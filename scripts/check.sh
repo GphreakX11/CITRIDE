@@ -7,4 +7,5 @@ python scripts/generate_demo_data.py --check
   cd backend
   UV_CACHE_DIR=/tmp/citride-uv-cache uv run --locked pytest
 )
+npm test --prefix frontend
 npm run build --prefix frontend

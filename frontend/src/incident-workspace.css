@@ -1,0 +1,332 @@
+.incident-workspace {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.incident-workspace *,
+.incident-workspace .card {
+  min-width: 0;
+}
+.incident-workspace .card {
+  padding: 22px;
+}
+.incident-workspace h3 {
+  margin: 10px 0 7px;
+}
+.incident-workspace h4 {
+  margin: 18px 0 8px;
+}
+.incident-workspace p + p {
+  margin-top: 7px;
+}
+.incident-header,
+.incident-section-head,
+.incident-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.incident-header .incident-title {
+  font-size: clamp(26px, 2.5vw, 34px);
+  line-height: 1.18;
+  margin-bottom: 12px;
+}
+.incident-header > div:first-child {
+  flex: 1;
+  max-width: 780px;
+}
+.incident-header .incident-actions {
+  flex-shrink: 0;
+}
+.incident-actions {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.incident-workspace .button {
+  white-space: normal;
+  min-height: 42px;
+  max-width: 100%;
+}
+.incident-workspace .button svg {
+  flex-shrink: 0;
+}
+.incident-section-head {
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.incident-eyebrow,
+.incident-step {
+  color: #46627d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.incident-muted,
+.incident-relation {
+  color: #566b80;
+  font-size: 12px;
+}
+.incident-tag,
+.incident-state {
+  display: inline-flex;
+  padding: 5px 9px;
+  border: 1px solid #dce4ee;
+  border-radius: 6px;
+  background: #f2f5fa;
+  color: #405b76;
+  font-size: 11px;
+  font-weight: 600;
+}
+.incident-field {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  max-width: 640px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.incident-field select {
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 34px 10px 12px;
+  border: 1px solid #c9d6e6;
+  border-radius: 7px;
+  background: #fff;
+  color: #23364b;
+  text-overflow: ellipsis;
+}
+.incident-sources {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 12px 0;
+}
+.incident-source {
+  max-width: 100%;
+  border: 1px solid #d5e2f4;
+  border-radius: 6px;
+  background: #f3f7fd;
+  font-size: 11px;
+  color: #305579;
+}
+.incident-source summary {
+  padding: 7px 10px;
+  min-height: 32px;
+}
+.incident-source > div {
+  padding: 4px 10px 10px;
+  max-width: 330px;
+}
+.incident-ribbon {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0;
+  margin: 18px 0;
+  list-style: none;
+}
+.incident-ribbon > li {
+  position: relative;
+  border: 1px solid #dde6f1;
+  border-top: 3px solid #5279b7;
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 13px;
+}
+.incident-ribbon h3 {
+  font-size: 13px;
+}
+.incident-ribbon-arrow {
+  position: absolute;
+  right: -15px;
+  top: 47%;
+  color: #5279b7;
+  z-index: 1;
+}
+.incident-bridges {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.incident-bridges article {
+  padding: 16px;
+  border: 1px solid #e3e8f0;
+  border-radius: 8px;
+  background: #f7f9fc;
+}
+.incident-bridges h3 {
+  font-size: 14px;
+}
+.incident-bridges p {
+  font-size: 12px;
+}
+.incident-detail {
+  margin: 13px 0;
+  border-top: 1px solid #e6eaf0;
+  padding-top: 11px;
+  font-size: 12px;
+}
+.incident-detail > summary {
+  min-height: 36px;
+  padding: 5px 0;
+  color: #365c85;
+  font-weight: 600;
+}
+.incident-workspace ul,
+.incident-path {
+  padding-left: 20px;
+  line-height: 1.65;
+  font-size: 12px;
+}
+.incident-workspace li + li {
+  margin-top: 7px;
+}
+.incident-ribbon > li + li {
+  margin-top: 0;
+}
+.incident-dependencies > li {
+  padding-bottom: 12px;
+}
+.incident-notice,
+.incident-warnings {
+  background: #fff8e9;
+  border: 1px solid #efdfb7;
+  border-radius: 7px;
+  color: #785615;
+  padding: 13px 16px;
+  font-size: 12px;
+}
+.incident-workspace .incident-warnings {
+  padding-left: 32px;
+}
+.incident-notice .button {
+  margin-top: 10px;
+}
+.incident-model > .button {
+  margin: 8px 0 15px;
+}
+.incident-review {
+  display: grid;
+  gap: 15px;
+}
+.incident-review > .incident-section-head {
+  margin-bottom: 0;
+}
+.incident-snapshot h3 {
+  margin-top: 0;
+}
+.incident-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+.incident-state-at_risk {
+  background: #fff6e0;
+  color: #785300;
+  border-color: #edd9a4;
+}
+.incident-state-degraded,
+.incident-state-failed {
+  background: #fff0ee;
+  color: #a33c32;
+  border-color: #edc5bf;
+}
+.incident-state-unknown {
+  background: #edf0f5;
+  color: #526176;
+}
+.incident-interval {
+  display: grid;
+  gap: 5px;
+  margin: 16px 0 10px;
+  padding: 13px;
+  border-left: 3px solid #6381b1;
+  border-radius: 5px;
+  background: #f4f7fc;
+}
+.incident-interval strong {
+  font-size: 20px;
+  color: #294c79;
+}
+.incident-interval span {
+  font-size: 11px;
+  color: #526982;
+}
+.incident-authority {
+  margin: 18px 0;
+  border-top: 1px solid #e6eaf0;
+  border-bottom: 1px solid #e6eaf0;
+  padding: 12px 0;
+  font-size: 12px;
+}
+.incident-authority > div + div {
+  margin-top: 9px;
+}
+.incident-authority dt {
+  font-weight: 700;
+  color: #506780;
+}
+.incident-authority dd {
+  margin: 3px 0 0;
+}
+.incident-empty .button,
+.incident-decision > .button {
+  margin-top: 14px;
+}
+@media (max-width: 1100px) {
+  .incident-header {
+    flex-direction: column;
+  }
+  .incident-ribbon {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .incident-ribbon-arrow {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .incident-ribbon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .incident-bridges,
+  .incident-decision-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .incident-workspace {
+    gap: 14px;
+  }
+  .incident-workspace .card {
+    padding: 16px;
+  }
+  .incident-ribbon {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .incident-header .incident-actions {
+    width: 100%;
+    flex-shrink: 1;
+  }
+  .incident-actions > .button {
+    flex: 1 1 140px;
+  }
+  .incident-section-head {
+    align-items: flex-start;
+  }
+  .incident-source > div {
+    max-width: 100%;
+  }
+  .incident-workspace h1 {
+    font-size: 27px;
+  }
+}

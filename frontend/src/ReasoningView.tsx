@@ -8,6 +8,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { api, describe, humanize } from "./api";
+import { displayText } from "./presentation";
 import type {
   Bootstrap,
   InferenceFact,
@@ -23,7 +24,7 @@ function failureMessage(failure: unknown): string {
 }
 
 function factText(fact: InferenceFact): string {
-  return `${fact.subject.label} → ${fact.predicate.label} → ${fact.object.label}`;
+  return `${displayText(fact.subject.label)} → ${fact.predicate.label} → ${displayText(fact.object.label)}`;
 }
 
 function createdLabel(timestamp?: string): string {
@@ -180,12 +181,12 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
       return (
         !query ||
         [
-          fact.subject.label,
+          displayText(fact.subject.label),
           fact.subject.id,
           fact.subject.iri,
           fact.predicate.label,
           fact.predicate.iri,
-          fact.object.label,
+          displayText(fact.object.label),
           fact.object.id,
           fact.object.iri,
         ].some((value) => value?.toLowerCase().includes(query))
@@ -475,13 +476,13 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
                             aria-pressed={selectedFactId === fact.id}
                             onClick={() => setSelectedFactId(fact.id)}
                           >
-                            <strong>{fact.subject.label}</strong>
+                            <strong>{displayText(fact.subject.label)}</strong>
                             <span>
                               <ArrowRight size={12} aria-hidden="true" />
                               {fact.predicate.label}
                               <ArrowRight size={12} aria-hidden="true" />
                             </span>
-                            <strong>{fact.object.label}</strong>
+                            <strong>{displayText(fact.object.label)}</strong>
                           </button>
                         </td>
                         <td>
@@ -647,11 +648,13 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
                           {proof.sources.map((source) => (
                             <li key={source.id}>
                               <strong>
-                                {source.label ?? source.title ?? source.id}
+                                {displayText(
+                                  source.label ?? source.title ?? source.id,
+                                )}
                               </strong>
                               <code>{source.id}</code>
                               {source.description && (
-                                <p>{source.description}</p>
+                                <p>{displayText(source.description)}</p>
                               )}
                               <details>
                                 <summary>Source record</summary>

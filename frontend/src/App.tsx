@@ -28,7 +28,11 @@ import type { LucideIcon } from "lucide-react";
 import Graph from "./Graph";
 import RelationshipEditor from "./RelationshipEditor";
 import ReasoningView from "./ReasoningView";
+import OntologyBlueprint from "./OntologyBlueprint";
+import IncidentWorkspace from "./IncidentWorkspace";
 import { ApiError, api, describe, humanize, windowLabel } from "./api";
+import { displayText } from "./presentation";
+import { reviewDisplayText } from "./incidentDecisions";
 import type {
   Bootstrap,
   Comparison,
@@ -41,10 +45,19 @@ import type {
 } from "./types";
 
 type View =
-  "overview" | "relationships" | "reasoning" | "lab" | "evidence" | "sources";
+  | "overview"
+  | "incident"
+  | "blueprint"
+  | "relationships"
+  | "reasoning"
+  | "lab"
+  | "evidence"
+  | "sources";
 const navigation: { id: View; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "Situation overview", icon: Layers3 },
+  { id: "incident", label: "Incident → decision", icon: ShieldCheck },
   { id: "relationships", label: "Relationship model", icon: Network },
+  { id: "blueprint", label: "Ontology blueprint", icon: BookOpen },
   { id: "reasoning", label: "Ontology reasoning", icon: BookOpen },
   { id: "lab", label: "Scenario lab", icon: FlaskConical },
   { id: "evidence", label: "Event evidence", icon: Activity },
@@ -52,7 +65,6 @@ const navigation: { id: View; label: string; icon: LucideIcon }[] = [
 ];
 
 function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
-  const username = issue.loginUsername || "demo";
   if (issue.code === "auth_not_configured") {
     return (
       <section
@@ -60,10 +72,10 @@ function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
         aria-labelledby="access-title"
       >
         <ShieldCheck size={30} />
-        <h2 id="access-title">Set up the demo login</h2>
+        <h2 id="access-title">Configure workspace access</h2>
         <p>
           The deployment owner needs to configure a password before this hosted
-          demo can open.
+          workspace can open.
         </p>
         <ol className="setup-steps">
           <li>
@@ -71,9 +83,8 @@ function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
             Environment Variables.
           </li>
           <li>
-            Add <code>CITRIDE_DEMO_PASSWORD</code> with a password you choose.
-            Optionally set <code>CITRIDE_DEMO_USERNAME</code>; the default is{" "}
-            <code>demo</code>.
+            Configure the workspace username and password using the deployment
+            guide.
           </li>
           <li>
             Select the Production and Preview environments you use. If Vercel
@@ -81,7 +92,7 @@ function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
           </li>
           <li>Redeploy the project, then check setup below.</li>
         </ol>
-        <p>Share the demo username and password with your invited viewers.</p>
+        <p>Share workspace credentials only with your invited viewers.</p>
         <button className="button primary" onClick={retry}>
           <RefreshCw size={16} />
           Check setup
@@ -96,10 +107,10 @@ function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
         aria-labelledby="access-title"
       >
         <Database size={30} />
-        <h2 id="access-title">Connect the demo database</h2>
+        <h2 id="access-title">Connect the workspace database</h2>
         <p>
-          The deployment owner needs to add a Postgres connection so the demo
-          can save relationships and run history.
+          The deployment owner needs to add a Postgres connection so the
+          workspace can save relationships and run history.
         </p>
         <ol className="setup-steps">
           <li>
@@ -131,13 +142,10 @@ function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
       <ShieldCheck size={30} />
       <h2 id="access-title">Sign in to CITRIDE</h2>
       <p>
-        Choose Sign in to open your browser’s login prompt. Use username{" "}
-        <strong>{username}</strong> and the password provided by the demo owner.
+        Choose Sign in to open your browser’s login prompt. Use the workspace
+        credentials provided by the deployment owner.
       </p>
-      <p>
-        Your Google sign-in for the Vercel dashboard is separate from this demo
-        login.
-      </p>
+      <p>Your Vercel dashboard sign-in is separate from workspace access.</p>
       <div className="access-actions">
         <a className="button primary" href="/v1/login">
           Sign in
@@ -253,14 +261,23 @@ export default function App() {
   function changeView(next: View) {
     setView(next);
     setMobileMenu(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function openIncidentScenario(nextScenarioId?: string) {
+    if (nextScenarioId) {
+      setScenarioId(nextScenarioId);
+      setOverrides([]);
+    }
+    changeView("lab");
   }
   const entityLabel = (id: string) =>
-    data?.entities.find((item) => item.id === id)?.label ?? id;
+    displayText(data?.entities.find((item) => item.id === id)?.label ?? id);
   const functionLabel = (id: string) =>
     data?.serviceFunctions.find((item) => item.id === id)?.label ?? id;
   const sourceLabel = (id: string) => {
     const source = data?.sources.find((item) => item.id === id);
-    return source?.label ?? source?.title ?? id;
+    return displayText(source?.label ?? source?.title ?? id);
   };
   const scenario = data?.scenarios.find((item) => item.id === scenarioId);
   const inspected = data?.entities.find((item) => item.id === selectedEntity);
@@ -363,7 +380,7 @@ export default function App() {
           </span>
           <div>
             <strong>Watershed 250</strong>
-            <small>Fictional OT environment</small>
+            <small>Water infrastructure workspace</small>
           </div>
           <span className="workspace-dot" />
         </div>
@@ -383,11 +400,11 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <span className="badge simulation">SIMULATED</span>
-          <p>A synthetic exercise for exploring downstream consequences.</p>
+          <span className="badge simulation">DECISION SUPPORT</span>
+          <p>Trace infrastructure dependencies and downstream consequences.</p>
           <div className="environment-status">
             <i />
-            Local demo mode
+            Watershed workspace
           </div>
           <small>Human review required for decisions.</small>
         </div>
@@ -416,7 +433,7 @@ export default function App() {
             <strong>{title}</strong>
           </div>
           <div className="topbar-status">
-            <span className="badge simulation">SIMULATED DATA</span>
+            <span className="badge simulation">SCENARIO ANALYSIS</span>
             <span className="revision">
               Baseline r{data?.baselineRevision ?? "—"}
             </span>
@@ -435,7 +452,9 @@ export default function App() {
         <div className="content">
           <div className="page-heading">
             <div>
-              <div className="eyebrow">WATERSHED 250 · BETA DEMONSTRATION</div>
+              <div className="eyebrow">
+                WATERSHED 250 · INFRASTRUCTURE INTELLIGENCE
+              </div>
               <h1>
                 {view === "overview"
                   ? "From incident to downstream impact"
@@ -443,16 +462,20 @@ export default function App() {
               </h1>
               <p>
                 {view === "overview"
-                  ? "Follow a fictional water-control incident through infrastructure, dependencies, and essential services."
-                  : view === "relationships"
-                    ? "Build explicit service dependencies with timing, reserve assumptions, and traceable sources."
-                    : view === "reasoning"
-                      ? "Derive and explain relationship context with a versioned OWL ontology and captured sources."
-                      : view === "lab"
-                        ? "Explore loss-specific consequences and compare isolated what-if runs."
-                        : view === "evidence"
-                          ? "Inspect coordinated synthetic events and the underlying raw telemetry."
-                          : "Review the fictional evidence and assumptions behind the model."}
+                  ? "Trace a water-control incident through infrastructure, dependencies, and essential services."
+                  : view === "incident"
+                    ? "Follow sourced event context into conditional consequences and human decision review."
+                    : view === "blueprint"
+                      ? "Explore the document-backed ontology stack and distinguish current capabilities from planned integrations."
+                      : view === "relationships"
+                        ? "Build explicit service dependencies with timing, reserve assumptions, and traceable sources."
+                        : view === "reasoning"
+                          ? "Derive and explain relationship context with a versioned OWL ontology and captured sources."
+                          : view === "lab"
+                            ? "Explore loss-specific consequences and compare isolated what-if runs."
+                            : view === "evidence"
+                              ? "Inspect the incident timeline and supporting telemetry records."
+                              : "Review source provenance, evidence, and the assumptions behind the model."}
               </p>
             </div>
             {view === "overview" && (
@@ -505,7 +528,7 @@ export default function App() {
             <div className="empty-state">
               <Database size={30} />
               <h2>The model could not be loaded</h2>
-              <p>Check that the demo API is running, then retry.</p>
+              <p>Check workspace connectivity, then retry.</p>
               <button className="button primary" onClick={() => void refresh()}>
                 Retry
               </button>
@@ -522,7 +545,7 @@ export default function App() {
                     <div>
                       <div className="banner-meta">
                         <span className="badge exercise">
-                          FICTIONAL EXERCISE
+                          INCIDENT ANALYSIS
                         </span>
                         <span>OT water-control scenario</span>
                       </div>
@@ -530,8 +553,8 @@ export default function App() {
                         Unusual access → controller change → water-quality drift
                       </h2>
                       <p>
-                        Telemetry supplies synthetic observations. Operational
-                        effects are explicitly configured scenario assumptions.
+                        Trace event evidence into configured operational effects
+                        and downstream service dependencies.
                       </p>
                     </div>
                     <span className="incident-marker">W250</span>
@@ -551,7 +574,7 @@ export default function App() {
                     />
                     <Metric
                       icon={Activity}
-                      label="Synthetic events"
+                      label="Incident events"
                       value={data.events.length}
                       detail="Coordinated incident timeline"
                     />
@@ -586,7 +609,7 @@ export default function App() {
                           <span className="badge muted">
                             {humanize(inspected.type)}
                           </span>
-                          <h3>{inspected.label}</h3>
+                          <h3>{displayText(inspected.label)}</h3>
                           <p className="muted-text">{inspected.id}</p>
                           {inspected.terrain && (
                             <p>Operational terrain: {inspected.terrain}</p>
@@ -670,10 +693,10 @@ export default function App() {
                   <section className="card">
                     <div className="panel-heading">
                       <div>
-                        <span className="eyebrow">Exercise progression</span>
+                        <span className="eyebrow">Incident progression</span>
                         <h2>
                           <Clock3 size={18} />
-                          Synthetic event timeline
+                          Event timeline
                         </h2>
                       </div>
                       <button
@@ -697,9 +720,9 @@ export default function App() {
                           <strong>
                             {event.label ?? event.title ?? event.id}
                           </strong>
-                          <p>{event.description}</p>
+                          <p>{displayText(event.description ?? "")}</p>
                           <span className="badge simulation small">
-                            SIMULATED OBSERVATION
+                            EVENT RECORD
                           </span>
                         </div>
                       ))}
@@ -731,7 +754,7 @@ export default function App() {
                           {data.dependencies.length} operational relationships
                         </h2>
                       </div>
-                      <span className="badge simulation">SIMULATED</span>
+                      <span className="badge simulation">BASELINE MODEL</span>
                     </div>
                     <div className="table-scroll">
                       <table>
@@ -921,7 +944,7 @@ export default function App() {
                       </div>
                       {scenario && (
                         <div className="scenario-description">
-                          <p>{scenario.description}</p>
+                          <p>{displayText(scenario.description ?? "")}</p>
                           <div>
                             <span>
                               Seed:{" "}
@@ -1050,7 +1073,7 @@ export default function App() {
                               <input
                                 value={override.note}
                                 required
-                                placeholder="Explain this fictional reserve"
+                                placeholder="Document the reserve and its assumptions"
                                 onChange={(event) =>
                                   setOverrides((current) =>
                                     current.map((item, position) =>
@@ -1124,7 +1147,9 @@ export default function App() {
                           <strong>Model review required</strong>
                           <ul>
                             {run.warnings.map((warning, index) => (
-                              <li key={index}>{describe(warning)}</li>
+                              <li key={index}>
+                                {reviewDisplayText(describe(warning))}
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -1223,7 +1248,9 @@ export default function App() {
                               <ul className="assumption-list">
                                 {currentImpact.assumptions.map(
                                   (item, index) => (
-                                    <li key={index}>{item}</li>
+                                    <li key={index}>
+                                      {reviewDisplayText(item)}
+                                    </li>
                                   ),
                                 )}
                               </ul>
@@ -1455,8 +1482,7 @@ export default function App() {
                     <Activity size={20} />
                     <div>
                       <strong>
-                        Synthetic observations are separate from modeled
-                        effects.
+                        Event evidence is separate from modeled effects.
                       </strong>
                       <p>
                         Network probing establishes activity. It does not
@@ -1469,9 +1495,9 @@ export default function App() {
                     <div className="panel-heading">
                       <div>
                         <span className="eyebrow">Coordinated timeline</span>
-                        <h2>{data.events.length} synthetic events</h2>
+                        <h2>{data.events.length} incident events</h2>
                       </div>
-                      <span className="badge simulation">SIMULATED</span>
+                      <span className="badge simulation">EVENT RECORDS</span>
                     </div>
                     <div className="event-list">
                       {data.events.map((event) => (
@@ -1487,7 +1513,7 @@ export default function App() {
                           </div>
                           <div>
                             <h3>{event.label ?? event.title ?? event.id}</h3>
-                            <p>{event.description}</p>
+                            <p>{displayText(event.description ?? "")}</p>
                             {renderSources(event.sourceRefs ?? [])}
                             <details>
                               <summary>Event record</summary>
@@ -1519,7 +1545,7 @@ export default function App() {
                         >
                           {telemetry?.streams.map((stream) => (
                             <option key={stream.id} value={stream.id}>
-                              {stream.label}
+                              {displayText(stream.label)}
                             </option>
                           ))}
                         </select>
@@ -1555,8 +1581,10 @@ export default function App() {
                                         record[key] === null
                                           ? "—"
                                           : typeof record[key] === "string"
-                                            ? (record[key] as string)
-                                            : describe(record[key])}
+                                            ? displayText(record[key] as string)
+                                            : displayText(
+                                                describe(record[key]),
+                                              )}
                                       </td>
                                     ))}
                                   </tr>
@@ -1581,17 +1609,33 @@ export default function App() {
                 </>
               )}
 
+              {view === "incident" && (
+                <IncidentWorkspace
+                  data={data}
+                  run={run}
+                  onOpenLab={openIncidentScenario}
+                  onOpenEvidence={() => changeView("evidence")}
+                  onOpenBlueprint={() => changeView("blueprint")}
+                />
+              )}
+              {view === "blueprint" && (
+                <OntologyBlueprint
+                  onOpenReasoning={() => changeView("reasoning")}
+                />
+              )}
               {view === "reasoning" && <ReasoningView data={data} />}
               {view === "sources" && (
                 <>
                   <div className="notice">
                     <FileText size={20} />
                     <div>
-                      <strong>All evidence in this demo is fictional.</strong>
+                      <strong>Data provenance & intended use</strong>
                       <p>
-                        These source labels describe generated datasets and
-                        assumptions. They do not establish real utility behavior
-                        or operational authority.
+                        Watershed 250 uses generated reference data for a
+                        fictional infrastructure environment, not a live utility
+                        feed. Results support scenario analysis, not verified
+                        operational decisions. Original records and provenance
+                        remain available in the metadata and exports.
                       </p>
                     </div>
                   </div>
@@ -1602,11 +1646,19 @@ export default function App() {
                           <span className="source-icon">
                             <FileText size={20} />
                           </span>
-                          <span className="badge simulation">SIMULATED</span>
+                          <span className="badge simulation">
+                            REFERENCE DATA
+                          </span>
                         </div>
-                        <h3>{source.label ?? source.title ?? source.id}</h3>
+                        <h3>
+                          {displayText(
+                            source.label ?? source.title ?? source.id,
+                          )}
+                        </h3>
                         <code>{source.id}</code>
-                        {source.description && <p>{source.description}</p>}
+                        {source.description && (
+                          <p>{displayText(source.description)}</p>
+                        )}
                         <details>
                           <summary>Source metadata</summary>
                           <pre>{JSON.stringify(source, null, 2)}</pre>
@@ -1628,11 +1680,13 @@ export default function App() {
                       {data.assumptions.map((assumption, index) => (
                         <details key={String(assumption.id ?? index)}>
                           <summary>
-                            {String(
-                              assumption.label ??
-                                assumption.note ??
-                                assumption.id ??
-                                `Assumption ${index + 1}`,
+                            {displayText(
+                              String(
+                                assumption.label ??
+                                  assumption.note ??
+                                  assumption.id ??
+                                  `Assumption ${index + 1}`,
+                              ),
                             )}
                           </summary>
                           <pre>{JSON.stringify(assumption, null, 2)}</pre>
@@ -1643,7 +1697,7 @@ export default function App() {
                   <section className="card limitations">
                     <h2>Model boundaries</h2>
                     <p>
-                      This first slice evaluates directed physical dependencies.
+                      The model evaluates directed physical dependencies.
                       Cycles, shared supply, and unresolved multi-supply groups
                       require explicit review. It does not implement
                       authenticated user roles, real utility integrations,
@@ -1668,8 +1722,8 @@ export default function App() {
               <footer className="content-footer">
                 <span>CITRIDE · Watershed 250</span>
                 <span>
-                  Model {data.modelVersion} · Baseline r{data.baselineRevision}{" "}
-                  · All inputs simulated
+                  Model {displayText(data.modelVersion)} · Baseline r
+                  {data.baselineRevision}
                 </span>
               </footer>
             </>

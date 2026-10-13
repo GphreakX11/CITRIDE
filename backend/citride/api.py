@@ -185,6 +185,18 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
             streams.extend(payload if isinstance(payload, list) else [payload])
         return {"streams": streams}
 
+    @app.get("/v1/incident-context")
+    def incident_context(store: RepositoryDependency, eventId: QueryIdentifier):
+        from .incident_context import incident_context as build_context
+
+        def operation():
+            baseline = store.baseline()
+            if not any(event.get("id") == eventId for event in baseline.get("events", [])):
+                raise NotFoundError(f"Event {eventId} was not found")
+            return build_context(baseline, eventId)
+
+        return handle_operation(operation)
+
     @app.post("/v1/dependency-proposals", status_code=201)
     def create_proposal(request: ProposalRequest, store: RepositoryDependency):
         return handle_operation(lambda: store.create_proposal(request.dependency, request.expectedBaselineRevision))

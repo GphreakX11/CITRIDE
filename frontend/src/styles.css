@@ -824,6 +824,7 @@ main {
   align-items: center;
 }
 .table-scroll {
+  position: relative;
   overflow-x: auto;
   width: 100%;
 }
@@ -1032,6 +1033,10 @@ summary {
 }
 .result-grid .card {
   margin: 0;
+  min-width: 0;
+}
+.result-grid .panel-heading {
+  flex-wrap: wrap;
 }
 .result-table .panel-heading {
   align-items: flex-start;

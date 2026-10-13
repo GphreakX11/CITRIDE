@@ -21,7 +21,7 @@ def authorize(client, username="demo", password="test-only-demo-password"):
     client.headers["Authorization"] = "Basic " + base64.b64encode(f"{username}:{password}".encode()).decode()
 
 
-@pytest.mark.parametrize("path", ["/health", "/v1/bootstrap", "/v1/telemetry", "/v1/graph/export", "/v1/ontology", "/docs", "/openapi.json", "/v1/login"])
+@pytest.mark.parametrize("path", ["/health", "/v1/bootstrap", "/v1/telemetry", "/v1/graph/export", "/v1/ontology", "/v1/incident-context?eventId=event-dosing", "/docs", "/openapi.json", "/v1/login"])
 def test_protected_routes_do_not_initialize_or_expose_model_without_login(tmp_path, monkeypatch, path):
     monkeypatch.setenv("CITRIDE_DEMO_PASSWORD", "test-only-demo-password")
     state = tmp_path / "state"
@@ -132,6 +132,11 @@ def test_hosted_api_survives_new_instances_and_preserves_owl_proofs(monkeypatch)
         with TestClient(create_app()) as first:
             authorize(first)
             baseline = first.get("/v1/bootstrap").json()
+            context_response = first.get("/v1/incident-context", params={"eventId": "event-dosing"})
+            assert context_response.status_code == 200
+            context = context_response.json()
+            assert context["provider"]["id"] == "utility-a"
+            assert first.get("/v1/bootstrap").json() == baseline
             cascade_response = first.post("/v1/cascade-runs", json={"scenarioId": "unsafe-water"})
             assert cascade_response.status_code == 201
             cascade = cascade_response.json()
@@ -148,6 +153,7 @@ def test_hosted_api_survives_new_instances_and_preserves_owl_proofs(monkeypatch)
         with TestClient(create_app()) as second:
             authorize(second)
             assert second.get("/v1/bootstrap").json() == baseline
+            assert second.get("/v1/incident-context", params={"eventId": "event-dosing"}).json() == context
             assert second.get(f"/v1/cascade-runs/{cascade['id']}").json() == cascade
             assert second.get(f"/v1/inference-runs/{inference['id']}").json() == inference
             assert second.get(proof_path).json() == proof

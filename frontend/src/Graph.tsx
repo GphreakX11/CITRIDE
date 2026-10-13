@@ -4,6 +4,7 @@ import type { Core, ElementDefinition } from "cytoscape";
 import { Maximize2, Minus, Plus, Network } from "lucide-react";
 import type { Bootstrap } from "./types";
 import { humanize } from "./api";
+import { displayText } from "./presentation";
 
 interface Props {
   data: Bootstrap;
@@ -42,7 +43,11 @@ export default function Graph({
           ),
         );
     const elements: ElementDefinition[] = visible.map((entity) => ({
-      data: { id: entity.id, label: entity.label, kind: entity.type },
+      data: {
+        id: entity.id,
+        label: displayText(entity.label),
+        kind: entity.type,
+      },
       classes: /Plant|Treatment|Utility|Power|Electric|ServiceProvider/.test(
         entity.type,
       )
@@ -317,7 +322,7 @@ export default function Graph({
           <option value="">Inspect an entity…</option>
           {data.entities.map((entity) => (
             <option key={entity.id} value={entity.id}>
-              {entity.label}
+              {displayText(entity.label)}
             </option>
           ))}
         </select>

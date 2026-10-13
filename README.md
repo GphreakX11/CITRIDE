@@ -46,6 +46,14 @@ RDF named graphs hold baseline records, staged proposals, and immutable cascade 
 
 The deterministic engine propagates provider → dependent only through compatible service/loss relationships. It accumulates time windows and usable backup across hops. Missing timing remains unknown. Unsupported supply groups and cycles are surfaced for model review. A geographic overlap, ownership link, or shared attacker does not itself propagate a physical outage.
 
+## Document-aligned views
+
+**Ontology blueprint** translates the supplied standards guide and landscape diagram into foundation, domain, bridge, validation, and exchange layers. Runtime metadata identifies the actual local ontology; external standard imports and the AWS target remain explicitly planned.
+
+**Incident → decision** retrieves explicit event/asset/facility/service-area/dependency context through `/v1/incident-context?eventId=...`. Matching scenarios are linked by seed evidence references, not inferred merely from alert presence. Advisory decision reviews use captured cascade snapshots and source trails. No authority approval or formal G1–G5 evaluation is claimed, and no operational action is dispatched.
+
+See [the document-alignment contract](.specs/document-alignment.md) for reviewed sources, scope, and acceptance criteria. No source-document binary or credential is included in the repository.
+
 ## OWL reasoning
 
 Formal **OWL 2 RL** entailment runs through the `owlrl` library over a versioned local ontology and a projection of approved RDF facts. It derives transitive containment, inverse hosting, class membership, event-to-facility context, and dependency summaries from explicit dependency records. Declared facts and inferred facts are shown separately, with a replayable witness for each published inference.

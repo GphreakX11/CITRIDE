@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, CheckCircle2, GitPullRequest, Save, X } from "lucide-react";
 import { api, humanize } from "./api";
+import { displayText } from "./presentation";
 import type { Bootstrap, Dependency, Proposal, Validation } from "./types";
 
 interface Props {
@@ -56,7 +57,9 @@ export default function RelationshipEditor({
   onPromoted,
 }: Props) {
   const [draft, setDraft] = useState<Dependency>(() =>
-    initial ? { ...initial } : newDependency(data),
+    initial
+      ? { ...initial, assumptionNote: displayText(initial.assumptionNote) }
+      : newDependency(data),
   );
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [validation, setValidation] = useState<Validation | null>(null);
@@ -256,7 +259,7 @@ export default function RelationshipEditor({
         >
           <div className="editor-body">
             <p className="notice compact">
-              This creates a simulated operational dependency. Geographic
+              This creates a modeled operational dependency. Geographic
               proximity and infrastructure ownership do not establish a
               dependency.
             </p>
@@ -279,7 +282,7 @@ export default function RelationshipEditor({
                   >
                     {physical.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.label}
+                        {displayText(item.label)}
                       </option>
                     ))}
                   </select>
@@ -303,7 +306,7 @@ export default function RelationshipEditor({
                   >
                     {physical.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.label}
+                        {displayText(item.label)}
                       </option>
                     ))}
                   </select>
@@ -348,7 +351,7 @@ export default function RelationshipEditor({
                     )}
                     {functions.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.label}
+                        {displayText(item.label)}
                       </option>
                     ))}
                   </select>
@@ -490,7 +493,7 @@ export default function RelationshipEditor({
                         })
                       }
                     />
-                    {source.label ?? source.title ?? source.id}
+                    {displayText(source.label ?? source.title ?? source.id)}
                     <code>{source.id}</code>
                   </label>
                 ))}
@@ -500,7 +503,7 @@ export default function RelationshipEditor({
                 <textarea
                   required
                   rows={3}
-                  placeholder="Explain the fictional dependency, timing, and reserve assumptions."
+                  placeholder="Document the dependency, timing, and reserve assumptions."
                   value={draft.assumptionNote}
                   onChange={(event) =>
                     update({ assumptionNote: event.target.value })
@@ -550,7 +553,7 @@ export default function RelationshipEditor({
             )}
           </div>
           <footer className="modal-footer">
-            <span className="badge simulation">SIMULATED · U</span>
+            <span className="badge simulation">MODEL EDITOR · U</span>
             <div className="button-row">
               {promoted ? (
                 <button
