@@ -8,6 +8,7 @@ htmlcov/
 .local/
 node_modules/
 frontend/dist/
+backend/citride/demo_data/
 *.tsbuildinfo
 *.log
 .env

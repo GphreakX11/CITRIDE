@@ -46,6 +46,10 @@ class InvalidModelError(Exception):
     pass
 
 
+class StorageUnavailableError(Exception):
+    """Safe public error without connection details or credentials."""
+
+
 def _json(value: object) -> str:
     return json.dumps(value, allow_nan=False, separators=(",", ":"), sort_keys=True)
 
@@ -66,39 +70,45 @@ class Repository:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         with self._locked():
             if not self.path.exists():
-                with self.scenario_path.open(encoding="utf-8") as source:
-                    data = json.load(source)
-                errors = validate_baseline(data)
-                if errors:
-                    raise InvalidModelError("Invalid initial model: " + "; ".join(errors))
-                data["baselineRevision"] = 1
-                data["modelVersion"] = MODEL_VERSION
-                dataset = Dataset()
-                self._write_baseline(dataset, data)
-                self._save(dataset)
+                self._save(self._seed_dataset())
             else:
                 # Earlier releases indexed event seenOn references as literals.
                 # Repair that RDF index from the unchanged authoritative JSON
                 # payload; preserve the revision and every historical graph.
                 dataset = self._load()
-                graph = dataset.graph(BASELINE)
-                changed = False
-                for event in self._baseline(dataset).get("events", []):
-                    references = event.get("seenOn", [])
-                    if isinstance(references, str):
-                        references = [references]
-                    if not references:
-                        continue
-                    subject = _resource(event["id"])
-                    expected = {_resource(reference) for reference in references if isinstance(reference, str)}
-                    actual = set(graph.objects(subject, NS.seenOn))
-                    if actual != expected:
-                        graph.remove((subject, NS.seenOn, None))
-                        for reference in expected:
-                            graph.add((subject, NS.seenOn, reference))
-                        changed = True
-                if changed:
+                if self._repair_seen_on(dataset):
                     self._save(dataset)
+
+    def _seed_dataset(self) -> Dataset:
+        """Build a new seed only when the selected durable state is absent."""
+        with self.scenario_path.open(encoding="utf-8") as source:
+            data = json.load(source)
+        errors = validate_baseline(data)
+        if errors:
+            raise InvalidModelError("Invalid initial model: " + "; ".join(errors))
+        data["baselineRevision"] = 1
+        data["modelVersion"] = MODEL_VERSION
+        dataset = Dataset()
+        self._write_baseline(dataset, data)
+        return dataset
+
+    def _repair_seen_on(self, dataset: Dataset) -> bool:
+        graph = dataset.graph(BASELINE)
+        changed = False
+        for event in self._baseline(dataset).get("events", []):
+            references = event.get("seenOn", [])
+            if isinstance(references, str):
+                references = [references]
+            if not references:
+                continue
+            subject = _resource(event["id"])
+            expected = {_resource(reference) for reference in references if isinstance(reference, str)}
+            if set(graph.objects(subject, NS.seenOn)) != expected:
+                graph.remove((subject, NS.seenOn, None))
+                for reference in expected:
+                    graph.add((subject, NS.seenOn, reference))
+                changed = True
+        return changed
 
     @contextmanager
     def _locked(self):

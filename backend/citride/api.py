@@ -10,10 +10,11 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .storage import ConflictError, InvalidModelError, NotFoundError, Repository
+from .access import DemoAccessMiddleware
+from .storage import ConflictError, InvalidModelError, NotFoundError, Repository, StorageUnavailableError
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
@@ -89,11 +90,26 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
     app = FastAPI(
         title="CITRIDE local synthetic demo",
         version="0.1.0",
-        description="Single-tenant local simulation. No authentication boundary or live OT connection.",
+        description="Single-tenant synthetic simulation. Hosted instances use a shared demo login; no live OT connection.",
+    )
+    hosted = os.environ.get("VERCEL") == "1"
+    database_url = None if data_dir is not None else (
+        os.environ.get("CITRIDE_DATABASE_URL") or os.environ.get("DATABASE_URL")
+    )
+    app.add_middleware(
+        DemoAccessMiddleware, username=os.environ.get("CITRIDE_DEMO_USERNAME", "demo"),
+        password=os.environ.get("CITRIDE_DEMO_PASSWORD"), required=hosted,
+        secure_origin=hosted and os.environ.get("VERCEL_ENV") != "development",
     )
     repository_path = data_dir or Path(os.environ.get("CITRIDE_DATA_DIR", REPO_ROOT / ".local"))
-    fixture_path = scenario_path or REPO_ROOT / "data" / "scenario.json"
+    bundled_data = Path(__file__).parent / "demo_data"
+    local_fixture = REPO_ROOT / "data" / "scenario.json"
+    fixture_path = scenario_path or (local_fixture if local_fixture.is_file() else bundled_data / "scenario.json")
     repository: Repository | None = None
+
+    @app.exception_handler(StorageUnavailableError)
+    async def unavailable_storage(_request, _error):
+        return JSONResponse(status_code=503, content={"detail": "Demo storage is temporarily unavailable."})
 
     @app.exception_handler(RequestValidationError)
     async def request_validation_error(_request, error: RequestValidationError):
@@ -109,7 +125,19 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
         nonlocal repository
         if repository is None:
             try:
-                repository = Repository(repository_path, fixture_path)
+                if database_url:
+                    from .postgres import PostgresRepository
+
+                    repository = PostgresRepository(
+                        database_url, fixture_path,
+                        state_key=os.environ.get("CITRIDE_STATE_KEY") or (
+                            "citride-" + os.environ.get("VERCEL_ENV", "development") if hosted else "default"
+                        ),
+                    )
+                elif hosted:
+                    raise HTTPException(status_code=503, detail="Set CITRIDE_DATABASE_URL or DATABASE_URL for durable hosted storage.")
+                else:
+                    repository = Repository(repository_path, fixture_path)
             except (OSError, ValueError, InvalidModelError) as error:
                 raise HTTPException(status_code=503, detail=f"Demo model could not be loaded: {error}") from error
         return repository
@@ -134,6 +162,12 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
     @app.get("/health")
     def health(store: RepositoryDependency):
         return {"status": "ok", "baselineRevision": store.baseline()["baselineRevision"], "demoMode": True}
+
+    @app.get("/v1/login", include_in_schema=False)
+    def demo_login():
+        # Top-level navigation invokes the browser's password prompt; credentials
+        # then apply to subsequent same-origin /v1 requests, never JS storage.
+        return RedirectResponse(url="/", status_code=303)
 
     @app.get("/v1/bootstrap")
     def bootstrap(store: RepositoryDependency):

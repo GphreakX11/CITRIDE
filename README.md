@@ -15,6 +15,8 @@ bash scripts/start.sh
 
 The API serves the compiled application on port 8000, bound to the local machine. `/health` reports readiness and `/docs` contains the generated OpenAPI interface. No API keys, AWS account, Docker daemon, or commercial software license is required.
 
+For Vercel, the proposed root `vercel.json` configures separate FastAPI and Vite services. Hosted persistence uses Postgres and backend access requires a shared demo password. See [deployment instructions](docs/vercel-deployment.md) for routing, environment settings, and checks; publishing requires a linked Vercel project.
+
 For development, run the API from `backend` with `uv run --locked uvicorn citride.api:app --reload --host 127.0.0.1 --port 8000`. In a separate terminal run `npm run dev --prefix frontend`; Vite proxies API requests to the backend.
 
 ## Demonstrate the workflow
@@ -38,7 +40,7 @@ python scripts/generate_demo_data.py --check  # verify checked-in data
 python scripts/generate_demo_data.py          # regenerate the fictional inputs
 ```
 
-Local RDF named graphs hold baseline records, staged proposals, and immutable cascade runs. Persistence defaults to an ignored `.local` directory; `CITRIDE_DATA_DIR` can select a separate local state directory. Stop the API before deliberately deleting that directory to reset to the checked-in seed. Dependency revisions and graph revision checks protect edits; run comparisons use captured snapshots.
+RDF named graphs hold baseline records, staged proposals, and immutable cascade and inference runs. Local persistence defaults to an ignored `.local` directory; `CITRIDE_DATA_DIR` can select a separate local state directory. A configured `CITRIDE_DATABASE_URL` or `DATABASE_URL` selects transactional Postgres persistence, which is required on Vercel. Stop the local API before deliberately deleting its data directory to reset to the checked-in seed. Dependency revisions and graph revision checks protect edits; run comparisons use captured snapshots.
 
 The deterministic engine propagates provider → dependent only through compatible service/loss relationships. It accumulates time windows and usable backup across hops. Missing timing remains unknown. Unsupported supply groups and cycles are surfaced for model review. A geographic overlap, ownership link, or shared attacker does not itself propagate a physical outage.
 
@@ -62,6 +64,6 @@ Tests cover coherent synthetic inputs, loss-specific activation, interval arithm
 
 ## Scope of this first increment
 
-This is a single-user local demo. It has no authenticated multi-customer boundary, operational response authority catalog, human decision/audit workflow, managed Neptune deployment, live ingest pipeline, or AI agent. Do not expose it as a public or operational service. Persisted RDF and API contracts are development foundations; they are not verified GovCloud, FedRAMP, IDT-OWL, or imported-ontology conformance.
+This is a single-user synthetic demo. Hosted instances support a shared demo login, with no authenticated multi-customer boundary, operational response authority catalog, human decision/audit workflow, managed Neptune deployment, live ingest pipeline, or AI agent. Hosted backend access requires the configured password; this is not an operational service. Persisted RDF and API contracts are development foundations; they are not verified GovCloud, FedRAMP, IDT-OWL, or imported-ontology conformance.
 
 Next increments are described in [the roadmap](docs/roadmap.md). See [the implementation contract](docs/implementation-contract.md) for data/API details.

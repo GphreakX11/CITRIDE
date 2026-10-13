@@ -28,7 +28,7 @@ import type { LucideIcon } from "lucide-react";
 import Graph from "./Graph";
 import RelationshipEditor from "./RelationshipEditor";
 import ReasoningView from "./ReasoningView";
-import { api, describe, humanize, windowLabel } from "./api";
+import { ApiError, api, describe, humanize, windowLabel } from "./api";
 import type {
   Bootstrap,
   Comparison,
@@ -56,6 +56,7 @@ export default function App() {
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loginRequired, setLoginRequired] = useState(false);
   const [view, setView] = useState<View>("overview");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
@@ -82,6 +83,7 @@ export default function App() {
   async function refresh() {
     setLoading(true);
     setError("");
+    setLoginRequired(false);
     try {
       const [baseline, feeds, history] = await Promise.all([
         api<Bootstrap>("/v1/bootstrap"),
@@ -95,6 +97,7 @@ export default function App() {
       setStreamId((current) => current || feeds.streams[0]?.id || "");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure));
+      setLoginRequired(failure instanceof ApiError && failure.status === 401);
     } finally {
       setLoading(false);
     }
@@ -132,6 +135,7 @@ export default function App() {
       await operation();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure));
+      setLoginRequired(failure instanceof ApiError && failure.status === 401);
     } finally {
       setBusy("");
     }
@@ -368,6 +372,11 @@ export default function App() {
           {error && (
             <div className="alert error" role="alert">
               {error}
+              {loginRequired && (
+                <a className="button primary" href="/v1/login">
+                  Sign in
+                </a>
+              )}
               <button
                 type="button"
                 className="text-button"

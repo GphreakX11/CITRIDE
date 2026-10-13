@@ -9,6 +9,7 @@ dependencies = [
   "rdflib>=7.1,<8",
   "pyshacl>=0.30,<1",
   "owlrl==7.6.2",
+  "psycopg[binary]==3.2.13",
 ]
 
 [dependency-groups]
@@ -20,6 +21,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["citride"]
+artifacts = ["citride/demo_data/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

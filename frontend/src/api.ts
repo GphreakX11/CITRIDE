@@ -1,3 +1,13 @@
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export async function api<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(
     path,
@@ -15,8 +25,9 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
       data && typeof data === "object" && "detail" in data
         ? data.detail
         : `Request failed (${response.status})`;
-    throw new Error(
+    throw new ApiError(
       typeof detail === "string" ? detail : JSON.stringify(detail),
+      response.status,
     );
   }
   return data as T;
