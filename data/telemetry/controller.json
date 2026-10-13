@@ -1,0 +1,121 @@
+{
+  "id": "controller",
+  "label": "Controller authentication and changes",
+  "sourceRef": "src-controller",
+  "format": "synthetic_controller_audit_json",
+  "records": [
+    {
+      "id": "controller-baseline-a",
+      "relativeTimeHours": -1.0,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "assetId": "plc-a",
+      "utilityId": "utility-a",
+      "eventType": "status_read",
+      "user": "fictional-operator-a",
+      "outcome": "success",
+      "parameter": "dosing_setpoint",
+      "value": 1.0,
+      "unit": "synthetic_index",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-controller"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "controller-baseline-b",
+      "relativeTimeHours": -1.0,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "assetId": "plc-b",
+      "utilityId": "utility-b",
+      "eventType": "status_read",
+      "user": "fictional-operator-b",
+      "outcome": "success",
+      "parameter": "dosing_setpoint",
+      "value": 1.0,
+      "unit": "synthetic_index",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-controller"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "controller-baseline-c",
+      "relativeTimeHours": -1.0,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "assetId": "plc-c",
+      "utilityId": "utility-c",
+      "eventType": "status_read",
+      "user": "fictional-operator-c",
+      "outcome": "success",
+      "parameter": "dosing_setpoint",
+      "value": 1.0,
+      "unit": "synthetic_index",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-controller"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "controller-auth-001",
+      "relativeTimeHours": -0.05,
+      "timestamp": "2026-10-13T06:57:00Z",
+      "assetId": "plc-a",
+      "utilityId": "utility-a",
+      "eventType": "authentication",
+      "user": "fictional-maintenance-session",
+      "sourceIp": "203.0.113.250",
+      "outcome": "success",
+      "anomalous": true,
+      "sourceRefs": [
+        "src-controller"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "controller-change-001",
+      "relativeTimeHours": 0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "assetId": "plc-a",
+      "utilityId": "utility-a",
+      "eventType": "parameter_change",
+      "user": "fictional-maintenance-session",
+      "sourceIp": "203.0.113.250",
+      "parameter": "dosing_setpoint",
+      "before": 1.0,
+      "after": 4.0,
+      "unit": "synthetic_index",
+      "outcome": "applied",
+      "anomalous": true,
+      "interpretation": "An invented parameter change. It does not by itself prove unsafe water.",
+      "sourceRefs": [
+        "src-controller"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "sourceRefs": [
+    "src-controller"
+  ],
+  "classification": "U",
+  "handling": [
+    "SIMULATED"
+  ]
+}

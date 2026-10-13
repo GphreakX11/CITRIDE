@@ -1,0 +1,4041 @@
+{
+  "id": "sensors",
+  "label": "Water-quality, pressure, and tank series",
+  "sourceRef": "src-sensors",
+  "format": "synthetic_sensor_json",
+  "records": [
+    {
+      "id": "sensor-a-000",
+      "relativeTimeHours": -2.0,
+      "timestamp": "2026-10-13T05:00:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.747,
+      "pressurePsi": 58.173,
+      "tankLevelPercent": 72.212,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-000",
+      "relativeTimeHours": -2.0,
+      "timestamp": "2026-10-13T05:00:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 59.816,
+      "tankLevelPercent": 72.148,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-000",
+      "relativeTimeHours": -2.0,
+      "timestamp": "2026-10-13T05:00:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.74,
+      "pressurePsi": 61.95,
+      "tankLevelPercent": 72.182,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-005",
+      "relativeTimeHours": -1.916667,
+      "timestamp": "2026-10-13T05:05:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 57.984,
+      "tankLevelPercent": 72.201,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-005",
+      "relativeTimeHours": -1.916667,
+      "timestamp": "2026-10-13T05:05:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.744,
+      "pressurePsi": 60.157,
+      "tankLevelPercent": 72.254,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-005",
+      "relativeTimeHours": -1.916667,
+      "timestamp": "2026-10-13T05:05:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.74,
+      "pressurePsi": 62.127,
+      "tankLevelPercent": 72.177,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-010",
+      "relativeTimeHours": -1.833333,
+      "timestamp": "2026-10-13T05:10:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.741,
+      "pressurePsi": 57.988,
+      "tankLevelPercent": 72.126,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-010",
+      "relativeTimeHours": -1.833333,
+      "timestamp": "2026-10-13T05:10:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.752,
+      "pressurePsi": 60.137,
+      "tankLevelPercent": 72.168,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-010",
+      "relativeTimeHours": -1.833333,
+      "timestamp": "2026-10-13T05:10:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 62.069,
+      "tankLevelPercent": 72.16,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-015",
+      "relativeTimeHours": -1.75,
+      "timestamp": "2026-10-13T05:15:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.752,
+      "pressurePsi": 57.936,
+      "tankLevelPercent": 72.118,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-015",
+      "relativeTimeHours": -1.75,
+      "timestamp": "2026-10-13T05:15:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 59.983,
+      "tankLevelPercent": 72.259,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-015",
+      "relativeTimeHours": -1.75,
+      "timestamp": "2026-10-13T05:15:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.757,
+      "pressurePsi": 61.943,
+      "tankLevelPercent": 72.23,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-020",
+      "relativeTimeHours": -1.666667,
+      "timestamp": "2026-10-13T05:20:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.742,
+      "pressurePsi": 58.13,
+      "tankLevelPercent": 72.237,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-020",
+      "relativeTimeHours": -1.666667,
+      "timestamp": "2026-10-13T05:20:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.759,
+      "pressurePsi": 60.005,
+      "tankLevelPercent": 72.238,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-020",
+      "relativeTimeHours": -1.666667,
+      "timestamp": "2026-10-13T05:20:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.762,
+      "pressurePsi": 61.895,
+      "tankLevelPercent": 72.161,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-025",
+      "relativeTimeHours": -1.583333,
+      "timestamp": "2026-10-13T05:25:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.752,
+      "pressurePsi": 58.001,
+      "tankLevelPercent": 72.217,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-025",
+      "relativeTimeHours": -1.583333,
+      "timestamp": "2026-10-13T05:25:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.743,
+      "pressurePsi": 60.008,
+      "tankLevelPercent": 72.097,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-025",
+      "relativeTimeHours": -1.583333,
+      "timestamp": "2026-10-13T05:25:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 62.028,
+      "tankLevelPercent": 72.133,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-030",
+      "relativeTimeHours": -1.5,
+      "timestamp": "2026-10-13T05:30:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.758,
+      "pressurePsi": 57.898,
+      "tankLevelPercent": 72.198,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-030",
+      "relativeTimeHours": -1.5,
+      "timestamp": "2026-10-13T05:30:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 59.849,
+      "tankLevelPercent": 72.08,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-030",
+      "relativeTimeHours": -1.5,
+      "timestamp": "2026-10-13T05:30:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.762,
+      "pressurePsi": 62.093,
+      "tankLevelPercent": 72.248,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-035",
+      "relativeTimeHours": -1.416667,
+      "timestamp": "2026-10-13T05:35:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.739,
+      "pressurePsi": 57.808,
+      "tankLevelPercent": 72.181,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-035",
+      "relativeTimeHours": -1.416667,
+      "timestamp": "2026-10-13T05:35:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.741,
+      "pressurePsi": 60.164,
+      "tankLevelPercent": 72.24,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-035",
+      "relativeTimeHours": -1.416667,
+      "timestamp": "2026-10-13T05:35:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 62.19,
+      "tankLevelPercent": 72.103,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-040",
+      "relativeTimeHours": -1.333333,
+      "timestamp": "2026-10-13T05:40:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.76,
+      "pressurePsi": 57.91,
+      "tankLevelPercent": 72.042,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-040",
+      "relativeTimeHours": -1.333333,
+      "timestamp": "2026-10-13T05:40:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.762,
+      "pressurePsi": 59.854,
+      "tankLevelPercent": 72.194,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-040",
+      "relativeTimeHours": -1.333333,
+      "timestamp": "2026-10-13T05:40:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 61.954,
+      "tankLevelPercent": 72.161,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-045",
+      "relativeTimeHours": -1.25,
+      "timestamp": "2026-10-13T05:45:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.759,
+      "pressurePsi": 57.816,
+      "tankLevelPercent": 72.097,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-045",
+      "relativeTimeHours": -1.25,
+      "timestamp": "2026-10-13T05:45:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 60.014,
+      "tankLevelPercent": 72.149,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-045",
+      "relativeTimeHours": -1.25,
+      "timestamp": "2026-10-13T05:45:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.744,
+      "pressurePsi": 61.805,
+      "tankLevelPercent": 72.099,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-050",
+      "relativeTimeHours": -1.166667,
+      "timestamp": "2026-10-13T05:50:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.76,
+      "pressurePsi": 58.151,
+      "tankLevelPercent": 72.155,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-050",
+      "relativeTimeHours": -1.166667,
+      "timestamp": "2026-10-13T05:50:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 59.812,
+      "tankLevelPercent": 72.069,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-050",
+      "relativeTimeHours": -1.166667,
+      "timestamp": "2026-10-13T05:50:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.747,
+      "pressurePsi": 61.972,
+      "tankLevelPercent": 72.072,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-055",
+      "relativeTimeHours": -1.083333,
+      "timestamp": "2026-10-13T05:55:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 57.965,
+      "tankLevelPercent": 72.103,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-055",
+      "relativeTimeHours": -1.083333,
+      "timestamp": "2026-10-13T05:55:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 60.059,
+      "tankLevelPercent": 72.096,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-055",
+      "relativeTimeHours": -1.083333,
+      "timestamp": "2026-10-13T05:55:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 62.087,
+      "tankLevelPercent": 72.205,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-060",
+      "relativeTimeHours": -1.0,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.761,
+      "pressurePsi": 57.873,
+      "tankLevelPercent": 72.023,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-060",
+      "relativeTimeHours": -1.0,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.755,
+      "pressurePsi": 60.175,
+      "tankLevelPercent": 72.148,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-060",
+      "relativeTimeHours": -1.0,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 61.845,
+      "tankLevelPercent": 72.177,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-065",
+      "relativeTimeHours": -0.916667,
+      "timestamp": "2026-10-13T06:05:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.742,
+      "pressurePsi": 57.826,
+      "tankLevelPercent": 72.079,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-065",
+      "relativeTimeHours": -0.916667,
+      "timestamp": "2026-10-13T06:05:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 59.974,
+      "tankLevelPercent": 72.139,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-065",
+      "relativeTimeHours": -0.916667,
+      "timestamp": "2026-10-13T06:05:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 61.834,
+      "tankLevelPercent": 72.004,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-070",
+      "relativeTimeHours": -0.833333,
+      "timestamp": "2026-10-13T06:10:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.752,
+      "pressurePsi": 57.931,
+      "tankLevelPercent": 72.162,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-070",
+      "relativeTimeHours": -0.833333,
+      "timestamp": "2026-10-13T06:10:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.744,
+      "pressurePsi": 60.063,
+      "tankLevelPercent": 71.995,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-070",
+      "relativeTimeHours": -0.833333,
+      "timestamp": "2026-10-13T06:10:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.757,
+      "pressurePsi": 61.806,
+      "tankLevelPercent": 72.167,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-075",
+      "relativeTimeHours": -0.75,
+      "timestamp": "2026-10-13T06:15:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.746,
+      "pressurePsi": 58.144,
+      "tankLevelPercent": 71.982,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-075",
+      "relativeTimeHours": -0.75,
+      "timestamp": "2026-10-13T06:15:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.747,
+      "pressurePsi": 59.907,
+      "tankLevelPercent": 71.984,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-075",
+      "relativeTimeHours": -0.75,
+      "timestamp": "2026-10-13T06:15:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 62.137,
+      "tankLevelPercent": 72.021,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-080",
+      "relativeTimeHours": -0.666667,
+      "timestamp": "2026-10-13T06:20:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.748,
+      "pressurePsi": 57.814,
+      "tankLevelPercent": 72.044,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-080",
+      "relativeTimeHours": -0.666667,
+      "timestamp": "2026-10-13T06:20:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.757,
+      "pressurePsi": 59.806,
+      "tankLevelPercent": 71.986,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-080",
+      "relativeTimeHours": -0.666667,
+      "timestamp": "2026-10-13T06:20:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 61.883,
+      "tankLevelPercent": 72.041,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-085",
+      "relativeTimeHours": -0.583333,
+      "timestamp": "2026-10-13T06:25:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.762,
+      "pressurePsi": 58.19,
+      "tankLevelPercent": 72.1,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-085",
+      "relativeTimeHours": -0.583333,
+      "timestamp": "2026-10-13T06:25:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 59.876,
+      "tankLevelPercent": 71.997,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-085",
+      "relativeTimeHours": -0.583333,
+      "timestamp": "2026-10-13T06:25:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.743,
+      "pressurePsi": 62.199,
+      "tankLevelPercent": 72.148,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-090",
+      "relativeTimeHours": -0.5,
+      "timestamp": "2026-10-13T06:30:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.754,
+      "pressurePsi": 58.055,
+      "tankLevelPercent": 72.146,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-090",
+      "relativeTimeHours": -0.5,
+      "timestamp": "2026-10-13T06:30:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.75,
+      "pressurePsi": 59.809,
+      "tankLevelPercent": 72.129,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-090",
+      "relativeTimeHours": -0.5,
+      "timestamp": "2026-10-13T06:30:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.746,
+      "pressurePsi": 61.897,
+      "tankLevelPercent": 71.969,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-095",
+      "relativeTimeHours": -0.416667,
+      "timestamp": "2026-10-13T06:35:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.761,
+      "pressurePsi": 57.944,
+      "tankLevelPercent": 72.119,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-095",
+      "relativeTimeHours": -0.416667,
+      "timestamp": "2026-10-13T06:35:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 60.124,
+      "tankLevelPercent": 72.029,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-095",
+      "relativeTimeHours": -0.416667,
+      "timestamp": "2026-10-13T06:35:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 61.953,
+      "tankLevelPercent": 72.138,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-100",
+      "relativeTimeHours": -0.333333,
+      "timestamp": "2026-10-13T06:40:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 57.999,
+      "tankLevelPercent": 71.941,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-100",
+      "relativeTimeHours": -0.333333,
+      "timestamp": "2026-10-13T06:40:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.742,
+      "pressurePsi": 59.877,
+      "tankLevelPercent": 71.945,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-100",
+      "relativeTimeHours": -0.333333,
+      "timestamp": "2026-10-13T06:40:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 62.141,
+      "tankLevelPercent": 72.061,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-105",
+      "relativeTimeHours": -0.25,
+      "timestamp": "2026-10-13T06:45:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.739,
+      "pressurePsi": 57.847,
+      "tankLevelPercent": 71.93,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-105",
+      "relativeTimeHours": -0.25,
+      "timestamp": "2026-10-13T06:45:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 60.068,
+      "tankLevelPercent": 71.958,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-105",
+      "relativeTimeHours": -0.25,
+      "timestamp": "2026-10-13T06:45:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 62.022,
+      "tankLevelPercent": 72.079,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-110",
+      "relativeTimeHours": -0.166667,
+      "timestamp": "2026-10-13T06:50:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 57.983,
+      "tankLevelPercent": 72.1,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-110",
+      "relativeTimeHours": -0.166667,
+      "timestamp": "2026-10-13T06:50:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 60.16,
+      "tankLevelPercent": 72.012,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-110",
+      "relativeTimeHours": -0.166667,
+      "timestamp": "2026-10-13T06:50:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.751,
+      "pressurePsi": 62.148,
+      "tankLevelPercent": 72.003,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-115",
+      "relativeTimeHours": -0.083333,
+      "timestamp": "2026-10-13T06:55:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.748,
+      "pressurePsi": 58.178,
+      "tankLevelPercent": 71.996,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-115",
+      "relativeTimeHours": -0.083333,
+      "timestamp": "2026-10-13T06:55:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.754,
+      "pressurePsi": 59.936,
+      "tankLevelPercent": 72.097,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-115",
+      "relativeTimeHours": -0.083333,
+      "timestamp": "2026-10-13T06:55:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.739,
+      "pressurePsi": 61.963,
+      "tankLevelPercent": 72.081,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-120",
+      "relativeTimeHours": 0.0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.748,
+      "pressurePsi": 57.873,
+      "tankLevelPercent": 72.082,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-120",
+      "relativeTimeHours": 0.0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 59.845,
+      "tankLevelPercent": 72.05,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-120",
+      "relativeTimeHours": 0.0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 62.081,
+      "tankLevelPercent": 71.944,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-125",
+      "relativeTimeHours": 0.083333,
+      "timestamp": "2026-10-13T07:05:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.762,
+      "pressurePsi": 58.112,
+      "tankLevelPercent": 72.087,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-125",
+      "relativeTimeHours": 0.083333,
+      "timestamp": "2026-10-13T07:05:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.75,
+      "pressurePsi": 60.156,
+      "tankLevelPercent": 72.021,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-125",
+      "relativeTimeHours": 0.083333,
+      "timestamp": "2026-10-13T07:05:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.746,
+      "pressurePsi": 62.0,
+      "tankLevelPercent": 71.941,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-130",
+      "relativeTimeHours": 0.166667,
+      "timestamp": "2026-10-13T07:10:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.74,
+      "pressurePsi": 57.919,
+      "tankLevelPercent": 71.934,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-130",
+      "relativeTimeHours": 0.166667,
+      "timestamp": "2026-10-13T07:10:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 59.934,
+      "tankLevelPercent": 71.892,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-130",
+      "relativeTimeHours": 0.166667,
+      "timestamp": "2026-10-13T07:10:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.75,
+      "pressurePsi": 62.082,
+      "tankLevelPercent": 71.892,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-135",
+      "relativeTimeHours": 0.25,
+      "timestamp": "2026-10-13T07:15:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.859,
+      "pressurePsi": 58.193,
+      "tankLevelPercent": 72.069,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-135",
+      "relativeTimeHours": 0.25,
+      "timestamp": "2026-10-13T07:15:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.759,
+      "pressurePsi": 59.868,
+      "tankLevelPercent": 72.003,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-135",
+      "relativeTimeHours": 0.25,
+      "timestamp": "2026-10-13T07:15:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.75,
+      "pressurePsi": 61.936,
+      "tankLevelPercent": 72.015,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-140",
+      "relativeTimeHours": 0.333333,
+      "timestamp": "2026-10-13T07:20:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 0.969,
+      "pressurePsi": 58.018,
+      "tankLevelPercent": 71.964,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-140",
+      "relativeTimeHours": 0.333333,
+      "timestamp": "2026-10-13T07:20:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.747,
+      "pressurePsi": 59.977,
+      "tankLevelPercent": 71.885,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-140",
+      "relativeTimeHours": 0.333333,
+      "timestamp": "2026-10-13T07:20:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 61.877,
+      "tankLevelPercent": 71.893,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-145",
+      "relativeTimeHours": 0.416667,
+      "timestamp": "2026-10-13T07:25:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.077,
+      "pressurePsi": 58.085,
+      "tankLevelPercent": 71.921,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-145",
+      "relativeTimeHours": 0.416667,
+      "timestamp": "2026-10-13T07:25:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.744,
+      "pressurePsi": 60.095,
+      "tankLevelPercent": 72.048,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-145",
+      "relativeTimeHours": 0.416667,
+      "timestamp": "2026-10-13T07:25:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.758,
+      "pressurePsi": 61.929,
+      "tankLevelPercent": 71.934,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-150",
+      "relativeTimeHours": 0.5,
+      "timestamp": "2026-10-13T07:30:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.186,
+      "pressurePsi": 58.165,
+      "tankLevelPercent": 72.049,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-150",
+      "relativeTimeHours": 0.5,
+      "timestamp": "2026-10-13T07:30:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 60.179,
+      "tankLevelPercent": 72.001,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-150",
+      "relativeTimeHours": 0.5,
+      "timestamp": "2026-10-13T07:30:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.765,
+      "pressurePsi": 62.061,
+      "tankLevelPercent": 71.876,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-155",
+      "relativeTimeHours": 0.583333,
+      "timestamp": "2026-10-13T07:35:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.302,
+      "pressurePsi": 58.047,
+      "tankLevelPercent": 71.864,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-155",
+      "relativeTimeHours": 0.583333,
+      "timestamp": "2026-10-13T07:35:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.756,
+      "pressurePsi": 59.945,
+      "tankLevelPercent": 71.937,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-155",
+      "relativeTimeHours": 0.583333,
+      "timestamp": "2026-10-13T07:35:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.762,
+      "pressurePsi": 62.059,
+      "tankLevelPercent": 71.859,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-160",
+      "relativeTimeHours": 0.666667,
+      "timestamp": "2026-10-13T07:40:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.41,
+      "pressurePsi": 58.153,
+      "tankLevelPercent": 72.002,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-160",
+      "relativeTimeHours": 0.666667,
+      "timestamp": "2026-10-13T07:40:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.751,
+      "pressurePsi": 59.971,
+      "tankLevelPercent": 72.004,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-160",
+      "relativeTimeHours": 0.666667,
+      "timestamp": "2026-10-13T07:40:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.744,
+      "pressurePsi": 61.86,
+      "tankLevelPercent": 71.894,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-165",
+      "relativeTimeHours": 0.75,
+      "timestamp": "2026-10-13T07:45:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.525,
+      "pressurePsi": 57.972,
+      "tankLevelPercent": 71.83,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-165",
+      "relativeTimeHours": 0.75,
+      "timestamp": "2026-10-13T07:45:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.762,
+      "pressurePsi": 59.997,
+      "tankLevelPercent": 71.872,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-165",
+      "relativeTimeHours": 0.75,
+      "timestamp": "2026-10-13T07:45:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.754,
+      "pressurePsi": 61.817,
+      "tankLevelPercent": 71.98,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-170",
+      "relativeTimeHours": 0.833333,
+      "timestamp": "2026-10-13T07:50:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.651,
+      "pressurePsi": 57.932,
+      "tankLevelPercent": 71.843,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-170",
+      "relativeTimeHours": 0.833333,
+      "timestamp": "2026-10-13T07:50:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.753,
+      "pressurePsi": 60.056,
+      "tankLevelPercent": 71.846,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-170",
+      "relativeTimeHours": 0.833333,
+      "timestamp": "2026-10-13T07:50:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 61.993,
+      "tankLevelPercent": 71.99,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-175",
+      "relativeTimeHours": 0.916667,
+      "timestamp": "2026-10-13T07:55:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.74,
+      "pressurePsi": 58.022,
+      "tankLevelPercent": 71.989,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-175",
+      "relativeTimeHours": 0.916667,
+      "timestamp": "2026-10-13T07:55:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.74,
+      "pressurePsi": 59.828,
+      "tankLevelPercent": 71.928,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-175",
+      "relativeTimeHours": 0.916667,
+      "timestamp": "2026-10-13T07:55:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.757,
+      "pressurePsi": 61.885,
+      "tankLevelPercent": 71.933,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-180",
+      "relativeTimeHours": 1.0,
+      "timestamp": "2026-10-13T08:00:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.876,
+      "pressurePsi": 57.894,
+      "tankLevelPercent": 71.968,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-180",
+      "relativeTimeHours": 1.0,
+      "timestamp": "2026-10-13T08:00:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.748,
+      "pressurePsi": 60.075,
+      "tankLevelPercent": 71.871,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-180",
+      "relativeTimeHours": 1.0,
+      "timestamp": "2026-10-13T08:00:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.747,
+      "pressurePsi": 61.85,
+      "tankLevelPercent": 71.981,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-185",
+      "relativeTimeHours": 1.083333,
+      "timestamp": "2026-10-13T08:05:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 1.964,
+      "pressurePsi": 57.862,
+      "tankLevelPercent": 71.866,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-185",
+      "relativeTimeHours": 1.083333,
+      "timestamp": "2026-10-13T08:05:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.761,
+      "pressurePsi": 60.169,
+      "tankLevelPercent": 71.904,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-185",
+      "relativeTimeHours": 1.083333,
+      "timestamp": "2026-10-13T08:05:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.752,
+      "pressurePsi": 62.024,
+      "tankLevelPercent": 71.823,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-190",
+      "relativeTimeHours": 1.166667,
+      "timestamp": "2026-10-13T08:10:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.089,
+      "pressurePsi": 58.082,
+      "tankLevelPercent": 71.804,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-190",
+      "relativeTimeHours": 1.166667,
+      "timestamp": "2026-10-13T08:10:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 60.043,
+      "tankLevelPercent": 71.96,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-190",
+      "relativeTimeHours": 1.166667,
+      "timestamp": "2026-10-13T08:10:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.741,
+      "pressurePsi": 62.129,
+      "tankLevelPercent": 71.859,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-195",
+      "relativeTimeHours": 1.25,
+      "timestamp": "2026-10-13T08:15:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.188,
+      "pressurePsi": 57.928,
+      "tankLevelPercent": 71.94,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-195",
+      "relativeTimeHours": 1.25,
+      "timestamp": "2026-10-13T08:15:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 59.816,
+      "tankLevelPercent": 71.963,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-195",
+      "relativeTimeHours": 1.25,
+      "timestamp": "2026-10-13T08:15:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.748,
+      "pressurePsi": 61.897,
+      "tankLevelPercent": 71.936,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-200",
+      "relativeTimeHours": 1.333333,
+      "timestamp": "2026-10-13T08:20:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.314,
+      "pressurePsi": 57.939,
+      "tankLevelPercent": 71.853,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-200",
+      "relativeTimeHours": 1.333333,
+      "timestamp": "2026-10-13T08:20:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.757,
+      "pressurePsi": 59.899,
+      "tankLevelPercent": 71.783,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-200",
+      "relativeTimeHours": 1.333333,
+      "timestamp": "2026-10-13T08:20:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.751,
+      "pressurePsi": 62.147,
+      "tankLevelPercent": 71.819,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-205",
+      "relativeTimeHours": 1.416667,
+      "timestamp": "2026-10-13T08:25:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.403,
+      "pressurePsi": 57.976,
+      "tankLevelPercent": 71.821,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-205",
+      "relativeTimeHours": 1.416667,
+      "timestamp": "2026-10-13T08:25:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.753,
+      "pressurePsi": 59.974,
+      "tankLevelPercent": 71.891,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-205",
+      "relativeTimeHours": 1.416667,
+      "timestamp": "2026-10-13T08:25:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.757,
+      "pressurePsi": 61.963,
+      "tankLevelPercent": 71.876,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-210",
+      "relativeTimeHours": 1.5,
+      "timestamp": "2026-10-13T08:30:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.528,
+      "pressurePsi": 57.993,
+      "tankLevelPercent": 71.776,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-210",
+      "relativeTimeHours": 1.5,
+      "timestamp": "2026-10-13T08:30:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.751,
+      "pressurePsi": 60.199,
+      "tankLevelPercent": 71.931,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-210",
+      "relativeTimeHours": 1.5,
+      "timestamp": "2026-10-13T08:30:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.761,
+      "pressurePsi": 61.871,
+      "tankLevelPercent": 71.874,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-215",
+      "relativeTimeHours": 1.583333,
+      "timestamp": "2026-10-13T08:35:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.648,
+      "pressurePsi": 58.162,
+      "tankLevelPercent": 71.766,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-215",
+      "relativeTimeHours": 1.583333,
+      "timestamp": "2026-10-13T08:35:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.753,
+      "pressurePsi": 60.001,
+      "tankLevelPercent": 71.855,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-215",
+      "relativeTimeHours": 1.583333,
+      "timestamp": "2026-10-13T08:35:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.761,
+      "pressurePsi": 62.156,
+      "tankLevelPercent": 71.778,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-220",
+      "relativeTimeHours": 1.666667,
+      "timestamp": "2026-10-13T08:40:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.763,
+      "pressurePsi": 58.081,
+      "tankLevelPercent": 71.885,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-220",
+      "relativeTimeHours": 1.666667,
+      "timestamp": "2026-10-13T08:40:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 59.825,
+      "tankLevelPercent": 71.794,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-220",
+      "relativeTimeHours": 1.666667,
+      "timestamp": "2026-10-13T08:40:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.749,
+      "pressurePsi": 61.968,
+      "tankLevelPercent": 71.886,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-225",
+      "relativeTimeHours": 1.75,
+      "timestamp": "2026-10-13T08:45:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.85,
+      "pressurePsi": 58.001,
+      "tankLevelPercent": 71.804,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-225",
+      "relativeTimeHours": 1.75,
+      "timestamp": "2026-10-13T08:45:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.758,
+      "pressurePsi": 59.901,
+      "tankLevelPercent": 71.924,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-225",
+      "relativeTimeHours": 1.75,
+      "timestamp": "2026-10-13T08:45:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.74,
+      "pressurePsi": 61.912,
+      "tankLevelPercent": 71.802,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-230",
+      "relativeTimeHours": 1.833333,
+      "timestamp": "2026-10-13T08:50:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 2.98,
+      "pressurePsi": 58.033,
+      "tankLevelPercent": 71.825,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-230",
+      "relativeTimeHours": 1.833333,
+      "timestamp": "2026-10-13T08:50:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.757,
+      "pressurePsi": 60.017,
+      "tankLevelPercent": 71.769,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-230",
+      "relativeTimeHours": 1.833333,
+      "timestamp": "2026-10-13T08:50:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 62.18,
+      "tankLevelPercent": 71.811,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-235",
+      "relativeTimeHours": 1.916667,
+      "timestamp": "2026-10-13T08:55:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.081,
+      "pressurePsi": 57.946,
+      "tankLevelPercent": 71.752,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-235",
+      "relativeTimeHours": 1.916667,
+      "timestamp": "2026-10-13T08:55:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.755,
+      "pressurePsi": 59.874,
+      "tankLevelPercent": 71.835,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-235",
+      "relativeTimeHours": 1.916667,
+      "timestamp": "2026-10-13T08:55:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.764,
+      "pressurePsi": 61.835,
+      "tankLevelPercent": 71.899,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-240",
+      "relativeTimeHours": 2.0,
+      "timestamp": "2026-10-13T09:00:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.186,
+      "pressurePsi": 57.997,
+      "tankLevelPercent": 71.788,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-240",
+      "relativeTimeHours": 2.0,
+      "timestamp": "2026-10-13T09:00:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.741,
+      "pressurePsi": 60.051,
+      "tankLevelPercent": 71.828,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-240",
+      "relativeTimeHours": 2.0,
+      "timestamp": "2026-10-13T09:00:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.761,
+      "pressurePsi": 62.086,
+      "tankLevelPercent": 71.838,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-245",
+      "relativeTimeHours": 2.083333,
+      "timestamp": "2026-10-13T09:05:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.292,
+      "pressurePsi": 58.196,
+      "tankLevelPercent": 71.88,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-245",
+      "relativeTimeHours": 2.083333,
+      "timestamp": "2026-10-13T09:05:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 60.139,
+      "tankLevelPercent": 71.806,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-245",
+      "relativeTimeHours": 2.083333,
+      "timestamp": "2026-10-13T09:05:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.747,
+      "pressurePsi": 61.814,
+      "tankLevelPercent": 71.73,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-250",
+      "relativeTimeHours": 2.166667,
+      "timestamp": "2026-10-13T09:10:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.429,
+      "pressurePsi": 58.198,
+      "tankLevelPercent": 71.771,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-250",
+      "relativeTimeHours": 2.166667,
+      "timestamp": "2026-10-13T09:10:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 60.189,
+      "tankLevelPercent": 71.767,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-250",
+      "relativeTimeHours": 2.166667,
+      "timestamp": "2026-10-13T09:10:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.754,
+      "pressurePsi": 61.982,
+      "tankLevelPercent": 71.762,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-255",
+      "relativeTimeHours": 2.25,
+      "timestamp": "2026-10-13T09:15:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.52,
+      "pressurePsi": 57.942,
+      "tankLevelPercent": 71.814,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-255",
+      "relativeTimeHours": 2.25,
+      "timestamp": "2026-10-13T09:15:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.763,
+      "pressurePsi": 59.912,
+      "tankLevelPercent": 71.826,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-255",
+      "relativeTimeHours": 2.25,
+      "timestamp": "2026-10-13T09:15:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.741,
+      "pressurePsi": 62.018,
+      "tankLevelPercent": 71.688,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-260",
+      "relativeTimeHours": 2.333333,
+      "timestamp": "2026-10-13T09:20:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.629,
+      "pressurePsi": 58.126,
+      "tankLevelPercent": 71.744,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-260",
+      "relativeTimeHours": 2.333333,
+      "timestamp": "2026-10-13T09:20:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.755,
+      "pressurePsi": 60.189,
+      "tankLevelPercent": 71.797,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-260",
+      "relativeTimeHours": 2.333333,
+      "timestamp": "2026-10-13T09:20:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.756,
+      "pressurePsi": 61.823,
+      "tankLevelPercent": 71.725,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-265",
+      "relativeTimeHours": 2.416667,
+      "timestamp": "2026-10-13T09:25:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.757,
+      "pressurePsi": 57.99,
+      "tankLevelPercent": 71.822,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-265",
+      "relativeTimeHours": 2.416667,
+      "timestamp": "2026-10-13T09:25:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.743,
+      "pressurePsi": 59.935,
+      "tankLevelPercent": 71.745,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-265",
+      "relativeTimeHours": 2.416667,
+      "timestamp": "2026-10-13T09:25:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.742,
+      "pressurePsi": 61.894,
+      "tankLevelPercent": 71.779,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-270",
+      "relativeTimeHours": 2.5,
+      "timestamp": "2026-10-13T09:30:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.868,
+      "pressurePsi": 58.116,
+      "tankLevelPercent": 71.664,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-270",
+      "relativeTimeHours": 2.5,
+      "timestamp": "2026-10-13T09:30:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.753,
+      "pressurePsi": 60.185,
+      "tankLevelPercent": 71.839,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-270",
+      "relativeTimeHours": 2.5,
+      "timestamp": "2026-10-13T09:30:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.753,
+      "pressurePsi": 62.016,
+      "tankLevelPercent": 71.766,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-275",
+      "relativeTimeHours": 2.583333,
+      "timestamp": "2026-10-13T09:35:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.955,
+      "pressurePsi": 57.829,
+      "tankLevelPercent": 71.83,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-275",
+      "relativeTimeHours": 2.583333,
+      "timestamp": "2026-10-13T09:35:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.739,
+      "pressurePsi": 59.934,
+      "tankLevelPercent": 71.775,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-275",
+      "relativeTimeHours": 2.583333,
+      "timestamp": "2026-10-13T09:35:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.737,
+      "pressurePsi": 62.109,
+      "tankLevelPercent": 71.815,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-280",
+      "relativeTimeHours": 2.666667,
+      "timestamp": "2026-10-13T09:40:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.937,
+      "pressurePsi": 58.18,
+      "tankLevelPercent": 71.696,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-280",
+      "relativeTimeHours": 2.666667,
+      "timestamp": "2026-10-13T09:40:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.739,
+      "pressurePsi": 60.051,
+      "tankLevelPercent": 71.8,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-280",
+      "relativeTimeHours": 2.666667,
+      "timestamp": "2026-10-13T09:40:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 61.995,
+      "tankLevelPercent": 71.798,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-285",
+      "relativeTimeHours": 2.75,
+      "timestamp": "2026-10-13T09:45:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.939,
+      "pressurePsi": 57.98,
+      "tankLevelPercent": 71.719,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-285",
+      "relativeTimeHours": 2.75,
+      "timestamp": "2026-10-13T09:45:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.736,
+      "pressurePsi": 59.928,
+      "tankLevelPercent": 71.804,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-285",
+      "relativeTimeHours": 2.75,
+      "timestamp": "2026-10-13T09:45:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.739,
+      "pressurePsi": 62.16,
+      "tankLevelPercent": 71.729,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-290",
+      "relativeTimeHours": 2.833333,
+      "timestamp": "2026-10-13T09:50:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.95,
+      "pressurePsi": 57.977,
+      "tankLevelPercent": 71.707,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-290",
+      "relativeTimeHours": 2.833333,
+      "timestamp": "2026-10-13T09:50:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.746,
+      "pressurePsi": 60.066,
+      "tankLevelPercent": 71.759,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-290",
+      "relativeTimeHours": 2.833333,
+      "timestamp": "2026-10-13T09:50:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.751,
+      "pressurePsi": 62.104,
+      "tankLevelPercent": 71.692,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-295",
+      "relativeTimeHours": 2.916667,
+      "timestamp": "2026-10-13T09:55:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.94,
+      "pressurePsi": 57.951,
+      "tankLevelPercent": 71.617,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-295",
+      "relativeTimeHours": 2.916667,
+      "timestamp": "2026-10-13T09:55:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.746,
+      "pressurePsi": 59.931,
+      "tankLevelPercent": 71.782,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-295",
+      "relativeTimeHours": 2.916667,
+      "timestamp": "2026-10-13T09:55:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.741,
+      "pressurePsi": 61.819,
+      "tankLevelPercent": 71.612,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a-300",
+      "relativeTimeHours": 3.0,
+      "timestamp": "2026-10-13T10:00:00Z",
+      "utilityId": "utility-a",
+      "assetId": "sensor-a",
+      "pressureAssetId": "pressure-a",
+      "tankAssetId": "tank-a",
+      "chlorineResidualMgL": 3.963,
+      "pressurePsi": 57.883,
+      "tankLevelPercent": 71.659,
+      "qualityDriftFlag": true,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b-300",
+      "relativeTimeHours": 3.0,
+      "timestamp": "2026-10-13T10:00:00Z",
+      "utilityId": "utility-b",
+      "assetId": "sensor-b",
+      "pressureAssetId": "pressure-b",
+      "tankAssetId": "tank-b",
+      "chlorineResidualMgL": 0.761,
+      "pressurePsi": 59.887,
+      "tankLevelPercent": 71.746,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c-300",
+      "relativeTimeHours": 3.0,
+      "timestamp": "2026-10-13T10:00:00Z",
+      "utilityId": "utility-c",
+      "assetId": "sensor-c",
+      "pressureAssetId": "pressure-c",
+      "tankAssetId": "tank-c",
+      "chlorineResidualMgL": 0.745,
+      "pressurePsi": 61.957,
+      "tankLevelPercent": 71.633,
+      "qualityDriftFlag": false,
+      "pressureLossFlag": false,
+      "interpretation": "Invented measurement. Quality drift is scenario evidence; no safety threshold or pressure loss is inferred.",
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "sourceRefs": [
+    "src-sensors"
+  ],
+  "classification": "U",
+  "handling": [
+    "SIMULATED"
+  ]
+}

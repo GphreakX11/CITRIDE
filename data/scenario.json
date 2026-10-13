@@ -1,0 +1,2320 @@
+{
+  "modelVersion": "citride-demo-interval-v1",
+  "baselineRevision": 1,
+  "demoMode": true,
+  "generatedWithSeed": 250,
+  "incidentOrigin": "2026-10-13T07:00:00Z",
+  "incidentOriginTimezone": "UTC",
+  "scenarioLocalTimezone": "America/Chicago",
+  "defaultScenarioId": "unsafe-water",
+  "defaultEvaluationHour": 1,
+  "defaultHorizonHours": 12,
+  "classification": "U",
+  "handling": [
+    "SIMULATED"
+  ],
+  "notes": [
+    "Fully fictional local development demonstration; no actual utilities, facilities, credentials, operational effects, or authority approval.",
+    "Seed dependency records are initialized as a local promoted baseline; this is not evidence of real operational validation.",
+    "Structural and geographic relationships provide context. Only compatible directed operational dependencies propagate effects.",
+    "Facility Q starts without an operational dependency in the seed baseline. Utility B/C probes do not establish compromise or outages.",
+    "Service-area populations overlap facility occupants and are not impact counts. No population ranking is supplied.",
+    "Raw synthetic telemetry is stored outside the scenario graph and is referenced by curated events.",
+    "Recovery, unresolved cycles, and parallel supply adequacy require additional review; no resilience conclusion is inferred."
+  ],
+  "entities": [
+    {
+      "id": "org-a",
+      "type": "Organization",
+      "label": "Utility A Operating Organization",
+      "fictionalName": "Watershed Demo Operator A",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "utility-a",
+      "type": "WaterServiceProvider",
+      "label": "Utility A",
+      "operatedBy": "org-a",
+      "serves": "area-a",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plant-a",
+      "type": "TreatmentPlant",
+      "label": "Treatment Plant A",
+      "operatedBy": "org-a",
+      "partOf": "utility-a",
+      "locatedIn": "area-a",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.02,
+          0.02
+        ]
+      },
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "area-a",
+      "type": "ServiceArea",
+      "label": "Fictional Service Area A",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.0,
+              0
+            ],
+            [
+              0.1,
+              0
+            ],
+            [
+              0.1,
+              0.1
+            ],
+            [
+              0.0,
+              0.1
+            ],
+            [
+              0.0,
+              0
+            ]
+          ]
+        ]
+      },
+      "geometryStatus": "synthetic_schematic",
+      "coordinateNote": "Invented geometry near the coordinate origin; does not represent an actual watershed or utility boundary.",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "population-a",
+      "type": "PopulationGroup",
+      "label": "Service Area A population",
+      "locatedIn": "area-a",
+      "count": 18000,
+      "countUnit": "fictional_people",
+      "aggregationNote": "Illustrative area total; facility occupants overlap and must not be added to this total.",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plc-a",
+      "type": "PhysicalOTAsset",
+      "label": "Dosing PLC A",
+      "partOf": "plant-a",
+      "operatedBy": "org-a",
+      "assetType": "PLC",
+      "terrain": "OT_SCADA",
+      "hostsCyberAsset": "cyber-plc-a",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-plc-a",
+      "type": "CyberAsset",
+      "label": "Dosing PLC A network identity",
+      "hostedBy": "plc-a",
+      "terrain": "OT_SCADA",
+      "ipAddress": "192.0.2.11",
+      "exposure": "simulated_inbound_reachable",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "hmi-a",
+      "type": "PhysicalOTAsset",
+      "label": "Operator HMI A",
+      "partOf": "plant-a",
+      "operatedBy": "org-a",
+      "assetType": "HMI",
+      "terrain": "OT_SCADA",
+      "hostsCyberAsset": "cyber-hmi-a",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-hmi-a",
+      "type": "CyberAsset",
+      "label": "Operator HMI A network identity",
+      "hostedBy": "hmi-a",
+      "terrain": "OT_SCADA",
+      "ipAddress": "192.0.2.21",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-a",
+      "type": "PhysicalOTAsset",
+      "label": "Water-quality Sensor A",
+      "partOf": "plant-a",
+      "operatedBy": "org-a",
+      "assetType": "water_quality_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-sensor-a",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-sensor-a",
+      "type": "CyberAsset",
+      "label": "Water-quality Sensor A network identity",
+      "hostedBy": "sensor-a",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.31",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "pressure-a",
+      "type": "PhysicalOTAsset",
+      "label": "Pressure Sensor A",
+      "partOf": "plant-a",
+      "operatedBy": "org-a",
+      "assetType": "pressure_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-pressure-a",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-pressure-a",
+      "type": "CyberAsset",
+      "label": "Pressure Sensor A network identity",
+      "hostedBy": "pressure-a",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.51",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "tank-a",
+      "type": "PhysicalOTAsset",
+      "label": "Tank-level Sensor A",
+      "partOf": "plant-a",
+      "operatedBy": "org-a",
+      "assetType": "tank_level_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-tank-a",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-tank-a",
+      "type": "CyberAsset",
+      "label": "Tank-level Sensor A network identity",
+      "hostedBy": "tank-a",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.61",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "workstation-a",
+      "type": "PhysicalITAsset",
+      "label": "Enterprise Workstation A",
+      "operatedBy": "org-a",
+      "terrain": "ENTERPRISE_IT",
+      "hostsCyberAsset": "cyber-workstation-a",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-workstation-a",
+      "type": "CyberAsset",
+      "label": "Enterprise Workstation A identity",
+      "hostedBy": "workstation-a",
+      "terrain": "ENTERPRISE_IT",
+      "ipAddress": "198.51.100.41",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "org-b",
+      "type": "Organization",
+      "label": "Utility B Operating Organization",
+      "fictionalName": "Watershed Demo Operator B",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "utility-b",
+      "type": "WaterServiceProvider",
+      "label": "Utility B",
+      "operatedBy": "org-b",
+      "serves": "area-b",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plant-b",
+      "type": "TreatmentPlant",
+      "label": "Treatment Plant B",
+      "operatedBy": "org-b",
+      "partOf": "utility-b",
+      "locatedIn": "area-b",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.14,
+          0.02
+        ]
+      },
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "area-b",
+      "type": "ServiceArea",
+      "label": "Fictional Service Area B",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.12,
+              0
+            ],
+            [
+              0.22,
+              0
+            ],
+            [
+              0.22,
+              0.1
+            ],
+            [
+              0.12,
+              0.1
+            ],
+            [
+              0.12,
+              0
+            ]
+          ]
+        ]
+      },
+      "geometryStatus": "synthetic_schematic",
+      "coordinateNote": "Invented geometry near the coordinate origin; does not represent an actual watershed or utility boundary.",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "population-b",
+      "type": "PopulationGroup",
+      "label": "Service Area B population",
+      "locatedIn": "area-b",
+      "count": 12000,
+      "countUnit": "fictional_people",
+      "aggregationNote": "Illustrative area total; facility occupants overlap and must not be added to this total.",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plc-b",
+      "type": "PhysicalOTAsset",
+      "label": "Dosing PLC B",
+      "partOf": "plant-b",
+      "operatedBy": "org-b",
+      "assetType": "PLC",
+      "terrain": "OT_SCADA",
+      "hostsCyberAsset": "cyber-plc-b",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-plc-b",
+      "type": "CyberAsset",
+      "label": "Dosing PLC B network identity",
+      "hostedBy": "plc-b",
+      "terrain": "OT_SCADA",
+      "ipAddress": "192.0.2.12",
+      "exposure": "simulated_inbound_reachable",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "hmi-b",
+      "type": "PhysicalOTAsset",
+      "label": "Operator HMI B",
+      "partOf": "plant-b",
+      "operatedBy": "org-b",
+      "assetType": "HMI",
+      "terrain": "OT_SCADA",
+      "hostsCyberAsset": "cyber-hmi-b",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-hmi-b",
+      "type": "CyberAsset",
+      "label": "Operator HMI B network identity",
+      "hostedBy": "hmi-b",
+      "terrain": "OT_SCADA",
+      "ipAddress": "192.0.2.22",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-b",
+      "type": "PhysicalOTAsset",
+      "label": "Water-quality Sensor B",
+      "partOf": "plant-b",
+      "operatedBy": "org-b",
+      "assetType": "water_quality_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-sensor-b",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-sensor-b",
+      "type": "CyberAsset",
+      "label": "Water-quality Sensor B network identity",
+      "hostedBy": "sensor-b",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.32",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "pressure-b",
+      "type": "PhysicalOTAsset",
+      "label": "Pressure Sensor B",
+      "partOf": "plant-b",
+      "operatedBy": "org-b",
+      "assetType": "pressure_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-pressure-b",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-pressure-b",
+      "type": "CyberAsset",
+      "label": "Pressure Sensor B network identity",
+      "hostedBy": "pressure-b",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.52",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "tank-b",
+      "type": "PhysicalOTAsset",
+      "label": "Tank-level Sensor B",
+      "partOf": "plant-b",
+      "operatedBy": "org-b",
+      "assetType": "tank_level_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-tank-b",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-tank-b",
+      "type": "CyberAsset",
+      "label": "Tank-level Sensor B network identity",
+      "hostedBy": "tank-b",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.62",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "workstation-b",
+      "type": "PhysicalITAsset",
+      "label": "Enterprise Workstation B",
+      "operatedBy": "org-b",
+      "terrain": "ENTERPRISE_IT",
+      "hostsCyberAsset": "cyber-workstation-b",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-workstation-b",
+      "type": "CyberAsset",
+      "label": "Enterprise Workstation B identity",
+      "hostedBy": "workstation-b",
+      "terrain": "ENTERPRISE_IT",
+      "ipAddress": "198.51.100.42",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "org-c",
+      "type": "Organization",
+      "label": "Utility C Operating Organization",
+      "fictionalName": "Watershed Demo Operator C",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "utility-c",
+      "type": "WaterServiceProvider",
+      "label": "Utility C",
+      "operatedBy": "org-c",
+      "serves": "area-c",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plant-c",
+      "type": "TreatmentPlant",
+      "label": "Treatment Plant C",
+      "operatedBy": "org-c",
+      "partOf": "utility-c",
+      "locatedIn": "area-c",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.26,
+          0.02
+        ]
+      },
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "area-c",
+      "type": "ServiceArea",
+      "label": "Fictional Service Area C",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.24,
+              0
+            ],
+            [
+              0.34,
+              0
+            ],
+            [
+              0.34,
+              0.1
+            ],
+            [
+              0.24,
+              0.1
+            ],
+            [
+              0.24,
+              0
+            ]
+          ]
+        ]
+      },
+      "geometryStatus": "synthetic_schematic",
+      "coordinateNote": "Invented geometry near the coordinate origin; does not represent an actual watershed or utility boundary.",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "population-c",
+      "type": "PopulationGroup",
+      "label": "Service Area C population",
+      "locatedIn": "area-c",
+      "count": 9000,
+      "countUnit": "fictional_people",
+      "aggregationNote": "Illustrative area total; facility occupants overlap and must not be added to this total.",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plc-c",
+      "type": "PhysicalOTAsset",
+      "label": "Dosing PLC C",
+      "partOf": "plant-c",
+      "operatedBy": "org-c",
+      "assetType": "PLC",
+      "terrain": "OT_SCADA",
+      "hostsCyberAsset": "cyber-plc-c",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-plc-c",
+      "type": "CyberAsset",
+      "label": "Dosing PLC C network identity",
+      "hostedBy": "plc-c",
+      "terrain": "OT_SCADA",
+      "ipAddress": "192.0.2.13",
+      "exposure": "simulated_inbound_reachable",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "hmi-c",
+      "type": "PhysicalOTAsset",
+      "label": "Operator HMI C",
+      "partOf": "plant-c",
+      "operatedBy": "org-c",
+      "assetType": "HMI",
+      "terrain": "OT_SCADA",
+      "hostsCyberAsset": "cyber-hmi-c",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-hmi-c",
+      "type": "CyberAsset",
+      "label": "Operator HMI C network identity",
+      "hostedBy": "hmi-c",
+      "terrain": "OT_SCADA",
+      "ipAddress": "192.0.2.23",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "sensor-c",
+      "type": "PhysicalOTAsset",
+      "label": "Water-quality Sensor C",
+      "partOf": "plant-c",
+      "operatedBy": "org-c",
+      "assetType": "water_quality_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-sensor-c",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-sensor-c",
+      "type": "CyberAsset",
+      "label": "Water-quality Sensor C network identity",
+      "hostedBy": "sensor-c",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.33",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "pressure-c",
+      "type": "PhysicalOTAsset",
+      "label": "Pressure Sensor C",
+      "partOf": "plant-c",
+      "operatedBy": "org-c",
+      "assetType": "pressure_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-pressure-c",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-pressure-c",
+      "type": "CyberAsset",
+      "label": "Pressure Sensor C network identity",
+      "hostedBy": "pressure-c",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.53",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "tank-c",
+      "type": "PhysicalOTAsset",
+      "label": "Tank-level Sensor C",
+      "partOf": "plant-c",
+      "operatedBy": "org-c",
+      "assetType": "tank_level_sensor",
+      "terrain": "FIELD_SENSORS",
+      "hostsCyberAsset": "cyber-tank-c",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-tank-c",
+      "type": "CyberAsset",
+      "label": "Tank-level Sensor C network identity",
+      "hostedBy": "tank-c",
+      "terrain": "FIELD_SENSORS",
+      "ipAddress": "192.0.2.63",
+      "exposure": "simulated_internal",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "workstation-c",
+      "type": "PhysicalITAsset",
+      "label": "Enterprise Workstation C",
+      "operatedBy": "org-c",
+      "terrain": "ENTERPRISE_IT",
+      "hostsCyberAsset": "cyber-workstation-c",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "cyber-workstation-c",
+      "type": "CyberAsset",
+      "label": "Enterprise Workstation C identity",
+      "hostedBy": "workstation-c",
+      "terrain": "ENTERPRISE_IT",
+      "ipAddress": "198.51.100.43",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dialysis-x",
+      "type": "DialysisCenter",
+      "label": "Dialysis Center X",
+      "locatedIn": "area-a",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.04,
+          0.03
+        ]
+      },
+      "operationalDependencyStatus": "synthetic_assumption",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "hospital-y",
+      "type": "Hospital",
+      "label": "Hospital Y",
+      "locatedIn": "area-a",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.065,
+          0.06
+        ]
+      },
+      "operationalDependencyStatus": "synthetic_assumption",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "nursing-z",
+      "type": "NursingHome",
+      "label": "Nursing Home Z",
+      "locatedIn": "area-a",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.03,
+          0.075
+        ]
+      },
+      "operationalDependencyStatus": "synthetic_assumption",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "fire-f",
+      "type": "FireService",
+      "label": "Fire Service F",
+      "locatedIn": "area-a",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.075,
+          0.025
+        ]
+      },
+      "operationalDependencyStatus": "synthetic_assumption",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "facility-q",
+      "type": "HealthcareFacility",
+      "label": "Facility Q",
+      "locatedIn": "area-a",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.08,
+          0.08
+        ]
+      },
+      "operationalDependencyStatus": "not_established",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "org-electric-e",
+      "type": "Organization",
+      "label": "Fictional Electricity Operator E",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "electric-e",
+      "type": "ElectricSupplyFacility",
+      "label": "Electric Supply E",
+      "operatedBy": "org-electric-e",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.02,
+          0.02
+        ]
+      },
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "serviceFunctions": [
+    {
+      "id": "water-a",
+      "facility": "utility-a",
+      "service": "treated_water",
+      "label": "Utility A treated-water supply",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "water-b",
+      "facility": "utility-b",
+      "service": "treated_water",
+      "label": "Utility B treated-water supply",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "water-c",
+      "facility": "utility-c",
+      "service": "treated_water",
+      "label": "Utility C treated-water supply",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plant-treatment",
+      "facility": "plant-a",
+      "service": "water_treatment",
+      "label": "Plant A water treatment",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plant-treatment-b",
+      "facility": "plant-b",
+      "service": "water_treatment",
+      "label": "Plant B water treatment",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "plant-treatment-c",
+      "facility": "plant-c",
+      "service": "water_treatment",
+      "label": "Plant C water treatment",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dialysis-treatment",
+      "facility": "dialysis-x",
+      "service": "dialysis_treatment",
+      "label": "Dialysis treatment",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "hospital-sterilization",
+      "facility": "hospital-y",
+      "service": "sterilization_support",
+      "label": "Hospital sterilization support",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "nursing-safe-water",
+      "facility": "nursing-z",
+      "service": "safe_water_support",
+      "label": "Nursing safe-water support",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "q-safe-water",
+      "facility": "facility-q",
+      "service": "safe_water_support",
+      "label": "Facility Q safe-water support",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "fire-flow",
+      "facility": "fire-f",
+      "service": "fire_flow",
+      "label": "Fire-flow supply",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "electric-supply",
+      "facility": "electric-e",
+      "service": "electricity",
+      "label": "Electricity supply",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "id": "dep-a-x",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "utility-a",
+      "dependent": "dialysis-x",
+      "requiredService": "treated_water",
+      "dependentFunction": "dialysis-treatment",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 2,
+      "usableBackupMaxHours": 2,
+      "backupService": "treated_water",
+      "validForLossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-a-x-delay",
+        "backup": "asm-dep-a-x-backup",
+        "lossFraction": "asm-dep-a-x-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dep-a-y",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "utility-a",
+      "dependent": "hospital-y",
+      "requiredService": "treated_water",
+      "dependentFunction": "hospital-sterilization",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 4,
+      "usableBackupMaxHours": 6,
+      "backupService": "treated_water",
+      "validForLossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "lossOfFunction": 0.5,
+      "outputLossType": null,
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-a-y-delay",
+        "backup": "asm-dep-a-y-backup",
+        "lossFraction": "asm-dep-a-y-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dep-a-z",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "utility-a",
+      "dependent": "nursing-z",
+      "requiredService": "treated_water",
+      "dependentFunction": "nursing-safe-water",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 1,
+      "usableBackupMaxHours": 2,
+      "backupService": "treated_water",
+      "validForLossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "lossOfFunction": 0.75,
+      "outputLossType": null,
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-a-z-delay",
+        "backup": "asm-dep-a-z-backup",
+        "lossFraction": "asm-dep-a-z-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dep-a-f",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "utility-a",
+      "dependent": "fire-f",
+      "requiredService": "treated_water",
+      "dependentFunction": "fire-flow",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "low_pressure",
+        "no_water"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 0.5,
+      "usableBackupMinHours": 0,
+      "usableBackupMaxHours": 0,
+      "backupService": "treated_water",
+      "validForLossTypes": [
+        "low_pressure",
+        "no_water"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-a-f-delay",
+        "backup": "asm-dep-a-f-backup",
+        "lossFraction": "asm-dep-a-f-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dep-e-plant",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "electric-e",
+      "dependent": "plant-a",
+      "requiredService": "electricity",
+      "dependentFunction": "plant-treatment",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "electricity_lost"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 0.25,
+      "usableBackupMinHours": 1,
+      "usableBackupMaxHours": 1,
+      "backupService": "electricity",
+      "validForLossTypes": [
+        "electricity_lost"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": "water_treatment_unavailable",
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-e-plant-delay",
+        "backup": "asm-dep-e-plant-backup",
+        "lossFraction": "asm-dep-e-plant-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dep-plant-a",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "plant-a",
+      "dependent": "utility-a",
+      "requiredService": "water_treatment",
+      "dependentFunction": "water-a",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "water_treatment_unavailable"
+      ],
+      "propagationDelayMinHours": 1,
+      "propagationDelayMaxHours": 2,
+      "usableBackupMinHours": 0,
+      "usableBackupMaxHours": 0,
+      "backupService": "water_treatment",
+      "validForLossTypes": [
+        "water_treatment_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": "no_water",
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-plant-a-delay",
+        "backup": "asm-dep-plant-a-backup",
+        "lossFraction": "asm-dep-plant-a-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-inventory",
+      "title": "Synthetic infrastructure inventory",
+      "label": "Synthetic infrastructure inventory",
+      "description": "Invented assets, operators, service polygons, facilities, and population groups; no real facility identifiers.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-dependencies",
+      "title": "Synthetic dependency assumptions",
+      "label": "Synthetic dependency assumptions",
+      "description": "Illustrative service links, independent reserves, and timing parameters. Not measured or validated utility or clinical planning data.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-effects",
+      "title": "Explicit scenario effects",
+      "label": "Explicit scenario effects",
+      "description": "Authored loss-type conversion and 12-hour persistence assumptions. Telemetry alone does not establish an operational loss.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-assessment",
+      "title": "Fictional prior OT assessment",
+      "label": "Fictional prior OT assessment",
+      "description": "Invented historical exposure finding for Utility A; no actual assessment has been performed.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-network",
+      "title": "Synthetic Zeek-shaped connection stream",
+      "label": "Synthetic Zeek-shaped connection stream",
+      "description": "Documentation IP ranges and invented connection records; shared source supports a campaign hypothesis, not actor attribution.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-controller",
+      "title": "Synthetic controller audit stream",
+      "label": "Synthetic controller audit stream",
+      "description": "Invented authentication and dosing parameter changes, using fictional users and assets.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-sensors",
+      "title": "Synthetic sensor time series",
+      "label": "Synthetic sensor time series",
+      "description": "Invented normal baseline, quality drift, stable pressure, and tank levels. Values assert no actual safety threshold.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-enterprise",
+      "title": "Synthetic enterprise background stream",
+      "label": "Synthetic enterprise background stream",
+      "description": "Quiet IT baseline records; absence of evidence here is not proof that enterprise IT is safe.",
+      "version": "1",
+      "createdOn": "2026-10-13",
+      "author": "CITRIDE fictional scenario generator",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "asm-dep-a-x-delay",
+      "dependencyId": "dep-a-x",
+      "parameter": "delay",
+      "value": [
+        0,
+        1
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-x-backup",
+      "dependencyId": "dep-a-x",
+      "parameter": "backup",
+      "value": [
+        2,
+        2
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-x-lossFraction",
+      "dependencyId": "dep-a-x",
+      "parameter": "lossFraction",
+      "value": 1.0,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-y-delay",
+      "dependencyId": "dep-a-y",
+      "parameter": "delay",
+      "value": [
+        0,
+        1
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-y-backup",
+      "dependencyId": "dep-a-y",
+      "parameter": "backup",
+      "value": [
+        4,
+        6
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-y-lossFraction",
+      "dependencyId": "dep-a-y",
+      "parameter": "lossFraction",
+      "value": 0.5,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-z-delay",
+      "dependencyId": "dep-a-z",
+      "parameter": "delay",
+      "value": [
+        0,
+        1
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-z-backup",
+      "dependencyId": "dep-a-z",
+      "parameter": "backup",
+      "value": [
+        1,
+        2
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-z-lossFraction",
+      "dependencyId": "dep-a-z",
+      "parameter": "lossFraction",
+      "value": 0.75,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-f-delay",
+      "dependencyId": "dep-a-f",
+      "parameter": "delay",
+      "value": [
+        0,
+        0.5
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-f-backup",
+      "dependencyId": "dep-a-f",
+      "parameter": "backup",
+      "value": [
+        0,
+        0
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-a-f-lossFraction",
+      "dependencyId": "dep-a-f",
+      "parameter": "lossFraction",
+      "value": 1.0,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-e-plant-delay",
+      "dependencyId": "dep-e-plant",
+      "parameter": "delay",
+      "value": [
+        0,
+        0.25
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-e-plant-backup",
+      "dependencyId": "dep-e-plant",
+      "parameter": "backup",
+      "value": [
+        1,
+        1
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-e-plant-lossFraction",
+      "dependencyId": "dep-e-plant",
+      "parameter": "lossFraction",
+      "value": 1.0,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-plant-a-delay",
+      "dependencyId": "dep-plant-a",
+      "parameter": "delay",
+      "value": [
+        1,
+        2
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-plant-a-backup",
+      "dependencyId": "dep-plant-a",
+      "parameter": "backup",
+      "value": [
+        0,
+        0
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-plant-a-lossFraction",
+      "dependencyId": "dep-plant-a",
+      "parameter": "lossFraction",
+      "value": 1.0,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-unsafe-water-effect",
+      "scenarioId": "unsafe-water",
+      "parameter": "seed_effect_and_persistence",
+      "value": {
+        "lossType": "unsafe_water",
+        "onsetWindowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12
+      },
+      "unit": "scenario_hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Illustrative unsafe treated-water effect at Utility A, supported by synthetic control-change and sensor events. Stable pressure means no fire-flow loss is inferred.",
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-low-pressure-effect",
+      "scenarioId": "low-pressure",
+      "parameter": "seed_effect_and_persistence",
+      "value": {
+        "lossType": "low_pressure",
+        "onsetWindowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12
+      },
+      "unit": "scenario_hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "An independent authored pressure-loss seed. This replaces the unsafe-water seed and is not claimed to have been observed in the default sensor stream.",
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-power-loss-effect",
+      "scenarioId": "power-loss",
+      "parameter": "seed_effect_and_persistence",
+      "value": {
+        "lossType": "electricity_lost",
+        "onsetWindowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12
+      },
+      "unit": "scenario_hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Independent authored loss at Electric Supply E. Explicit dependency conversions model electricity loss to treatment loss to no water at Utility A; no reverse propagation is allowed.",
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "event-inbound-a",
+      "type": "CyberEvent",
+      "label": "Unusual inbound connection at Utility A",
+      "relativeTimeHours": -0.1,
+      "timestamp": "2026-10-13T06:54:00Z",
+      "seenOn": "cyber-plc-a",
+      "observation": "unusual_inbound_connection",
+      "description": "A completed simulated connection to the previously exposed controller.",
+      "evidenceCategory": "simulated",
+      "rawRef": {
+        "streamId": "network",
+        "recordId": "conn-a-unusual-001",
+        "sourceRef": "src-network"
+      },
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "event-auth-a",
+      "type": "CyberEvent",
+      "label": "Controller session at Utility A",
+      "relativeTimeHours": -0.05,
+      "timestamp": "2026-10-13T06:57:00Z",
+      "seenOn": "cyber-plc-a",
+      "observation": "controller_authentication",
+      "description": "Simulated successful controller authentication from the unusual source.",
+      "evidenceCategory": "simulated",
+      "rawRef": {
+        "streamId": "controller",
+        "recordId": "controller-auth-001",
+        "sourceRef": "src-controller"
+      },
+      "sourceRefs": [
+        "src-controller"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "event-dosing",
+      "type": "CyberEvent",
+      "label": "Dosing parameter changed",
+      "relativeTimeHours": 0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "seenOn": "cyber-plc-a",
+      "observation": "dosing_parameter_change",
+      "description": "A dosing-setpoint change is recorded; unsafe water requires a separate explicit scenario assumption.",
+      "evidenceCategory": "simulated",
+      "rawRef": {
+        "streamId": "controller",
+        "recordId": "controller-change-001",
+        "sourceRef": "src-controller"
+      },
+      "sourceRefs": [
+        "src-controller"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "event-sensor",
+      "type": "CyberEvent",
+      "label": "Water-quality readings drift",
+      "relativeTimeHours": 0.25,
+      "timestamp": "2026-10-13T07:15:00Z",
+      "seenOn": "cyber-sensor-a",
+      "observation": "water_quality_drift",
+      "description": "Synthetic quality indicator drifts after the change while pressure remains stable.",
+      "evidenceCategory": "simulated",
+      "rawRef": {
+        "streamId": "sensors",
+        "recordId": "sensor-a-135",
+        "sourceRef": "src-sensors"
+      },
+      "sourceRefs": [
+        "src-sensors"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "event-probe-b",
+      "type": "CyberEvent",
+      "label": "Related source probes Utility B",
+      "relativeTimeHours": 0.5,
+      "timestamp": "2026-10-13T07:30:00Z",
+      "seenOn": "cyber-plc-b",
+      "observation": "probing_only",
+      "description": "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at B.",
+      "evidenceCategory": "simulated",
+      "rawRef": {
+        "streamId": "network",
+        "recordId": "conn-b-unusual-001",
+        "sourceRef": "src-network"
+      },
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "event-probe-c",
+      "type": "CyberEvent",
+      "label": "Related source probes Utility C",
+      "relativeTimeHours": 0.75,
+      "timestamp": "2026-10-13T07:45:00Z",
+      "seenOn": "cyber-plc-c",
+      "observation": "probing_only",
+      "description": "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at C.",
+      "evidenceCategory": "simulated",
+      "rawRef": {
+        "streamId": "network",
+        "recordId": "conn-c-unusual-001",
+        "sourceRef": "src-network"
+      },
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "id": "assessment-a-exposure",
+      "type": "AssessmentFinding",
+      "label": "Previously identified controller exposure at A",
+      "relativeTimeHours": -168,
+      "timestamp": "2026-10-06T07:00:00Z",
+      "assetId": "plc-a",
+      "cyberAssetId": "cyber-plc-a",
+      "utilityId": "utility-a",
+      "finding": "simulated_exposed_controller",
+      "status": "fictional_unresolved_finding",
+      "evidenceCategory": "simulated",
+      "description": "A fictional assessment one week earlier identified inbound controller exposure. This provides context, not proof of actual vulnerability or compromise.",
+      "sourceRefs": [
+        "src-assessment"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "unsafe-water",
+      "label": "Unsafe-water incident",
+      "description": "Illustrative unsafe treated-water effect at Utility A, supported by synthetic control-change and sensor events. Stable pressure means no fire-flow loss is inferred.",
+      "evidenceCategory": "simulated",
+      "seed": {
+        "provider": "utility-a",
+        "service": "treated_water",
+        "lossType": "unsafe_water",
+        "windowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12,
+        "eventRefs": [
+          "event-dosing",
+          "event-sensor"
+        ],
+        "assumptionNote": "Explicit simulated effect and persistence; not an observed operational effect.",
+        "sourceRefs": [
+          "src-effects"
+        ],
+        "classification": "U",
+        "handling": [
+          "SIMULATED"
+        ]
+      },
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "low-pressure",
+      "label": "Alternate pressure-loss scenario",
+      "description": "An independent authored pressure-loss seed. This replaces the unsafe-water seed and is not claimed to have been observed in the default sensor stream.",
+      "evidenceCategory": "simulated",
+      "seed": {
+        "provider": "utility-a",
+        "service": "treated_water",
+        "lossType": "low_pressure",
+        "windowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12,
+        "eventRefs": [],
+        "assumptionNote": "Explicit simulated effect and persistence; not an observed operational effect.",
+        "sourceRefs": [
+          "src-effects"
+        ],
+        "classification": "U",
+        "handling": [
+          "SIMULATED"
+        ]
+      },
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "power-loss",
+      "label": "Alternate electricity-loss cascade",
+      "description": "Independent authored loss at Electric Supply E. Explicit dependency conversions model electricity loss to treatment loss to no water at Utility A; no reverse propagation is allowed.",
+      "evidenceCategory": "simulated",
+      "seed": {
+        "provider": "electric-e",
+        "service": "electricity",
+        "lossType": "electricity_lost",
+        "windowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12,
+        "eventRefs": [],
+        "assumptionNote": "Explicit simulated effect and persistence; not an observed operational effect.",
+        "sourceRefs": [
+          "src-effects"
+        ],
+        "classification": "U",
+        "handling": [
+          "SIMULATED"
+        ]
+      },
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ]
+}

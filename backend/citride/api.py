@@ -1,0 +1,252 @@
+"""Single-tenant local demo API. Bind to loopback; production auth is deferred."""
+
+import json
+import os
+import re
+from copy import deepcopy
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse, Response
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from .storage import ConflictError, InvalidModelError, NotFoundError, Repository
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+FiniteHours = Annotated[float, Field(strict=True, ge=0, allow_inf_nan=False)]
+Identifier = Annotated[str, Field(pattern=ID_PATTERN)]
+QueryIdentifier = Annotated[str, Query(pattern=ID_PATTERN)]
+
+
+class ProposalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    dependency: dict
+    expectedBaselineRevision: Annotated[int, Field(strict=True, ge=1)]
+
+    @model_validator(mode="after")
+    def safe_dependency_id(self):
+        identifier = self.dependency.get("id")
+        if not isinstance(identifier, str) or not re.fullmatch(ID_PATTERN, identifier):
+            raise ValueError("Dependency id must be a safe identifier of 1–128 characters")
+        # Drafts may contain invalid domain values for review, but payloads are
+        # always valid JSON; non-finite values must never reach persisted RDF.
+        try:
+            json.dumps(self.dependency, allow_nan=False)
+        except (TypeError, ValueError) as error:
+            raise ValueError("Dependency must contain JSON values and finite numbers") from error
+        return self
+
+
+class BackupOverride(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    dependencyId: Identifier
+    backupMinHours: FiniteHours
+    backupMaxHours: FiniteHours
+    note: Annotated[str, Field(min_length=1, max_length=2000)]
+
+    @model_validator(mode="after")
+    def ordered_window(self):
+        if self.backupMinHours > self.backupMaxHours:
+            raise ValueError("Backup minimum cannot exceed maximum")
+        if not self.note.strip():
+            raise ValueError("Override note must explain the simulated assumption")
+        return self
+
+
+class RunRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scenarioId: Identifier
+    evaluationHour: FiniteHours = 1
+    horizonHours: Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)] = 12
+    overrides: list[BackupOverride] = Field(default_factory=list, max_length=100)
+
+    @model_validator(mode="after")
+    def valid_window(self):
+        if self.evaluationHour > self.horizonHours:
+            raise ValueError("Evaluation hour must not exceed horizon")
+        ids = [override.dependencyId for override in self.overrides]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Each dependency may have only one backup override")
+        return self
+
+
+def _safe_id(identifier: str) -> str:
+    if not re.fullmatch(ID_PATTERN, identifier):
+        raise HTTPException(status_code=422, detail="Invalid identifier")
+    return identifier
+
+
+def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) -> FastAPI:
+    app = FastAPI(
+        title="CITRIDE local synthetic demo",
+        version="0.1.0",
+        description="Single-tenant local simulation. No authentication boundary or live OT connection.",
+    )
+    repository_path = data_dir or Path(os.environ.get("CITRIDE_DATA_DIR", REPO_ROOT / ".local"))
+    fixture_path = scenario_path or REPO_ROOT / "data" / "scenario.json"
+    repository: Repository | None = None
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_error(_request, error: RequestValidationError):
+        # Pydantic includes offending input/context in errors. Restrict the
+        # response to actionable fields so NaN inputs and exception objects do
+        # not break JSON encoding, and raw submitted records are not echoed.
+        return JSONResponse(status_code=422, content={"detail": [
+            {key: issue[key] for key in ("type", "loc", "msg") if key in issue}
+            for issue in error.errors()
+        ]})
+
+    def repo() -> Repository:
+        nonlocal repository
+        if repository is None:
+            try:
+                repository = Repository(repository_path, fixture_path)
+            except (OSError, ValueError, InvalidModelError) as error:
+                raise HTTPException(status_code=503, detail=f"Demo model could not be loaded: {error}") from error
+        return repository
+
+    RepositoryDependency = Annotated[Repository, Depends(repo)]
+
+    def handle_operation(operation):
+        try:
+            return operation()
+        except NotFoundError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ConflictError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        except (InvalidModelError, ValueError) as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @app.get("/health")
+    def health(store: RepositoryDependency):
+        return {"status": "ok", "baselineRevision": store.baseline()["baselineRevision"], "demoMode": True}
+
+    @app.get("/v1/bootstrap")
+    def bootstrap(store: RepositoryDependency):
+        return store.baseline()
+
+    @app.get("/v1/telemetry")
+    def telemetry(store: RepositoryDependency):
+        streams = []
+        for path in sorted((fixture_path.parent / "telemetry").glob("*.json")):
+            with path.open(encoding="utf-8") as source:
+                payload = json.load(source)
+            streams.extend(payload if isinstance(payload, list) else [payload])
+        return {"streams": streams}
+
+    @app.post("/v1/dependency-proposals", status_code=201)
+    def create_proposal(request: ProposalRequest, store: RepositoryDependency):
+        return handle_operation(lambda: store.create_proposal(request.dependency, request.expectedBaselineRevision))
+
+    @app.get("/v1/dependency-proposals")
+    def proposals(store: RepositoryDependency):
+        return {"proposals": store.proposals()}
+
+    @app.get("/v1/dependency-proposals/{proposal_id}")
+    def proposal(proposal_id: str, store: RepositoryDependency):
+        return handle_operation(lambda: store.proposal(_safe_id(proposal_id)))
+
+    @app.post("/v1/dependency-proposals/{proposal_id}/validate")
+    def validate_proposal(proposal_id: str, store: RepositoryDependency):
+        return handle_operation(lambda: store.validate_proposal(_safe_id(proposal_id)))
+
+    @app.post("/v1/dependency-proposals/{proposal_id}/promote")
+    def promote(proposal_id: str, store: RepositoryDependency):
+        return handle_operation(lambda: store.promote(_safe_id(proposal_id)))
+
+    @app.post("/v1/cascade-runs", status_code=201)
+    def create_run(request: RunRequest, store: RepositoryDependency):
+        from .engine import compute_run
+
+        def compute(data, model_request, run_id):
+            run = compute_run(data, model_request, run_id)
+            run["createdAt"] = datetime.now(timezone.utc).isoformat()
+            return run
+
+        return handle_operation(lambda: store.create_run(request.model_dump(), compute))
+
+    @app.get("/v1/cascade-runs")
+    def runs(store: RepositoryDependency):
+        keys = ("id", "createdAt", "scenarioId", "baselineRevision")
+        return {"runs": [{key: run[key] for key in keys} for run in store.runs()]}
+
+    @app.get("/v1/cascade-runs/{run_id}/compare")
+    def compare(run_id: str, store: RepositoryDependency, otherRunId: QueryIdentifier):
+        from .engine import compare_runs
+
+        def operation():
+            left = store.run(_safe_id(run_id))
+            right = store.run(otherRunId)
+            return compare_runs(left, right)
+
+        return handle_operation(operation)
+
+    @app.get("/v1/cascade-runs/{run_id}")
+    def run_detail(run_id: str, store: RepositoryDependency):
+        return handle_operation(lambda: store.run(_safe_id(run_id)))
+
+    @app.get("/v1/explain")
+    def explain(store: RepositoryDependency, runId: QueryIdentifier, impactId: QueryIdentifier):
+        def operation():
+            run = store.run(runId)
+            impact = next((item for item in run["impacts"] if item["id"] == impactId), None)
+            if impact is None:
+                raise NotFoundError(f"Impact {impactId} was not found in run {runId}")
+            snapshot = run["baselineSnapshot"]
+            used_dependencies = {identifier for path in impact["paths"] for identifier in path}
+            dependencies = deepcopy([item for item in snapshot["dependencies"] if item["id"] in used_dependencies])
+            overrides = {item["dependencyId"]: item for item in run["request"].get("overrides", [])}
+            for dependency in dependencies:
+                if dependency["id"] in overrides:
+                    override = overrides[dependency["id"]]
+                    dependency["baselineBackupHours"] = [dependency.get("usableBackupMinHours"), dependency.get("usableBackupMaxHours")]
+                    dependency["usableBackupMinHours"] = override["backupMinHours"]
+                    dependency["usableBackupMaxHours"] = override["backupMaxHours"]
+                    dependency["whatIfOverride"] = deepcopy(override)
+            source_ids = set(impact["sourceRefs"]) | set(run["seed"].get("sourceRefs", []))
+            source_catalog = snapshot.get("sources", []) + run.get("overrideSources", [])
+            assertion_ids = {
+                identifier for dependency in dependencies
+                for identifier in dependency.get("parameterAssertionRefs", {}).values()
+            }
+            parameter_assertions = [item for item in snapshot.get("assumptions", []) if item["id"] in assertion_ids]
+            events = [event for event in snapshot.get("events", []) if event["id"] in run["seed"].get("eventRefs", [])]
+            for item in events + parameter_assertions:
+                source_ids.update(item.get("sourceRefs", []))
+            return {
+                "runId": runId,
+                "impact": impact,
+                "seed": run["seed"],
+                "dependencies": dependencies,
+                "sources": [source for source in source_catalog if source["id"] in source_ids],
+                "assumptions": impact["assumptions"],
+                "parameterAssertions": parameter_assertions,
+                "eventEvidence": events,
+                "baselineRevision": run["baselineRevision"],
+            }
+
+        return handle_operation(operation)
+
+    @app.get("/v1/graph/export")
+    def graph_export(store: RepositoryDependency):
+        return Response(store.export(), media_type="application/n-quads", headers={"Content-Disposition": 'attachment; filename="citride.nq"'})
+
+    frontend_dist = REPO_ROOT / "frontend" / "dist"
+    if frontend_dist.is_dir():
+        @app.get("/{frontend_path:path}", include_in_schema=False)
+        def frontend(frontend_path: str):
+            if frontend_path == "v1" or frontend_path.startswith("v1/"):
+                raise HTTPException(status_code=404, detail="API endpoint was not found")
+            file_path = (frontend_dist / frontend_path).resolve()
+            if not file_path.is_relative_to(frontend_dist.resolve()):
+                raise HTTPException(status_code=404, detail="File was not found")
+            return FileResponse(file_path if file_path.is_file() else frontend_dist / "index.html")
+
+    return app
+
+
+app = create_app()

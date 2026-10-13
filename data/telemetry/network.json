@@ -1,0 +1,609 @@
+{
+  "id": "network",
+  "label": "Zeek-shaped network connections",
+  "sourceRef": "src-network",
+  "format": "zeek_conn_shaped_json",
+  "records": [
+    {
+      "id": "conn-a-baseline-001",
+      "ts": 1791867600.0,
+      "relativeTimeHours": -2,
+      "timestamp": "2026-10-13T05:00:00Z",
+      "uid": "SIMABASE001",
+      "id.orig_h": "192.0.2.21",
+      "id.orig_p": 45001,
+      "id.resp_h": "192.0.2.11",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-a",
+      "targetAssetId": "plc-a",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-b-baseline-001",
+      "ts": 1791867600.0,
+      "relativeTimeHours": -2,
+      "timestamp": "2026-10-13T05:00:00Z",
+      "uid": "SIMBBASE001",
+      "id.orig_h": "192.0.2.22",
+      "id.orig_p": 45001,
+      "id.resp_h": "192.0.2.12",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-b",
+      "targetAssetId": "plc-b",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-c-baseline-001",
+      "ts": 1791867600.0,
+      "relativeTimeHours": -2,
+      "timestamp": "2026-10-13T05:00:00Z",
+      "uid": "SIMCBASE001",
+      "id.orig_h": "192.0.2.23",
+      "id.orig_p": 45001,
+      "id.resp_h": "192.0.2.13",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-c",
+      "targetAssetId": "plc-c",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-a-baseline-002",
+      "ts": 1791869400.0,
+      "relativeTimeHours": -1.5,
+      "timestamp": "2026-10-13T05:30:00Z",
+      "uid": "SIMABASE002",
+      "id.orig_h": "192.0.2.21",
+      "id.orig_p": 45002,
+      "id.resp_h": "192.0.2.11",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-a",
+      "targetAssetId": "plc-a",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-b-baseline-002",
+      "ts": 1791869400.0,
+      "relativeTimeHours": -1.5,
+      "timestamp": "2026-10-13T05:30:00Z",
+      "uid": "SIMBBASE002",
+      "id.orig_h": "192.0.2.22",
+      "id.orig_p": 45002,
+      "id.resp_h": "192.0.2.12",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-b",
+      "targetAssetId": "plc-b",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-c-baseline-002",
+      "ts": 1791869400.0,
+      "relativeTimeHours": -1.5,
+      "timestamp": "2026-10-13T05:30:00Z",
+      "uid": "SIMCBASE002",
+      "id.orig_h": "192.0.2.23",
+      "id.orig_p": 45002,
+      "id.resp_h": "192.0.2.13",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-c",
+      "targetAssetId": "plc-c",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-a-baseline-003",
+      "ts": 1791871200.0,
+      "relativeTimeHours": -1,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "uid": "SIMABASE003",
+      "id.orig_h": "192.0.2.21",
+      "id.orig_p": 45003,
+      "id.resp_h": "192.0.2.11",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-a",
+      "targetAssetId": "plc-a",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-b-baseline-003",
+      "ts": 1791871200.0,
+      "relativeTimeHours": -1,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "uid": "SIMBBASE003",
+      "id.orig_h": "192.0.2.22",
+      "id.orig_p": 45003,
+      "id.resp_h": "192.0.2.12",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-b",
+      "targetAssetId": "plc-b",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-c-baseline-003",
+      "ts": 1791871200.0,
+      "relativeTimeHours": -1,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "uid": "SIMCBASE003",
+      "id.orig_h": "192.0.2.23",
+      "id.orig_p": 45003,
+      "id.resp_h": "192.0.2.13",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-c",
+      "targetAssetId": "plc-c",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-a-baseline-004",
+      "ts": 1791872100.0,
+      "relativeTimeHours": -0.75,
+      "timestamp": "2026-10-13T06:15:00Z",
+      "uid": "SIMABASE004",
+      "id.orig_h": "192.0.2.21",
+      "id.orig_p": 45004,
+      "id.resp_h": "192.0.2.11",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-a",
+      "targetAssetId": "plc-a",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-b-baseline-004",
+      "ts": 1791872100.0,
+      "relativeTimeHours": -0.75,
+      "timestamp": "2026-10-13T06:15:00Z",
+      "uid": "SIMBBASE004",
+      "id.orig_h": "192.0.2.22",
+      "id.orig_p": 45004,
+      "id.resp_h": "192.0.2.12",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-b",
+      "targetAssetId": "plc-b",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-c-baseline-004",
+      "ts": 1791872100.0,
+      "relativeTimeHours": -0.75,
+      "timestamp": "2026-10-13T06:15:00Z",
+      "uid": "SIMCBASE004",
+      "id.orig_h": "192.0.2.23",
+      "id.orig_p": 45004,
+      "id.resp_h": "192.0.2.13",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-c",
+      "targetAssetId": "plc-c",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-a-baseline-005",
+      "ts": 1791873000.0,
+      "relativeTimeHours": -0.5,
+      "timestamp": "2026-10-13T06:30:00Z",
+      "uid": "SIMABASE005",
+      "id.orig_h": "192.0.2.21",
+      "id.orig_p": 45005,
+      "id.resp_h": "192.0.2.11",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-a",
+      "targetAssetId": "plc-a",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-b-baseline-005",
+      "ts": 1791873000.0,
+      "relativeTimeHours": -0.5,
+      "timestamp": "2026-10-13T06:30:00Z",
+      "uid": "SIMBBASE005",
+      "id.orig_h": "192.0.2.22",
+      "id.orig_p": 45005,
+      "id.resp_h": "192.0.2.12",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-b",
+      "targetAssetId": "plc-b",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-c-baseline-005",
+      "ts": 1791873000.0,
+      "relativeTimeHours": -0.5,
+      "timestamp": "2026-10-13T06:30:00Z",
+      "uid": "SIMCBASE005",
+      "id.orig_h": "192.0.2.23",
+      "id.orig_p": 45005,
+      "id.resp_h": "192.0.2.13",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-c",
+      "targetAssetId": "plc-c",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-a-baseline-006",
+      "ts": 1791873900.0,
+      "relativeTimeHours": -0.25,
+      "timestamp": "2026-10-13T06:45:00Z",
+      "uid": "SIMABASE006",
+      "id.orig_h": "192.0.2.21",
+      "id.orig_p": 45006,
+      "id.resp_h": "192.0.2.11",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-a",
+      "targetAssetId": "plc-a",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-b-baseline-006",
+      "ts": 1791873900.0,
+      "relativeTimeHours": -0.25,
+      "timestamp": "2026-10-13T06:45:00Z",
+      "uid": "SIMBBASE006",
+      "id.orig_h": "192.0.2.22",
+      "id.orig_p": 45006,
+      "id.resp_h": "192.0.2.12",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-b",
+      "targetAssetId": "plc-b",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-c-baseline-006",
+      "ts": 1791873900.0,
+      "relativeTimeHours": -0.25,
+      "timestamp": "2026-10-13T06:45:00Z",
+      "uid": "SIMCBASE006",
+      "id.orig_h": "192.0.2.23",
+      "id.orig_p": 45006,
+      "id.resp_h": "192.0.2.13",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 1.5,
+      "orig_bytes": 64,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-c",
+      "targetAssetId": "plc-c",
+      "observation": "normal_polling",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-a-unusual-001",
+      "ts": 1791874440.0,
+      "relativeTimeHours": -0.1,
+      "timestamp": "2026-10-13T06:54:00Z",
+      "uid": "SIMAINBOUND001",
+      "id.orig_h": "203.0.113.250",
+      "id.orig_p": 49000,
+      "id.resp_h": "192.0.2.11",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 3.0,
+      "orig_bytes": 128,
+      "resp_bytes": 96,
+      "conn_state": "SF",
+      "utilityId": "utility-a",
+      "targetAssetId": "plc-a",
+      "observation": "unusual_inbound_connection",
+      "anomalous": true,
+      "sharedSourceIdentity": "synthetic-campaign-01",
+      "interpretation": "Simulated completed connection at A.",
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-b-unusual-001",
+      "ts": 1791876600.0,
+      "relativeTimeHours": 0.5,
+      "timestamp": "2026-10-13T07:30:00Z",
+      "uid": "SIMBINBOUND001",
+      "id.orig_h": "203.0.113.250",
+      "id.orig_p": 49001,
+      "id.resp_h": "192.0.2.12",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 0.0,
+      "orig_bytes": 0,
+      "resp_bytes": 0,
+      "conn_state": "S0",
+      "utilityId": "utility-b",
+      "targetAssetId": "plc-b",
+      "observation": "probing_only",
+      "anomalous": true,
+      "sharedSourceIdentity": "synthetic-campaign-01",
+      "interpretation": "Probe attempt only; no authentication, control change, compromise, or physical effect is established.",
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "conn-c-unusual-001",
+      "ts": 1791877500.0,
+      "relativeTimeHours": 0.75,
+      "timestamp": "2026-10-13T07:45:00Z",
+      "uid": "SIMCINBOUND001",
+      "id.orig_h": "203.0.113.250",
+      "id.orig_p": 49002,
+      "id.resp_h": "192.0.2.13",
+      "id.resp_p": 502,
+      "proto": "tcp",
+      "service": "modbus",
+      "duration": 0.0,
+      "orig_bytes": 0,
+      "resp_bytes": 0,
+      "conn_state": "S0",
+      "utilityId": "utility-c",
+      "targetAssetId": "plc-c",
+      "observation": "probing_only",
+      "anomalous": true,
+      "sharedSourceIdentity": "synthetic-campaign-01",
+      "interpretation": "Probe attempt only; no authentication, control change, compromise, or physical effect is established.",
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "sourceRefs": [
+    "src-network"
+  ],
+  "classification": "U",
+  "handling": [
+    "SIMULATED"
+  ]
+}

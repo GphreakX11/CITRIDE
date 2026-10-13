@@ -1,0 +1,374 @@
+"""RDF-backed local repository with atomic writes and process-safe mutations.
+
+The named baseline graph is the sole mutable baseline. Draft proposals have their
+own graphs, and run graphs retain complete immutable snapshots. JSON literals
+retain structured records; typed relational triples permit graph interchange.
+"""
+
+from __future__ import annotations
+
+import fcntl
+import json
+import os
+import tempfile
+import threading
+from contextlib import contextmanager
+from copy import deepcopy
+from pathlib import Path
+from typing import Callable
+from urllib.parse import quote
+from uuid import uuid4
+
+from rdflib import Dataset, Literal, Namespace, RDF, RDFS, URIRef, XSD
+
+from . import MODEL_VERSION
+from .validation import FACILITY_TYPES, validate_baseline, validate_dependency
+
+NS = Namespace("urn:citride:")
+BASELINE = URIRef("urn:citride:graph:baseline")
+ROOT = URIRef("urn:citride:baseline")
+REFERENCE_FIELDS = {
+    "provider", "dependent", "dependentFunction", "partOf", "operatedBy",
+    "serves", "locatedIn", "hostsCyberAsset", "hostedBy", "facility", "sourceRefs",
+}
+
+
+class NotFoundError(Exception):
+    pass
+
+
+class ConflictError(Exception):
+    pass
+
+
+class InvalidModelError(Exception):
+    pass
+
+
+def _json(value: object) -> str:
+    return json.dumps(value, allow_nan=False, separators=(",", ":"), sort_keys=True)
+
+
+def _resource(identifier: str) -> URIRef:
+    return URIRef("urn:citride:record:" + quote(identifier, safe="._-:"))
+
+
+class Repository:
+    def __init__(self, data_dir: Path, scenario_path: Path):
+        self.data_dir = Path(data_dir)
+        self.scenario_path = Path(scenario_path)
+        self.path = self.data_dir / "citride.nq"
+        self.lock_path = self.data_dir / "citride.lock"
+        self._thread_lock = threading.RLock()
+        self._cached_dataset: Dataset | None = None
+        self._cached_signature: tuple[int, int, int] | None = None
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        with self._locked():
+            if not self.path.exists():
+                with self.scenario_path.open(encoding="utf-8") as source:
+                    data = json.load(source)
+                errors = validate_baseline(data)
+                if errors:
+                    raise InvalidModelError("Invalid initial model: " + "; ".join(errors))
+                data["baselineRevision"] = 1
+                data["modelVersion"] = MODEL_VERSION
+                dataset = Dataset()
+                self._write_baseline(dataset, data)
+                self._save(dataset)
+
+    @contextmanager
+    def _locked(self):
+        with self._thread_lock:
+            with self.lock_path.open("a", encoding="utf-8") as lock_file:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                try:
+                    yield
+                except BaseException:
+                    # Mutations work under the same lock as reads. If a write
+                    # fails, discard any modified in-memory graph immediately.
+                    self._cached_dataset = None
+                    self._cached_signature = None
+                    raise
+                finally:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+    def _load(self) -> Dataset:
+        signature = self._signature()
+        if self._cached_dataset is not None and signature == self._cached_signature:
+            return self._cached_dataset
+        dataset = Dataset()
+        dataset.parse(self.path, format="nquads")
+        self._cached_dataset = dataset
+        self._cached_signature = signature
+        return dataset
+
+    def _signature(self) -> tuple[int, int, int]:
+        stat = self.path.stat()
+        return stat.st_ino, stat.st_mtime_ns, stat.st_size
+
+    def _save(self, dataset: Dataset) -> None:
+        serialized = dataset.serialize(format="nquads", encoding="utf-8")
+        temporary_path: str | None = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=self.data_dir, suffix=".nq.tmp", delete=False) as output:
+                temporary_path = output.name
+                output.write(serialized)
+                output.flush()
+                os.fsync(output.fileno())
+            os.replace(temporary_path, self.path)
+            temporary_path = None
+            directory_fd = os.open(self.data_dir, os.O_DIRECTORY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+            self._cached_dataset = dataset
+            self._cached_signature = self._signature()
+        finally:
+            if temporary_path is not None:
+                os.unlink(temporary_path)
+
+    def _write_baseline(self, dataset: Dataset, data: dict) -> None:
+        graph = dataset.graph(BASELINE)
+        graph.remove((None, None, None))
+        for field, value in data.items():
+            # Collection records remain RDF literals as well as materialized
+            # relationships. Reading and writing one graph prevents split truth.
+            if isinstance(value, list) and value and all(isinstance(item, dict) for item in value):
+                for index, item in enumerate(value):
+                    resource = _resource(item.get("id", f"{field}-{index}"))
+                    graph.add((ROOT, NS[field], resource))
+                    graph.add((resource, NS.collection, Literal(field)))
+                    graph.add((resource, NS.position, Literal(index, datatype=XSD.integer)))
+                    graph.add((resource, NS.payload, Literal(_json(item), datatype=RDF.JSON)))
+                    record_type = item.get("type", {
+                        "dependencies": "Dependency", "serviceFunctions": "ServiceFunction",
+                        "sources": "Source", "assumptions": "ParameterAssertion",
+                        "events": "Event", "assessments": "Assessment", "scenarios": "Scenario",
+                    }.get(field, field))
+                    graph.add((resource, RDF.type, NS[record_type]))
+                    if record_type in FACILITY_TYPES:
+                        graph.add((resource, RDF.type, NS.PhysicalFacility))
+                    if "label" in item:
+                        graph.add((resource, RDFS.label, Literal(item["label"])))
+                    for key, item_value in item.items():
+                        if key in REFERENCE_FIELDS:
+                            references = item_value if isinstance(item_value, list) else [item_value]
+                            for reference in references:
+                                if isinstance(reference, str):
+                                    graph.add((resource, NS[key], _resource(reference)))
+                        elif key == "requiredService" and isinstance(item_value, str):
+                            graph.add((resource, NS[key], Literal(item_value, datatype=XSD.string)))
+                        elif field == "dependencies" and key in {
+                            "propagationDelayMinHours", "propagationDelayMaxHours",
+                            "usableBackupMinHours", "usableBackupMaxHours", "lossOfFunction",
+                        } and isinstance(item_value, (int, float)):
+                            graph.add((resource, NS[key], Literal(float(item_value), datatype=XSD.double)))
+                        elif isinstance(item_value, (str, int, float, bool)):
+                            graph.add((resource, NS[key], Literal(item_value)))
+                        elif isinstance(item_value, list) and all(isinstance(v, str) for v in item_value):
+                            for member in item_value:
+                                graph.add((resource, NS[key], Literal(member)))
+            else:
+                graph.add((ROOT, NS[field], Literal(_json(value), datatype=RDF.JSON)))
+
+    def _baseline(self, dataset: Dataset) -> dict:
+        graph = dataset.graph(BASELINE)
+        data = {}
+        for predicate in set(graph.predicates(ROOT)):
+            field = str(predicate).removeprefix(str(NS))
+            objects = list(graph.objects(ROOT, predicate))
+            if objects and isinstance(objects[0], URIRef):
+                ordered = sorted(objects, key=lambda record: int(graph.value(record, NS.position)))
+                data[field] = [json.loads(str(graph.value(record, NS.payload))) for record in ordered]
+            elif objects:
+                data[field] = json.loads(str(objects[0]))
+        return data
+
+    def baseline(self) -> dict:
+        with self._locked():
+            return self._baseline(self._load())
+
+    def _record_graph(self, dataset: Dataset, kind: str, record: dict) -> None:
+        identifier = record["id"]
+        graph = dataset.graph(URIRef(f"urn:citride:graph:{kind}:{quote(identifier, safe='')}"))
+        graph.remove((None, None, None))
+        resource = _resource(identifier)
+        graph.add((resource, RDF.type, NS[kind]))
+        graph.add((resource, NS.payload, Literal(_json(record), datatype=RDF.JSON)))
+        if kind == "proposal":
+            dependency = record["dependency"]
+            snapshot = URIRef(str(resource) + ":dependency")
+            graph.add((resource, NS.dependencySnapshot, snapshot))
+            self._dependency_triples(graph, snapshot, dependency)
+        if kind == "run":
+            graph.add((resource, NS.baselineRevision, Literal(record["baselineRevision"], datatype=XSD.integer)))
+            graph.add((resource, NS.scenarioId, Literal(record["scenarioId"])))
+            for dependency in record.get("baselineSnapshot", {}).get("dependencies", []):
+                snapshot = _resource(dependency["id"])
+                graph.add((resource, NS.dependencySnapshot, snapshot))
+                self._dependency_triples(graph, snapshot, dependency)
+
+    def _dependency_triples(self, graph, resource: URIRef, dependency: dict) -> None:
+        graph.add((resource, RDF.type, NS.Dependency))
+        for field, value in dependency.items():
+            if field in REFERENCE_FIELDS:
+                for item in value if isinstance(value, list) else [value]:
+                    if isinstance(item, str):
+                        graph.add((resource, NS[field], _resource(item)))
+            elif field == "requiredService" and isinstance(value, str):
+                graph.add((resource, NS[field], Literal(value, datatype=XSD.string)))
+            elif field in {
+                "propagationDelayMinHours", "propagationDelayMaxHours",
+                "usableBackupMinHours", "usableBackupMaxHours", "lossOfFunction",
+            } and isinstance(value, (int, float)):
+                graph.add((resource, NS[field], Literal(float(value), datatype=XSD.double)))
+            elif isinstance(value, (str, int, float, bool)):
+                graph.add((resource, NS[field], Literal(value)))
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, str):
+                        graph.add((resource, NS[field], Literal(item)))
+
+    def _records(self, dataset: Dataset, kind: str) -> list[dict]:
+        prefix = f"urn:citride:graph:{kind}:"
+        records = []
+        for graph in dataset.graphs():
+            if str(graph.identifier).startswith(prefix):
+                resource = next(graph.subjects(RDF.type, NS[kind]), None)
+                payload = graph.value(resource, NS.payload) if resource is not None else None
+                if payload is not None:
+                    records.append(json.loads(str(payload)))
+        return sorted(records, key=lambda item: (item.get("createdAt", ""), item["id"]))
+
+    def _record(self, dataset: Dataset, kind: str, identifier: str) -> dict:
+        graph = dataset.graph(URIRef(f"urn:citride:graph:{kind}:{quote(identifier, safe='')}"))
+        payload = graph.value(_resource(identifier), NS.payload)
+        if payload is None:
+            raise NotFoundError(f"{kind.title()} {identifier} was not found")
+        return json.loads(str(payload))
+
+    def create_proposal(self, dependency: dict, expected_revision: int) -> dict:
+        with self._locked():
+            dataset = self._load()
+            proposal = {
+                "id": "proposal-" + uuid4().hex,
+                "status": "draft",
+                "dependency": deepcopy(dependency),
+                "expectedBaselineRevision": expected_revision,
+            }
+            self._record_graph(dataset, "proposal", proposal)
+            self._save(dataset)
+            return proposal
+
+    def proposals(self) -> list[dict]:
+        with self._locked():
+            return self._records(self._load(), "proposal")
+
+    def proposal(self, identifier: str) -> dict:
+        with self._locked():
+            return self._record(self._load(), "proposal", identifier)
+
+    def validate_proposal(self, identifier: str) -> dict:
+        with self._locked():
+            dataset = self._load()
+            proposal = self._record(dataset, "proposal", identifier)
+            errors = validate_dependency(proposal["dependency"], self._baseline(dataset))
+            valid = not errors
+            if proposal["status"] != "promoted":
+                proposal["status"] = "validated" if valid else "needs_review"
+                self._record_graph(dataset, "proposal", proposal)
+                self._save(dataset)
+            return {"id": identifier, "status": "validated" if valid else "needs_review", "valid": valid, "errors": errors}
+
+    def promote(self, identifier: str) -> dict:
+        with self._locked():
+            dataset = self._load()
+            proposal = self._record(dataset, "proposal", identifier)
+            if proposal["status"] == "promoted":
+                raise ConflictError("Proposal has already been promoted")
+            baseline = self._baseline(dataset)
+            if proposal["expectedBaselineRevision"] != baseline["baselineRevision"]:
+                raise ConflictError("Baseline revision changed; create a proposal against the current baseline")
+            errors = validate_dependency(proposal["dependency"], baseline)
+            if errors:
+                raise InvalidModelError("Dependency validation failed: " + "; ".join(errors))
+            dependency = deepcopy(proposal["dependency"])
+            existing = next((item for item in baseline["dependencies"] if item["id"] == dependency["id"]), None)
+            dependency["revision"] = existing["revision"] + 1 if existing else 1
+            for field, records in baseline.items():
+                if field != "dependencies" and isinstance(records, list) and any(
+                    isinstance(item, dict) and item.get("id") == dependency["id"] for item in records
+                ):
+                    raise InvalidModelError("Dependency id is already used by another model record")
+            source_id = f"src-model-{uuid4().hex}"
+            baseline["sources"].append({
+                "id": source_id,
+                "label": f"Local simulated model edit: {dependency['id']} revision {dependency['revision']}",
+                "note": dependency["assumptionNote"],
+                "evidenceCategory": "analyst_assumed",
+                "classification": "U",
+                "handling": ["SIMULATED"],
+            })
+            dependency["sourceRefs"] = list(dict.fromkeys(dependency["sourceRefs"] + [source_id]))
+            dependency["status"] = "promoted_local_demo"
+            assertions = {
+                "delay": [dependency["propagationDelayMinHours"], dependency["propagationDelayMaxHours"]],
+                "backup": [dependency["usableBackupMinHours"], dependency["usableBackupMaxHours"]],
+                "lossFraction": dependency["lossOfFunction"],
+            }
+            dependency["parameterAssertionRefs"] = {}
+            for parameter, value in assertions.items():
+                assertion_id = f"asm-{uuid4().hex}"
+                dependency["parameterAssertionRefs"][parameter] = assertion_id
+                baseline.setdefault("assumptions", []).append({
+                    "id": assertion_id,
+                    "dependencyId": dependency["id"],
+                    "parameter": parameter,
+                    "value": value,
+                    "unit": "fraction" if parameter == "lossFraction" else "hours",
+                    "ownerRole": "local_demo_author",
+                    "reviewStatus": "local_demo_promoted",
+                    "evidenceCategory": "analyst_assumed",
+                    "note": dependency["assumptionNote"],
+                    "sourceRefs": [source_id],
+                    "classification": "U",
+                    "handling": ["SIMULATED"],
+                })
+            if existing:
+                baseline["dependencies"] = [dependency if item["id"] == dependency["id"] else item for item in baseline["dependencies"]]
+            else:
+                baseline["dependencies"].append(dependency)
+            baseline["baselineRevision"] += 1
+            model_errors = validate_baseline(baseline)
+            if model_errors:
+                raise InvalidModelError("Promoted model validation failed: " + "; ".join(model_errors))
+            self._write_baseline(dataset, baseline)
+            proposal.update({"status": "promoted", "baselineRevision": baseline["baselineRevision"], "dependency": dependency})
+            self._record_graph(dataset, "proposal", proposal)
+            self._save(dataset)
+            return {key: proposal[key] for key in ("id", "status", "baselineRevision", "dependency")}
+
+    def create_run(self, request: dict, compute: Callable) -> dict:
+        with self._locked():
+            dataset = self._load()
+            baseline = self._baseline(dataset)
+            if not any(scenario["id"] == request["scenarioId"] for scenario in baseline["scenarios"]):
+                raise NotFoundError(f"Scenario {request['scenarioId']} was not found")
+            run_id = "run-" + uuid4().hex
+            run = compute(deepcopy(baseline), deepcopy(request), run_id)
+            self._record_graph(dataset, "run", run)
+            self._save(dataset)
+            return run
+
+    def runs(self) -> list[dict]:
+        with self._locked():
+            return self._records(self._load(), "run")
+
+    def run(self, identifier: str) -> dict:
+        with self._locked():
+            return self._record(self._load(), "run", identifier)
+
+    def export(self) -> str:
+        with self._locked():
+            return self._load().serialize(format="nquads")

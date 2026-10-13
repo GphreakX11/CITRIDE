@@ -1,0 +1,231 @@
+{
+  "id": "enterprise",
+  "label": "Enterprise IT background activity",
+  "sourceRef": "src-enterprise",
+  "format": "synthetic_it_audit_json",
+  "records": [
+    {
+      "id": "enterprise-a-001",
+      "relativeTimeHours": -1,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "assetId": "workstation-a",
+      "utilityId": "utility-a",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-a",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-b-001",
+      "relativeTimeHours": -1,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "assetId": "workstation-b",
+      "utilityId": "utility-b",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-b",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-c-001",
+      "relativeTimeHours": -1,
+      "timestamp": "2026-10-13T06:00:00Z",
+      "assetId": "workstation-c",
+      "utilityId": "utility-c",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-c",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-a-002",
+      "relativeTimeHours": 0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "assetId": "workstation-a",
+      "utilityId": "utility-a",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-a",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-b-002",
+      "relativeTimeHours": 0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "assetId": "workstation-b",
+      "utilityId": "utility-b",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-b",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-c-002",
+      "relativeTimeHours": 0,
+      "timestamp": "2026-10-13T07:00:00Z",
+      "assetId": "workstation-c",
+      "utilityId": "utility-c",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-c",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-a-003",
+      "relativeTimeHours": 1,
+      "timestamp": "2026-10-13T08:00:00Z",
+      "assetId": "workstation-a",
+      "utilityId": "utility-a",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-a",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-b-003",
+      "relativeTimeHours": 1,
+      "timestamp": "2026-10-13T08:00:00Z",
+      "assetId": "workstation-b",
+      "utilityId": "utility-b",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-b",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-c-003",
+      "relativeTimeHours": 1,
+      "timestamp": "2026-10-13T08:00:00Z",
+      "assetId": "workstation-c",
+      "utilityId": "utility-c",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-c",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-a-004",
+      "relativeTimeHours": 2,
+      "timestamp": "2026-10-13T09:00:00Z",
+      "assetId": "workstation-a",
+      "utilityId": "utility-a",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-a",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-b-004",
+      "relativeTimeHours": 2,
+      "timestamp": "2026-10-13T09:00:00Z",
+      "assetId": "workstation-b",
+      "utilityId": "utility-b",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-b",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "enterprise-c-004",
+      "relativeTimeHours": 2,
+      "timestamp": "2026-10-13T09:00:00Z",
+      "assetId": "workstation-c",
+      "utilityId": "utility-c",
+      "eventType": "scheduled_health_check",
+      "user": "fictional-service-account-c",
+      "outcome": "success",
+      "anomalous": false,
+      "sourceRefs": [
+        "src-enterprise"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "sourceRefs": [
+    "src-enterprise"
+  ],
+  "classification": "U",
+  "handling": [
+    "SIMULATED"
+  ]
+}
