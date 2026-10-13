@@ -25,6 +25,7 @@ For development, run the API from `backend` with `uv run --locked uvicorn citrid
 4. Increase X's usable clean reserve from 2 to 6 hours for a what-if run. Its window moves to 6–8 hours. The baseline remains unchanged.
 5. Switch to the low-pressure scenario to activate the fire-flow dependency, or the power-loss scenario to demonstrate a multihop service cascade.
 6. Create or revise a dependency, validate the proposal, and promote it. Stale baseline revisions are rejected. Earlier run snapshots remain readable.
+7. Open **Ontology reasoning** and run **OWL inference**. Inspect the controller-to-utility and event-to-facility relationships derived from the declared facts, then select an inference to see its premises, ontology axioms, and sources. Earlier inference runs retain their captured revision.
 
 ## Data and model
 
@@ -41,13 +42,23 @@ Local RDF named graphs hold baseline records, staged proposals, and immutable ca
 
 The deterministic engine propagates provider → dependent only through compatible service/loss relationships. It accumulates time windows and usable backup across hops. Missing timing remains unknown. Unsupported supply groups and cycles are surfaced for model review. A geographic overlap, ownership link, or shared attacker does not itself propagate a physical outage.
 
+## OWL reasoning
+
+Formal **OWL 2 RL** entailment runs through the `owlrl` library over a versioned local ontology and a projection of approved RDF facts. It derives transitive containment, inverse hosting, class membership, event-to-facility context, and dependency summaries from explicit dependency records. Declared facts and inferred facts are shown separately, with a replayable witness for each published inference.
+
+The ontology lives in `backend/citride/ontology/watershed.ttl`. Every immutable inference run captures its ontology text/hash/version, engine version, baseline revision, asserted inputs, selected inferred outputs, and proof/source metadata. Baseline edits or ontology changes mark saved runs stale; they do not rewrite historical results. Raw telemetry, draft proposals, and old runs are excluded from reasoning input.
+
+OWL inference supplies structural context. The cascade engine separately calculates modeled loss and timing from sourced service dependencies. A hospital inside a service polygon does not acquire an operational dependency through OWL. A probe event can be associated with a utility without implying compromise, unsafe water, or failure.
+
+This is a locally authored OWL 2 RL slice with supported, explicitly checked axiom forms. It is not a full OWL 2 DL reasoner or verified BFO/CCO/IDT ontology alignment. The useful facts displayed in the UI are a filtered projection of the complete closure; built-in and reflexive identity noise is omitted. The witness annotator explains library-derived facts; `owlrl` itself does not return proof objects. See [reasoning details](docs/owl-reasoning.md).
+
 ## Validation
 
 ```bash
 bash scripts/check.sh
 ```
 
-Tests cover coherent synthetic inputs, loss-specific activation, interval arithmetic, what-ifs, persistence, unknowns, model limits, relationship validation/promotion, immutable runs, and API behavior. The frontend build includes TypeScript checking. GitHub Actions repeats the automated checks.
+Tests cover coherent synthetic inputs, loss-specific activation, interval arithmetic, what-ifs, persistence, unknowns, model limits, relationship validation/promotion, immutable runs, and API behavior. OWL checks exercise actual entailments, source witnesses, negative controls, revision history, and RDF export. The frontend build includes TypeScript checking. GitHub Actions repeats the automated checks.
 
 ## Scope of this first increment
 

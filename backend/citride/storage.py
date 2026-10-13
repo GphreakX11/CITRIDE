@@ -8,6 +8,7 @@ retain structured records; typed relational triples permit graph interchange.
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import json
 import os
 import tempfile
@@ -29,7 +30,7 @@ BASELINE = URIRef("urn:citride:graph:baseline")
 ROOT = URIRef("urn:citride:baseline")
 REFERENCE_FIELDS = {
     "provider", "dependent", "dependentFunction", "partOf", "operatedBy",
-    "serves", "locatedIn", "hostsCyberAsset", "hostedBy", "facility", "sourceRefs",
+    "serves", "locatedIn", "hostsCyberAsset", "hostedBy", "facility", "sourceRefs", "seenOn",
 }
 
 
@@ -75,6 +76,29 @@ class Repository:
                 dataset = Dataset()
                 self._write_baseline(dataset, data)
                 self._save(dataset)
+            else:
+                # Earlier releases indexed event seenOn references as literals.
+                # Repair that RDF index from the unchanged authoritative JSON
+                # payload; preserve the revision and every historical graph.
+                dataset = self._load()
+                graph = dataset.graph(BASELINE)
+                changed = False
+                for event in self._baseline(dataset).get("events", []):
+                    references = event.get("seenOn", [])
+                    if isinstance(references, str):
+                        references = [references]
+                    if not references:
+                        continue
+                    subject = _resource(event["id"])
+                    expected = {_resource(reference) for reference in references if isinstance(reference, str)}
+                    actual = set(graph.objects(subject, NS.seenOn))
+                    if actual != expected:
+                        graph.remove((subject, NS.seenOn, None))
+                        for reference in expected:
+                            graph.add((subject, NS.seenOn, reference))
+                        changed = True
+                if changed:
+                    self._save(dataset)
 
     @contextmanager
     def _locked(self):
@@ -368,6 +392,123 @@ class Repository:
     def run(self, identifier: str) -> dict:
         with self._locked():
             return self._record(self._load(), "run", identifier)
+
+    def _write_inference(self, dataset: Dataset, run: dict, ontology_turtle: str) -> None:
+        """Add an immutable reasoning snapshot without touching the baseline.
+
+        Hash-addressed ontology graphs preserve the axioms that each historical
+        run used, even after the packaged ontology changes. Fact graphs contain
+        the selected public projection; JSON retains provenance and premises.
+        """
+        digest = hashlib.sha256(ontology_turtle.encode("utf-8")).hexdigest()
+        if digest != run["ontology"]["sha256"]:
+            raise InvalidModelError("Ontology changed during inference; retry against its current version")
+        graph_iri = URIRef("urn:citride:graph:ontology:" + digest)
+        ontology_graph = dataset.graph(graph_iri)
+        if not len(ontology_graph):
+            ontology_graph.parse(data=ontology_turtle, format="turtle")
+        self._record_graph(dataset, "inference", run)
+        metadata = dataset.graph(URIRef("urn:citride:graph:inference:" + quote(run["id"], safe="")))
+        resource = _resource(run["id"])
+        metadata.add((resource, NS.ontologyGraph, graph_iri))
+        metadata.add((resource, NS.ontologyDocument, Literal(ontology_turtle)))
+        metadata.add((resource, NS.baselineRevision, Literal(run["baselineRevision"], datatype=XSD.integer)))
+        for status, collection in (("asserted", "assertedFacts"), ("inferred", "inferredFacts")):
+            fact_graph_iri = URIRef(f"urn:citride:graph:inference-{status}:" + quote(run["id"], safe=""))
+            fact_graph = dataset.graph(fact_graph_iri)
+            metadata.add((resource, NS[status + "Graph"], fact_graph_iri))
+            for fact in run[collection]:
+                fact_graph.add((URIRef(fact["subject"]["iri"]), URIRef(fact["predicate"]["iri"]), URIRef(fact["object"]["iri"])))
+                fact_resource = URIRef(str(resource) + ":fact:" + quote(fact["id"], safe=""))
+                metadata.add((resource, NS.fact, fact_resource))
+                metadata.add((fact_resource, NS.payload, Literal(_json(fact), datatype=RDF.JSON)))
+                for source_id in fact.get("sourceRefs", []):
+                    metadata.add((fact_resource, NS.sourceRefs, _resource(source_id)))
+                for premise_id in fact.get("premiseFactIds", []):
+                    premise_resource = URIRef(str(resource) + ":fact:" + quote(premise_id, safe=""))
+                    metadata.add((fact_resource, NS.premiseFact, premise_resource))
+                for axiom_id in fact.get("axiomIds", []):
+                    metadata.add((fact_resource, NS.axiomId, Literal(axiom_id)))
+        for source in run.get("baselineSnapshot", {}).get("sources", []):
+            metadata.add((_resource(source["id"]), NS.payload, Literal(_json(source), datatype=RDF.JSON)))
+
+    def create_inference_run(self, expected_revision: int | None, compute: Callable) -> dict:
+        with self._locked():
+            dataset = self._load()
+            baseline = self._baseline(dataset)
+            if expected_revision is not None and expected_revision != baseline["baselineRevision"]:
+                raise ConflictError("Baseline revision changed; run inference against the current baseline")
+            run_id = "inference-" + uuid4().hex
+            run = compute(deepcopy(baseline), run_id)
+            # Configuration/inconsistency failures raised by the reasoner leave
+            # the file untouched. Nothing is automatically promoted here.
+            ontology_turtle = run.pop("_ontologyTurtle")
+            self._write_inference(dataset, run, ontology_turtle)
+            self._save(dataset)
+            return self._inference_status(run, baseline["baselineRevision"], run["ontology"]["sha256"])
+
+    @staticmethod
+    def _inference_status(run: dict, current_revision: int, current_ontology_hash: str) -> dict:
+        reasons = {
+            "baselineRevision": run["baselineRevision"] != current_revision,
+            "ontology": run["ontology"]["sha256"] != current_ontology_hash,
+        }
+        return {**run, "stale": any(reasons.values()), "staleReasons": reasons,
+                "currentBaselineRevision": current_revision, "currentOntologySha256": current_ontology_hash}
+
+    def inference_runs(self, current_ontology_hash: str) -> list[dict]:
+        with self._locked():
+            dataset = self._load()
+            revision = self._baseline(dataset)["baselineRevision"]
+            return [self._inference_status(run, revision, current_ontology_hash)
+                    for run in self._records(dataset, "inference")]
+
+    def inference_run(self, identifier: str, current_ontology_hash: str) -> dict:
+        with self._locked():
+            dataset = self._load()
+            return self._inference_status(self._record(dataset, "inference", identifier),
+                                          self._baseline(dataset)["baselineRevision"], current_ontology_hash)
+
+    def inference_fact(self, identifier: str, fact_id: str) -> dict:
+        """Resolve only captured facts, axioms and sources from this run."""
+        with self._locked():
+            run = self._record(self._load(), "inference", identifier)
+            facts = {fact["id"]: fact for fact in run["assertedFacts"] + run["inferredFacts"]}
+            if fact_id not in facts:
+                raise NotFoundError(f"Fact {fact_id} was not found in inference run {identifier}")
+            visited, visiting, ordered = set(), set(), []
+
+            def visit(current_id):
+                if current_id in visited:
+                    return
+                if current_id in visiting:
+                    raise InvalidModelError("Captured inference proof contains a cycle")
+                if current_id not in facts:
+                    raise InvalidModelError("Captured inference proof refers to a missing fact")
+                visiting.add(current_id)
+                fact = facts[current_id]
+                for premise_id in fact.get("premiseFactIds", []):
+                    visit(premise_id)
+                visiting.remove(current_id)
+                visited.add(current_id)
+                ordered.append(fact)
+
+            visit(fact_id)
+            source_ids = {source for fact in ordered for source in fact.get("sourceRefs", [])}
+            axiom_ids = {axiom for fact in ordered for axiom in fact.get("axiomIds", [])}
+            sources = run.get("baselineSnapshot", {}).get("sources", [])
+            axioms = run["ontology"]["axioms"]
+            if not source_ids.issubset({source["id"] for source in sources}):
+                raise InvalidModelError("Captured inference proof refers to a missing source")
+            if not axiom_ids.issubset({axiom["id"] for axiom in axioms}):
+                raise InvalidModelError("Captured inference proof refers to a missing ontology axiom")
+            return {
+                "runId": identifier, "fact": facts[fact_id],
+                "proofFacts": [fact for fact in ordered if fact["id"] != fact_id],
+                "axioms": [axiom for axiom in axioms if axiom["id"] in axiom_ids],
+                "sources": [source for source in sources if source["id"] in source_ids],
+                "baselineRevision": run["baselineRevision"],
+            }
 
     def export(self) -> str:
         with self._locked():

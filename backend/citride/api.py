@@ -74,6 +74,11 @@ class RunRequest(BaseModel):
         return self
 
 
+class InferenceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expectedBaselineRevision: Annotated[int | None, Field(strict=True, ge=1)] = None
+
+
 def _safe_id(identifier: str) -> str:
     if not re.fullmatch(ID_PATTERN, identifier):
         raise HTTPException(status_code=422, detail="Invalid identifier")
@@ -119,6 +124,11 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
         except ConflictError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         except (InvalidModelError, ValueError) as error:
+            diagnostics = getattr(error, "diagnostics", None)
+            if diagnostics is not None:
+                return JSONResponse(status_code=422, content={
+                    "detail": str(error), "category": "semantic_inconsistency", "diagnostics": diagnostics,
+                })
             raise HTTPException(status_code=422, detail=str(error)) from error
 
     @app.get("/health")
@@ -230,6 +240,52 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
             }
 
         return handle_operation(operation)
+
+    @app.get("/v1/ontology")
+    def ontology():
+        from .reasoning import ontology_metadata
+
+        return handle_operation(ontology_metadata)
+
+    @app.post("/v1/inference-runs", status_code=201)
+    def create_inference(store: RepositoryDependency, request: InferenceRequest | None = None):
+        from .reasoning import compute_inference, ontology_document
+
+        def compute(data, run_id):
+            run = compute_inference(data, run_id)
+            run["createdAt"] = datetime.now(timezone.utc).isoformat()
+            # Storage retains this exact ontology in a hash-addressed graph;
+            # the private transfer field is excluded from the API response.
+            run["_ontologyTurtle"] = ontology_document()
+            return run
+
+        expected_revision = request.expectedBaselineRevision if request is not None else None
+        return handle_operation(lambda: store.create_inference_run(expected_revision, compute))
+
+    @app.get("/v1/inference-runs")
+    def inference_runs(store: RepositoryDependency):
+        from .reasoning import ontology_metadata
+
+        def operation():
+            metadata = ontology_metadata()
+            keys = ("id", "createdAt", "baselineRevision", "stale", "staleReasons", "currentBaselineRevision", "currentOntologySha256")
+            return {"runs": [{
+                **{key: run[key] for key in keys},
+                "ontologyVersion": run["ontology"]["version"],
+                "inferredCount": len(run["inferredFacts"]),
+            } for run in store.inference_runs(metadata["sha256"])]}
+
+        return handle_operation(operation)
+
+    @app.get("/v1/inference-runs/{run_id}/facts/{fact_id}")
+    def inference_fact(run_id: str, fact_id: str, store: RepositoryDependency):
+        return handle_operation(lambda: store.inference_fact(_safe_id(run_id), _safe_id(fact_id)))
+
+    @app.get("/v1/inference-runs/{run_id}")
+    def inference_run(run_id: str, store: RepositoryDependency):
+        from .reasoning import ontology_metadata
+
+        return handle_operation(lambda: store.inference_run(_safe_id(run_id), ontology_metadata()["sha256"]))
 
     @app.get("/v1/graph/export")
     def graph_export(store: RepositoryDependency):

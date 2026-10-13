@@ -5,6 +5,7 @@
 - Reproducible fictional inventory, operational dependencies, assessment findings, curated events, and raw synthetic telemetry.
 - Analyst-created relationships with sources, typed endpoints, service/loss applicability, delay/backup ranges, and staged validation/promotion.
 - RDF baseline, staging, and immutable scenario-run persistence.
+- Versioned local OWL 2 RL entailment, separate asserted/inferred facts, source witnesses, and immutable inference history.
 - Interactive dependency view, source explanations, scenario selection, what-if overrides, and saved-run comparison.
 - Deterministic loss-specific cascade logic and meaningful negative controls.
 

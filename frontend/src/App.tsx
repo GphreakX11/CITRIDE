@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Activity,
   ArrowRight,
+  BookOpen,
   Building2,
   ChevronRight,
   CircleHelp,
@@ -26,6 +27,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import Graph from "./Graph";
 import RelationshipEditor from "./RelationshipEditor";
+import ReasoningView from "./ReasoningView";
 import { api, describe, humanize, windowLabel } from "./api";
 import type {
   Bootstrap,
@@ -38,10 +40,12 @@ import type {
   Telemetry,
 } from "./types";
 
-type View = "overview" | "relationships" | "lab" | "evidence" | "sources";
+type View =
+  "overview" | "relationships" | "reasoning" | "lab" | "evidence" | "sources";
 const navigation: { id: View; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "Situation overview", icon: Layers3 },
   { id: "relationships", label: "Relationship model", icon: Network },
+  { id: "reasoning", label: "Ontology reasoning", icon: BookOpen },
   { id: "lab", label: "Scenario lab", icon: FlaskConical },
   { id: "evidence", label: "Event evidence", icon: Activity },
   { id: "sources", label: "Sources & assumptions", icon: FileText },
@@ -328,11 +332,13 @@ export default function App() {
                   ? "Follow a fictional water-control incident through infrastructure, dependencies, and essential services."
                   : view === "relationships"
                     ? "Build explicit service dependencies with timing, reserve assumptions, and traceable sources."
-                    : view === "lab"
-                      ? "Explore loss-specific consequences and compare isolated what-if runs."
-                      : view === "evidence"
-                        ? "Inspect coordinated synthetic events and the underlying raw telemetry."
-                        : "Review the fictional evidence and assumptions behind the model."}
+                    : view === "reasoning"
+                      ? "Derive and explain relationship context with a versioned OWL ontology and captured sources."
+                      : view === "lab"
+                        ? "Explore loss-specific consequences and compare isolated what-if runs."
+                        : view === "evidence"
+                          ? "Inspect coordinated synthetic events and the underlying raw telemetry."
+                          : "Review the fictional evidence and assumptions behind the model."}
               </p>
             </div>
             {view === "overview" && (
@@ -1458,6 +1464,7 @@ export default function App() {
                 </>
               )}
 
+              {view === "reasoning" && <ReasoningView data={data} />}
               {view === "sources" && (
                 <>
                   <div className="notice">

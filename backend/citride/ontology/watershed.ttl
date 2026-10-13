@@ -1,0 +1,399 @@
+@prefix c: <urn:citride:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+c:WatershedOntology a owl:Ontology ;
+  owl:versionInfo "1.0.0" ;
+  owl:versionIRI c:WatershedOntology-1.0.0 ;
+  rdfs:label "CITRIDE local Watershed ontology" ;
+  rdfs:comment "Locally authored OWL 2 RL demo slice. No BFO, CCO, IDT, external ontology, physical prediction, or complete OWL 2 DL conformance is claimed. No remote imports." .
+
+c:InfrastructureEntity a owl:Class ;
+  rdfs:label "Infrastructure entity" ;
+  rdfs:comment "A modeled physical or cyber infrastructure component; classification alone implies no loss of service." .
+
+c:PhysicalFacility a owl:Class ;
+  rdfs:label "Physical facility" ;
+  rdfs:comment "A physical facility or service-provider node, already materialized by the baseline RDF writer for supported facility types." .
+
+c:PhysicalAsset a owl:Class ;
+  rdfs:label "Physical asset" ;
+  rdfs:comment "A tangible infrastructure asset, distinct from its cyber identity." .
+
+c:PhysicalOTAsset a owl:Class ;
+  rdfs:label "Physical OT asset" ;
+  rdfs:comment "A tangible operational-technology controller, sensor, or workstation." .
+
+c:PhysicalITAsset a owl:Class ;
+  rdfs:label "Physical IT asset" ;
+  rdfs:comment "A tangible enterprise information-technology asset." .
+
+c:CyberAsset a owl:Class ;
+  rdfs:label "Cyber asset" ;
+  rdfs:comment "A network or software identity hosted by a physical asset." .
+
+c:WaterServiceProvider a owl:Class ;
+  rdfs:label "Water service provider" ;
+  rdfs:comment "The fictional water-provider service node, distinct from its operating organization." .
+
+c:TreatmentPlant a owl:Class ;
+  rdfs:label "Treatment plant" ;
+  rdfs:comment "A fictional physical water-treatment facility." .
+
+c:HealthcareFacility a owl:Class ;
+  rdfs:label "Healthcare facility" ;
+  rdfs:comment "A fictional physical healthcare facility." .
+
+c:DialysisCenter a owl:Class ;
+  rdfs:label "Dialysis center" ;
+  rdfs:comment "A fictional physical dialysis facility." .
+
+c:Hospital a owl:Class ;
+  rdfs:label "Hospital" ;
+  rdfs:comment "A fictional physical hospital facility." .
+
+c:NursingHome a owl:Class ;
+  rdfs:label "Nursing home" ;
+  rdfs:comment "A fictional physical residential-care facility." .
+
+c:FireService a owl:Class ;
+  rdfs:label "Fire service" ;
+  rdfs:comment "A fictional physical fire-service facility or service node." .
+
+c:ElectricSupplyFacility a owl:Class ;
+  rdfs:label "Electric supply facility" ;
+  rdfs:comment "A fictional physical electricity-supply facility or service node." .
+
+c:Organization a owl:Class ;
+  rdfs:label "Organization" ;
+  rdfs:comment "An operating organization; its identity is separate from facilities it operates." .
+
+c:ServiceArea a owl:Class ;
+  rdfs:label "Service area" ;
+  rdfs:comment "A geographic service area; presence in an area does not assert operational dependency." .
+
+c:PopulationGroup a owl:Class ;
+  rdfs:label "Population group" ;
+  rdfs:comment "A population context record, not an inferred count of impacted people." .
+
+c:ServiceFunction a owl:Class ;
+  rdfs:label "Service function" ;
+  rdfs:comment "A declared service function belonging to a facility; timing remains in the consequence model." .
+
+c:Dependency a owl:Class ;
+  rdfs:label "Approved dependency" ;
+  rdfs:comment "An approved directed dependency record retaining service and loss qualifiers in the baseline; no transitivity is declared for dependsOn." .
+
+c:Event a owl:Class ;
+  rdfs:label "Event" ;
+  rdfs:comment "A curated evidence event; classification alone implies no compromise or outage." .
+
+c:CyberEvent a owl:Class ;
+  rdfs:label "Cyber event" ;
+  rdfs:comment "A curated observation on a cyber asset, including probe observations." .
+
+c:partOf a owl:ObjectProperty ;
+  rdfs:label "part of" ;
+  rdfs:comment "Structural containment. Its transitivity supplies infrastructure context, not operational consequences." .
+
+c:hostedBy a owl:ObjectProperty ;
+  rdfs:label "hosted by" ;
+  rdfs:comment "A cyber identity is hosted by a physical asset." .
+
+c:hostsCyberAsset a owl:ObjectProperty ;
+  rdfs:label "hosts cyber asset" ;
+  rdfs:comment "The inverse of hostedBy." .
+
+c:provider a owl:ObjectProperty ;
+  rdfs:label "provider" ;
+  rdfs:comment "An approved Dependency record identifies its supplying facility." .
+
+c:providesThrough a owl:ObjectProperty ;
+  rdfs:label "provides through dependency" ;
+  rdfs:comment "The inverse of provider, from a provider facility to its Dependency record." .
+
+c:dependent a owl:ObjectProperty ;
+  rdfs:label "dependent" ;
+  rdfs:comment "An approved Dependency record identifies its receiving facility." .
+
+c:receivesThrough a owl:ObjectProperty ;
+  rdfs:label "receives through dependency" ;
+  rdfs:comment "The inverse of dependent, from a receiving facility to its Dependency record." .
+
+c:dependentFunction a owl:ObjectProperty ;
+  rdfs:label "dependent function" ;
+  rdfs:comment "The declared dependent service function; consequence qualifiers are retained on Dependency records." .
+
+c:dependsOn a owl:ObjectProperty ;
+  rdfs:label "depends on" ;
+  rdfs:comment "A direct operational context relationship derived through an approved Dependency; deliberately not transitive and never inferred from geography or probing." .
+
+c:providesTo a owl:ObjectProperty ;
+  rdfs:label "provides to" ;
+  rdfs:comment "The inverse of dependsOn; this context relationship supplies no timing or loss prediction." .
+
+c:associatedWithFacility a owl:ObjectProperty ;
+  rdfs:label "associated with facility" ;
+  rdfs:comment "A cyber asset is associated with a facility through hosting and structural containment." .
+
+c:seenOn a owl:ObjectProperty ;
+  rdfs:label "seen on cyber asset" ;
+  rdfs:comment "A curated observation explicitly identifies its observed cyber asset." .
+
+c:seenAtFacility a owl:ObjectProperty ;
+  rdfs:label "seen at facility" ;
+  rdfs:comment "Facility context for an event through its cyber asset; no compromise or outage conclusion follows." .
+
+c:operatedBy a owl:ObjectProperty ;
+  rdfs:label "operated by" ;
+  rdfs:comment "Explicit operating-organization context for a physical facility or asset." .
+
+c:associatedWithOperator a owl:ObjectProperty ;
+  rdfs:label "associated with operator" ;
+  rdfs:comment "Cyber-asset operator context through an associated facility and its explicit operator." .
+
+c:seenInOperatorContext a owl:ObjectProperty ;
+  rdfs:label "seen in operator context" ;
+  rdfs:comment "Event operator context through a seen-at facility and its explicit operator." .
+
+c:facility a owl:ObjectProperty ;
+  rdfs:label "function facility" ;
+  rdfs:comment "The explicitly recorded facility owning a service function." .
+
+c:serves a owl:ObjectProperty ;
+  rdfs:label "serves geographic area" ;
+  rdfs:comment "A geographic service-area relationship; no dependency rule uses this property." .
+
+c:locatedIn a owl:ObjectProperty ;
+  rdfs:label "located in geographic area" ;
+  rdfs:comment "A location relationship; no dependency rule uses this property." .
+
+c:PhysicalFacility rdfs:subClassOf c:InfrastructureEntity .
+c:axiom-class-PhysicalFacility a owl:Axiom ;
+  owl:annotatedSource c:PhysicalFacility ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:InfrastructureEntity ;
+  rdfs:label "Physical facility class hierarchy" ;
+  rdfs:comment "Every physical facility is classified as infrastructure entity; this is context and predicts no physical state." .
+
+c:PhysicalAsset rdfs:subClassOf c:InfrastructureEntity .
+c:axiom-class-PhysicalAsset a owl:Axiom ;
+  owl:annotatedSource c:PhysicalAsset ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:InfrastructureEntity ;
+  rdfs:label "Physical asset class hierarchy" ;
+  rdfs:comment "Every physical asset is classified as infrastructure entity; this is context and predicts no physical state." .
+
+c:PhysicalOTAsset rdfs:subClassOf c:PhysicalAsset .
+c:axiom-class-PhysicalOTAsset a owl:Axiom ;
+  owl:annotatedSource c:PhysicalOTAsset ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:PhysicalAsset ;
+  rdfs:label "Physical OT asset class hierarchy" ;
+  rdfs:comment "Every physical ot asset is classified as physical asset; this is context and predicts no physical state." .
+
+c:PhysicalITAsset rdfs:subClassOf c:PhysicalAsset .
+c:axiom-class-PhysicalITAsset a owl:Axiom ;
+  owl:annotatedSource c:PhysicalITAsset ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:PhysicalAsset ;
+  rdfs:label "Physical IT asset class hierarchy" ;
+  rdfs:comment "Every physical it asset is classified as physical asset; this is context and predicts no physical state." .
+
+c:CyberAsset rdfs:subClassOf c:InfrastructureEntity .
+c:axiom-class-CyberAsset a owl:Axiom ;
+  owl:annotatedSource c:CyberAsset ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:InfrastructureEntity ;
+  rdfs:label "Cyber asset class hierarchy" ;
+  rdfs:comment "Every cyber asset is classified as infrastructure entity; this is context and predicts no physical state." .
+
+c:WaterServiceProvider rdfs:subClassOf c:PhysicalFacility .
+c:axiom-class-WaterServiceProvider a owl:Axiom ;
+  owl:annotatedSource c:WaterServiceProvider ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:PhysicalFacility ;
+  rdfs:label "Water service provider class hierarchy" ;
+  rdfs:comment "Every water service provider is classified as physical facility; this is context and predicts no physical state." .
+
+c:TreatmentPlant rdfs:subClassOf c:PhysicalFacility .
+c:axiom-class-TreatmentPlant a owl:Axiom ;
+  owl:annotatedSource c:TreatmentPlant ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:PhysicalFacility ;
+  rdfs:label "Treatment plant class hierarchy" ;
+  rdfs:comment "Every treatment plant is classified as physical facility; this is context and predicts no physical state." .
+
+c:HealthcareFacility rdfs:subClassOf c:PhysicalFacility .
+c:axiom-class-HealthcareFacility a owl:Axiom ;
+  owl:annotatedSource c:HealthcareFacility ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:PhysicalFacility ;
+  rdfs:label "Healthcare facility class hierarchy" ;
+  rdfs:comment "Every healthcare facility is classified as physical facility; this is context and predicts no physical state." .
+
+c:DialysisCenter rdfs:subClassOf c:HealthcareFacility .
+c:axiom-class-DialysisCenter a owl:Axiom ;
+  owl:annotatedSource c:DialysisCenter ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:HealthcareFacility ;
+  rdfs:label "Dialysis center class hierarchy" ;
+  rdfs:comment "Every dialysis center is classified as healthcare facility; this is context and predicts no physical state." .
+
+c:Hospital rdfs:subClassOf c:HealthcareFacility .
+c:axiom-class-Hospital a owl:Axiom ;
+  owl:annotatedSource c:Hospital ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:HealthcareFacility ;
+  rdfs:label "Hospital class hierarchy" ;
+  rdfs:comment "Every hospital is classified as healthcare facility; this is context and predicts no physical state." .
+
+c:NursingHome rdfs:subClassOf c:HealthcareFacility .
+c:axiom-class-NursingHome a owl:Axiom ;
+  owl:annotatedSource c:NursingHome ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:HealthcareFacility ;
+  rdfs:label "Nursing home class hierarchy" ;
+  rdfs:comment "Every nursing home is classified as healthcare facility; this is context and predicts no physical state." .
+
+c:FireService rdfs:subClassOf c:PhysicalFacility .
+c:axiom-class-FireService a owl:Axiom ;
+  owl:annotatedSource c:FireService ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:PhysicalFacility ;
+  rdfs:label "Fire service class hierarchy" ;
+  rdfs:comment "Every fire service is classified as physical facility; this is context and predicts no physical state." .
+
+c:ElectricSupplyFacility rdfs:subClassOf c:PhysicalFacility .
+c:axiom-class-ElectricSupplyFacility a owl:Axiom ;
+  owl:annotatedSource c:ElectricSupplyFacility ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:PhysicalFacility ;
+  rdfs:label "Electric supply facility class hierarchy" ;
+  rdfs:comment "Every electric supply facility is classified as physical facility; this is context and predicts no physical state." .
+
+c:CyberEvent rdfs:subClassOf c:Event .
+c:axiom-class-CyberEvent a owl:Axiom ;
+  owl:annotatedSource c:CyberEvent ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget c:Event ;
+  rdfs:label "Cyber event class hierarchy" ;
+  rdfs:comment "Every cyber event is classified as event; this is context and predicts no physical state." .
+
+c:partOf rdf:type owl:TransitiveProperty .
+c:axiom-partOf-transitive a owl:Axiom ;
+  owl:annotatedSource c:partOf ;
+  owl:annotatedProperty rdf:type ;
+  owl:annotatedTarget owl:TransitiveProperty ;
+  rdfs:label "Structural containment is transitive" ;
+  rdfs:comment "If an asset is part of a plant and the plant is part of a provider, the asset is part of that provider. This does not establish an operational dependency." .
+
+c:hostedBy owl:inverseOf c:hostsCyberAsset .
+c:axiom-inverse-hostedBy a owl:Axiom ;
+  owl:annotatedSource c:hostedBy ;
+  owl:annotatedProperty owl:inverseOf ;
+  owl:annotatedTarget c:hostsCyberAsset ;
+  rdfs:label "hostedBy / hostsCyberAsset inverse" ;
+  rdfs:comment "hostedBy and hostsCyberAsset describe the same declared or inferred relationship with reversed endpoints." .
+
+c:provider owl:inverseOf c:providesThrough .
+c:axiom-inverse-provider a owl:Axiom ;
+  owl:annotatedSource c:provider ;
+  owl:annotatedProperty owl:inverseOf ;
+  owl:annotatedTarget c:providesThrough ;
+  rdfs:label "provider / providesThrough inverse" ;
+  rdfs:comment "provider and providesThrough describe the same declared or inferred relationship with reversed endpoints." .
+
+c:dependent owl:inverseOf c:receivesThrough .
+c:axiom-inverse-dependent a owl:Axiom ;
+  owl:annotatedSource c:dependent ;
+  owl:annotatedProperty owl:inverseOf ;
+  owl:annotatedTarget c:receivesThrough ;
+  rdfs:label "dependent / receivesThrough inverse" ;
+  rdfs:comment "dependent and receivesThrough describe the same declared or inferred relationship with reversed endpoints." .
+
+c:dependsOn owl:inverseOf c:providesTo .
+c:axiom-inverse-dependsOn a owl:Axiom ;
+  owl:annotatedSource c:dependsOn ;
+  owl:annotatedProperty owl:inverseOf ;
+  owl:annotatedTarget c:providesTo ;
+  rdfs:label "dependsOn / providesTo inverse" ;
+  rdfs:comment "dependsOn and providesTo describe the same declared or inferred relationship with reversed endpoints." .
+
+_:chain-dependsOn rdf:first c:receivesThrough ; rdf:rest [ rdf:first c:provider ; rdf:rest rdf:nil ] .
+c:dependsOn owl:propertyChainAxiom _:chain-dependsOn .
+c:axiom-chain-dependsOn a owl:Axiom ;
+  owl:annotatedSource c:dependsOn ;
+  owl:annotatedProperty owl:propertyChainAxiom ;
+  owl:annotatedTarget _:chain-dependsOn ;
+  rdfs:label "Dependency endpoint chain" ;
+  rdfs:comment "A facility receiving through an approved Dependency depends on that Dependency provider. Service and loss qualifiers remain on the Dependency record; this relation is not transitive." .
+
+_:chain-associatedWithFacility rdf:first c:hostedBy ; rdf:rest [ rdf:first c:partOf ; rdf:rest rdf:nil ] .
+c:associatedWithFacility owl:propertyChainAxiom _:chain-associatedWithFacility .
+c:axiom-chain-associatedWithFacility a owl:Axiom ;
+  owl:annotatedSource c:associatedWithFacility ;
+  owl:annotatedProperty owl:propertyChainAxiom ;
+  owl:annotatedTarget _:chain-associatedWithFacility ;
+  rdfs:label "Cyber asset facility context" ;
+  rdfs:comment "A cyber asset hosted by a physical asset that is part of a facility is associated with that facility. Hosting and containment are context only." .
+
+_:chain-seenAtFacility rdf:first c:seenOn ; rdf:rest [ rdf:first c:associatedWithFacility ; rdf:rest rdf:nil ] .
+c:seenAtFacility owl:propertyChainAxiom _:chain-seenAtFacility .
+c:axiom-chain-seenAtFacility a owl:Axiom ;
+  owl:annotatedSource c:seenAtFacility ;
+  owl:annotatedProperty owl:propertyChainAxiom ;
+  owl:annotatedTarget _:chain-seenAtFacility ;
+  rdfs:label "Event facility context" ;
+  rdfs:comment "An event seen on a cyber asset is seen in the context of facilities associated with that asset. Probe observations do not imply compromise, water loss, or outages." .
+
+_:chain-associatedWithOperator rdf:first c:associatedWithFacility ; rdf:rest [ rdf:first c:operatedBy ; rdf:rest rdf:nil ] .
+c:associatedWithOperator owl:propertyChainAxiom _:chain-associatedWithOperator .
+c:axiom-chain-associatedWithOperator a owl:Axiom ;
+  owl:annotatedSource c:associatedWithOperator ;
+  owl:annotatedProperty owl:propertyChainAxiom ;
+  owl:annotatedTarget _:chain-associatedWithOperator ;
+  rdfs:label "Cyber asset operator context" ;
+  rdfs:comment "Cyber-asset facility context followed by an explicit facility operator supplies operator context." .
+
+_:chain-seenInOperatorContext rdf:first c:seenAtFacility ; rdf:rest [ rdf:first c:operatedBy ; rdf:rest rdf:nil ] .
+c:seenInOperatorContext owl:propertyChainAxiom _:chain-seenInOperatorContext .
+c:axiom-chain-seenInOperatorContext a owl:Axiom ;
+  owl:annotatedSource c:seenInOperatorContext ;
+  owl:annotatedProperty owl:propertyChainAxiom ;
+  owl:annotatedTarget _:chain-seenInOperatorContext ;
+  rdfs:label "Event operator context" ;
+  rdfs:comment "Event facility context followed by an explicit facility operator supplies operator context without physical predictions." .
+
+c:PhysicalAsset owl:disjointWith c:CyberAsset .
+c:axiom-disjoint-PhysicalAsset-CyberAsset a owl:Axiom ;
+  owl:annotatedSource c:PhysicalAsset ;
+  owl:annotatedProperty owl:disjointWith ;
+  owl:annotatedTarget c:CyberAsset ;
+  rdfs:label "PhysicalAsset and CyberAsset are distinct categories" ;
+  rdfs:comment "A record classified in both PhysicalAsset and CyberAsset is semantically inconsistent in this local demo ontology." .
+
+c:PhysicalFacility owl:disjointWith c:CyberAsset .
+c:axiom-disjoint-PhysicalFacility-CyberAsset a owl:Axiom ;
+  owl:annotatedSource c:PhysicalFacility ;
+  owl:annotatedProperty owl:disjointWith ;
+  owl:annotatedTarget c:CyberAsset ;
+  rdfs:label "PhysicalFacility and CyberAsset are distinct categories" ;
+  rdfs:comment "A record classified in both PhysicalFacility and CyberAsset is semantically inconsistent in this local demo ontology." .
+
+c:Event owl:disjointWith c:InfrastructureEntity .
+c:axiom-disjoint-Event-InfrastructureEntity a owl:Axiom ;
+  owl:annotatedSource c:Event ;
+  owl:annotatedProperty owl:disjointWith ;
+  owl:annotatedTarget c:InfrastructureEntity ;
+  rdfs:label "Event and InfrastructureEntity are distinct categories" ;
+  rdfs:comment "A record classified in both Event and InfrastructureEntity is semantically inconsistent in this local demo ontology." .
+
+c:Organization owl:disjointWith c:InfrastructureEntity .
+c:axiom-disjoint-Organization-InfrastructureEntity a owl:Axiom ;
+  owl:annotatedSource c:Organization ;
+  owl:annotatedProperty owl:disjointWith ;
+  owl:annotatedTarget c:InfrastructureEntity ;
+  rdfs:label "Organization and InfrastructureEntity are distinct categories" ;
+  rdfs:comment "A record classified in both Organization and InfrastructureEntity is semantically inconsistent in this local demo ontology." .

@@ -183,3 +183,75 @@ export interface Telemetry {
     records: Record<string, unknown>[];
   }[];
 }
+
+export interface OntologyAxiom {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface OntologyMetadata {
+  id: string;
+  version: string;
+  sha256: string;
+  axioms: OntologyAxiom[];
+  profile: string;
+  engine: { name: string; version: string };
+  limitations?: string[];
+}
+
+export interface InferenceTerm {
+  id: string;
+  iri: string;
+  label: string;
+}
+
+export interface InferenceFact {
+  id: string;
+  subject: InferenceTerm;
+  predicate: { iri: string; label: string };
+  object: InferenceTerm;
+  status: "asserted" | "inferred";
+  sourceRefs: string[];
+  axiomIds: string[];
+  premiseFactIds: string[];
+}
+
+export interface InferenceRunSummary {
+  id: string;
+  createdAt: string;
+  baselineRevision: number;
+  ontologyVersion: string;
+  inferredCount: number;
+  stale?: boolean;
+  staleReasons?: { baselineRevision: boolean; ontology: boolean };
+}
+
+export interface InferenceRun {
+  id: string;
+  baselineRevision: number;
+  createdAt?: string;
+  profile: string;
+  engine: { name: string; version: string };
+  ontology: Pick<OntologyMetadata, "id" | "version" | "sha256" | "axioms">;
+  baselineSnapshot: unknown;
+  assertedFacts: InferenceFact[];
+  inferredFacts: InferenceFact[];
+  warnings: unknown[];
+  limitations?: string[];
+  diagnostics: unknown[];
+  statistics: Record<string, unknown>;
+  stale?: boolean;
+  staleReasons?: { baselineRevision: boolean; ontology: boolean };
+  currentBaselineRevision?: number;
+  currentOntologySha256?: string;
+}
+
+export interface InferenceProof {
+  runId: string;
+  fact: InferenceFact;
+  proofFacts: InferenceFact[];
+  axioms: OntologyAxiom[];
+  sources: Source[];
+  baselineRevision: number;
+}
