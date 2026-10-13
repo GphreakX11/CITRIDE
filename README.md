@@ -17,6 +17,8 @@ The API serves the compiled application on port 8000, bound to the local machine
 
 For Vercel, the proposed root `vercel.json` configures separate FastAPI and Vite services. Hosted persistence uses Postgres and backend access requires a shared demo password. See [deployment instructions](docs/vercel-deployment.md) for routing, environment settings, and checks; publishing requires a linked Vercel project.
 
+The demo username defaults to `demo`. Set `CITRIDE_DEMO_PASSWORD` in the existing Vercel project's backend environment, then redeploy. Your Google sign-in to the Vercel dashboard is separate from the demo login; no default password is committed to the repository.
+
 For development, run the API from `backend` with `uv run --locked uvicorn citride.api:app --reload --host 127.0.0.1 --port 8000`. In a separate terminal run `npm run dev --prefix frontend`; Vite proxies API requests to the backend.
 
 ## Demonstrate the workflow

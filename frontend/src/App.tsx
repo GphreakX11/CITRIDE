@@ -51,12 +51,111 @@ const navigation: { id: View; label: string; icon: LucideIcon }[] = [
   { id: "sources", label: "Sources & assumptions", icon: FileText },
 ];
 
+function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
+  const username = issue.loginUsername || "demo";
+  if (issue.code === "auth_not_configured") {
+    return (
+      <section
+        className="empty-state access-state"
+        aria-labelledby="access-title"
+      >
+        <ShieldCheck size={30} />
+        <h2 id="access-title">Set up the demo login</h2>
+        <p>
+          The deployment owner needs to configure a password before this hosted
+          demo can open.
+        </p>
+        <ol className="setup-steps">
+          <li>
+            Open the existing CITRIDE project in Vercel, then go to Settings →
+            Environment Variables.
+          </li>
+          <li>
+            Add <code>CITRIDE_DEMO_PASSWORD</code> with a password you choose.
+            Optionally set <code>CITRIDE_DEMO_USERNAME</code>; the default is{" "}
+            <code>demo</code>.
+          </li>
+          <li>
+            Select the Production and Preview environments you use. If Vercel
+            offers a service selector, choose <code>backend</code>.
+          </li>
+          <li>Redeploy the project, then check setup below.</li>
+        </ol>
+        <p>Share the demo username and password with your invited viewers.</p>
+        <button className="button primary" onClick={retry}>
+          <RefreshCw size={16} />
+          Check setup
+        </button>
+      </section>
+    );
+  }
+  if (issue.code === "database_not_configured") {
+    return (
+      <section
+        className="empty-state access-state"
+        aria-labelledby="access-title"
+      >
+        <Database size={30} />
+        <h2 id="access-title">Connect the demo database</h2>
+        <p>
+          The deployment owner needs to add a Postgres connection so the demo
+          can save relationships and run history.
+        </p>
+        <ol className="setup-steps">
+          <li>
+            Open the existing CITRIDE project in Vercel, then go to Settings →
+            Environment Variables.
+          </li>
+          <li>
+            Set <code>CITRIDE_DATABASE_URL</code> to your Postgres connection
+            string. An existing <code>DATABASE_URL</code> also works.
+          </li>
+          <li>
+            Select the Production and Preview environments you use, and{" "}
+            <code>backend</code> if Vercel offers a service selector.
+          </li>
+          <li>Redeploy the project, then check setup below.</li>
+        </ol>
+        <button className="button primary" onClick={retry}>
+          <RefreshCw size={16} />
+          Check setup
+        </button>
+      </section>
+    );
+  }
+  return (
+    <section
+      className="empty-state access-state"
+      aria-labelledby="access-title"
+    >
+      <ShieldCheck size={30} />
+      <h2 id="access-title">Sign in to CITRIDE</h2>
+      <p>
+        Choose Sign in to open your browser’s login prompt. Use username{" "}
+        <strong>{username}</strong> and the password provided by the demo owner.
+      </p>
+      <p>
+        Your Google sign-in for the Vercel dashboard is separate from this demo
+        login.
+      </p>
+      <div className="access-actions">
+        <a className="button primary" href="/v1/login">
+          Sign in
+        </a>
+        <button className="button" onClick={retry}>
+          Reload after signing in
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState<Bootstrap | null>(null);
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [loginRequired, setLoginRequired] = useState(false);
+  const [accessIssue, setAccessIssue] = useState<ApiError | null>(null);
   const [view, setView] = useState<View>("overview");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
@@ -80,10 +179,22 @@ export default function App() {
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [streamId, setStreamId] = useState("");
 
+  function reportFailure(failure: unknown) {
+    setError(failure instanceof Error ? failure.message : String(failure));
+    setAccessIssue(
+      failure instanceof ApiError &&
+        (failure.status === 401 ||
+          failure.code === "auth_not_configured" ||
+          failure.code === "database_not_configured")
+        ? failure
+        : null,
+    );
+  }
+
   async function refresh() {
     setLoading(true);
     setError("");
-    setLoginRequired(false);
+    setAccessIssue(null);
     try {
       const [baseline, feeds, history] = await Promise.all([
         api<Bootstrap>("/v1/bootstrap"),
@@ -96,8 +207,7 @@ export default function App() {
       setScenarioId((current) => current || baseline.defaultScenarioId);
       setStreamId((current) => current || feeds.streams[0]?.id || "");
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure));
-      setLoginRequired(failure instanceof ApiError && failure.status === 401);
+      reportFailure(failure);
     } finally {
       setLoading(false);
     }
@@ -131,11 +241,11 @@ export default function App() {
   async function operate(name: string, operation: () => Promise<void>) {
     setBusy(name);
     setError("");
+    setAccessIssue(null);
     try {
       await operation();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure));
-      setLoginRequired(failure instanceof ApiError && failure.status === 401);
+      reportFailure(failure);
     } finally {
       setBusy("");
     }
@@ -349,7 +459,7 @@ export default function App() {
               <button
                 type="button"
                 className="button primary"
-                disabled={!data}
+                disabled={!data || !!accessIssue}
                 onClick={() => changeView("lab")}
               >
                 <FlaskConical size={17} />
@@ -361,7 +471,7 @@ export default function App() {
               <button
                 type="button"
                 className="button primary"
-                disabled={!data}
+                disabled={!data || !!accessIssue}
                 onClick={() => setEditor({ initial: null })}
               >
                 <Plus size={17} />
@@ -369,14 +479,9 @@ export default function App() {
               </button>
             )}
           </div>
-          {error && (
+          {error && !accessIssue && (
             <div className="alert error" role="alert">
               {error}
-              {loginRequired && (
-                <a className="button primary" href="/v1/login">
-                  Sign in
-                </a>
-              )}
               <button
                 type="button"
                 className="text-button"
@@ -393,7 +498,10 @@ export default function App() {
               <p>Fetching relationships, sources, and telemetry.</p>
             </div>
           )}
-          {!data && !loading && (
+          {accessIssue && (
+            <AccessState issue={accessIssue} retry={() => void refresh()} />
+          )}
+          {!data && !loading && !accessIssue && (
             <div className="empty-state">
               <Database size={30} />
               <h2>The model could not be loaded</h2>
@@ -403,7 +511,7 @@ export default function App() {
               </button>
             </div>
           )}
-          {data && (
+          {data && !accessIssue && (
             <>
               {view === "overview" && (
                 <>

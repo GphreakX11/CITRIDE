@@ -28,6 +28,8 @@ def test_protected_routes_do_not_initialize_or_expose_model_without_login(tmp_pa
     with TestClient(create_app(state)) as client:
         response = client.get(path)
         assert response.status_code == 401
+        assert response.json()["code"] == "login_required"
+        assert response.json()["username"] == "demo"
         assert response.headers["www-authenticate"].startswith("Basic ")
         assert response.headers["cache-control"] == "no-store"
         assert not state.exists()
@@ -70,14 +72,39 @@ def test_vercel_fails_closed_without_password_or_durable_connection(tmp_path, mo
     state = tmp_path / "state"
     with TestClient(create_app(state)) as client:
         response = client.get("/health")
-        assert response.status_code == 503 and "CITRIDE_DEMO_PASSWORD" in response.text
+        assert response.status_code == 503
+        assert response.json() == {
+            "detail": "The demo login has not been configured in Vercel.",
+            "code": "auth_not_configured", "username": "demo",
+        }
         assert not state.exists()
     monkeypatch.setenv("CITRIDE_DEMO_PASSWORD", "test-only-demo-password")
     with TestClient(create_app(state)) as client:
         authorize(client)
         response = client.get("/health")
         assert response.status_code == 503 and "DATABASE_URL" in response.text
+        assert response.headers["x-citride-setup-required"] == "database_not_configured"
         assert not state.exists()
+
+
+def test_login_metadata_uses_configured_username_without_disclosing_credentials(tmp_path, monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("CITRIDE_DEMO_USERNAME", "watershed-reviewer")
+    monkeypatch.setenv("CITRIDE_DATABASE_URL", "postgresql://sample_user:never-return-this-password@example.invalid/demo")
+    state = tmp_path / "state"
+    with TestClient(create_app(state)) as client:
+        response = client.get("/v1/bootstrap")
+        assert response.json()["code"] == "auth_not_configured"
+        assert response.json()["username"] == "watershed-reviewer"
+        assert "never-return-this-password" not in response.text
+    monkeypatch.setenv("CITRIDE_DEMO_PASSWORD", "another-test-only-secret")
+    with TestClient(create_app(state)) as client:
+        response = client.get("/v1/bootstrap")
+        assert response.json()["code"] == "login_required"
+        assert response.json()["username"] == "watershed-reviewer"
+        assert "another-test-only-secret" not in response.text
+        assert "never-return-this-password" not in response.text
+    assert not state.exists()
 
 
 def test_later_storage_failure_returns_generic_503_without_exception_details(tmp_path, monkeypatch):

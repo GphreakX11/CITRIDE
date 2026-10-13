@@ -23,7 +23,11 @@ class DemoAccessMiddleware:
         if not self.password:
             if self.required:
                 response = JSONResponse(
-                    {"detail": "Set CITRIDE_DEMO_PASSWORD before serving the hosted demo."},
+                    {
+                        "detail": "The demo login has not been configured in Vercel.",
+                        "code": "auth_not_configured",
+                        "username": self.username,
+                    },
                     status_code=503,
                     headers={"Cache-Control": "no-store"},
                 )
@@ -43,7 +47,8 @@ class DemoAccessMiddleware:
             pass
         if not authenticated:
             response = JSONResponse(
-                {"detail": "Sign in to access the demo."}, status_code=401,
+                {"detail": "Sign in to access the demo.", "code": "login_required", "username": self.username},
+                status_code=401,
                 headers={"WWW-Authenticate": 'Basic realm="CITRIDE demo", charset="UTF-8"', "Cache-Control": "no-store"},
             )
             return await response(scope, receive, send)

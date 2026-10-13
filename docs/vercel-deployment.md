@@ -33,6 +33,16 @@ The frontend shell is publicly routable. Backend requests, including graph expor
 
 This is a shared demo login, not a multi-customer authentication or audit system. Vercel project-level deployment protection can additionally restrict the frontend shell where the account supports it.
 
+### Set the initial login
+
+Signing into the Vercel dashboard with Google manages the hosting account; it does not create a CITRIDE demo password. There is no built-in or published password. The default username is `demo`, and the password is the value the project owner sets for `CITRIDE_DEMO_PASSWORD`.
+
+If the site shows **Finish setting up the demo login**, open the existing CITRIDE Vercel project, go to **Settings → Environment Variables**, and add `CITRIDE_DEMO_PASSWORD` using a password you choose. Set `CITRIDE_DEMO_USERNAME` if you want a username other than `demo`. Apply the variables to the deployment environment you are using (Production and/or Preview) and the backend service if the dashboard offers a service selector. Save, then redeploy the latest GitHub commit so the backend receives the new settings.
+
+Reload the site and select **Sign in**. Enter the configured username and password in the browser prompt. Do not commit either a real password or a database connection string to GitHub. If the next screen asks for storage setup, configure `CITRIDE_DATABASE_URL` or `DATABASE_URL` with your Postgres connection and redeploy again.
+
+The setup and sign-in screens distinguish a missing deployment setting from an incorrect login or a temporary API failure. These screens do not initialize or expose the model before authentication.
+
 ## Build and checks
 
 Each service builds independently. The backend uses Python 3.12 and its locked Python dependencies; its build helper packages the five fictional JSON inputs into `citride/demo_data`. The wheel includes these generated data artifacts and the ontology at `citride/ontology/watershed.ttl`. The backend build needs access to the repository's `data/` directory outside its service root. The frontend selects Node.js 24 through `package.json`, uses its npm lockfile, and builds with Vite.

@@ -1,10 +1,19 @@
 export class ApiError extends Error {
   readonly status: number;
+  readonly code: string | undefined;
+  readonly loginUsername: string | undefined;
 
-  constructor(message: string, status: number) {
+  constructor(
+    message: string,
+    status: number,
+    code?: string,
+    loginUsername?: string,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
+    this.loginUsername = loginUsername;
   }
 }
 
@@ -21,6 +30,8 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
   );
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) {
+    const metadata =
+      data && typeof data === "object" ? (data as Record<string, unknown>) : {};
     const detail =
       data && typeof data === "object" && "detail" in data
         ? data.detail
@@ -28,6 +39,10 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
     throw new ApiError(
       typeof detail === "string" ? detail : JSON.stringify(detail),
       response.status,
+      typeof metadata.code === "string"
+        ? metadata.code
+        : (response.headers.get("X-CITRIDE-Setup-Required") ?? undefined),
+      typeof metadata.username === "string" ? metadata.username : undefined,
     );
   }
   return data as T;

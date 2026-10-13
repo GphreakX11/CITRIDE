@@ -1381,6 +1381,37 @@ summary {
   font-size: 12px;
   max-width: 530px;
 }
+.access-state {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--blue);
+}
+.access-state p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.setup-steps {
+  max-width: 580px;
+  margin: 4px 0;
+  padding-left: 24px;
+  color: #334b64;
+  font-size: 13px;
+  line-height: 1.8;
+  text-align: left;
+}
+.setup-steps li + li {
+  margin-top: 10px;
+}
+.setup-steps code {
+  font-size: 12px;
+}
+.access-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 .small-empty {
   padding: 35px 20px;
 }

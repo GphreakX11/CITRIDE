@@ -135,7 +135,10 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
                         ),
                     )
                 elif hosted:
-                    raise HTTPException(status_code=503, detail="Set CITRIDE_DATABASE_URL or DATABASE_URL for durable hosted storage.")
+                    raise HTTPException(
+                        status_code=503, detail="Set CITRIDE_DATABASE_URL or DATABASE_URL for durable hosted storage.",
+                        headers={"X-CITRIDE-Setup-Required": "database_not_configured"},
+                    )
                 else:
                     repository = Repository(repository_path, fixture_path)
             except (OSError, ValueError, InvalidModelError) as error:
