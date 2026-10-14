@@ -30,6 +30,9 @@ import RelationshipEditor from "./RelationshipEditor";
 import ReasoningView from "./ReasoningView";
 import OntologyBlueprint from "./OntologyBlueprint";
 import IncidentWorkspace from "./IncidentWorkspace";
+import CommandWorkspace from "./CommandWorkspace";
+import { commandNavigation } from "./commandTypes";
+import type { CommandView } from "./commandTypes";
 import { ApiError, api, describe, humanize, windowLabel } from "./api";
 import { displayText } from "./presentation";
 import { reviewDisplayText } from "./incidentDecisions";
@@ -45,6 +48,7 @@ import type {
 } from "./types";
 
 type View =
+  | CommandView
   | "overview"
   | "incident"
   | "blueprint"
@@ -164,7 +168,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [accessIssue, setAccessIssue] = useState<ApiError | null>(null);
-  const [view, setView] = useState<View>("overview");
+  const [view, setView] = useState<View>("command");
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ initial: Dependency | null } | null>(
@@ -292,7 +297,9 @@ export default function App() {
         .flatMap((item) => Object.keys(item)) ?? [],
     ),
   ];
-  const title = navigation.find((item) => item.id === view)?.label;
+  const commandView = commandNavigation.find((item) => item.id === view);
+  const title =
+    commandView?.label ?? navigation.find((item) => item.id === view)?.label;
 
   function renderSources(ids: string[]) {
     return (
@@ -349,21 +356,21 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${commandView ? "command-mode" : ""}`}>
       <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
         <a
           className="brand"
           href="#"
           onClick={(event) => {
             event.preventDefault();
-            changeView("overview");
+            changeView("command");
           }}
         >
           <span className="brand-symbol">
             <Droplets size={24} />
           </span>
           <span>
-            CITRIDE<small>INCIDENT → DECISION</small>
+            CITRIDE<small>COMMAND WORKSPACE</small>
           </span>
         </a>
         <button
@@ -384,21 +391,40 @@ export default function App() {
           </div>
           <span className="workspace-dot" />
         </div>
-        <p className="nav-label">WORKSPACE</p>
+        <p className="nav-label">COMMAND VIEWS</p>
         <nav aria-label="Main navigation">
-          {navigation.map(({ id, label, icon: Icon }) => (
+          {commandNavigation.map(({ id, code, label, color }) => (
             <button
               key={id}
               className={view === id ? "nav-item active" : "nav-item"}
               aria-current={view === id ? "page" : undefined}
               onClick={() => changeView(id)}
             >
-              <Icon size={18} />
+              <span className="command-nav-code" style={{ color }}>
+                {code}
+              </span>
               {label}
               {view === id && <span className="nav-active-dot" />}
             </button>
           ))}
         </nav>
+        <details className="model-tools" open={!commandView}>
+          <summary>Model & evidence tools</summary>
+          <nav aria-label="Model and evidence tools">
+            {navigation.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                className={view === id ? "nav-item active" : "nav-item"}
+                aria-current={view === id ? "page" : undefined}
+                onClick={() => changeView(id)}
+              >
+                <Icon size={18} />
+                {label}
+                {view === id && <span className="nav-active-dot" />}
+              </button>
+            ))}
+          </nav>
+        </details>
         <div className="sidebar-footer">
           <span className="badge simulation">DECISION SUPPORT</span>
           <p>Trace infrastructure dependencies and downstream consequences.</p>
@@ -433,7 +459,9 @@ export default function App() {
             <strong>{title}</strong>
           </div>
           <div className="topbar-status">
-            <span className="badge simulation">SCENARIO ANALYSIS</span>
+            <span className="badge simulation">
+              {commandView ? "HUMAN REVIEW" : "SCENARIO ANALYSIS"}
+            </span>
             <span className="revision">
               Baseline r{data?.baselineRevision ?? "—"}
             </span>
@@ -461,21 +489,23 @@ export default function App() {
                   : title}
               </h1>
               <p>
-                {view === "overview"
-                  ? "Trace a water-control incident through infrastructure, dependencies, and essential services."
-                  : view === "incident"
-                    ? "Follow sourced event context into conditional consequences and human decision review."
-                    : view === "blueprint"
-                      ? "Explore the document-backed ontology stack and distinguish current capabilities from planned integrations."
-                      : view === "relationships"
-                        ? "Build explicit service dependencies with timing, reserve assumptions, and traceable sources."
-                        : view === "reasoning"
-                          ? "Derive and explain relationship context with a versioned OWL ontology and captured sources."
-                          : view === "lab"
-                            ? "Explore loss-specific consequences and compare isolated what-if runs."
-                            : view === "evidence"
-                              ? "Inspect the incident timeline and supporting telemetry records."
-                              : "Review source provenance, evidence, and the assumptions behind the model."}
+                {commandView
+                  ? "Track incidents, review consequences, and coordinate next steps from saved evidence."
+                  : view === "overview"
+                    ? "Trace a water-control incident through infrastructure, dependencies, and essential services."
+                    : view === "incident"
+                      ? "Follow sourced event context into conditional consequences and human decision review."
+                      : view === "blueprint"
+                        ? "Explore the document-backed ontology stack and distinguish current capabilities from planned integrations."
+                        : view === "relationships"
+                          ? "Build explicit service dependencies with timing, reserve assumptions, and traceable sources."
+                          : view === "reasoning"
+                            ? "Derive and explain relationship context with a versioned OWL ontology and captured sources."
+                            : view === "lab"
+                              ? "Explore loss-specific consequences and compare isolated what-if runs."
+                              : view === "evidence"
+                                ? "Inspect the incident timeline and supporting telemetry records."
+                                : "Review source provenance, evidence, and the assumptions behind the model."}
               </p>
             </div>
             {view === "overview" && (
@@ -536,6 +566,20 @@ export default function App() {
           )}
           {data && !accessIssue && (
             <>
+              <div hidden={!commandView}>
+                <CommandWorkspace
+                  data={data}
+                  view={commandView?.id ?? "command"}
+                  selectedId={selectedCaseId}
+                  onSelect={setSelectedCaseId}
+                  onNavigate={changeView}
+                  onOpenTool={(tool, entityId) => {
+                    if (entityId) setSelectedEntity(entityId);
+                    changeView(tool);
+                  }}
+                  onAccessFailure={reportFailure}
+                />
+              </div>
               {view === "overview" && (
                 <>
                   <section className="incident-banner">

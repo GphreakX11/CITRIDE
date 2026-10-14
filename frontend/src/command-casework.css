@@ -1,0 +1,340 @@
+.command-casework {
+  --cc-surface: var(--surface, #fff);
+  --cc-border: var(--line, #e6eaf0);
+  --cc-muted: var(--muted, #65788c);
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+  color: inherit;
+}
+.command-casework *,
+.cc-dialog * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+.command-casework .cc-panel {
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid var(--cc-border);
+  border-radius: 12px;
+  background: var(--cc-surface);
+}
+.command-casework .cc-header,
+.command-casework .cc-heading {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.command-casework .cc-header > div {
+  flex: 1 1 300px;
+}
+.command-casework .cc-header > label {
+  flex: 1 1 280px;
+}
+.command-casework h2,
+.cc-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+.command-casework h3 {
+  margin: 16px 0 8px;
+  font-size: 15px;
+}
+.command-casework p,
+.cc-dialog p {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.command-casework p + p,
+.cc-dialog p + p {
+  margin-top: 8px;
+}
+.command-casework label,
+.cc-dialog label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.command-casework button,
+.cc-dialog button {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+  color: #23364b;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.command-casework .cc-primary,
+.cc-dialog .cc-primary {
+  background: var(--blue, #275cc5);
+  color: #fff;
+  border-color: var(--blue, #275cc5);
+}
+.command-casework input:not([type="checkbox"]),
+.command-casework select,
+.command-casework textarea {
+  width: 100%;
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 10px 12px;
+  background: var(--cc-surface);
+  color: inherit;
+  font-size: 14px;
+}
+.command-casework textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.command-casework summary {
+  min-height: 44px;
+  padding: 10px 0;
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.command-casework .cc-form,
+.command-casework .cc-stack {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+.command-casework .cc-form > button {
+  justify-self: start;
+}
+.command-casework .cc-actions,
+.cc-dialog footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.command-casework .cc-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.command-casework .cc-metadata,
+.cc-dialog .cc-metadata {
+  display: grid;
+  grid-template-columns: minmax(115px, 0.35fr) minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.command-casework .cc-metadata dt,
+.cc-dialog .cc-metadata dt {
+  color: var(--cc-muted, #65788c);
+}
+.command-casework .cc-metadata dd,
+.cc-dialog .cc-metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.command-casework .cc-chips,
+.cc-dialog .cc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 12px 0;
+}
+.command-casework .cc-chip,
+.cc-dialog .cc-chip {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #eef3f9;
+  color: #39516c;
+  border: 1px solid #dee7f1;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.command-casework .cc-muted {
+  color: var(--cc-muted);
+  font-size: 13px;
+}
+.command-casework .cc-warning {
+  background: #fff8e6;
+  border: 1px solid #e8ce91;
+  color: #76531b;
+  padding: 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+.command-casework .cc-warning h3 {
+  margin-top: 0;
+}
+.command-casework .cc-error,
+.cc-dialog .cc-error {
+  margin: 0;
+  background: #fff1f1;
+  border: 1px solid #f0b8b8;
+  padding: 14px;
+  border-radius: 8px;
+  color: #9e2929;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.command-casework .cc-note,
+.cc-dialog .cc-note {
+  padding: 12px;
+  border-radius: 7px;
+  background: #f5f7fa;
+  margin: 12px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.command-casework .cc-review {
+  border: 1px solid var(--cc-border);
+  border-left: 3px solid #7da5df;
+  padding: 16px;
+  border-radius: 8px;
+}
+.command-casework .cc-review > h3:first-child {
+  margin-top: 0;
+}
+.command-casework .cc-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 8px;
+  border: 1px solid var(--cc-border);
+  border-radius: 7px;
+  cursor: pointer;
+}
+.command-casework .cc-task input {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  margin: 0 6px 0 0;
+  accent-color: var(--blue, #275cc5);
+}
+.command-casework .cc-task span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.command-casework .cc-task time,
+.command-casework .cc-timeline time {
+  display: block;
+  font-size: 12px;
+  color: var(--cc-muted);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.command-casework .cc-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0;
+  display: grid;
+  gap: 14px;
+}
+.command-casework .cc-timeline li {
+  border-left: 2px solid #cddcf0;
+  padding-left: 14px;
+}
+.command-casework .cc-user-text {
+  white-space: pre-wrap;
+}
+.command-casework ul,
+.cc-dialog ul {
+  padding-left: 22px;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+.command-casework .cc-empty {
+  display: grid;
+  gap: 12px;
+}
+.command-casework .cc-empty button {
+  justify-self: start;
+}
+.cc-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  padding: 0;
+  width: min(620px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  height: fit-content;
+  max-height: min(90dvh, 800px);
+  border: 1px solid #d1dae6;
+  border-radius: 12px;
+  background: #fff;
+  color: #23364b;
+  box-shadow: 0 24px 80px #10273d40;
+}
+.cc-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.cc-dialog::backdrop {
+  background: #10273d99;
+}
+.cc-dialog header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e6eaf0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.cc-dialog header h2 {
+  margin: 0;
+}
+.cc-dialog .cc-dialog-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+.cc-dialog footer {
+  padding: 14px 20px;
+  border-top: 1px solid #e6eaf0;
+  margin: 0;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+.cc-dialog button:focus-visible {
+  outline: 3px solid #6498ee;
+  outline-offset: 2px;
+}
+@media (max-width: 520px) {
+  .command-casework .cc-metadata,
+  .cc-dialog .cc-metadata {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .command-casework .cc-metadata dd,
+  .cc-dialog .cc-metadata dd {
+    margin-bottom: 8px;
+  }
+  .command-casework .cc-header > label {
+    flex-basis: 100%;
+  }
+  .command-casework .cc-actions button {
+    flex: 1 1 100%;
+  }
+  .cc-dialog footer button {
+    flex: 1 1 100%;
+  }
+  .cc-dialog header,
+  .cc-dialog footer,
+  .cc-dialog .cc-dialog-body {
+    padding: 14px;
+  }
+}

@@ -14,7 +14,14 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .access import DemoAccessMiddleware
-from .storage import ConflictError, InvalidModelError, NotFoundError, Repository, StorageUnavailableError
+from .command_requests import CommandActionRequest, CommandCreateRequest
+from .storage import (
+    ConflictError,
+    InvalidModelError,
+    NotFoundError,
+    Repository,
+    StorageUnavailableError,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
@@ -32,13 +39,17 @@ class ProposalRequest(BaseModel):
     def safe_dependency_id(self):
         identifier = self.dependency.get("id")
         if not isinstance(identifier, str) or not re.fullmatch(ID_PATTERN, identifier):
-            raise ValueError("Dependency id must be a safe identifier of 1–128 characters")
+            raise ValueError(
+                "Dependency id must be a safe identifier of 1–128 characters"
+            )
         # Drafts may contain invalid domain values for review, but payloads are
         # always valid JSON; non-finite values must never reach persisted RDF.
         try:
             json.dumps(self.dependency, allow_nan=False)
         except (TypeError, ValueError) as error:
-            raise ValueError("Dependency must contain JSON values and finite numbers") from error
+            raise ValueError(
+                "Dependency must contain JSON values and finite numbers"
+            ) from error
         return self
 
 
@@ -86,40 +97,61 @@ def _safe_id(identifier: str) -> str:
     return identifier
 
 
-def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) -> FastAPI:
+def create_app(
+    data_dir: Path | None = None, scenario_path: Path | None = None
+) -> FastAPI:
     app = FastAPI(
         title="CITRIDE local synthetic demo",
         version="0.1.0",
         description="Single-tenant synthetic simulation. Hosted instances use a shared demo login; no live OT connection.",
     )
     hosted = os.environ.get("VERCEL") == "1"
-    database_url = None if data_dir is not None else (
-        os.environ.get("CITRIDE_DATABASE_URL") or os.environ.get("DATABASE_URL")
+    database_url = (
+        None
+        if data_dir is not None
+        else (os.environ.get("CITRIDE_DATABASE_URL") or os.environ.get("DATABASE_URL"))
     )
     app.add_middleware(
-        DemoAccessMiddleware, username=os.environ.get("CITRIDE_DEMO_USERNAME", "demo"),
-        password=os.environ.get("CITRIDE_DEMO_PASSWORD"), required=hosted,
+        DemoAccessMiddleware,
+        username=os.environ.get("CITRIDE_DEMO_USERNAME", "demo"),
+        password=(
+            # Runtime configuration only; no credential is embedded in source.
+            os.environ.get("CITRIDE_DEMO_PASSWORD")
+        ),
+        required=hosted,
         secure_origin=hosted and os.environ.get("VERCEL_ENV") != "development",
     )
-    repository_path = data_dir or Path(os.environ.get("CITRIDE_DATA_DIR", REPO_ROOT / ".local"))
+    repository_path = data_dir or Path(
+        os.environ.get("CITRIDE_DATA_DIR", REPO_ROOT / ".local")
+    )
     bundled_data = Path(__file__).parent / "demo_data"
     local_fixture = REPO_ROOT / "data" / "scenario.json"
-    fixture_path = scenario_path or (local_fixture if local_fixture.is_file() else bundled_data / "scenario.json")
+    fixture_path = scenario_path or (
+        local_fixture if local_fixture.is_file() else bundled_data / "scenario.json"
+    )
     repository: Repository | None = None
 
     @app.exception_handler(StorageUnavailableError)
     async def unavailable_storage(_request, _error):
-        return JSONResponse(status_code=503, content={"detail": "Demo storage is temporarily unavailable."})
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Demo storage is temporarily unavailable."},
+        )
 
     @app.exception_handler(RequestValidationError)
     async def request_validation_error(_request, error: RequestValidationError):
         # Pydantic includes offending input/context in errors. Restrict the
         # response to actionable fields so NaN inputs and exception objects do
         # not break JSON encoding, and raw submitted records are not echoed.
-        return JSONResponse(status_code=422, content={"detail": [
-            {key: issue[key] for key in ("type", "loc", "msg") if key in issue}
-            for issue in error.errors()
-        ]})
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": [
+                    {key: issue[key] for key in ("type", "loc", "msg") if key in issue}
+                    for issue in error.errors()
+                ]
+            },
+        )
 
     def repo() -> Repository:
         nonlocal repository
@@ -129,20 +161,27 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
                     from .postgres import PostgresRepository
 
                     repository = PostgresRepository(
-                        database_url, fixture_path,
-                        state_key=os.environ.get("CITRIDE_STATE_KEY") or (
-                            "citride-" + os.environ.get("VERCEL_ENV", "development") if hosted else "default"
+                        database_url,
+                        fixture_path,
+                        state_key=os.environ.get("CITRIDE_STATE_KEY")
+                        or (
+                            "citride-" + os.environ.get("VERCEL_ENV", "development")
+                            if hosted
+                            else "default"
                         ),
                     )
                 elif hosted:
                     raise HTTPException(
-                        status_code=503, detail="Set CITRIDE_DATABASE_URL or DATABASE_URL for durable hosted storage.",
+                        status_code=503,
+                        detail="Set CITRIDE_DATABASE_URL or DATABASE_URL for durable hosted storage.",
                         headers={"X-CITRIDE-Setup-Required": "database_not_configured"},
                     )
                 else:
                     repository = Repository(repository_path, fixture_path)
             except (OSError, ValueError, InvalidModelError) as error:
-                raise HTTPException(status_code=503, detail=f"Demo model could not be loaded: {error}") from error
+                raise HTTPException(
+                    status_code=503, detail=f"Demo model could not be loaded: {error}"
+                ) from error
         return repository
 
     RepositoryDependency = Annotated[Repository, Depends(repo)]
@@ -157,14 +196,23 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
         except (InvalidModelError, ValueError) as error:
             diagnostics = getattr(error, "diagnostics", None)
             if diagnostics is not None:
-                return JSONResponse(status_code=422, content={
-                    "detail": str(error), "category": "semantic_inconsistency", "diagnostics": diagnostics,
-                })
+                return JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": str(error),
+                        "category": "semantic_inconsistency",
+                        "diagnostics": diagnostics,
+                    },
+                )
             raise HTTPException(status_code=422, detail=str(error)) from error
 
     @app.get("/health")
     def health(store: RepositoryDependency):
-        return {"status": "ok", "baselineRevision": store.baseline()["baselineRevision"], "demoMode": True}
+        return {
+            "status": "ok",
+            "baselineRevision": store.baseline()["baselineRevision"],
+            "demoMode": True,
+        }
 
     @app.get("/v1/login", include_in_schema=False)
     def demo_login():
@@ -191,15 +239,57 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
 
         def operation():
             baseline = store.baseline()
-            if not any(event.get("id") == eventId for event in baseline.get("events", [])):
+            if not any(
+                event.get("id") == eventId for event in baseline.get("events", [])
+            ):
                 raise NotFoundError(f"Event {eventId} was not found")
             return build_context(baseline, eventId)
 
         return handle_operation(operation)
 
+    @app.get("/v1/command/incidents")
+    def command_incidents(store: RepositoryDependency):
+        from .command import CommandService
+
+        return handle_operation(lambda: {"incidents": CommandService(store).list()})
+
+    @app.post("/v1/command/incidents", status_code=201)
+    def create_command_incident(
+        request: CommandCreateRequest, store: RepositoryDependency
+    ):
+        from .command import CommandService
+
+        return handle_operation(
+            lambda: CommandService(store).create(request.model_dump())
+        )
+
+    @app.get("/v1/command/incidents/{incident_id}")
+    def command_incident(incident_id: str, store: RepositoryDependency):
+        from .command import CommandService
+
+        return handle_operation(
+            lambda: CommandService(store).get(_safe_id(incident_id))
+        )
+
+    @app.post("/v1/command/incidents/{incident_id}/actions")
+    def command_action(
+        incident_id: str, request: CommandActionRequest, store: RepositoryDependency
+    ):
+        from .command import CommandService
+
+        return handle_operation(
+            lambda: CommandService(store).act(
+                _safe_id(incident_id), request.model_dump()
+            )
+        )
+
     @app.post("/v1/dependency-proposals", status_code=201)
     def create_proposal(request: ProposalRequest, store: RepositoryDependency):
-        return handle_operation(lambda: store.create_proposal(request.dependency, request.expectedBaselineRevision))
+        return handle_operation(
+            lambda: store.create_proposal(
+                request.dependency, request.expectedBaselineRevision
+            )
+        )
 
     @app.get("/v1/dependency-proposals")
     def proposals(store: RepositoryDependency):
@@ -249,31 +339,62 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
         return handle_operation(lambda: store.run(_safe_id(run_id)))
 
     @app.get("/v1/explain")
-    def explain(store: RepositoryDependency, runId: QueryIdentifier, impactId: QueryIdentifier):
+    def explain(
+        store: RepositoryDependency, runId: QueryIdentifier, impactId: QueryIdentifier
+    ):
         def operation():
             run = store.run(runId)
-            impact = next((item for item in run["impacts"] if item["id"] == impactId), None)
+            impact = next(
+                (item for item in run["impacts"] if item["id"] == impactId), None
+            )
             if impact is None:
                 raise NotFoundError(f"Impact {impactId} was not found in run {runId}")
             snapshot = run["baselineSnapshot"]
-            used_dependencies = {identifier for path in impact["paths"] for identifier in path}
-            dependencies = deepcopy([item for item in snapshot["dependencies"] if item["id"] in used_dependencies])
-            overrides = {item["dependencyId"]: item for item in run["request"].get("overrides", [])}
+            used_dependencies = {
+                identifier for path in impact["paths"] for identifier in path
+            }
+            dependencies = deepcopy(
+                [
+                    item
+                    for item in snapshot["dependencies"]
+                    if item["id"] in used_dependencies
+                ]
+            )
+            overrides = {
+                item["dependencyId"]: item
+                for item in run["request"].get("overrides", [])
+            }
             for dependency in dependencies:
                 if dependency["id"] in overrides:
                     override = overrides[dependency["id"]]
-                    dependency["baselineBackupHours"] = [dependency.get("usableBackupMinHours"), dependency.get("usableBackupMaxHours")]
+                    dependency["baselineBackupHours"] = [
+                        dependency.get("usableBackupMinHours"),
+                        dependency.get("usableBackupMaxHours"),
+                    ]
                     dependency["usableBackupMinHours"] = override["backupMinHours"]
                     dependency["usableBackupMaxHours"] = override["backupMaxHours"]
                     dependency["whatIfOverride"] = deepcopy(override)
-            source_ids = set(impact["sourceRefs"]) | set(run["seed"].get("sourceRefs", []))
-            source_catalog = snapshot.get("sources", []) + run.get("overrideSources", [])
+            source_ids = set(impact["sourceRefs"]) | set(
+                run["seed"].get("sourceRefs", [])
+            )
+            source_catalog = snapshot.get("sources", []) + run.get(
+                "overrideSources", []
+            )
             assertion_ids = {
-                identifier for dependency in dependencies
+                identifier
+                for dependency in dependencies
                 for identifier in dependency.get("parameterAssertionRefs", {}).values()
             }
-            parameter_assertions = [item for item in snapshot.get("assumptions", []) if item["id"] in assertion_ids]
-            events = [event for event in snapshot.get("events", []) if event["id"] in run["seed"].get("eventRefs", [])]
+            parameter_assertions = [
+                item
+                for item in snapshot.get("assumptions", [])
+                if item["id"] in assertion_ids
+            ]
+            events = [
+                event
+                for event in snapshot.get("events", [])
+                if event["id"] in run["seed"].get("eventRefs", [])
+            ]
             for item in events + parameter_assertions:
                 source_ids.update(item.get("sourceRefs", []))
             return {
@@ -281,7 +402,9 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
                 "impact": impact,
                 "seed": run["seed"],
                 "dependencies": dependencies,
-                "sources": [source for source in source_catalog if source["id"] in source_ids],
+                "sources": [
+                    source for source in source_catalog if source["id"] in source_ids
+                ],
                 "assumptions": impact["assumptions"],
                 "parameterAssertions": parameter_assertions,
                 "eventEvidence": events,
@@ -297,7 +420,9 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
         return handle_operation(ontology_metadata)
 
     @app.post("/v1/inference-runs", status_code=201)
-    def create_inference(store: RepositoryDependency, request: InferenceRequest | None = None):
+    def create_inference(
+        store: RepositoryDependency, request: InferenceRequest | None = None
+    ):
         from .reasoning import compute_inference, ontology_document
 
         def compute(data, run_id):
@@ -308,8 +433,12 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
             run["_ontologyTurtle"] = ontology_document()
             return run
 
-        expected_revision = request.expectedBaselineRevision if request is not None else None
-        return handle_operation(lambda: store.create_inference_run(expected_revision, compute))
+        expected_revision = (
+            request.expectedBaselineRevision if request is not None else None
+        )
+        return handle_operation(
+            lambda: store.create_inference_run(expected_revision, compute)
+        )
 
     @app.get("/v1/inference-runs")
     def inference_runs(store: RepositoryDependency):
@@ -317,39 +446,65 @@ def create_app(data_dir: Path | None = None, scenario_path: Path | None = None) 
 
         def operation():
             metadata = ontology_metadata()
-            keys = ("id", "createdAt", "baselineRevision", "stale", "staleReasons", "currentBaselineRevision", "currentOntologySha256")
-            return {"runs": [{
-                **{key: run[key] for key in keys},
-                "ontologyVersion": run["ontology"]["version"],
-                "inferredCount": len(run["inferredFacts"]),
-            } for run in store.inference_runs(metadata["sha256"])]}
+            keys = (
+                "id",
+                "createdAt",
+                "baselineRevision",
+                "stale",
+                "staleReasons",
+                "currentBaselineRevision",
+                "currentOntologySha256",
+            )
+            return {
+                "runs": [
+                    {
+                        **{key: run[key] for key in keys},
+                        "ontologyVersion": run["ontology"]["version"],
+                        "inferredCount": len(run["inferredFacts"]),
+                    }
+                    for run in store.inference_runs(metadata["sha256"])
+                ]
+            }
 
         return handle_operation(operation)
 
     @app.get("/v1/inference-runs/{run_id}/facts/{fact_id}")
     def inference_fact(run_id: str, fact_id: str, store: RepositoryDependency):
-        return handle_operation(lambda: store.inference_fact(_safe_id(run_id), _safe_id(fact_id)))
+        return handle_operation(
+            lambda: store.inference_fact(_safe_id(run_id), _safe_id(fact_id))
+        )
 
     @app.get("/v1/inference-runs/{run_id}")
     def inference_run(run_id: str, store: RepositoryDependency):
         from .reasoning import ontology_metadata
 
-        return handle_operation(lambda: store.inference_run(_safe_id(run_id), ontology_metadata()["sha256"]))
+        return handle_operation(
+            lambda: store.inference_run(_safe_id(run_id), ontology_metadata()["sha256"])
+        )
 
     @app.get("/v1/graph/export")
     def graph_export(store: RepositoryDependency):
-        return Response(store.export(), media_type="application/n-quads", headers={"Content-Disposition": 'attachment; filename="citride.nq"'})
+        return Response(
+            store.export(),
+            media_type="application/n-quads",
+            headers={"Content-Disposition": 'attachment; filename="citride.nq"'},
+        )
 
     frontend_dist = REPO_ROOT / "frontend" / "dist"
     if frontend_dist.is_dir():
+
         @app.get("/{frontend_path:path}", include_in_schema=False)
         def frontend(frontend_path: str):
             if frontend_path == "v1" or frontend_path.startswith("v1/"):
-                raise HTTPException(status_code=404, detail="API endpoint was not found")
+                raise HTTPException(
+                    status_code=404, detail="API endpoint was not found"
+                )
             file_path = (frontend_dist / frontend_path).resolve()
             if not file_path.is_relative_to(frontend_dist.resolve()):
                 raise HTTPException(status_code=404, detail="File was not found")
-            return FileResponse(file_path if file_path.is_file() else frontend_dist / "index.html")
+            return FileResponse(
+                file_path if file_path.is_file() else frontend_dist / "index.html"
+            )
 
     return app
 
