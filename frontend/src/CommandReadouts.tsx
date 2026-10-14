@@ -1,20 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import TexasInfrastructureMap from "./TexasInfrastructureMap";
 import {
   ArrowRight,
   FileText,
-  MapPin,
   ShieldCheck,
   Users,
   Download,
 } from "lucide-react";
 import { displayText } from "./presentation";
 import { humanize, windowLabel } from "./api";
-import {
-  commandMetrics,
-  orderIncidents,
-  referenceGeometries,
-  geometryLayout,
-} from "./commandMetrics";
+import { commandMetrics, orderIncidents } from "./commandMetrics";
 import type { Bootstrap } from "./types";
 import type { CommandIncident, CommandView } from "./commandTypes";
 
@@ -27,7 +22,13 @@ interface Props {
   onSelect: (id: string) => void;
   onNavigate: (view: CommandView) => void;
   onOpenTool: (
-    tool: "relationships" | "evidence" | "blueprint" | "incident" | "lab",
+    tool:
+      | "overview"
+      | "relationships"
+      | "evidence"
+      | "blueprint"
+      | "incident"
+      | "lab",
     entityId?: string,
   ) => void;
   onDownload: () => void;
@@ -43,16 +44,8 @@ export default function CommandReadouts({
   onOpenTool,
   onDownload,
 }: Props) {
-  const [areaId, setAreaId] = useState("all");
   const metrics = useMemo(() => commandMetrics(incidents), [incidents]);
   const areas = data.entities.filter((entity) => entity.type === "ServiceArea");
-  const features = referenceGeometries(data.entities).filter(
-    (feature) =>
-      areaId === "all" ||
-      feature.entity.id === areaId ||
-      feature.entity.locatedIn === areaId,
-  );
-  const project = geometryLayout(features);
   const label = (id: string) =>
     displayText(data.entities.find((entity) => entity.id === id)?.label ?? id);
   const active = orderIncidents(incidents).filter(
@@ -224,135 +217,10 @@ export default function CommandReadouts({
   if (view === "cop")
     return (
       <>
-        <section className="command-panel">
-          <div className="command-panel-heading">
-            <div>
-              <h2>
-                <MapPin size={18} />
-                Service-area common picture
-              </h2>
-              <p>
-                Reference-coordinate schematic · not verified Texas geography.
-              </p>
-            </div>
-            <label>
-              Area filter
-              <select
-                aria-label="Service area filter"
-                value={areaId}
-                onChange={(event) => setAreaId(event.target.value)}
-              >
-                <option value="all">All modeled areas</option>
-                {areas.map((area) => (
-                  <option key={area.id} value={area.id}>
-                    {displayText(area.label)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {features.length ? (
-            <svg
-              className="command-cop"
-              viewBox="0 0 800 400"
-              role="img"
-              aria-label="Reference service-area geometry and model records"
-            >
-              <defs>
-                <pattern
-                  id="command-map-grid"
-                  width="40"
-                  height="40"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <path
-                    d="M 40 0 L 0 0 0 40"
-                    fill="none"
-                    stroke="#1d3046"
-                    strokeWidth="1"
-                  />
-                </pattern>
-              </defs>
-              <rect width="800" height="400" fill="url(#command-map-grid)" />
-              {features
-                .filter((feature) => feature.kind === "Polygon")
-                .map((feature, index) => (
-                  <g key={feature.entity.id}>
-                    <polygon
-                      points={feature.points
-                        .map((point) => project(point).join(","))
-                        .join(" ")}
-                      fill={["#173755", "#3e2b1c", "#163f36"][index % 3]}
-                      fillOpacity="0.55"
-                      stroke={["#60a5fa", "#fb923c", "#34d399"][index % 3]}
-                      strokeDasharray="5 4"
-                    />
-                    <text
-                      x={project(feature.points[0]!)[0] + 6}
-                      y={project(feature.points[0]!)[1] - 8}
-                      fill="#cbd5e1"
-                      fontSize="14"
-                    >
-                      {displayText(feature.entity.label)}
-                    </text>
-                  </g>
-                ))}
-              {features
-                .filter((feature) => feature.kind === "Point")
-                .map((feature) => {
-                  const [x, y] = project(feature.points[0]!);
-                  return (
-                    <g
-                      key={feature.entity.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Inspect ${displayText(feature.entity.label)}`}
-                      onClick={() =>
-                        onOpenTool("relationships", feature.entity.id)
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          onOpenTool("relationships", feature.entity.id);
-                        }
-                      }}
-                    >
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="8"
-                        fill="#60a5fa"
-                        stroke="#dbeafe"
-                        strokeWidth="2"
-                      />
-                      <text
-                        x={Math.min(x + 13, 640)}
-                        y={y - 12}
-                        fill="#e2e8f0"
-                        fontSize="13"
-                      >
-                        {displayText(feature.entity.label)}
-                      </text>
-                      <title>
-                        {displayText(feature.entity.label)} ·{" "}
-                        {feature.entity.type} · reference coordinates
-                      </title>
-                    </g>
-                  );
-                })}
-            </svg>
-          ) : (
-            <p className="command-empty">
-              No valid geometry is available for this selection. Locations are
-              not inferred.
-            </p>
-          )}
-          <p className="command-muted">
-            Select a point to inspect its actual model record. Location or
-            spatial overlap never creates a service dependency or physical
-            impact.
-          </p>
-        </section>
+        <TexasInfrastructureMap
+          data={data}
+          onOpenEntity={(id) => onOpenTool("overview", id)}
+        />
         <div className="command-three-grid">
           {areas.map((area) => {
             const providers = data.entities.filter(

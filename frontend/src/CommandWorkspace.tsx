@@ -23,7 +23,13 @@ export interface CommandWorkspaceProps {
   onSelect: (id: string | null) => void;
   onNavigate: (view: CommandView) => void;
   onOpenTool: (
-    tool: "relationships" | "evidence" | "blueprint" | "incident" | "lab",
+    tool:
+      | "overview"
+      | "relationships"
+      | "evidence"
+      | "blueprint"
+      | "incident"
+      | "lab",
     entityId?: string,
   ) => void;
   onAccessFailure: (failure: ApiError) => void;
