@@ -45,6 +45,22 @@ export function linkedCaseId(
     null
   );
 }
+/** Default only once: explicit cleared/new-case intent survives subsequent reads. */
+export function caseSelectionAfterRead(
+  records: CommandIncident[],
+  entityId: string | null,
+  currentId: string | null,
+  chooseInitialDefault: boolean,
+): string | null {
+  if (entityId) return linkedCaseId(records, entityId, currentId);
+  if (currentId && records.some((record) => record.id === currentId))
+    return currentId;
+  if (!chooseInitialDefault) return null;
+  return (
+    (records.find((record) => record.status !== "closed") ?? records[0])?.id ??
+    null
+  );
+}
 export function caseFocusEntity(
   record: CommandIncident,
   currentEntity: string | null,

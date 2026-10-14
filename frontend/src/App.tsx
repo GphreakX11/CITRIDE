@@ -38,6 +38,7 @@ import {
   caseFocusEntity,
   linkedCaseId,
   evidenceForContext,
+  caseSelectionAfterRead,
 } from "./investigationContext";
 import { initialMapView } from "./mapViewState";
 import { ApiError, api, describe, humanize, windowLabel } from "./api";
@@ -179,6 +180,7 @@ export default function App() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [caseRecords, setCaseRecords] = useState<CommandIncident[]>([]);
   const caseRecordsRef = useRef<CommandIncident[]>([]);
+  const selectionInitialized = useRef(false);
   const [mapState, setMapState] = useState(initialMapView);
   const [workflowLocked, setWorkflowLocked] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -205,12 +207,14 @@ export default function App() {
 
   function selectEntity(id: string | null) {
     if (workflowLocked) return;
+    selectionInitialized.current = true;
     setSelectedEntity(id);
     setSelectedCaseId((current) =>
       linkedCaseId(caseRecordsRef.current, id, current),
     );
   }
   function selectCase(id: string | null) {
+    selectionInitialized.current = true;
     const record = caseRecordsRef.current.find((item) => item.id === id);
     setSelectedCaseId(record?.id ?? null);
     if (!record) {
@@ -235,16 +239,16 @@ export default function App() {
   function receiveCases(records: CommandIncident[]) {
     caseRecordsRef.current = records;
     setCaseRecords(records);
-    if (selectedEntity) {
-      setSelectedCaseId((current) =>
-        linkedCaseId(records, selectedEntity, current),
-      );
-    } else {
-      const record =
-        records.find((item) => item.id === selectedCaseId) ??
-        records.find((item) => item.status !== "closed") ??
-        records[0];
-      setSelectedCaseId(record?.id ?? null);
+    const nextId = caseSelectionAfterRead(
+      records,
+      selectedEntity,
+      selectedCaseId,
+      !selectionInitialized.current,
+    );
+    selectionInitialized.current = true;
+    setSelectedCaseId(nextId);
+    if (!selectedEntity) {
+      const record = records.find((item) => item.id === nextId);
       const entityId = record ? caseFocusEntity(record, null) : null;
       setSelectedEntity(
         entityId && data?.entities.some((entity) => entity.id === entityId)
@@ -255,6 +259,7 @@ export default function App() {
   }
   function reportFailure(failure: unknown) {
     if (failure instanceof ApiError && failure.status === 401) {
+      selectionInitialized.current = false;
       caseRecordsRef.current = [];
       setCaseRecords([]);
       setSelectedCaseId(null);
@@ -395,9 +400,10 @@ export default function App() {
         <td>
           <button
             className="text-button"
+            disabled={workflowLocked}
             onClick={() => {
               setSelectedImpact(impact.id);
-              setSelectedEntity(impact.entityId);
+              selectEntity(impact.entityId);
             }}
           >
             {entityLabel(impact.entityId)}

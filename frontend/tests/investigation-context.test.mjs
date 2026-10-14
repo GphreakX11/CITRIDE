@@ -6,6 +6,7 @@ import {
   linkedCaseId,
   caseFocusEntity,
   evidenceForContext,
+  caseSelectionAfterRead,
 } from "../src/investigationContext.ts";
 import { initialMapView } from "../src/mapViewState.ts";
 const record = (id, provider, extra = {}) => ({
@@ -77,6 +78,25 @@ test("evidence prioritizes immutable captured event; no unrelated substitution",
   assert.deepEqual(evidenceForContext(data, a, "utility-a"), [a.eventSnapshot]);
   assert.deepEqual(evidenceForContext(data, null, "cyber-a"), [data.events[1]]);
   assert.deepEqual(evidenceForContext(data, null, "unknown"), []);
+});
+test("successful refresh preserves explicit cleared/new-case intent instead of reselecting a default", () => {
+  const a = record("a", "utility-a"),
+    b = record("b", "utility-b");
+  assert.equal(caseSelectionAfterRead([a, b], null, null, false), null);
+  assert.equal(
+    caseSelectionAfterRead([a, b], null, "deleted-case", false),
+    null,
+  );
+  assert.equal(caseSelectionAfterRead([a, b], "unlinked", null, true), null);
+});
+test("only initial loading defaults to an active case; refresh keeps captured context", () => {
+  const closed = record("closed", "utility-a", { status: "closed" });
+  const a = record("a", "utility-a"),
+    b = record("b", "utility-b");
+  assert.equal(caseSelectionAfterRead([closed, a, b], null, null, true), "a");
+  assert.equal(caseSelectionAfterRead([a, b], "utility-b", "a", false), "b");
+  assert.equal(caseSelectionAfterRead([a, b], null, "b", false), "b");
+  assert.equal(caseSelectionAfterRead([], null, null, true), null);
 });
 test("map defaults are independent and keep context links secondary", () => {
   const a = initialMapView(),
