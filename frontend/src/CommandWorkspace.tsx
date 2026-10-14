@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCw, Download, AlertTriangle } from "lucide-react";
 import { api, ApiError } from "./api";
 import type { Bootstrap } from "./types";
+import type { MapViewState } from "./mapViewState";
 import type {
   CommandAction,
   CommandActionRequest,
@@ -21,6 +22,12 @@ export interface CommandWorkspaceProps {
   view: CommandView;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  onCasesLoaded: (records: CommandIncident[]) => void;
+  onWorkflowLockChange: (locked: boolean) => void;
+  selectedEntityId: string | null;
+  onSelectEntity: (id: string | null) => void;
+  mapState: MapViewState;
+  onMapStateChange: (state: MapViewState) => void;
   onNavigate: (view: CommandView) => void;
   onOpenTool: (
     tool:
@@ -40,6 +47,12 @@ export default function CommandWorkspace({
   view,
   selectedId,
   onSelect,
+  onCasesLoaded,
+  onWorkflowLockChange,
+  selectedEntityId,
+  onSelectEntity,
+  mapState,
+  onMapStateChange,
   onNavigate,
   onOpenTool,
   onAccessFailure,
@@ -58,10 +71,23 @@ export default function CommandWorkspace({
   const active = useRef(true);
   const generation = useRef(0);
   const selectedRef = useRef(selectedId);
-  const handlers = useRef({ onSelect, onAccessFailure });
-  handlers.current = { onSelect, onAccessFailure };
+  const handlers = useRef({
+    onSelect,
+    onAccessFailure,
+    onCasesLoaded,
+    onWorkflowLockChange,
+  });
+  handlers.current = {
+    onSelect,
+    onAccessFailure,
+    onCasesLoaded,
+    onWorkflowLockChange,
+  };
   selectedRef.current = selectedId;
   const selected = incidents.find((item) => item.id === selectedId) ?? null;
+  useEffect(() => {
+    handlers.current.onWorkflowLockChange(loading || busy || uncertain);
+  }, [loading, busy, uncertain]);
 
   const loadCases = useCallback(async () => {
     const ticket = ++generation.current;
@@ -78,13 +104,7 @@ export default function CommandWorkspace({
       setIncidents(response.incidents);
       setLoaded(true);
       setRefreshedAt(new Date().toISOString());
-      if (!response.incidents.some((item) => item.id === selectedRef.current)) {
-        handlers.current.onSelect(
-          response.incidents.find((item) => item.status !== "closed")?.id ??
-            response.incidents[0]?.id ??
-            null,
-        );
-      }
+      handlers.current.onCasesLoaded(response.incidents);
       setError("");
       if (!pending.current) setUncertain(false);
     } catch (failure) {
@@ -121,6 +141,10 @@ export default function CommandWorkspace({
     setIncidents((current) => [
       result,
       ...current.filter((item) => item.id !== result.id),
+    ]);
+    handlers.current.onCasesLoaded([
+      result,
+      ...incidents.filter((item) => item.id !== result.id),
     ]);
     onSelect(result.id);
   }
@@ -372,6 +396,10 @@ export default function CommandWorkspace({
               onSelect={focus}
               onNavigate={onNavigate}
               onOpenTool={onOpenTool}
+              selectedEntityId={selectedEntityId}
+              onSelectEntity={onSelectEntity}
+              mapState={mapState}
+              onMapStateChange={onMapStateChange}
               onDownload={downloadBrief}
             />
           )}

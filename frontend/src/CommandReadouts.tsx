@@ -11,6 +11,7 @@ import { displayText } from "./presentation";
 import { humanize, windowLabel } from "./api";
 import { commandMetrics, orderIncidents } from "./commandMetrics";
 import type { Bootstrap } from "./types";
+import type { MapViewState } from "./mapViewState";
 import type { CommandIncident, CommandView } from "./commandTypes";
 
 interface Props {
@@ -32,6 +33,10 @@ interface Props {
     entityId?: string,
   ) => void;
   onDownload: () => void;
+  selectedEntityId: string | null;
+  onSelectEntity: (id: string | null) => void;
+  mapState: MapViewState;
+  onMapStateChange: (state: MapViewState) => void;
 }
 export default function CommandReadouts({
   data,
@@ -43,6 +48,10 @@ export default function CommandReadouts({
   onNavigate,
   onOpenTool,
   onDownload,
+  selectedEntityId,
+  onSelectEntity,
+  mapState,
+  onMapStateChange,
 }: Props) {
   const metrics = useMemo(() => commandMetrics(incidents), [incidents]);
   const areas = data.entities.filter((entity) => entity.type === "ServiceArea");
@@ -219,6 +228,10 @@ export default function CommandReadouts({
       <>
         <TexasInfrastructureMap
           data={data}
+          selectedId={selectedEntityId}
+          onSelectEntity={onSelectEntity}
+          mapState={mapState}
+          onMapStateChange={onMapStateChange}
           onOpenEntity={(id) => onOpenTool("overview", id)}
         />
         <div className="command-three-grid">
@@ -253,7 +266,7 @@ export default function CommandReadouts({
                     <li key={entity.id}>
                       <button
                         className="command-link"
-                        onClick={() => onOpenTool("relationships", entity.id)}
+                        onClick={() => onSelectEntity(entity.id)}
                       >
                         {displayText(entity.label)}
                       </button>

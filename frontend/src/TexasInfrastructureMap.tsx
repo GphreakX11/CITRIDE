@@ -1,4 +1,10 @@
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
+import type { MapViewState, RelationshipDirection } from "./mapViewState";
+import {
+  relationshipStory,
+  serviceConnections,
+  serviceNeighborhood,
+} from "./relationshipStory";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -28,6 +34,10 @@ import "./texas-map.css";
 interface Props {
   data: Bootstrap;
   onOpenEntity: (id: string) => void;
+  selectedId: string | null;
+  onSelectEntity: (id: string | null) => void;
+  mapState: MapViewState;
+  onMapStateChange: (state: MapViewState) => void;
 }
 const typeColor = (entity: Entity) =>
   /Cyber|PhysicalOT|PhysicalIT/.test(entity.type)
@@ -46,14 +56,22 @@ const edgeColor = (edge: MapEdge) =>
       ? "#91a8bd"
       : "#75aaf2";
 
-export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [areaId, setAreaId] = useState("all");
-  const [query, setQuery] = useState("");
-  const [focusOnly, setFocusOnly] = useState(false);
-  const [structural, setStructural] = useState(true);
-  const [zoom, setZoom] = useState(1);
-  const [center, setCenter] = useState({ x: 480, y: 360 });
+export default function TexasInfrastructureMap({
+  data,
+  onOpenEntity,
+  selectedId,
+  onSelectEntity,
+  mapState,
+  onMapStateChange,
+}: Props) {
+  const { areaId, query, focusOnly, structural, zoom, center, direction } =
+    mapState;
+  const updateView = (patch: Partial<MapViewState>) =>
+    onMapStateChange({ ...mapState, ...patch });
+  const connectionsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    connectionsRef.current?.scrollTo({ top: 0 });
+  }, [selectedId, direction]);
   const drag = useRef<{
     x: number;
     y: number;
@@ -74,8 +92,18 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
   const areas = data.entities.filter((entity) => entity.type === "ServiceArea");
   const selected = selectedId ? entities.get(selectedId) : undefined;
   const connections = selected ? connectedEdges(edges, selected.id) : [];
+  const story = selected
+    ? relationshipStory(edges, selected.id, data.entities)
+    : undefined;
+  const directional = !!selected && direction !== "all";
+  const serviceEdges = selected
+    ? serviceConnections(edges, selected.id, direction)
+    : [];
+  const activeConnections = directional
+    ? serviceEdges
+    : connections.filter((edge) => edge.kind === "dependency" || structural);
   const neighbors = new Set(
-    connections.flatMap((edge) => [edge.source, edge.target]),
+    activeConnections.flatMap((edge) => [edge.source, edge.target]),
   );
   if (selected) neighbors.add(selected.id);
   const belongsToArea = (
@@ -114,7 +142,7 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
   const visible = data.entities.filter(
     (entity) =>
       visibleIds.has(entity.id) &&
-      (!focusOnly || !selected || neighbors.has(entity.id)),
+      (!(focusOnly || directional) || !selected || neighbors.has(entity.id)),
   );
   const drawnIds = new Set(visible.map((entity) => entity.id));
   const labelBounds = {
@@ -151,34 +179,74 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
     (edge) =>
       drawnIds.has(edge.source) &&
       drawnIds.has(edge.target) &&
-      (edge.kind === "dependency" || structural),
+      (directional
+        ? serviceEdges.includes(edge)
+        : edge.kind === "dependency" || structural),
   );
   const name = (id: string) => displayText(entities.get(id)?.label ?? id);
   const choose = (id: string) => {
-    setSelectedId(id);
-    setQuery("");
+    if (!entities.has(id)) return;
+    onSelectEntity(id);
     const entity = entities.get(id);
-    if (entity && areaId !== "all" && !belongsToArea(entity, areaId))
-      setAreaId("all");
     const compact = window.matchMedia("(max-width: 800px)").matches;
-    if (compact) setZoom(2);
-    if (zoom > 1 || compact) {
-      const point = positions.get(id);
-      if (point) setCenter({ x: point.x, y: point.y });
-    }
+    const point = positions.get(id);
+    updateView({
+      query: "",
+      areaId:
+        entity && areaId !== "all" && !belongsToArea(entity, areaId)
+          ? "all"
+          : areaId,
+      zoom: compact ? 2 : zoom,
+      center:
+        point && (zoom > 1 || compact) ? { x: point.x, y: point.y } : center,
+    });
   };
   const reset = () => {
-    setZoom(1);
-    setCenter({ x: 480, y: 360 });
+    updateView({ zoom: 1, center: { x: 480, y: 360 } });
   };
   const changeZoom = (next: number) => {
     const value = Math.max(1, Math.min(3, next));
-    setZoom(value);
-    if (value === 1) setCenter({ x: 480, y: 360 });
-    else if (selected) {
-      const point = positions.get(selected.id);
-      if (point) setCenter({ x: point.x, y: point.y });
+    const point = selected ? positions.get(selected.id) : undefined;
+    updateView({
+      zoom: value,
+      center:
+        value === 1
+          ? { x: 480, y: 360 }
+          : point
+            ? { x: point.x, y: point.y }
+            : center,
+    });
+  };
+  const showDirection = (next: RelationshipDirection) => {
+    // Fit actual direct counterparts, rather than hiding them outside a retained zoom.
+    const ids = selected
+      ? serviceNeighborhood(edges, selected.id, next)
+      : new Set<string>();
+    const points = [...ids].flatMap((id) =>
+      positions.has(id) ? [positions.get(id)!] : [],
+    );
+    if (!points.length) {
+      updateView({ direction: next });
+      return;
     }
+    const xs = points.map((point) => point.x),
+      ys = points.map((point) => point.y);
+    const minX = Math.min(...xs),
+      maxX = Math.max(...xs),
+      minY = Math.min(...ys),
+      maxY = Math.max(...ys);
+    const fittedZoom = Math.max(
+      1,
+      Math.min(3, 960 / (maxX - minX + 240), 720 / (maxY - minY + 200)),
+    );
+    updateView({
+      direction: next,
+      zoom: fittedZoom,
+      center:
+        fittedZoom === 1
+          ? { x: 480, y: 360 }
+          : { x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
+    });
   };
   const width = 960 / zoom,
     height = 720 / zoom;
@@ -210,9 +278,17 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
           </button>
           {dependency && (
             <div className="texas-edge-detail">
-              {functionLabel && <span>{displayText(functionLabel)}</span>}
               <span>
-                Propagation{" "}
+                Service function:{" "}
+                {displayText(functionLabel ?? dependency.dependentFunction)}
+              </span>
+              <span>
+                Applies to recorded loss types:{" "}
+                {dependency.lossTypes.map(humanize).join(", ") ||
+                  "not established"}
+              </span>
+              <span>
+                If supply is lost: modeled propagation{" "}
                 {windowLabel([
                   dependency.propagationDelayMinHours,
                   dependency.propagationDelayMaxHours,
@@ -225,6 +301,24 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
                   ? "Usable backup not established"
                   : `Usable backup ${windowLabel([dependency.usableBackupMinHours, dependency.usableBackupMaxHours])}`}
               </span>
+              <span>
+                Modeled impact if supply is lost:{" "}
+                {dependency.outputLossType
+                  ? humanize(dependency.outputLossType)
+                  : "output loss type not established"}
+                . Not a current outage.
+              </span>
+              {dependency.validForLossTypes.length > 0 && (
+                <span>
+                  Backup applies to:{" "}
+                  {dependency.validForLossTypes.map(humanize).join(", ")}
+                </span>
+              )}
+              {dependency.assumptionNote && (
+                <span>
+                  Assumption: {displayText(dependency.assumptionNote)}
+                </span>
+              )}
             </div>
           )}
           <small className="texas-source">
@@ -235,6 +329,30 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
         </li>
       );
     });
+
+  function serviceSection(side: "suppliers" | "dependents") {
+    const outbound = side === "dependents";
+    const rows = story?.[side] ?? [];
+    const ids = outbound ? story?.dependentIds : story?.supplierIds;
+    return (
+      <section key={side} className="texas-service-section">
+        <h4>
+          {outbound ? "What depends on this" : "What supplies this"}{" "}
+          <span>{ids?.length ?? 0}</span>
+        </h4>
+        <ul className="texas-connection-list">
+          {relationRows(rows, outbound)}
+        </ul>
+        {!rows.length && (
+          <p className="texas-quiet">
+            {outbound
+              ? "No directly supported entities recorded."
+              : "No direct suppliers recorded. This does not establish that the entity has no external supply."}
+          </p>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section
@@ -264,14 +382,17 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
             placeholder="Find a facility, utility or asset…"
             value={query}
             onChange={(event) => {
-              setQuery(event.target.value);
-              setSelectedId(null);
+              updateView({ query: event.target.value });
+              onSelectEntity(null);
             }}
           />
           {query && (
             <button
               aria-label="Clear entity search"
-              onClick={() => setQuery("")}
+              onClick={() => {
+                updateView({ query: "" });
+                onSelectEntity(null);
+              }}
             >
               <X size={16} />
             </button>
@@ -283,9 +404,8 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
             aria-label="Service area filter"
             value={areaId}
             onChange={(event) => {
-              setAreaId(event.target.value);
-              setSelectedId(null);
-              setQuery("");
+              updateView({ areaId: event.target.value, query: "" });
+              onSelectEntity(null);
             }}
           >
             <option value="all">All service areas</option>
@@ -304,7 +424,7 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
             onChange={(event) =>
               event.target.value
                 ? choose(event.target.value)
-                : setSelectedId(null)
+                : onSelectEntity(null)
             }
           >
             <option value="">Select an entity…</option>
@@ -316,7 +436,29 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
           </select>
         </label>
       </div>
-      <div className="texas-workspace">
+      <div
+        className="texas-direction-controls"
+        role="group"
+        aria-label="Explore direct service connections"
+      >
+        {(
+          [
+            ["suppliers", "What supplies this?"],
+            ["dependents", "What depends on this?"],
+            ["all", "All service connections"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            disabled={!selected}
+            aria-pressed={direction === value}
+            onClick={() => showDirection(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="texas-workspace" data-relationship-direction={direction}>
         <div className="texas-map-wrap">
           <div className="texas-map-actions" aria-label="Map view controls">
             <button
@@ -365,9 +507,11 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
                 dy = event.clientY - start.y;
               if (Math.abs(dx) + Math.abs(dy) > 6) start.moved = true;
               if (start.moved)
-                setCenter({
-                  x: Math.max(80, Math.min(880, start.cx - dx * start.scale)),
-                  y: Math.max(60, Math.min(660, start.cy - dy * start.scale)),
+                updateView({
+                  center: {
+                    x: Math.max(80, Math.min(880, start.cx - dx * start.scale)),
+                    y: Math.max(60, Math.min(660, start.cy - dy * start.scale)),
+                  },
                 });
             }}
             onPointerUp={(event) => {
@@ -637,20 +781,31 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
             </span>
           </div>
           <div className="texas-layer-controls">
+            {directional && (
+              <p className="texas-quiet">
+                Direct service connections only. Choose All service connections
+                to show optional context links.
+              </p>
+            )}
             <label>
               <input
                 type="checkbox"
                 checked={structural}
-                onChange={(event) => setStructural(event.target.checked)}
+                aria-label="Context links"
+                onChange={(event) =>
+                  updateView({ structural: event.target.checked })
+                }
               />
-              Context links
+              Show ownership &amp; cyber links
             </label>
             <label>
               <input
                 type="checkbox"
-                checked={focusOnly}
-                disabled={!selected}
-                onChange={(event) => setFocusOnly(event.target.checked)}
+                checked={focusOnly || directional}
+                disabled={!selected || directional}
+                onChange={(event) =>
+                  updateView({ focusOnly: event.target.checked })
+                }
               />
               Selected neighborhood only
             </label>
@@ -658,9 +813,13 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
               <button
                 className="command-link"
                 onClick={() => {
-                  setSelectedId(null);
-                  setFocusOnly(false);
-                  reset();
+                  onSelectEntity(null);
+                  updateView({
+                    focusOnly: false,
+                    direction: "all",
+                    zoom: 1,
+                    center: { x: 480, y: 360 },
+                  });
                 }}
               >
                 Clear selection
@@ -685,75 +844,58 @@ export default function TexasInfrastructureMap({ data, onOpenEntity }: Props) {
                 </p>
                 <code>{selected.id}</code>
               </div>
-              <div className="texas-inspector-stats">
-                <span>
-                  <strong>
-                    {
-                      new Set(
-                        connections.map((edge) =>
-                          edge.source === selected.id
-                            ? edge.target
-                            : edge.source,
-                        ),
-                      ).size
-                    }
-                  </strong>
-                  Connected entities
-                </span>
-                <span>
-                  <strong>
-                    {
-                      connections.filter((edge) => edge.kind === "dependency")
-                        .length
-                    }
-                  </strong>
-                  Service links
-                </span>
-              </div>
-              <div className="texas-connections-scroll">
-                <h4>
-                  Outgoing connections{" "}
+              <div className="texas-connections-scroll" ref={connectionsRef}>
+                <p
+                  className="texas-relationship-story"
+                  data-relationship-summary
+                >
+                  {displayText(story?.summary ?? "")}
+                </p>
+                <div className="texas-inspector-stats">
                   <span>
-                    {
-                      connections.filter((edge) => edge.source === selected.id)
-                        .length
-                    }
+                    <strong>{story?.supplierIds.length ?? 0}</strong>Direct
+                    suppliers
                   </span>
-                </h4>
-                <ul className="texas-connection-list">
-                  {relationRows(
-                    connections.filter((edge) => edge.source === selected.id),
-                    true,
-                  )}
-                </ul>
-                {!connections.some((edge) => edge.source === selected.id) && (
-                  <p className="texas-quiet">
-                    No recorded outgoing connections.
-                  </p>
-                )}
-                <h4>
-                  Incoming connections{" "}
                   <span>
-                    {
-                      connections.filter((edge) => edge.target === selected.id)
-                        .length
-                    }
+                    <strong>{story?.dependentIds.length ?? 0}</strong>Supported
+                    entities
                   </span>
-                </h4>
-                <ul className="texas-connection-list">
-                  {relationRows(
-                    connections.filter((edge) => edge.target === selected.id),
-                    false,
-                  )}
-                </ul>
-                {!connections.some((edge) => edge.target === selected.id) && (
+                </div>
+                {(direction === "dependents"
+                  ? (["dependents", "suppliers"] as const)
+                  : (["suppliers", "dependents"] as const)
+                ).map(serviceSection)}
+                <details className="texas-context-details">
+                  <summary>
+                    Ownership, hosting &amp; location (
+                    {story?.context.length ?? 0} links)
+                  </summary>
                   <p className="texas-quiet">
-                    No recorded incoming connections.
+                    Context only, not service dependencies. Select a linked
+                    entity to explore its own records.
                   </p>
-                )}
+                  <ul className="texas-connection-list">
+                    {relationRows(
+                      (story?.context ?? []).filter(
+                        (edge) => edge.source === selected.id,
+                      ),
+                      true,
+                    )}
+                    {relationRows(
+                      (story?.context ?? []).filter(
+                        (edge) => edge.target === selected.id,
+                      ),
+                      false,
+                    )}
+                  </ul>
+                  {!story?.context.length && (
+                    <p className="texas-quiet">No context links recorded.</p>
+                  )}
+                </details>
                 <p className="texas-quiet">
                   Only explicit model links are shown. Proximity does not
-                  establish a dependency.
+                  establish a dependency. Conditional timing and backup are
+                  model assumptions, not live countdowns or current outages.
                 </p>
               </div>
               <button

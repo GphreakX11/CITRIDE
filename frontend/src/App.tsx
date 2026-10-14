@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowRight,
@@ -32,7 +32,14 @@ import OntologyBlueprint from "./OntologyBlueprint";
 import IncidentWorkspace from "./IncidentWorkspace";
 import CommandWorkspace from "./CommandWorkspace";
 import { commandNavigation } from "./commandTypes";
-import type { CommandView } from "./commandTypes";
+import type { CommandView, CommandIncident } from "./commandTypes";
+import InvestigationBar from "./InvestigationBar";
+import {
+  caseFocusEntity,
+  linkedCaseId,
+  evidenceForContext,
+} from "./investigationContext";
+import { initialMapView } from "./mapViewState";
 import { ApiError, api, describe, humanize, windowLabel } from "./api";
 import { displayText } from "./presentation";
 import { reviewDisplayText } from "./incidentDecisions";
@@ -170,6 +177,10 @@ export default function App() {
   const [accessIssue, setAccessIssue] = useState<ApiError | null>(null);
   const [view, setView] = useState<View>("command");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [caseRecords, setCaseRecords] = useState<CommandIncident[]>([]);
+  const caseRecordsRef = useRef<CommandIncident[]>([]);
+  const [mapState, setMapState] = useState(initialMapView);
+  const [workflowLocked, setWorkflowLocked] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ initial: Dependency | null } | null>(
@@ -192,7 +203,64 @@ export default function App() {
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [streamId, setStreamId] = useState("");
 
+  function selectEntity(id: string | null) {
+    if (workflowLocked) return;
+    setSelectedEntity(id);
+    setSelectedCaseId((current) =>
+      linkedCaseId(caseRecordsRef.current, id, current),
+    );
+  }
+  function selectCase(id: string | null) {
+    const record = caseRecordsRef.current.find((item) => item.id === id);
+    setSelectedCaseId(record?.id ?? null);
+    if (!record) {
+      setSelectedEntity(null);
+      return;
+    }
+    const entityId = caseFocusEntity(record, selectedEntity);
+    setSelectedEntity(
+      entityId && data?.entities.some((entity) => entity.id === entityId)
+        ? entityId
+        : null,
+    );
+    // A new investigation should not be hidden by a previous utility's map filter.
+    if (entityId !== selectedEntity)
+      setMapState((current) => ({
+        ...current,
+        areaId: "all",
+        query: "",
+        direction: "all",
+      }));
+  }
+  function receiveCases(records: CommandIncident[]) {
+    caseRecordsRef.current = records;
+    setCaseRecords(records);
+    if (selectedEntity) {
+      setSelectedCaseId((current) =>
+        linkedCaseId(records, selectedEntity, current),
+      );
+    } else {
+      const record =
+        records.find((item) => item.id === selectedCaseId) ??
+        records.find((item) => item.status !== "closed") ??
+        records[0];
+      setSelectedCaseId(record?.id ?? null);
+      const entityId = record ? caseFocusEntity(record, null) : null;
+      setSelectedEntity(
+        entityId && data?.entities.some((entity) => entity.id === entityId)
+          ? entityId
+          : null,
+      );
+    }
+  }
   function reportFailure(failure: unknown) {
+    if (failure instanceof ApiError && failure.status === 401) {
+      caseRecordsRef.current = [];
+      setCaseRecords([]);
+      setSelectedCaseId(null);
+      setSelectedEntity(null);
+      setMapState(initialMapView());
+    }
     setError(failure instanceof Error ? failure.message : String(failure));
     setAccessIssue(
       failure instanceof ApiError &&
@@ -286,6 +354,11 @@ export default function App() {
   };
   const scenario = data?.scenarios.find((item) => item.id === scenarioId);
   const inspected = data?.entities.find((item) => item.id === selectedEntity);
+  const contextCase =
+    caseRecords.find((item) => item.id === selectedCaseId) ?? null;
+  const contextEvents = data
+    ? evidenceForContext(data, contextCase, selectedEntity)
+    : [];
   const currentImpact = run?.impacts.find((item) => item.id === selectedImpact);
   const selectedStream = telemetry?.streams.find(
     (item) => item.id === streamId,
@@ -566,15 +639,32 @@ export default function App() {
           )}
           {data && !accessIssue && (
             <>
+              <InvestigationBar
+                entity={inspected}
+                selectedCase={contextCase}
+                cases={caseRecords}
+                view={view}
+                locked={workflowLocked}
+                onSelectCase={(id) => {
+                  if (!workflowLocked) selectCase(id);
+                }}
+                onNavigate={changeView}
+              />
               <div hidden={!commandView}>
                 <CommandWorkspace
                   data={data}
                   view={commandView?.id ?? "command"}
                   selectedId={selectedCaseId}
-                  onSelect={setSelectedCaseId}
+                  onSelect={selectCase}
+                  onCasesLoaded={receiveCases}
+                  onWorkflowLockChange={setWorkflowLocked}
+                  selectedEntityId={selectedEntity}
+                  onSelectEntity={selectEntity}
+                  mapState={mapState}
+                  onMapStateChange={setMapState}
                   onNavigate={changeView}
                   onOpenTool={(tool, entityId) => {
-                    if (entityId) setSelectedEntity(entityId);
+                    if (entityId) selectEntity(entityId);
                     changeView(tool);
                   }}
                   onAccessFailure={reportFailure}
@@ -633,7 +723,7 @@ export default function App() {
                     <Graph
                       data={data}
                       selectedId={selectedEntity}
-                      onSelect={setSelectedEntity}
+                      onSelect={selectEntity}
                       impactedIds={run?.impacts.map((item) => item.entityId)}
                     />
                     <section className="card inspector">
@@ -1522,6 +1612,78 @@ export default function App() {
 
               {view === "evidence" && (
                 <>
+                  {(inspected || contextCase) && (
+                    <section
+                      className="card context-evidence"
+                      aria-label="Evidence for current investigation"
+                    >
+                      <div className="panel-heading">
+                        <div>
+                          <span className="eyebrow">
+                            {contextCase
+                              ? `CAPTURED CASE · BASELINE R${contextCase.baselineRevision}`
+                              : "EXPLICIT ASSET ASSOCIATION"}
+                          </span>
+                          <h2>
+                            Evidence for{" "}
+                            {inspected
+                              ? displayText(inspected.label)
+                              : "selected case"}
+                          </h2>
+                        </div>
+                      </div>
+                      {contextCase && (
+                        <p>
+                          {contextCase.title} · saved source snapshot, not live
+                          telemetry.
+                        </p>
+                      )}
+                      {contextEvents.map((event) => (
+                        <article
+                          key={event.id}
+                          className="event-card"
+                          data-context-event-id={event.id}
+                        >
+                          <div className="event-time">
+                            <Clock3 size={17} />
+                            <strong>
+                              {event.timestamp ??
+                                event.eventTime ??
+                                "Time unknown"}
+                            </strong>
+                          </div>
+                          <div>
+                            <h3>
+                              {displayText(
+                                event.label ?? event.title ?? event.id,
+                              )}
+                            </h3>
+                            <p>
+                              {displayText(
+                                event.description ?? "Description not provided",
+                              )}
+                            </p>
+                            {renderSources(event.sourceRefs ?? [])}
+                            <details>
+                              <summary>
+                                {contextCase
+                                  ? "Captured event record"
+                                  : "Event record"}
+                              </summary>
+                              <pre>{JSON.stringify(event, null, 2)}</pre>
+                            </details>
+                          </div>
+                        </article>
+                      ))}
+                      {!contextEvents.length && (
+                        <p>
+                          No directly associated event or saved case is recorded
+                          for this entity. Other source records below are not
+                          assumed to belong to it.
+                        </p>
+                      )}
+                    </section>
+                  )}
                   <div className="notice">
                     <Activity size={20} />
                     <div>
