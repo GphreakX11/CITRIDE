@@ -52,10 +52,10 @@ export function caseSelectionAfterRead(
   currentId: string | null,
   chooseInitialDefault: boolean,
 ): string | null {
-  if (entityId) return linkedCaseId(records, entityId, currentId);
   if (currentId && records.some((record) => record.id === currentId))
     return currentId;
   if (!chooseInitialDefault) return null;
+  if (entityId) return linkedCaseId(records, entityId, currentId);
   return (
     (records.find((record) => record.status !== "closed") ?? records[0])?.id ??
     null

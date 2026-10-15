@@ -1,0 +1,131 @@
+.app-shell .sidebar {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sidebar .workspace-mode-switch {
+  display: grid;
+  flex-shrink: 0;
+  padding: 4px;
+  margin: 16px 0 20px;
+  gap: 4px;
+}
+.workspace-command .cc-page-heading {
+  display: none;
+}
+.workspace-mode-switch {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 4px;
+  margin: 16px 13px 20px;
+  padding: 4px;
+  background: #0b1221;
+  border: 1px solid #26354c;
+  border-radius: 9px;
+}
+.workspace-mode-switch button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #a8bad1;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.workspace-mode-switch button[aria-pressed="true"] {
+  background: #24466b;
+  color: #fff;
+  box-shadow: 0 1px 5px #0005;
+}
+.workspace-mode-switch button:focus-visible {
+  outline: 2px solid #67c5ff;
+  outline-offset: 2px;
+}
+.workspace-mode-switch button:disabled,
+.nav-item:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+.command-incident-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #a9bdd5;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+.command-incident-picker select {
+  background: #101d30;
+  color: #e5efff;
+  border: 1px solid #30445f;
+  max-width: min(640px, 85%);
+  min-height: 38px;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.analyst-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+.analyst-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  color: #b1c4db;
+  flex: 1 1 140px;
+}
+.analyst-filters input,
+.analyst-filters select {
+  min-width: 0;
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #30445f;
+  background: #101d30;
+  color: #e6f0ff;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.evidence-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+.evidence-picker [aria-pressed="true"] {
+  outline: 2px solid #5aa5df;
+  background: #17324f;
+}
+.workspace-command .content-footer {
+  opacity: 0.75;
+}
+.command-workspace .command-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.workspace-analyst .model-tools summary {
+  cursor: pointer;
+}
+.workspace-analyst .model-tools:not([open]) {
+  margin-bottom: 20px;
+}
+@media (max-width: 700px) {
+  .command-incident-picker {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .command-incident-picker select {
+    max-width: 100%;
+    width: 100%;
+  }
+  .analyst-filters {
+    gap: 10px;
+  }
+  .workspace-mode-switch {
+    margin-top: 10px;
+  }
+}

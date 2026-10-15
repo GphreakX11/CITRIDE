@@ -11,10 +11,10 @@ function fixture(overrides = {}) {
     ...overrides,
   };
 }
-test("eight source-inspired roles retain useful nonoperational labels", () => {
-  assert.equal(commandNavigation.length, 8);
-  assert.equal(new Set(commandNavigation.map((item) => item.id)).size, 8);
-  assert.deepEqual(commandNavigation.map((item) => item.code), ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]);
+test("seven command views have unique ids and command-specific labels", () => {
+  assert.equal(commandNavigation.length, 7);
+  assert.equal(new Set(commandNavigation.map((item) => item.id)).size, 7);
+  assert.deepEqual(commandNavigation.map((item) => item.code), ["C1", "C2", "C3", "C4", "C5", "C6", "C7"]);
 });
 test("empty casework does not invent operational performance", () => {
   assert.deepEqual(commandMetrics([]), { activeIncidents: 0, pendingDecisions: 0, pendingTasks: 0, modeledFunctions: 0, savedCoordinationNotes: 0, closedIncidents: 0, firstReviewMedianSeconds: null });

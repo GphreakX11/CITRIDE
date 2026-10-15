@@ -10,6 +10,15 @@ import type {
 import { displayText } from "./presentation";
 import { reviewDisplayText, reviewWarning } from "./incidentDecisions";
 import "./command-casework.css";
+import "./analyst-detail.css";
+import {
+  referenceSourceEvent,
+  referenceFromEvent,
+} from "./referenceInvestigation";
+import ReferenceInvestigationEvidence from "./ReferenceInvestigationEvidence";
+import CaseProgress from "./CaseProgress";
+import { pcapFromEvent } from "./pcapEvidence";
+import PcapEvidencePanel from "./PcapEvidencePanel";
 
 export interface CommandCaseworkProps {
   data: Bootstrap;
@@ -28,6 +37,10 @@ export interface CommandCaseworkProps {
   onRecheck: () => void;
   onRetryPending: () => void;
   onOpenEvidence: () => void;
+  onNavigate?: (target: string) => void;
+  onOpenEntity?: (id: string) => void;
+  onDownloadRecord?: () => void;
+  onOpenTool?: (tool: "incident" | "lab") => void;
 }
 const eventName = (event: Event) =>
   displayText(event.label || event.title || event.id);
@@ -53,9 +66,18 @@ function Sources({ refs, sources }: { refs: string[]; sources: Source[] }) {
         refs.map((id) => {
           const source = sources.find((item) => item.id === id);
           return (
-            <span key={id} className="cc-chip" title={id}>
-              {displayText(source?.label || source?.title || id)}
-            </span>
+            <details key={id} className="analyst-source-record">
+              <summary title={id}>
+                {displayText(source?.label || source?.title || id)}
+              </summary>
+              {source ? (
+                <pre className="analyst-raw-record">
+                  {JSON.stringify(source, null, 2)}
+                </pre>
+              ) : (
+                <p>Source record not captured in this snapshot.</p>
+              )}
+            </details>
           );
         })
       ) : (
@@ -149,6 +171,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
     onRetryPending,
     onOpenEvidence,
   } = props;
+  const sourceEvents = [...data.events, referenceSourceEvent];
   const [eventId, setEventId] = useState(
     () =>
       data.events.find((event) => event.id === "event-dosing")?.id ||
@@ -168,7 +191,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
     if (
       !title.trim() ||
       !eventId.trim() ||
-      !data.events.some((event) => event.id === eventId)
+      !sourceEvents.some((event) => event.id === eventId)
     ) {
       setError(
         "Select an available source event and enter a nonempty case title.",
@@ -200,7 +223,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
     <section className="command-casework" aria-label="Workspace casework">
       <header className="cc-panel cc-header">
         <div>
-          <h2>Workspace casework</h2>
+          <h2>{props.mode === "full" ? "Case File" : "Workspace casework"}</h2>
           <p className="cc-muted">
             Durable local triage and advisory review. Priority and status are
             user-assigned tracking, not source-system severity.
@@ -278,7 +301,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
               <option value="" disabled>
                 Select a source event
               </option>
-              {data.events.map((event) => (
+              {sourceEvents.map((event) => (
                 <option key={event.id} value={event.id}>
                   {eventName(event)} — {event.id}
                 </option>
@@ -331,7 +354,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
           )}
           <button
             className="cc-primary"
-            disabled={blocked || !data.events.length}
+            disabled={blocked || !sourceEvents.length}
             type="submit"
           >
             {creating ? "Saving workspace case…" : "Create workspace case"}
@@ -353,7 +376,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
             available source event above. Tasks, notes and advisory reviews are
             saved to that case.
           </p>
-          {!data.events.length && (
+          {!sourceEvents.length && (
             <p>
               No source events are available. Recheck the workflow to reload
               source context.
@@ -380,10 +403,27 @@ function CaseDetails({
   data,
   selected,
   mode,
+  onNavigate,
+  onOpenEntity,
+  onDownloadRecord,
+  onOpenTool,
   onMutate,
   busy,
   uncertain,
 }: CommandCaseworkProps & { selected: CommandIncident }) {
+  const sectionPrefix = useId();
+  const sectionId = (section: string) => `${sectionPrefix}-case-${section}`;
+  const [activeSection, setActiveSection] = useState("context");
+  const sections = [
+    ["context", "Context"],
+    ["cyber", "Cyber"],
+    ["consequence", "Consequences"],
+    ["decisions", "Decisions"],
+    ["tasks", "Response"],
+    ["notes", "Coordination"],
+    ["activity", "History"],
+    ["advanced", "Advanced"],
+  ] as const;
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const guard = useRef(false);
@@ -397,6 +437,7 @@ function CaseDetails({
   const blocked = busy || uncertain || saving;
   const locked = blocked || selected.status === "closed";
   const context = selected.contextSnapshot;
+  const reference = referenceFromEvent(selected.eventSnapshot);
   const scenarios = context.scenarios.filter((scenario) =>
     scenario.seed.eventRefs.includes(selected.eventId),
   );
@@ -417,11 +458,24 @@ function CaseDetails({
     selected.decisions.every((decision) => decision.reviewed);
   const run = selected.runSnapshot;
   const sources = snapshotSources(run?.baselineSnapshot);
-  const contextSources = sources.length
-    ? sources
-    : baselineMatches
-      ? data.sources
-      : [];
+  const contextSources = reference
+    ? [
+        {
+          id: reference.source.id,
+          type: "SourceRecord",
+          title: reference.source.title,
+          label: reference.source.filename,
+          evidenceCategory: "user_supplied_report",
+          confidence: "unverified",
+          notes:
+            "Original report fingerprint. Actual PCAP not supplied; payment-key literal redacted in case summaries.",
+        },
+      ]
+    : sources.length
+      ? sources
+      : baselineMatches
+        ? data.sources
+        : [];
   const show = (section: CommandCaseworkProps["mode"]) =>
     mode === "full" || mode === section;
   async function mutate(
@@ -562,7 +616,34 @@ function CaseDetails({
   }
   return (
     <>
-      <section className="cc-panel">
+      {mode === "full" && (
+        <nav className="analyst-section-nav" aria-label="Case file sections">
+          {sections.map(([id, label]) => (
+            <a
+              key={id}
+              href={`#${sectionId(id)}`}
+              aria-current={activeSection === id ? "location" : undefined}
+              onClick={() => setActiveSection(id)}
+            >
+              {label}
+              {id === "tasks" &&
+                ` ${selected.tasks.filter((task) => task.completed).length}/${selected.tasks.length}`}
+              {id === "decisions" &&
+                ` ${selected.decisions.filter((decision) => decision.reviewed).length}/${selected.decisions.length}`}
+            </a>
+          ))}
+        </nav>
+      )}
+      <CaseProgress
+        incident={selected}
+        locked={locked}
+        onNavigate={onNavigate}
+      />
+      <section
+        className="cc-panel analyst-detail-section"
+        id={sectionId("context")}
+        data-case-section="context"
+      >
         <div className="cc-heading">
           <h2>{selected.title}</h2>
           <div className="cc-chips">
@@ -572,9 +653,56 @@ function CaseDetails({
         </div>
         <p>
           {eventName(selected.eventSnapshot)} ·{" "}
-          {displayText(context.provider?.label ?? "Provider unresolved")}
+          {reference
+            ? "Case-local reference assets · no modeled provider"
+            : displayText(context.provider?.label ?? "Provider unresolved")}
         </p>
-        <details>
+        <h3>Context · how this event reaches people</h3>
+        <ol
+          className="analyst-context-chain"
+          aria-label="Captured event-to-people chain"
+        >
+          {(
+            [
+              ["Cyber asset", context.cyberAsset],
+              ["Physical asset", context.physicalAsset],
+              ["Facility", context.facility],
+              ["Provider", context.provider],
+              ["Service area", context.serviceArea],
+            ] as const
+          ).map(([label, entity]) => (
+            <li key={label}>
+              <small>{label}</small>
+              {entity ? (
+                onOpenEntity ? (
+                  <button
+                    type="button"
+                    className="analyst-record-link"
+                    disabled={blocked}
+                    onClick={() => onOpenEntity(entity.id)}
+                  >
+                    {displayText(entity.label)}
+                  </button>
+                ) : (
+                  <strong>{displayText(entity.label)}</strong>
+                )
+              ) : (
+                <span className="cc-muted">Not captured</span>
+              )}
+            </li>
+          ))}
+        </ol>
+        {context.warnings.length > 0 && (
+          <aside className="cc-warning" aria-label="Context warnings">
+            <h3>Context warnings</h3>
+            <ul>
+              {context.warnings.map((warning, index) => (
+                <li key={index}>{reviewDisplayText(warning)}</li>
+              ))}
+            </ul>
+          </aside>
+        )}
+        <details open>
           <summary>Captured context & sources</summary>
           <dl className="cc-metadata">
             <dt>Case / version</dt>
@@ -611,16 +739,6 @@ function CaseDetails({
             are unchanged.
           </p>
           <Sources refs={context.sourceRefs} sources={contextSources} />
-          {context.warnings.length > 0 && (
-            <aside className="cc-warning">
-              <h3>Context warnings</h3>
-              <ul>
-                {context.warnings.map((warning, index) => (
-                  <li key={index}>{reviewDisplayText(warning)}</li>
-                ))}
-              </ul>
-            </aside>
-          )}
         </details>
         {!baselineMatches && (
           <p className="cc-warning">
@@ -641,8 +759,43 @@ function CaseDetails({
           {error}
         </p>
       )}
+      {mode === "full" && (
+        <section
+          className="cc-panel analyst-detail-section"
+          id={sectionId("cyber")}
+          data-case-section="cyber"
+        >
+          <h2>Cyber evidence</h2>
+          <p>{eventName(selected.eventSnapshot)}</p>
+          <p>
+            {displayText(
+              String(
+                selected.eventSnapshot.description ||
+                  "No description captured.",
+              ),
+            )}
+          </p>
+          <p className="cc-muted">
+            Captured source event: {selected.eventId}. Case tracking and modeled
+            consequences do not alter this evidence.
+          </p>
+          <Sources refs={context.sourceRefs} sources={contextSources} />
+          {pcapFromEvent(selected.eventSnapshot) && (
+            <PcapEvidencePanel
+              evidence={pcapFromEvent(selected.eventSnapshot)!}
+            />
+          )}
+          {reference && (
+            <ReferenceInvestigationEvidence reference={reference} />
+          )}
+        </section>
+      )}
       {show("tasks") && (
-        <section className="cc-panel">
+        <section
+          className="cc-panel analyst-detail-section"
+          id={sectionId("tasks")}
+          data-case-section="tasks"
+        >
           <h2>Saved checklist</h2>
           <p className="cc-muted">
             Checklist completion records workspace review only.
@@ -664,6 +817,16 @@ function CaseDetails({
                 />
                 <span>
                   {displayText(task.label)}
+                  {reference?.tasks.find((item) => item.label === task.label)
+                    ?.acceptance && (
+                    <small className="reference-task-acceptance">
+                      {
+                        reference.tasks.find(
+                          (item) => item.label === task.label,
+                        )?.acceptance
+                      }
+                    </small>
+                  )}
                   {task.completedAt && (
                     <time dateTime={task.completedAt}>{task.completedAt}</time>
                   )}
@@ -675,7 +838,11 @@ function CaseDetails({
         </section>
       )}
       {show("consequence") && (
-        <section className="cc-panel">
+        <section
+          className="cc-panel analyst-detail-section"
+          id={sectionId("consequence")}
+          data-case-section="consequence"
+        >
           <h2>Consequence analysis</h2>
           <p className="cc-muted">
             Conditional modeled consequences; not observed failures. One
@@ -686,7 +853,7 @@ function CaseDetails({
               <h3>Immutable captured run</h3>
               {run ? (
                 <>
-                  <details>
+                  <details open>
                     <summary>Captured run details & sources</summary>
                     <dl className="cc-metadata">
                       <dt>Run</dt>
@@ -825,7 +992,11 @@ function CaseDetails({
         </section>
       )}
       {(show("decisions") || mode === "consequence") && (
-        <section className="cc-panel">
+        <section
+          className="cc-panel analyst-detail-section"
+          id={sectionId("decisions")}
+          data-case-section="decisions"
+        >
           <h2>Advisory decision reviews</h2>
           <div className="cc-chips">
             <span className="cc-chip">Authority not configured</span>
@@ -937,7 +1108,11 @@ function CaseDetails({
         </section>
       )}
       {show("coordination") && (
-        <section className="cc-panel">
+        <section
+          className="cc-panel analyst-detail-section"
+          id={sectionId("notes")}
+          data-case-section="notes"
+        >
           <h2>Coordination notes</h2>
           <p className="cc-muted">
             Saved locally to this case. Notes are not sent to partners.
@@ -981,7 +1156,15 @@ function CaseDetails({
             ))}
           </ol>
           {!selected.notes.length && <p>No saved coordination notes.</p>}
-          <h3>Activity timeline</h3>
+        </section>
+      )}
+      {show("coordination") && (
+        <section
+          className="cc-panel analyst-detail-section"
+          id={sectionId("activity")}
+          data-case-section="activity"
+        >
+          <h2>Activity timeline</h2>
           <ol className="cc-timeline">
             {selected.activity.map((item) => (
               <li key={item.id}>
@@ -994,8 +1177,12 @@ function CaseDetails({
           {!selected.activity.length && <p>No activity captured.</p>}
         </section>
       )}
-      <section className="cc-panel">
-        <h2>Case tracking</h2>
+      <section
+        className="cc-panel analyst-detail-section"
+        id={sectionId("tracking")}
+        data-case-section="tracking"
+      >
+        <h2>Case status</h2>
         <p className="cc-muted">
           Local tracking only; status changes do not change source events or
           modeled evidence.
@@ -1051,6 +1238,50 @@ function CaseDetails({
           </p>
         )}
       </section>
+      {mode === "full" && (
+        <section
+          className="cc-panel analyst-detail-section"
+          id={sectionId("advanced")}
+          data-case-section="advanced"
+        >
+          <h2>Advanced</h2>
+          <div className="cc-actions">
+            {onDownloadRecord && (
+              <button
+                type="button"
+                disabled={blocked}
+                onClick={onDownloadRecord}
+              >
+                Download case record (JSON)
+              </button>
+            )}
+            {onOpenTool && (
+              <button
+                type="button"
+                disabled={blocked}
+                onClick={() => onOpenTool("incident")}
+              >
+                Open in Incident → decision
+              </button>
+            )}
+            {onOpenTool && (
+              <button
+                type="button"
+                disabled={blocked || !(selected.runId || run)}
+                onClick={() => onOpenTool("lab")}
+              >
+                Open run in scenario lab
+              </button>
+            )}
+          </div>
+          <details>
+            <summary>Raw case record (JSON · not sent)</summary>
+            <pre className="analyst-raw-record">
+              {JSON.stringify(selected, null, 2)}
+            </pre>
+          </details>
+        </section>
+      )}
       {confirmation && (
         <ConfirmDialog
           title={confirmation.title}

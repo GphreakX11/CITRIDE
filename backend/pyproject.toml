@@ -21,7 +21,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["citride"]
-artifacts = ["citride/demo_data/**"]
+artifacts = ["citride/demo_data/**", "citride/reference_data/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

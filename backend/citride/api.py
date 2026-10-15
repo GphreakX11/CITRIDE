@@ -14,6 +14,9 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .access import DemoAccessMiddleware
+from .billington_reference import idt_router
+from . import billington_reference
+from .pcap_reference import pcap_router
 from .command_requests import CommandActionRequest, CommandCreateRequest
 from .storage import (
     ConflictError,
@@ -105,6 +108,10 @@ def create_app(
         version="0.1.0",
         description="Single-tenant synthetic simulation. Hosted instances use a shared demo login; no live OT connection.",
     )
+    if not billington_reference.REFERENCE_DIR.is_dir():
+        billington_reference.REFERENCE_DIR = Path(__file__).parent / "demo_data/reference/idt"
+    app.include_router(idt_router)
+    app.include_router(pcap_router)
     hosted = os.environ.get("VERCEL") == "1"
     database_url = (
         None

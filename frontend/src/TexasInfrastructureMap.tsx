@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useRef } from "react";
 import type { MapViewState, RelationshipDirection } from "./mapViewState";
+import { IdtChip } from "./IdtChip";
+import type { IdtIndex } from "./idt";
 import {
   relationshipStory,
   serviceConnections,
@@ -32,6 +34,7 @@ import { nodeLabels } from "./texasLabels";
 import "./texas-map.css";
 
 interface Props {
+  idtIndex?: IdtIndex | null;
   data: Bootstrap;
   onOpenEntity: (id: string) => void;
   selectedId: string | null;
@@ -57,6 +60,7 @@ const edgeColor = (edge: MapEdge) =>
       : "#75aaf2";
 
 export default function TexasInfrastructureMap({
+  idtIndex = null,
   data,
   onOpenEntity,
   selectedId,
@@ -842,6 +846,7 @@ export default function TexasInfrastructureMap({
                     selected.type.replace(/([a-z0-9])([A-Z])/g, "$1 $2"),
                   )}
                 </p>
+                <IdtChip entity={selected} index={idtIndex} allowSeedLookup />
                 <code>{selected.id}</code>
               </div>
               <div className="texas-connections-scroll" ref={connectionsRef}>

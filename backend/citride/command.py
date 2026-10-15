@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from .engine import compute_run
 from .incident_context import incident_context
+from .reference_investigations import reference_context, reference_task_labels
 from .storage import ConflictError, InvalidModelError, NotFoundError
 from .validation import validate_baseline
 
@@ -211,9 +212,10 @@ class CommandService:
                 refs = scenario["seed"]["eventRefs"]
                 if not isinstance(refs, list) or record["eventId"] not in refs:
                     raise InvalidModelError("Captured scenario is not linked to this event")
-            if not isinstance(record["tasks"], list) or len(record["tasks"]) != 3:
+            task_labels = reference_task_labels(record) or TASK_LABELS
+            if not isinstance(record["tasks"], list) or len(record["tasks"]) != len(task_labels):
                 raise InvalidModelError("Invalid incident tasks")
-            for task, label in zip(record["tasks"], TASK_LABELS):
+            for task, label in zip(record["tasks"], task_labels):
                 if set(task) != {"id", "label", "completed", "completedAt"} or task["label"] != label or type(task["completed"]) is not bool:
                     raise InvalidModelError("Invalid incident task")
                 _text(task["id"], "taskId")
@@ -221,7 +223,7 @@ class CommandService:
                     self._time(task["completedAt"])
                 elif task["completedAt"] is not None:
                     raise InvalidModelError("Incomplete task has completion timestamp")
-            if len({task["id"] for task in record["tasks"]}) != 3:
+            if len({task["id"] for task in record["tasks"]}) != len(task_labels):
                 raise InvalidModelError("Duplicate task IDs")
             for key in ("notes", "activity", "decisions"):
                 if not isinstance(record[key], list):
@@ -355,16 +357,20 @@ class CommandService:
             if len(records) >= 200:
                 raise ConflictError("Incident capacity of 200 reached")
             try:
-                context = incident_context(baseline, request["eventId"])
+                context = reference_context(request["eventId"], baseline["baselineRevision"])
+                if context is None:
+                    context = incident_context(baseline, request["eventId"])
             except ValueError as exc:
-                raise InvalidModelError("eventId must resolve to a baseline event") from exc
+                raise InvalidModelError("eventId must resolve to a baseline event or a supported reference investigation") from exc
+            manifest = context["event"].get("referenceInvestigation") or context["event"].get("pcapEvidence")
+            task_labels = tuple(task["label"] for task in manifest["tasks"]) if manifest else TASK_LABELS
             now = _timestamp()
             record = {
                 "id": _id(), "version": 1, "title": request["title"], "priority": request["priority"],
                 "status": "open", "createdAt": now, "updatedAt": now, "closedAt": None, "closureNote": None,
                 "eventId": request["eventId"], "baselineRevision": baseline["baselineRevision"],
                 "eventSnapshot": deepcopy(context["event"]), "contextSnapshot": context,
-                "tasks": [{"id": _id(), "label": label, "completed": False, "completedAt": None} for label in TASK_LABELS],
+                "tasks": [{"id": _id(), "label": label, "completed": False, "completedAt": None} for label in task_labels],
                 "decisions": [], "notes": [], "activity": [], "runId": None,
                 "_requests": {request["clientRequestId"]: _fingerprint(request)},
             }

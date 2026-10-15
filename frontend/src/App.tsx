@@ -8,6 +8,7 @@ import {
   CircleHelp,
   Clock3,
   Database,
+  Download,
   Droplets,
   FileText,
   FlaskConical,
@@ -31,17 +32,21 @@ import ReasoningView from "./ReasoningView";
 import OntologyBlueprint from "./OntologyBlueprint";
 import IncidentWorkspace from "./IncidentWorkspace";
 import CommandWorkspace from "./CommandWorkspace";
-import { commandNavigation } from "./commandTypes";
+import { commandNavigation, analystNavigation } from "./commandTypes";
+import { modeForView, modeLanding, type WorkspaceMode } from "./navigation";
+import "./workspace-modes.css";
+import { telemetryExport } from "./telemetryDownload";
 import type { CommandView, CommandIncident } from "./commandTypes";
 import InvestigationBar from "./InvestigationBar";
 import {
   caseFocusEntity,
-  linkedCaseId,
   evidenceForContext,
   caseSelectionAfterRead,
 } from "./investigationContext";
 import { initialMapView } from "./mapViewState";
 import { ApiError, api, describe, humanize, windowLabel } from "./api";
+import { referenceFromEvent } from "./referenceInvestigation";
+import ReferenceInvestigationEvidence from "./ReferenceInvestigationEvidence";
 import { displayText } from "./presentation";
 import { reviewDisplayText } from "./incidentDecisions";
 import type {
@@ -54,6 +59,8 @@ import type {
   RunSummary,
   Telemetry,
 } from "./types";
+
+import { prototypeLocation, readPrototypeLocation } from "./prototypeLocation";
 
 type View =
   | CommandView
@@ -176,15 +183,32 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [accessIssue, setAccessIssue] = useState<ApiError | null>(null);
-  const [view, setView] = useState<View>("command");
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [view, setView] = useState<View>(
+    () => readPrototypeLocation(window.location.href).view as View,
+  );
+  const [mode, setMode] = useState<WorkspaceMode>(
+    () => readPrototypeLocation(window.location.href).mode,
+  );
+  const [advancedOpen, setAdvancedOpen] = useState(() => {
+    try {
+      return localStorage.getItem("citride.advanced.open") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(
+    () => readPrototypeLocation(window.location.href).caseId,
+  );
   const [caseRecords, setCaseRecords] = useState<CommandIncident[]>([]);
   const caseRecordsRef = useRef<CommandIncident[]>([]);
-  const selectionInitialized = useRef(false);
+  const selectionInitialized = useRef(true);
+  const casesRead = useRef(false);
   const [mapState, setMapState] = useState(initialMapView);
   const [workflowLocked, setWorkflowLocked] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<string | null>(
+    () => readPrototypeLocation(window.location.href).entityId,
+  );
   const [editor, setEditor] = useState<{ initial: Dependency | null } | null>(
     null,
   );
@@ -209,18 +233,13 @@ export default function App() {
     if (workflowLocked) return;
     selectionInitialized.current = true;
     setSelectedEntity(id);
-    setSelectedCaseId((current) =>
-      linkedCaseId(caseRecordsRef.current, id, current),
-    );
+    // Entity exploration must not silently switch or clear the active case.
   }
   function selectCase(id: string | null) {
     selectionInitialized.current = true;
     const record = caseRecordsRef.current.find((item) => item.id === id);
     setSelectedCaseId(record?.id ?? null);
-    if (!record) {
-      setSelectedEntity(null);
-      return;
-    }
+    if (!record) return;
     const entityId = caseFocusEntity(record, selectedEntity);
     setSelectedEntity(
       entityId && data?.entities.some((entity) => entity.id === entityId)
@@ -236,18 +255,55 @@ export default function App() {
         direction: "all",
       }));
   }
+  useEffect(() => {
+    if (data && casesRead.current)
+      window.history.replaceState(
+        null,
+        "",
+        prototypeLocation(
+          window.location.href,
+          view,
+          selectedEntity,
+          selectedCaseId,
+          mode,
+        ),
+      );
+  }, [data, view, selectedEntity, selectedCaseId, caseRecords, mode]);
+  useEffect(() => {
+    const restore = () => {
+      if (workflowLocked) return;
+      const loc = readPrototypeLocation(window.location.href);
+      selectionInitialized.current = true;
+      setView(loc.view as View);
+      setMode(loc.mode);
+      setSelectedEntity(
+        data?.entities.some((e) => e.id === loc.entityId) ? loc.entityId : null,
+      );
+      setSelectedCaseId(
+        caseRecordsRef.current.some((r) => r.id === loc.caseId)
+          ? loc.caseId
+          : null,
+      );
+      setMobileMenu(false);
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [data, workflowLocked]);
+
   function receiveCases(records: CommandIncident[]) {
+    casesRead.current = true;
     caseRecordsRef.current = records;
     setCaseRecords(records);
+    const chooseInitialDefault = !selectionInitialized.current;
     const nextId = caseSelectionAfterRead(
       records,
       selectedEntity,
       selectedCaseId,
-      !selectionInitialized.current,
+      chooseInitialDefault,
     );
     selectionInitialized.current = true;
     setSelectedCaseId(nextId);
-    if (!selectedEntity) {
+    if (chooseInitialDefault && !selectedEntity) {
       const record = records.find((item) => item.id === nextId);
       const entityId = record ? caseFocusEntity(record, null) : null;
       setSelectedEntity(
@@ -337,12 +393,73 @@ export default function App() {
     }
   }
   function changeView(next: View) {
+    if (workflowLocked) return;
+    const nextMode = modeForView(next, mode);
+    if (next !== view || nextMode !== mode)
+      window.history.pushState(
+        null,
+        "",
+        prototypeLocation(
+          window.location.href,
+          next,
+          selectedEntity,
+          selectedCaseId,
+          nextMode,
+        ),
+      );
+    setMode(nextMode);
     setView(next);
     setMobileMenu(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function switchMode(nextMode: WorkspaceMode) {
+    if (workflowLocked || nextMode === mode) return;
+    const nextView = modeLanding(nextMode, view, !!selectedCaseId) as View;
+    window.history.pushState(
+      null,
+      "",
+      prototypeLocation(
+        window.location.href,
+        nextView,
+        selectedEntity,
+        selectedCaseId,
+        nextMode,
+      ),
+    );
+    setMode(nextMode);
+    setView(nextView);
+    setMobileMenu(false);
+    window.scrollTo({ top: 0 });
+  }
+  function openAnalyst(next: CommandView, caseId?: string, entityId?: string) {
+    if (workflowLocked) return;
+    if (caseId) selectCase(caseId);
+    if (entityId) selectEntity(entityId);
+    window.history.pushState(
+      null,
+      "",
+      prototypeLocation(
+        window.location.href,
+        next,
+        entityId ?? selectedEntity,
+        caseId ?? selectedCaseId,
+        "analyst",
+      ),
+    );
+    setMode("analyst");
+    setView(next);
+    setMobileMenu(false);
+    window.scrollTo({ top: 0 });
+  }
   function openIncidentScenario(nextScenarioId?: string) {
+    if (
+      overrides.length &&
+      !window.confirm(
+        "Opening this incident in the scenario lab will clear your unsaved what-if changes. Continue?",
+      )
+    )
+      return;
     if (nextScenarioId) {
       setScenarioId(nextScenarioId);
       setOverrides([]);
@@ -370,12 +487,16 @@ export default function App() {
   );
   const recordKeys = [
     ...new Set(
-      selectedStream?.records
-        .slice(0, 20)
-        .flatMap((item) => Object.keys(item)) ?? [],
+      selectedStream?.records.flatMap((item) => Object.keys(item)) ?? [],
     ),
   ];
-  const commandView = commandNavigation.find((item) => item.id === view);
+  const workspaceNavigation =
+    mode === "command" ? commandNavigation : analystNavigation;
+  const commandView = [
+    ...workspaceNavigation,
+    { id: "case-file", label: "Case File" },
+    { id: "entity-profile", label: "Entity Profile" },
+  ].find((item) => item.id === view);
   const title =
     commandView?.label ?? navigation.find((item) => item.id === view)?.label;
 
@@ -435,7 +556,10 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell ${commandView ? "command-mode" : ""}`}>
+    <div
+      data-workspace-mode={mode}
+      className={`app-shell ${commandView ? "command-mode" : ""} workspace-${mode}`}
+    >
       <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
         <a
           className="brand"
@@ -449,7 +573,10 @@ export default function App() {
             <Droplets size={24} />
           </span>
           <span>
-            CITRIDE<small>COMMAND WORKSPACE</small>
+            CITRIDE
+            <small>
+              {mode === "command" ? "COMMAND CENTER" : "ANALYST WORKSPACE"}
+            </small>
           </span>
         </a>
         <button
@@ -470,11 +597,34 @@ export default function App() {
           </div>
           <span className="workspace-dot" />
         </div>
-        <p className="nav-label">COMMAND VIEWS</p>
+        <nav className="workspace-mode-switch" aria-label="Workspace mode">
+          <button
+            type="button"
+            aria-pressed={mode === "command"}
+            disabled={workflowLocked}
+            onClick={() => switchMode("command")}
+          >
+            Command Center
+          </button>
+          <button
+            type="button"
+            aria-pressed={mode === "analyst"}
+            disabled={workflowLocked}
+            onClick={() => switchMode("analyst")}
+          >
+            Analyst
+          </button>
+        </nav>
+        <p className="nav-label">
+          {mode === "command" ? "SITUATIONAL AWARENESS" : "ANALYST WORKFLOW"}
+        </p>
         <nav aria-label="Main navigation">
-          {commandNavigation.map(({ id, code, label, color }) => (
+          {workspaceNavigation.map(({ id, code, label, unit, color }) => (
             <button
               key={id}
+              aria-label={`${code} ${label}${unit ? ` ${unit}` : ""}`}
+              data-command-view={id}
+              disabled={workflowLocked}
               className={view === id ? "nav-item active" : "nav-item"}
               aria-current={view === id ? "page" : undefined}
               onClick={() => changeView(id)}
@@ -482,28 +632,47 @@ export default function App() {
               <span className="command-nav-code" style={{ color }}>
                 {code}
               </span>
-              {label}
+              <span className="prototype-nav-label">
+                {label}
+                {unit && <small>{unit}</small>}
+              </span>
               {view === id && <span className="nav-active-dot" />}
             </button>
           ))}
         </nav>
-        <details className="model-tools" open={!commandView}>
-          <summary>Model & evidence tools</summary>
-          <nav aria-label="Model and evidence tools">
-            {navigation.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                className={view === id ? "nav-item active" : "nav-item"}
-                aria-current={view === id ? "page" : undefined}
-                onClick={() => changeView(id)}
-              >
-                <Icon size={18} />
-                {label}
-                {view === id && <span className="nav-active-dot" />}
-              </button>
-            ))}
-          </nav>
-        </details>
+        {mode === "analyst" && (
+          <details className="model-tools" open={advancedOpen}>
+            <summary
+              onClick={(event) => {
+                event.preventDefault();
+                const open = !advancedOpen;
+                setAdvancedOpen(open);
+                try {
+                  localStorage.setItem("citride.advanced.open", String(open));
+                } catch {
+                  /* preference storage unavailable */
+                }
+              }}
+            >
+              Advanced tools
+            </summary>
+            <nav aria-label="Model and evidence tools">
+              {navigation.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  className={view === id ? "nav-item active" : "nav-item"}
+                  aria-current={view === id ? "page" : undefined}
+                  disabled={workflowLocked}
+                  onClick={() => changeView(id)}
+                >
+                  <Icon size={18} />
+                  {label}
+                  {view === id && <span className="nav-active-dot" />}
+                </button>
+              ))}
+            </nav>
+          </details>
+        )}
         <div className="sidebar-footer">
           <span className="badge simulation">DECISION SUPPORT</span>
           <p>Trace infrastructure dependencies and downstream consequences.</p>
@@ -539,21 +708,23 @@ export default function App() {
           </div>
           <div className="topbar-status">
             <span className="badge simulation">
-              {commandView ? "HUMAN REVIEW" : "SCENARIO ANALYSIS"}
+              {mode === "command" ? "READ-ONLY PICTURE" : "ANALYST WORKSPACE"}
             </span>
             <span className="revision">
               Baseline r{data?.baselineRevision ?? "—"}
             </span>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Reload model"
-              title="Reload model"
-              onClick={() => void refresh()}
-              disabled={loading}
-            >
-              <RefreshCw size={16} className={loading ? "spin" : ""} />
-            </button>
+            {mode === "analyst" && (
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Reload model"
+                title="Reload model"
+                onClick={() => void refresh()}
+                disabled={loading}
+              >
+                <RefreshCw size={16} className={loading ? "spin" : ""} />
+              </button>
+            )}
           </div>
         </header>
         <div className="content">
@@ -569,7 +740,9 @@ export default function App() {
               </h1>
               <p>
                 {commandView
-                  ? "Track incidents, review consequences, and coordinate next steps from saved evidence."
+                  ? mode === "command"
+                    ? "Read-only situational awareness from the same saved evidence analysts work with."
+                    : "Investigate evidence, maintain casework, and review conditional consequences."
                   : view === "overview"
                     ? "Trace a water-control incident through infrastructure, dependencies, and essential services."
                     : view === "incident"
@@ -645,21 +818,48 @@ export default function App() {
           )}
           {data && !accessIssue && (
             <>
-              <InvestigationBar
-                entity={inspected}
-                selectedCase={contextCase}
-                cases={caseRecords}
-                view={view}
-                locked={workflowLocked}
-                onSelectCase={(id) => {
-                  if (!workflowLocked) selectCase(id);
-                }}
-                onNavigate={changeView}
-              />
+              {mode === "analyst" ? (
+                <InvestigationBar
+                  entity={inspected}
+                  selectedCase={contextCase}
+                  cases={caseRecords}
+                  view={view}
+                  locked={workflowLocked}
+                  onSelectCase={(id) => {
+                    if (!workflowLocked) selectCase(id);
+                  }}
+                  onNavigate={changeView}
+                  onClear={() => {
+                    if (!workflowLocked) selectEntity(null);
+                  }}
+                />
+              ) : (
+                <label className="command-incident-picker">
+                  Incident
+                  <select
+                    aria-label="Command incident"
+                    value={selectedCaseId ?? ""}
+                    disabled={workflowLocked}
+                    onChange={(event) => selectCase(event.target.value || null)}
+                  >
+                    <option value="">All incidents</option>
+                    {caseRecords.map((record) => (
+                      <option key={record.id} value={record.id}>
+                        {record.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <div hidden={!commandView}>
                 <CommandWorkspace
+                  mode={mode}
+                  onOpenAnalyst={openAnalyst}
+                  onEditDependency={(dependency) =>
+                    setEditor({ initial: dependency })
+                  }
                   data={data}
-                  view={commandView?.id ?? "command"}
+                  view={(commandView?.id ?? "command") as CommandView}
                   selectedId={selectedCaseId}
                   onSelect={selectCase}
                   onCasesLoaded={receiveCases}
@@ -671,6 +871,32 @@ export default function App() {
                   onNavigate={changeView}
                   onOpenTool={(tool, entityId) => {
                     if (entityId) selectEntity(entityId);
+                    if (tool === "lab") {
+                      const selected = caseRecordsRef.current.find(
+                        (r) => r.id === selectedCaseId,
+                      );
+                      const scenario =
+                        selected?.runSnapshot?.scenarioId ??
+                        selected?.contextSnapshot.scenarios[0]?.id;
+                      if (scenario) {
+                        if (
+                          overrides.length &&
+                          !window.confirm(
+                            "Opening this captured scenario will clear your unsaved what-if changes. Continue?",
+                          )
+                        )
+                          return;
+                        setScenarioId(scenario);
+                        setEvaluationHour(
+                          selected?.runSnapshot?.request.evaluationHour ?? 1,
+                        );
+                        setHorizonHours(
+                          selected?.runSnapshot?.request.horizonHours ?? 12,
+                        );
+                        setOverrides([]);
+                        setRun(selected?.runSnapshot ?? null);
+                      }
+                    }
                     changeView(tool);
                   }}
                   onAccessFailure={reportFailure}
@@ -1690,6 +1916,14 @@ export default function App() {
                       )}
                     </section>
                   )}
+                  {contextCase &&
+                    referenceFromEvent(contextCase.eventSnapshot) && (
+                      <ReferenceInvestigationEvidence
+                        reference={referenceFromEvent(
+                          contextCase.eventSnapshot,
+                        )!}
+                      />
+                    )}
                   <div className="notice">
                     <Activity size={20} />
                     <div>
@@ -1768,6 +2002,25 @@ export default function App() {
                             {selectedStream.records.length} records
                           </strong>
                           {renderSources([selectedStream.sourceRef])}
+                          <button
+                            className="button secondary"
+                            onClick={() => {
+                              const exported = telemetryExport(selectedStream);
+                              const url = URL.createObjectURL(
+                                new Blob([exported.contents], {
+                                  type: "application/json;charset=utf-8",
+                                }),
+                              );
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = exported.filename;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                          >
+                            <Download size={15} />
+                            Download complete stream
+                          </button>
                         </div>
                       )}
                     </div>
@@ -1784,7 +2037,7 @@ export default function App() {
                             </thead>
                             <tbody>
                               {selectedStream.records
-                                .slice(0, 100)
+                                .slice(0, 200)
                                 .map((record, index) => (
                                   <tr key={index}>
                                     {recordKeys.map((key) => (
@@ -1804,10 +2057,10 @@ export default function App() {
                             </tbody>
                           </table>
                         </div>
-                        {selectedStream.records.length > 100 && (
+                        {selectedStream.records.length > 200 && (
                           <p className="field-help telemetry-note">
-                            Showing the first 100 records. The complete stream
-                            is available through the telemetry API.
+                            Showing the first 200 records. Download complete
+                            stream includes every record.
                           </p>
                         )}
                       </>

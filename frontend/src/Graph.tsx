@@ -299,6 +299,19 @@ export default function Graph({
       <div className="graph-footer">
         <div className="legend">
           <span>
+            <i
+              aria-hidden="true"
+              style={{
+                display: "inline-block",
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                backgroundColor: "#d27832",
+              }}
+            />
+            Orange: modeled impacted node, not an observed outage
+          </span>
+          <span>
             <i className="legend-line" />
             Dependency
           </span>

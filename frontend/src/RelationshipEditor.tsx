@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, CheckCircle2, GitPullRequest, Save, X } from "lucide-react";
-import { api, humanize } from "./api";
+import { api, ApiError, humanize } from "./api";
 import { displayText } from "./presentation";
 import type { Bootstrap, Dependency, Proposal, Validation } from "./types";
 
@@ -51,11 +51,13 @@ function newDependency(data: Bootstrap): Dependency {
 }
 
 export default function RelationshipEditor({
-  data,
+  data: initialData,
   initial,
   onClose,
   onPromoted,
 }: Props) {
+  // Parent refreshes must not silently rebase an unreviewed draft.
+  const [data, setData] = useState(initialData);
   const [draft, setDraft] = useState<Dependency>(() =>
     initial
       ? { ...initial, assumptionNote: displayText(initial.assumptionNote) }
@@ -65,6 +67,7 @@ export default function RelationshipEditor({
   const [validation, setValidation] = useState<Validation | null>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [baselineConflict, setBaselineConflict] = useState(false);
   const [promoted, setPromoted] = useState(false);
   const dialog = useRef<HTMLElement>(null);
   const closeRef = useRef(onClose);
@@ -147,15 +150,38 @@ export default function RelationshipEditor({
     setError("");
   }
   async function action(name: string, operation: () => Promise<void>) {
+    if (busyRef.current) return;
+    busyRef.current = name;
     setBusy(name);
     setError("");
     try {
       await operation();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure));
+      if (
+        failure instanceof ApiError &&
+        failure.status === 409 &&
+        /baseline revision changed/i.test(failure.message)
+      ) {
+        setBaselineConflict(true);
+        setProposal(null);
+        setValidation(null);
+      }
     } finally {
+      busyRef.current = "";
       setBusy("");
     }
+  }
+  async function stage(baseline: Bootstrap) {
+    setProposal(null);
+    setValidation(null);
+    setProposal(
+      await api<Proposal>("/v1/dependency-proposals", {
+        dependency: draft,
+        expectedBaselineRevision: baseline.baselineRevision,
+      }),
+    );
+    setBaselineConflict(false);
   }
   const numberField = (
     key:
@@ -246,15 +272,8 @@ export default function RelationshipEditor({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            void action("Staging", async () => {
-              setProposal(
-                await api<Proposal>("/v1/dependency-proposals", {
-                  dependency: draft,
-                  expectedBaselineRevision: data.baselineRevision,
-                }),
-              );
-              setValidation(null);
-            });
+            if (!baselineConflict && !promoted)
+              void action("Staging", () => stage(data));
           }}
         >
           <div className="editor-body">
@@ -511,13 +530,34 @@ export default function RelationshipEditor({
                 />
               </label>
             </fieldset>
-            {error && (
+            {(error || baselineConflict) && (
               <div role="alert" className="alert error">
                 {error}
-                <p>
-                  For a baseline conflict, close this editor and reload the
-                  model before staging again.
-                </p>
+                {baselineConflict && (
+                  <>
+                    <p>
+                      The baseline changed. Reload and re-stage keeps your draft
+                      values and sources, then requires validation again before
+                      promotion. Review your draft against the updated model.
+                    </p>
+                    <button
+                      type="button"
+                      className="button secondary"
+                      disabled={Boolean(busy)}
+                      onClick={() =>
+                        void action("Reloading", async () => {
+                          const current = await api<Bootstrap>("/v1/bootstrap");
+                          setData(current);
+                          await stage(current);
+                        })
+                      }
+                    >
+                      {busy === "Reloading"
+                        ? "Reloading and re-staging…"
+                        : "Reload and re-stage"}
+                    </button>
+                  </>
+                )}
               </div>
             )}
             {proposal && (
@@ -568,7 +608,7 @@ export default function RelationshipEditor({
                   <button
                     type="submit"
                     className="button secondary"
-                    disabled={Boolean(busy)}
+                    disabled={Boolean(busy) || baselineConflict}
                   >
                     <Save size={16} />
                     {busy === "Staging"

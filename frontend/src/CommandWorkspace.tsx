@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCw, Download, AlertTriangle } from "lucide-react";
 import { api, ApiError } from "./api";
-import type { Bootstrap } from "./types";
+import type { Bootstrap, Event, Dependency } from "./types";
+import type { WorkspaceMode } from "./navigation";
 import type { MapViewState } from "./mapViewState";
 import type {
   CommandAction,
@@ -13,11 +14,21 @@ import type {
 import { incidentBrief } from "./commandMetrics";
 import CommandCasework from "./CommandCasework";
 import CommandReadouts from "./CommandReadouts";
+import CommandCenterViews from "./CommandCenterViews";
+import AnalystEntityProfile from "./AnalystEntityProfile";
 import "./command-shell.css";
+import "./prototype.css";
 import "./command-casework-dark.css";
 
 type SavedRequest = { url: string; body: CommandCreate | CommandActionRequest };
 export interface CommandWorkspaceProps {
+  mode: WorkspaceMode;
+  onOpenAnalyst: (
+    view: CommandView,
+    caseId?: string,
+    entityId?: string,
+  ) => void;
+  onEditDependency: (dependency: Dependency | null) => void;
   data: Bootstrap;
   view: CommandView;
   selectedId: string | null;
@@ -36,13 +47,18 @@ export interface CommandWorkspaceProps {
       | "evidence"
       | "blueprint"
       | "incident"
-      | "lab",
+      | "lab"
+      | "reasoning"
+      | "sources",
     entityId?: string,
   ) => void;
   onAccessFailure: (failure: ApiError) => void;
 }
 
 export default function CommandWorkspace({
+  mode,
+  onOpenAnalyst,
+  onEditDependency,
   data,
   view,
   selectedId,
@@ -63,9 +79,11 @@ export default function CommandWorkspace({
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [error, setError] = useState("");
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const [health, setHealth] = useState<{ demoMode: boolean } | null>(null);
   const [notice, setNotice] = useState("");
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
-  const [showCasework, setShowCasework] = useState(false);
+
   const pending = useRef<SavedRequest | null>(null);
   const writing = useRef(false);
   const active = useRef(true);
@@ -104,6 +122,7 @@ export default function CommandWorkspace({
       setIncidents(response.incidents);
       setLoaded(true);
       setRefreshedAt(new Date().toISOString());
+      setRefreshFailed(false);
       handlers.current.onCasesLoaded(response.incidents);
       setError("");
       if (!pending.current) setUncertain(false);
@@ -116,7 +135,8 @@ export default function CommandWorkspace({
         handlers.current.onAccessFailure(failure);
       }
       setError(failure instanceof Error ? failure.message : String(failure));
-      setUncertain(true);
+      setRefreshFailed(true);
+      setUncertain(!!pending.current);
       throw failure;
     } finally {
       if (active.current && ticket === generation.current) setLoading(false);
@@ -133,8 +153,38 @@ export default function CommandWorkspace({
   }, [loadCases]);
 
   useEffect(() => {
-    if (view !== "command") setShowCasework(false);
-  }, [view]);
+    let current = true;
+    api<{ demoMode: boolean }>("/health")
+      .then((value) => {
+        if (current) setHealth(value);
+      })
+      .catch(() => {
+        if (current) setHealth(null);
+      });
+    return () => {
+      current = false;
+    };
+  }, [data.baselineRevision]);
+  useEffect(() => {
+    const refresh = () => {
+      if (
+        mode === "command" &&
+        !writing.current &&
+        !pending.current &&
+        document.visibilityState === "visible"
+      )
+        void loadCases().catch(() => {});
+    };
+    window.addEventListener("focus", refresh);
+    const timer =
+      mode === "command" && health?.demoMode
+        ? window.setInterval(refresh, 15000)
+        : undefined;
+    return () => {
+      window.removeEventListener("focus", refresh);
+      if (timer) window.clearInterval(timer);
+    };
+  }, [mode, health?.demoMode, loadCases]);
 
   function mergeIncident(result: CommandIncident) {
     selectedRef.current = result.id;
@@ -213,6 +263,29 @@ export default function CommandWorkspace({
   function create(request: CommandCreate) {
     return submit({ url: "/v1/command/incidents", body: request });
   }
+  async function investigate(event: Event) {
+    if (writing.current || busy || loading || uncertain) return;
+    const existing = incidents.find(
+      (record) => record.eventId === event.id && record.status !== "closed",
+    );
+    if (existing) {
+      onSelect(existing.id);
+      onNavigate("case-file");
+      return;
+    }
+    try {
+      await create({
+        eventId: event.id,
+        title: `Investigation — ${event.label ?? event.title ?? event.id}`,
+        priority: "high",
+        expectedBaselineRevision: data.baselineRevision,
+        clientRequestId: crypto.randomUUID(),
+      });
+      onNavigate("case-file");
+    } catch {
+      /* existing save/retry controls retain the request */
+    }
+  }
   function mutate(
     action: CommandAction,
     expectedVersion: number,
@@ -266,10 +339,9 @@ export default function CommandWorkspace({
     );
   }
   const focus = (id: string) => {
-    if (!writing.current) {
+    if (!writing.current && !busy && !loading && !uncertain) {
       onSelect(id);
-      setShowCasework(true);
-      onNavigate("command");
+      onNavigate("case-file");
     }
   };
   const caseMode =
@@ -286,8 +358,26 @@ export default function CommandWorkspace({
       incidents={incidents}
       selected={selected}
       mode={caseMode}
+      onOpenEntity={(id) => {
+        onSelectEntity(id);
+        onNavigate("entity-profile");
+      }}
+      onOpenTool={(tool) => onOpenTool(tool)}
+      onDownloadRecord={() => {
+        if (!selected) return;
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(selected, null, 2)], {
+            type: "application/json;charset=utf-8",
+          }),
+        );
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${selected.id}-case-record.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }}
       onSelect={(id) => {
-        if (!writing.current) onSelect(id);
+        if (!writing.current && !busy && !loading && !uncertain) onSelect(id);
       }}
       onCreate={create}
       onMutate={mutate}
@@ -295,12 +385,83 @@ export default function CommandWorkspace({
       uncertain={uncertain}
       onRecheck={() => void recheck()}
       onRetryPending={() => void retryPending()}
-      onOpenEvidence={() => onOpenTool("evidence")}
+      onOpenEvidence={() => onNavigate("cyber")}
+      onNavigate={(target) =>
+        onNavigate(
+          target === "consequence" || target === "decisions"
+            ? "consequence"
+            : "uctf",
+        )
+      }
     />
   );
 
+  const dataStatus = (
+    <div className="prototype-status" aria-label="Data status">
+      <span>{health?.demoMode ? "Reference workspace" : "Workspace data"}</span>
+      <span>Offline packet evidence + conditional scenarios</span>
+      <span>Illustrative map positions · no live OT connection</span>
+      <span>
+        {refreshedAt
+          ? `Updated ${new Date(refreshedAt).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit" })} CT`
+          : "Update pending"}
+      </span>
+    </div>
+  );
+
+  if (mode === "command")
+    return (
+      <div
+        className="command-workspace"
+        data-readonly-command="true"
+        data-casework-loaded={loaded}
+        aria-busy={loading || busy}
+      >
+        {dataStatus}
+        {error && (
+          <div className="command-error" role="alert">
+            <strong>Couldn't refresh — saved picture may be stale.</strong>
+            <p>{error}</p>
+            <button
+              className="button secondary"
+              onClick={() => void recheck()}
+              disabled={loading}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {!loaded ? (
+          <section className="command-panel">
+            <h2>
+              {loading
+                ? "Loading saved operating picture"
+                : "Operating picture unavailable"}
+            </h2>
+            <p>No incident state has been assumed.</p>
+          </section>
+        ) : (
+          <CommandCenterViews
+            data={data}
+            incidents={incidents}
+            selected={selected}
+            view={view}
+            onSelect={(id) => {
+              if (!busy && !loading && !uncertain) onSelect(id);
+            }}
+            onOpenAnalyst={onOpenAnalyst}
+            onNavigate={onNavigate}
+          />
+        )}
+      </div>
+    );
+
   return (
-    <div className="command-workspace">
+    <div
+      className="command-workspace"
+      data-casework-loaded={loaded}
+      aria-busy={loading || busy}
+    >
       <div className="command-toolbar">
         <div>
           <span className="command-source-tag">
@@ -312,31 +473,13 @@ export default function CommandWorkspace({
           </p>
         </div>
         <div className="command-toolbar-actions">
-          {view === "command" && showCasework && (
+          {selected && view !== "case-file" && (
             <button
               className="button secondary"
-              onClick={() => setShowCasework(false)}
+              disabled={busy || loading || uncertain}
+              onClick={() => onNavigate("case-file")}
             >
-              Command overview
-            </button>
-          )}
-          <button
-            className="button primary"
-            disabled={!loaded || busy || loading || uncertain}
-            onClick={() => {
-              onSelect(null);
-              setShowCasework(true);
-              onNavigate("command");
-            }}
-          >
-            Start incident
-          </button>
-          {selected && view === "command" && !showCasework && (
-            <button
-              className="button secondary"
-              onClick={() => setShowCasework(true)}
-            >
-              Manage selected case
+              Open full case file
             </button>
           )}
           {selected && (
@@ -346,7 +489,7 @@ export default function CommandWorkspace({
               disabled={busy}
             >
               <Download size={16} />
-              Download brief
+              Download structured brief (JSON)
             </button>
           )}
           <button
@@ -359,12 +502,34 @@ export default function CommandWorkspace({
           </button>
         </div>
       </div>
+      {uncertain && pending.current && (
+        <section className="command-panel" aria-label="Pending save recovery">
+          <h2>Check your previous save</h2>
+          <p>
+            The previous save could not be fully confirmed. Other changes are
+            paused to avoid duplicates. Refresh checks saved casework; retry
+            uses the original request, not a new case or action. Nothing is
+            retried automatically.
+          </p>
+          <button
+            className="button primary"
+            disabled={busy || loading}
+            onClick={() => void retryPending()}
+          >
+            Retry same saved request
+          </button>
+        </section>
+      )}
       {error && (
         <div className="command-error" role="alert">
           <AlertTriangle size={18} />
           <div>
             <strong>
-              {uncertain ? "Reconciliation required" : "Change not accepted"}
+              {uncertain
+                ? "Reconciliation required"
+                : refreshFailed
+                  ? "Couldn't refresh — Retry"
+                  : "Change not accepted"}
             </strong>
             <p>{error}</p>
           </div>
@@ -375,6 +540,16 @@ export default function CommandWorkspace({
           {notice}
         </p>
       )}
+      <div className="prototype-status" aria-label="Data status">
+        <span>Offline evidence + reference scenarios</span>
+        <span>Illustrative map positions</span>
+        <span>No live OT connection</span>
+        <span>
+          {refreshedAt
+            ? `Refreshed ${new Date(refreshedAt).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit" })} CT`
+            : "Refresh pending"}
+        </span>
+      </div>
       {!loaded ? (
         <section className="command-panel">
           <h2>{loading ? "Loading saved casework" : "Casework unavailable"}</h2>
@@ -386,7 +561,20 @@ export default function CommandWorkspace({
         </section>
       ) : (
         <>
-          {!(view === "command" && showCasework) && (
+          {view === "entity-profile" && (
+            <AnalystEntityProfile
+              data={data}
+              entityId={selectedEntityId}
+              incidents={incidents}
+              locked={busy || loading || uncertain}
+              onSelectEntity={onSelectEntity}
+              onOpenCase={focus}
+              onOpenTool={onOpenTool}
+              onEditDependency={onEditDependency}
+              onBack={() => onNavigate("cop")}
+            />
+          )}
+          {view !== "case-file" && view !== "entity-profile" && (
             <CommandReadouts
               data={data}
               incidents={incidents}
@@ -401,9 +589,20 @@ export default function CommandWorkspace({
               mapState={mapState}
               onMapStateChange={onMapStateChange}
               onDownload={downloadBrief}
+              onNote={(note) =>
+                selected
+                  ? mutate(
+                      { action: "add_note", note },
+                      selected.version,
+                      selected.id,
+                    )
+                  : Promise.reject(new Error("Select a case first"))
+              }
+              onInvestigate={(event) => void investigate(event)}
+              workflowLocked={busy || loading || uncertain}
             />
           )}
-          {((view === "command" && showCasework) ||
+          {(view === "case-file" ||
             ["coordination", "uctf", "consequence"].includes(view)) &&
             casework}
         </>

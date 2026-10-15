@@ -9,21 +9,99 @@ import type {
 } from "./types.ts";
 
 export const commandNavigation = [
-  { id: "command", code: "S1", label: "Command overview", color: "#60a5fa" },
-  { id: "cop", code: "S2", label: "Service-area COP", color: "#fb923c" },
-  { id: "cyber", code: "S3", label: "Cyber operations", color: "#34d399" },
-  { id: "coordination", code: "S4", label: "Coordination", color: "#fbbf24" },
-  { id: "uctf", code: "S5", label: "Task force workspace", color: "#f472b6" },
-  { id: "consequence", code: "S6", label: "Consequence", color: "#a78bfa" },
-  { id: "leadership", code: "S7", label: "Leadership brief", color: "#22d3ee" },
+  {
+    id: "command",
+    code: "C1",
+    label: "Command Overview",
+    unit: "",
+    color: "#60a5fa",
+  },
+  {
+    id: "cop",
+    code: "C2",
+    label: "Operational Landscape",
+    unit: "",
+    color: "#fb923c",
+  },
+  {
+    id: "cyber",
+    code: "C3",
+    label: "Cyber Situation",
+    unit: "CTIC",
+    color: "#34d399",
+  },
+  {
+    id: "consequence",
+    code: "C4",
+    label: "Consequence Picture",
+    unit: "",
+    color: "#a78bfa",
+  },
+  {
+    id: "uctf",
+    code: "C5",
+    label: "Response Posture",
+    unit: "UCTF",
+    color: "#f472b6",
+  },
+  {
+    id: "leadership",
+    code: "C6",
+    label: "Briefs & Cases",
+    unit: "Chief",
+    color: "#22d3ee",
+  },
   {
     id: "federation",
-    code: "S8",
-    label: "Organizations & handoff",
+    code: "C7",
+    label: "Partner Status",
+    unit: "TX-ISAO",
     color: "#cbd5e1",
   },
 ] as const;
-export type CommandView = (typeof commandNavigation)[number]["id"];
+export const analystNavigation = [
+  { id: "command", code: "A1", label: "My Work", unit: "", color: "#60a5fa" },
+  {
+    id: "cop",
+    code: "A2",
+    label: "Infrastructure & Dependencies",
+    unit: "",
+    color: "#fb923c",
+  },
+  {
+    id: "cyber",
+    code: "A3",
+    label: "Cyber Evidence",
+    unit: "CTIC",
+    color: "#34d399",
+  },
+  {
+    id: "consequence",
+    code: "A4",
+    label: "Consequences",
+    unit: "",
+    color: "#a78bfa",
+  },
+  {
+    id: "coordination",
+    code: "A5",
+    label: "Decisions & Coordination",
+    unit: "TX-ISAO",
+    color: "#fbbf24",
+  },
+  {
+    id: "uctf",
+    code: "A6",
+    label: "Response Workspace",
+    unit: "UCTF",
+    color: "#f472b6",
+  },
+] as const;
+export type CommandView =
+  | (typeof commandNavigation)[number]["id"]
+  | (typeof analystNavigation)[number]["id"]
+  | "case-file"
+  | "entity-profile";
 export type IncidentPriority = "critical" | "high" | "medium" | "low";
 export type IncidentStatus = "open" | "monitoring" | "closed";
 

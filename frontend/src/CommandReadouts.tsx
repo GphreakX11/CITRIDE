@@ -1,4 +1,15 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { api } from "./api";
+import { createIdtIndex, type IdtIndex } from "./idt";
+import { IdtChip } from "./IdtChip";
+import {
+  pcapEvent,
+  pcapFromEvent,
+  parsePcapEvidence,
+  type PcapEvidence,
+} from "./pcapEvidence";
+import PcapEvidencePanel from "./PcapEvidencePanel";
+import PrototypeCaseViews from "./PrototypeCaseViews";
 import TexasInfrastructureMap from "./TexasInfrastructureMap";
 import {
   ArrowRight,
@@ -10,9 +21,10 @@ import {
 import { displayText } from "./presentation";
 import { humanize, windowLabel } from "./api";
 import { commandMetrics, orderIncidents } from "./commandMetrics";
-import type { Bootstrap } from "./types";
+import type { Bootstrap, Event } from "./types";
 import type { MapViewState } from "./mapViewState";
 import type { CommandIncident, CommandView } from "./commandTypes";
+import { filterWork } from "./workFilters";
 
 interface Props {
   data: Bootstrap;
@@ -33,6 +45,9 @@ interface Props {
     entityId?: string,
   ) => void;
   onDownload: () => void;
+  onInvestigate: (event: Event) => void;
+  workflowLocked: boolean;
+  onNote: (note: string) => Promise<unknown>;
   selectedEntityId: string | null;
   onSelectEntity: (id: string | null) => void;
   mapState: MapViewState;
@@ -48,6 +63,9 @@ export default function CommandReadouts({
   onNavigate,
   onOpenTool,
   onDownload,
+  onInvestigate,
+  workflowLocked,
+  onNote,
   selectedEntityId,
   onSelectEntity,
   mapState,
@@ -57,6 +75,50 @@ export default function CommandReadouts({
   const areas = data.entities.filter((entity) => entity.type === "ServiceArea");
   const label = (id: string) =>
     displayText(data.entities.find((entity) => entity.id === id)?.label ?? id);
+  const [idtIndex, setIdtIndex] = useState<IdtIndex | null>(null);
+  const [capture, setCapture] = useState<PcapEvidence | null>(null);
+  const [referenceError, setReferenceError] = useState("");
+  const [workFilters, setWorkFilters] = useState({
+    query: "",
+    status: "active",
+    priority: "all",
+  });
+  const [evidenceId, setEvidenceId] = useState(
+    selected?.eventId ?? pcapEvent.id,
+  );
+  const [evidenceQuery, setEvidenceQuery] = useState("");
+  const [evidenceSource, setEvidenceSource] = useState("all");
+  const selectedEventId = selected?.eventId;
+  useEffect(() => {
+    if (selectedEventId) setEvidenceId(selectedEventId);
+  }, [selectedEventId]);
+  const filteredWork = filterWork(incidents, workFilters);
+  useEffect(() => {
+    let current = true;
+    Promise.all([
+      api<unknown>("/v1/reference/idt"),
+      api<unknown>("/v1/reference/pcap"),
+    ])
+      .then(([idt, pcap]) => {
+        if (current) {
+          setIdtIndex(createIdtIndex(idt));
+          const parsed = parsePcapEvidence(pcap);
+          if (!parsed) throw new Error("Packet reference failed validation");
+          setCapture(parsed);
+          setReferenceError("");
+        }
+      })
+      .catch((error) => {
+        if (current)
+          setReferenceError(
+            error instanceof Error ? error.message : "Reference unavailable",
+          );
+      });
+    return () => {
+      current = false;
+    };
+  }, []);
+  const capturedPacketEvidence = pcapFromEvent(selected?.eventSnapshot);
   const active = orderIncidents(incidents).filter(
     (incident) => incident.status !== "closed",
   );
@@ -80,6 +142,7 @@ export default function CommandReadouts({
               <td>
                 <button
                   className="command-link"
+                  disabled={workflowLocked}
                   onClick={() => onSelect(incident.id)}
                 >
                   {incident.title}
@@ -117,9 +180,78 @@ export default function CommandReadouts({
     </div>
   );
 
+  if (
+    selected &&
+    ["consequence", "coordination", "leadership", "federation"].includes(view)
+  )
+    return (
+      <PrototypeCaseViews
+        key={selected.id}
+        incident={selected}
+        view={view}
+        onOpenLab={() => onOpenTool("lab")}
+        onNote={onNote}
+        locked={workflowLocked}
+      />
+    );
+
   if (view === "command")
     return (
       <>
+        <section className="command-panel">
+          <div className="command-panel-heading">
+            <h2>Evidence to investigate</h2>
+            <span>Source-linked · no automatic incident declaration</span>
+          </div>
+          {referenceError && (
+            <p role="alert">
+              Reference evidence unavailable: {referenceError}. Restart/recheck
+              the local API; no substitute evidence has been invented.
+            </p>
+          )}
+          <div className="prototype-alerts">
+            <article className="command-event prototype-alert">
+              <span className="command-source-tag">
+                Corelight capture · offline evidence
+              </span>
+              <h3>Review water-sector network activity</h3>
+              <p>
+                {capture
+                  ? `${capture.capture.packet_count} packets · ${capture.tcpFlowCount} TCP flows · historical capture`
+                  : "Capture reference loading"}
+              </p>
+              <button
+                className="button primary"
+                disabled={workflowLocked || !capture}
+                onClick={() => onInvestigate(pcapEvent)}
+              >
+                {active.some((record) => record.eventId === pcapEvent.id)
+                  ? "Resume investigation"
+                  : "Investigate"}
+              </button>
+            </article>
+            {data.events.slice(0, 2).map((event) => (
+              <article className="command-event prototype-alert" key={event.id}>
+                <span className="command-source-tag">Scenario evidence</span>
+                <h3>{eventLabel(event)}</h3>
+                <p>
+                  {displayText(
+                    event.description ?? "Recorded scenario observation",
+                  )}
+                </p>
+                <button
+                  className="button primary"
+                  disabled={workflowLocked}
+                  onClick={() => onInvestigate(event)}
+                >
+                  {active.some((record) => record.eventId === event.id)
+                    ? "Resume investigation"
+                    : "Investigate"}
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
         <section className="command-metrics" aria-label="Saved casework counts">
           {[
             [
@@ -154,19 +286,67 @@ export default function CommandReadouts({
         <div className="command-dashboard-grid">
           <section className="command-panel">
             <div className="command-panel-heading">
-              <h2>Active incidents · workspace picture</h2>
-              <span>{active.length} open / monitoring</span>
+              <h2>My Work · case queue</h2>
+              <span>{filteredWork.length} matching case records</span>
             </div>
-            {active.length ? (
-              casesTable(active)
+            <div className="analyst-filters" aria-label="Case queue filters">
+              <label>
+                Search cases
+                <input
+                  aria-label="Search cases"
+                  value={workFilters.query}
+                  onChange={(e) =>
+                    setWorkFilters({ ...workFilters, query: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Status
+                <select
+                  aria-label="Case status filter"
+                  value={workFilters.status}
+                  onChange={(e) =>
+                    setWorkFilters({ ...workFilters, status: e.target.value })
+                  }
+                >
+                  <option value="active">Open and monitoring</option>
+                  <option value="all">All statuses</option>
+                  <option value="open">Open</option>
+                  <option value="monitoring">Monitoring</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </label>
+              <label>
+                Priority
+                <select
+                  aria-label="Case priority filter"
+                  value={workFilters.priority}
+                  onChange={(e) =>
+                    setWorkFilters({ ...workFilters, priority: e.target.value })
+                  }
+                >
+                  <option value="all">All priorities</option>
+                  {["critical", "high", "medium", "low"].map((p) => (
+                    <option key={p} value={p}>
+                      {humanize(p)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {filteredWork.length ? (
+              casesTable(filteredWork)
             ) : (
               <div className="command-empty">
                 <ShieldCheck size={27} />
-                <h3>No active incidents</h3>
+                <h3>
+                  {incidents.length
+                    ? "No cases match these filters"
+                    : "No active incidents"}
+                </h3>
                 <p>
-                  Choose Start incident to create a case from a recorded event.
-                  Alerts are not automatically declared incidents or physical
-                  outages.
+                  Select an evidence card to investigate. Alerts do not by
+                  themselves establish an incident or a physical outage.
                 </p>
               </div>
             )}
@@ -184,6 +364,7 @@ export default function CommandReadouts({
                 <button
                   key={decision.id}
                   className="command-action-card"
+                  disabled={workflowLocked}
                   onClick={() => {
                     onSelect(incident.id);
                     onNavigate("consequence");
@@ -227,12 +408,16 @@ export default function CommandReadouts({
     return (
       <>
         <TexasInfrastructureMap
+          idtIndex={idtIndex}
           data={data}
           selectedId={selectedEntityId}
           onSelectEntity={onSelectEntity}
           mapState={mapState}
           onMapStateChange={onMapStateChange}
-          onOpenEntity={(id) => onOpenTool("overview", id)}
+          onOpenEntity={(id) => {
+            onSelectEntity(id);
+            onNavigate("entity-profile");
+          }}
         />
         <div className="command-three-grid">
           {areas.map((area) => {
@@ -266,11 +451,17 @@ export default function CommandReadouts({
                     <li key={entity.id}>
                       <button
                         className="command-link"
+                        disabled={workflowLocked}
                         onClick={() => onSelectEntity(entity.id)}
                       >
                         {displayText(entity.label)}
                       </button>
                       <small>{humanize(entity.type)}</small>
+                      <IdtChip
+                        entity={entity}
+                        index={idtIndex}
+                        allowSeedLookup
+                      />
                     </li>
                   ))}
                 </ul>
@@ -281,9 +472,103 @@ export default function CommandReadouts({
       </>
     );
 
+  const evidenceRecords = [
+    { ...pcapEvent, label: "Offline packet capture", evidenceOrigin: "packet" },
+    ...data.events.map((event) => ({ ...event, evidenceOrigin: "scenario" })),
+  ];
+  const cyberSelector = (
+    <section className="command-panel">
+      <div className="command-panel-heading">
+        <h2>Cyber evidence</h2>
+        <button
+          className="button secondary"
+          disabled={workflowLocked}
+          onClick={() => onOpenTool("evidence")}
+        >
+          Open raw telemetry
+        </button>
+      </div>
+      <div className="analyst-filters">
+        <label>
+          Search evidence
+          <input
+            aria-label="Search evidence"
+            value={evidenceQuery}
+            onChange={(e) => setEvidenceQuery(e.target.value)}
+          />
+        </label>
+        <label>
+          Source
+          <select
+            aria-label="Evidence source filter"
+            value={evidenceSource}
+            onChange={(e) => setEvidenceSource(e.target.value)}
+          >
+            <option value="all">All sources</option>
+            <option value="packet">Offline packet capture</option>
+            <option value="scenario">Scenario records</option>
+          </select>
+        </label>
+      </div>
+      <div className="evidence-picker" aria-label="Evidence records">
+        {evidenceRecords
+          .filter(
+            (event) =>
+              (evidenceSource === "all" ||
+                event.evidenceOrigin === evidenceSource) &&
+              `${eventLabel(event)} ${event.description ?? ""}`
+                .toLocaleLowerCase()
+                .includes(evidenceQuery.toLocaleLowerCase()),
+          )
+          .map((event) => (
+            <button
+              key={event.id}
+              className="command-action-card"
+              aria-pressed={evidenceId === event.id}
+              onClick={() => setEvidenceId(event.id)}
+            >
+              <strong>{eventLabel(event)}</strong>
+              <small>
+                {event.evidenceOrigin === "packet"
+                  ? "Offline capture · packet observations"
+                  : "Scenario evidence · reference record"}
+              </small>
+            </button>
+          ))}
+      </div>
+      <button
+        className="button primary"
+        disabled={workflowLocked || (evidenceId === pcapEvent.id && !capture)}
+        onClick={() => {
+          const event = evidenceRecords.find((item) => item.id === evidenceId);
+          if (event) onInvestigate(event);
+        }}
+      >
+        Investigate selected evidence
+      </button>
+      {referenceError && (
+        <p role="alert">Reference evidence unavailable: {referenceError}</p>
+      )}
+    </section>
+  );
+  if (view === "cyber" && evidenceId === pcapEvent.id)
+    return (
+      <>
+        {cyberSelector}
+        {capturedPacketEvidence || capture ? (
+          <PcapEvidencePanel evidence={(capturedPacketEvidence || capture)!} />
+        ) : (
+          <p className="notice">
+            Packet reference unavailable. No substitute evidence has been
+            invented.
+          </p>
+        )}
+      </>
+    );
   if (view === "cyber")
     return (
       <>
+        {cyberSelector}
         <section className="command-panel">
           <div className="command-panel-heading">
             <div>
@@ -302,65 +587,69 @@ export default function CommandReadouts({
             </button>
           </div>
           <div className="command-event-grid">
-            {data.events.map((event) => {
-              const casework = incidents.filter(
-                (incident) => incident.eventId === event.id,
-              );
-              const refs =
-                typeof event.seenOn === "string"
-                  ? [event.seenOn]
-                  : Array.isArray(event.seenOn)
-                    ? event.seenOn.filter(
-                        (value): value is string => typeof value === "string",
-                      )
-                    : [];
-              return (
-                <article className="command-event" key={event.id}>
-                  <span className="command-source-tag">SOURCE RECORD</span>
-                  <h3>{eventLabel(event)}</h3>
-                  <p>
-                    {displayText(
-                      event.description ?? "Description not provided",
-                    )}
-                  </p>
-                  <small>
-                    Seen on:{" "}
-                    {refs.length
-                      ? refs.map(label).join(", ")
-                      : "Asset association unknown"}
-                  </small>
-                  <small>
-                    Recorded: {event.timestamp ?? event.eventTime ?? "Unknown"}
-                  </small>
-                  <div className="command-tags">
-                    {(event.sourceRefs ?? []).map((id) => (
-                      <span key={id}>
-                        {displayText(
-                          data.sources.find((source) => source.id === id)
-                            ?.label ?? id,
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                  {casework.map((incident) => (
-                    <button
-                      key={incident.id}
-                      className="command-link"
-                      onClick={() => onSelect(incident.id)}
-                    >
-                      Open {incident.title} · {humanize(incident.status)}{" "}
-                      <ArrowRight size={13} />
-                    </button>
-                  ))}
-                  {!casework.length && (
-                    <p className="command-muted">
-                      No incident opened for this record. Open casework to
-                      triage an event explicitly.
+            {data.events
+              .filter((event) => event.id === evidenceId)
+              .map((event) => {
+                const casework = incidents.filter(
+                  (incident) => incident.eventId === event.id,
+                );
+                const refs =
+                  typeof event.seenOn === "string"
+                    ? [event.seenOn]
+                    : Array.isArray(event.seenOn)
+                      ? event.seenOn.filter(
+                          (value): value is string => typeof value === "string",
+                        )
+                      : [];
+                return (
+                  <article className="command-event" key={event.id}>
+                    <span className="command-source-tag">SOURCE RECORD</span>
+                    <h3>{eventLabel(event)}</h3>
+                    <p>
+                      {displayText(
+                        event.description ?? "Description not provided",
+                      )}
                     </p>
-                  )}
-                </article>
-              );
-            })}
+                    <small>
+                      Seen on:{" "}
+                      {refs.length
+                        ? refs.map(label).join(", ")
+                        : "Asset association unknown"}
+                    </small>
+                    <small>
+                      Recorded:{" "}
+                      {event.timestamp ?? event.eventTime ?? "Unknown"}
+                    </small>
+                    <div className="command-tags">
+                      {(event.sourceRefs ?? []).map((id) => (
+                        <span key={id}>
+                          {displayText(
+                            data.sources.find((source) => source.id === id)
+                              ?.label ?? id,
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                    {casework.map((incident) => (
+                      <button
+                        key={incident.id}
+                        className="command-link"
+                        disabled={workflowLocked}
+                        onClick={() => onSelect(incident.id)}
+                      >
+                        Open {incident.title} · {humanize(incident.status)}{" "}
+                        <ArrowRight size={13} />
+                      </button>
+                    ))}
+                    {!casework.length && (
+                      <p className="command-muted">
+                        No incident opened for this record. Open casework to
+                        triage an event explicitly.
+                      </p>
+                    )}
+                  </article>
+                );
+              })}
           </div>
         </section>
       </>

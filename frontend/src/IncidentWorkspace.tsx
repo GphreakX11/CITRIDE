@@ -615,7 +615,7 @@ export default function IncidentWorkspace({
               onClick={() => onOpenLab(scenario.id)}
             >
               <FlaskConical size={16} aria-hidden="true" />
-              Model consequences
+              Open in scenario lab (clears what-if changes)
             </button>
           </>
         ) : (

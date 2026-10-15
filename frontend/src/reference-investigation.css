@@ -1,0 +1,139 @@
+.reference-evidence {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  color: #e2e8f0;
+  background: #08131f;
+}
+.reference-evidence .cc-panel {
+  min-width: 0;
+  background: #0f1723;
+  color: #e2e8f0;
+  border: 1px solid #273449;
+  border-radius: 12px;
+  padding: 24px;
+}
+.reference-evidence .cc-panel p,
+.reference-evidence .cc-panel li,
+.reference-evidence .cc-panel dd,
+.reference-evidence .cc-panel summary,
+.reference-evidence .cc-panel h2,
+.reference-evidence .cc-panel h3,
+.reference-evidence .reference-asset h3 code,
+.reference-evidence .reference-provenance code {
+  color: #e2e8f0;
+}
+.reference-evidence .cc-panel .cc-note {
+  background: #1a2b40;
+  color: #e2e8f0;
+  padding: 12px;
+  border-radius: 8px;
+}
+.reference-evidence .reference-asset h3 code {
+  background: transparent;
+}
+.reference-evidence h2 {
+  margin: 8px 0 12px;
+  font-size: 1.12rem;
+}
+.reference-evidence p,
+.reference-evidence li,
+.reference-evidence dd,
+.reference-evidence code {
+  overflow-wrap: anywhere;
+}
+.reference-kicker {
+  color: #7dd3fc;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+.reference-provenance {
+  display: grid;
+  grid-template-columns: minmax(110px, 190px) minmax(0, 1fr);
+  gap: 8px 16px;
+  font-size: 0.82rem;
+}
+.reference-provenance dt {
+  color: #94a3b8;
+}
+.reference-provenance dd {
+  margin: 0;
+  min-width: 0;
+}
+.reference-provenance code {
+  white-space: normal;
+}
+.reference-assets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.reference-asset {
+  padding: 12px;
+  border: 1px solid #273449;
+  border-radius: 10px;
+  background: #0d1726;
+  min-width: 0;
+}
+.reference-asset h3 {
+  margin: 0 0 7px;
+  font-size: 0.91rem;
+}
+.reference-asset p {
+  margin: 4px 0;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+.reference-timeline {
+  display: grid;
+  gap: 8px;
+}
+.reference-timeline details {
+  border: 1px solid #273449;
+  padding: 12px;
+  border-radius: 10px;
+  min-width: 0;
+}
+.reference-timeline summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.reference-timeline summary span {
+  display: block;
+  margin-top: 5px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+.reference-timeline p,
+.reference-timeline li {
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+.reference-timeline ul {
+  padding-left: 20px;
+}
+.reference-flow {
+  color: #7dd3fc;
+}
+.reference-task-acceptance {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+@media (max-width: 600px) {
+  .reference-evidence .cc-panel {
+    padding: 16px;
+  }
+  .reference-assets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reference-provenance {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .reference-provenance dd {
+    margin-bottom: 10px;
+  }
+}

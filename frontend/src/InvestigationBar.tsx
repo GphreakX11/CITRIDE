@@ -9,7 +9,8 @@ import {
   GitBranch,
 } from "lucide-react";
 import "./investigation-context.css";
-export type InvestigationStep = "cop" | "evidence" | "consequence" | "uctf";
+export type InvestigationStep =
+  "cop" | "cyber" | "consequence" | "uctf" | "leadership";
 interface Props {
   entity: Entity | undefined;
   selectedCase: CommandIncident | null;
@@ -17,6 +18,7 @@ interface Props {
   view: string;
   locked: boolean;
   onSelectCase: (id: string | null) => void;
+  onClear: () => void;
   onNavigate: (view: InvestigationStep) => void;
 }
 export default function InvestigationBar({
@@ -26,9 +28,9 @@ export default function InvestigationBar({
   view,
   locked,
   onSelectCase,
+  onClear,
   onNavigate,
 }: Props) {
-  if (!entity && !selectedCase) return null;
   return (
     <section
       className="investigation-bar"
@@ -40,7 +42,11 @@ export default function InvestigationBar({
         <div>
           <span className="investigation-kicker">CURRENT INVESTIGATION</span>
           <strong>
-            {entity ? displayText(entity.label) : "Captured case context"}
+            {entity
+              ? displayText(entity.label)
+              : selectedCase
+                ? "Captured case context"
+                : "Choose an asset or saved case"}
           </strong>
         </div>
         <label>
@@ -67,9 +73,10 @@ export default function InvestigationBar({
         {(
           [
             { id: "cop", label: "Map", icon: MapPin },
-            { id: "evidence", label: "Evidence", icon: FileText },
+            { id: "cyber", label: "Evidence", icon: FileText },
             { id: "consequence", label: "Service impacts", icon: GitBranch },
             { id: "uctf", label: "Tasks", icon: ListChecks },
+            { id: "leadership", label: "Brief", icon: FileText },
           ] as const
         ).map(({ id, label, icon: Icon }) => (
           <button
@@ -96,6 +103,13 @@ export default function InvestigationBar({
             Back to map
           </button>
         )}
+        <button
+          className="button secondary"
+          disabled={locked}
+          onClick={onClear}
+        >
+          Clear entity focus
+        </button>
       </nav>
       {!selectedCase && (
         <p className="investigation-empty">

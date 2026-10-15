@@ -17,6 +17,8 @@ FILES = (
     "telemetry/enterprise.json",
     "telemetry/network.json",
     "telemetry/sensors.json",
+    "reference/idt/idt_v4.json",
+    "reference/idt/idt_v4.ttl",
 )
 
 

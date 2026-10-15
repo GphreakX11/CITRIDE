@@ -1,0 +1,169 @@
+/* Detail pages share the casework vocabulary; no global shell/tool overrides. */
+.analyst-entity-profile,
+.command-casework:has(> .analyst-section-nav) {
+  --cc-surface: #101b2b;
+  --cc-border: #2c3d55;
+  --cc-muted: #a9bbd1;
+  color: #e5edf6;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.analyst-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #2c3d55;
+  border-radius: 10px;
+  background: #111c2e;
+}
+.analyst-section-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  color: #cfe3ff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.analyst-section-nav a:hover,
+.analyst-section-nav a[aria-current="location"] {
+  background: #24456d;
+  color: #fff;
+}
+.analyst-section-nav a:focus-visible,
+.command-casework .analyst-record-link:focus-visible,
+.analyst-entity-profile summary:focus-visible {
+  outline: 2px solid #8abfff;
+  outline-offset: 3px;
+}
+.analyst-detail-section {
+  scroll-margin-block-start: 24px;
+}
+.analyst-detail-section:target {
+  outline: 2px solid #759ed6;
+  outline-offset: 2px;
+}
+.analyst-context-chain {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+  padding: 0;
+}
+.analyst-context-chain li {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--cc-border);
+  border-radius: 8px;
+  background: #0d1725;
+}
+.analyst-context-chain small {
+  color: #a9bbd1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.command-casework .analyst-record-link {
+  display: inline;
+  min-height: 44px;
+  padding: 4px 0;
+  text-align: left;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #a8cfff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.command-casework button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.analyst-detail-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+.analyst-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: #a9bbd1;
+}
+.analyst-entity-profile .cc-header h2 {
+  font-size: clamp(23px, 3vw, 30px);
+}
+.analyst-profile-summary {
+  margin: 0;
+  padding-inline: 4px;
+  max-width: 100ch;
+}
+.analyst-relationship-row {
+  border-top: 1px solid var(--cc-border);
+  padding-block: 12px;
+}
+.analyst-relationship-row p {
+  margin: 5px 0;
+}
+.analyst-raw-record {
+  max-height: 32rem;
+  max-width: 100%;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  border: 1px solid var(--cc-border);
+  border-radius: 6px;
+  background: #0a1422;
+  color: #cfe3f5;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.analyst-source-record {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px solid var(--cc-border);
+  border-radius: 6px;
+  background: #132840;
+  color: #cfe3ff;
+}
+.command-casework.analyst-entity-profile button:not(.analyst-record-link) {
+  background: #182b42;
+  color: #d9eaff;
+  border-color: #435d7b;
+}
+.command-casework.analyst-entity-profile .cc-chip {
+  background: #1a304a;
+  color: #cfe3ff;
+  border-color: #345377;
+}
+.command-casework.analyst-entity-profile .cc-warning {
+  background: #302212;
+  color: #f7d39a;
+  border-color: #866232;
+}
+@media (max-width: 720px) {
+  .analyst-detail-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .analyst-section-nav {
+    gap: 2px;
+    padding: 5px;
+  }
+  .analyst-section-nav a {
+    padding: 8px 10px;
+  }
+  .analyst-context-chain {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

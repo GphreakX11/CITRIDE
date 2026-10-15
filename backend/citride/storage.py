@@ -285,6 +285,8 @@ class Repository:
     def create_proposal(self, dependency: dict, expected_revision: int) -> dict:
         with self._locked():
             dataset = self._load()
+            if expected_revision != self._baseline(dataset)["baselineRevision"]:
+                raise ConflictError("Baseline revision changed; reload and re-stage against the current baseline")
             proposal = {
                 "id": "proposal-" + uuid4().hex,
                 "status": "draft",

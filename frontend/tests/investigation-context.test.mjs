@@ -94,7 +94,8 @@ test("only initial loading defaults to an active case; refresh keeps captured co
   const a = record("a", "utility-a"),
     b = record("b", "utility-b");
   assert.equal(caseSelectionAfterRead([closed, a, b], null, null, true), "a");
-  assert.equal(caseSelectionAfterRead([a, b], "utility-b", "a", false), "b");
+  // Browsing another entity is not a request to switch the selected case.
+  assert.equal(caseSelectionAfterRead([a, b], "utility-b", "a", false), "a");
   assert.equal(caseSelectionAfterRead([a, b], null, "b", false), "b");
   assert.equal(caseSelectionAfterRead([], null, null, true), null);
 });
