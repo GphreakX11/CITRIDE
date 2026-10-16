@@ -6,6 +6,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { transformWithOxc } from "vite";
 import { statewideFootprint } from "../src/statewideFootprint.ts";
+import { incidentMarkerLayout } from "../src/incidentMarkerLayout.ts";
 const read = (p) =>
   JSON.parse(readFileSync(new URL(p, import.meta.url), "utf8"));
 const data = read("../../data/scenario.json");
@@ -176,6 +177,45 @@ test("C2 desktop schematic uses non-overlapping compact targets and the vendored
   assert.match(rendered, /PublicaMundi/);
   for (const incident of props().records.statewideIncidents)
     assert.ok(rendered.includes(incident.title));
+});
+
+test("C2 five incident markers keep authored anchors but avoid dense-label collisions at every viewport", () => {
+  const points = statewideFootprint(props()).rows.map((r) => ({
+    id: r.id,
+    ...r.location.schematic,
+  }));
+  const before = JSON.stringify(points);
+  for (const width of [216, 268, 650, 794]) {
+    const placed = incidentMarkerLayout(points, width, 370);
+    assert.equal(placed.length, 5);
+    placed.forEach((p, i) => {
+      assert.equal(p.sourceX, (points[i].x * width) / 100);
+      assert.equal(p.sourceY, (points[i].y * 370) / 100);
+      assert.ok(p.x >= 22 && p.x <= width - 22 && p.y >= 22 && p.y <= 348);
+      for (const other of placed.slice(0, i))
+        assert.ok(
+          Math.abs(p.x - other.x) >= 44 || Math.abs(p.y - other.y) >= 44,
+        );
+    });
+    assert.deepEqual(incidentMarkerLayout(points, width, 370), placed);
+    assert.ok(placed.some((p) => p.offsetX || p.offsetY));
+  }
+  assert.equal(JSON.stringify(points), before);
+});
+
+test("C2 coincident and edge markers remain independently selectable without mutating recorded positions", () => {
+  const points = Array.from({ length: 8 }, (_, i) => ({
+    id: String(i),
+    x: 2,
+    y: 2,
+  }));
+  const placed = incidentMarkerLayout(points, 216, 370);
+  placed.forEach((p, i) => {
+    assert.ok(p.x >= 22 && p.x <= 194 && p.y >= 22 && p.y <= 348);
+    for (const other of placed.slice(0, i))
+      assert.ok(Math.abs(p.x - other.x) >= 44 || Math.abs(p.y - other.y) >= 44);
+  });
+  assert.ok(points.every((p) => p.x === 2 && p.y === 2));
 });
 
 test("C2 real captured run has exactly three windows and excluded fire service", () => {

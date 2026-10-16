@@ -30,7 +30,8 @@ async function loadComponent(hookHarness = false) {
       // exercise its real controls/hooks. No fake map is used for acceptance.
       else if (
         hookHarness &&
-        specifier.endsWith("CommandInfrastructureMap.tsx")
+        (specifier.endsWith("CommandInfrastructureMap.tsx") ||
+          specifier.endsWith("StatewideFootprint.tsx"))
       )
         imports.set(
           specifier,
@@ -365,10 +366,7 @@ test("C6 exports are formatted local draft downloads, and includes closed cases"
 
 test("C7 previews and notes never invent contact records or operational statuses", () => {
   const html = render("federation");
-  assert.match(
-    html,
-    /No partner coordination records\./,
-  );
+  assert.match(html, /No partner coordination records\./);
   assert.match(html, /CITRIDE does not send notifications/);
   for (const category of ["internal", "water", "health", "federal"])
     assert.ok(html.includes(`<h3>${category}</h3>`)); // No authored reference titles were supplied to this fallback fixture.

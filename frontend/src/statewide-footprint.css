@@ -84,6 +84,20 @@
   height: 100%;
   pointer-events: none;
 }
+.sf-marker-leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.sf-marker-leaders line {
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+}
+.sf-marker-leaders circle {
+  fill: var(--accent);
+}
 .sf-state-boundary path {
   fill: var(--surface-raised, var(--surface));
   stroke: var(--text-muted);

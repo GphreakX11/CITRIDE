@@ -1,5 +1,6 @@
 import { StatusChip } from "./visualPrimitives.ts";
-import { useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { incidentMarkerLayout } from "./incidentMarkerLayout.ts";
 
 import { idtEntry, idtSectorName } from "./idt.ts";
 import { words } from "./commandCenterModel.ts";
@@ -162,12 +163,27 @@ export function StatewideFootprintView({
   model,
   onPick,
   onOpenAnalyst,
+  mapRef,
+  mapSize = { width: 240, height: 370 },
 }: {
   model: StatewideFootprintModel;
   onPick: (id: string) => void;
   onOpenAnalyst: StatewideFootprintProps["onOpenAnalyst"];
+  mapRef?: RefObject<HTMLDivElement | null>;
+  mapSize?: { width: number; height: number };
 }) {
   const row = model.active;
+  const markers = incidentMarkerLayout(
+    model.rows.flatMap((item) => {
+      const p = item.location?.schematic;
+      return p && Number.isFinite(p.x) && Number.isFinite(p.y)
+        ? [{ id: item.id, x: p.x, y: p.y }]
+        : [];
+    }),
+    mapSize.width,
+    mapSize.height,
+  );
+  const leaders = markers.filter((m) => m.offsetX || m.offsetY);
   return (
     <section className="sf-statewide" aria-label="Statewide incident footprint">
       <header className="sf-heading">
@@ -193,7 +209,7 @@ export function StatewideFootprintView({
       </nav>
       <div className="sf-layout">
         <section className="sf-map-panel" aria-label="Statewide map">
-          <div className="sf-state-map">
+          <div className="sf-state-map" ref={mapRef}>
             <svg
               className="sf-state-boundary"
               viewBox="0 0 1000 700"
@@ -203,6 +219,25 @@ export function StatewideFootprintView({
               data-boundary-source={TEXAS_BOUNDARY_SOURCE}
             >
               <path d={TEXAS_PATH} />
+            </svg>
+            <svg
+              className="sf-marker-leaders"
+              viewBox={`0 0 ${mapSize.width} ${mapSize.height}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              {leaders.map((marker) => (
+                <g key={marker.id} data-marker-leader={marker.id}>
+                  <line
+                    x1={marker.sourceX}
+                    y1={marker.sourceY}
+                    x2={marker.x}
+                    y2={marker.y}
+                  />
+                  <circle cx={marker.sourceX} cy={marker.sourceY} r="3" />
+                </g>
+              ))}
             </svg>
             <span className="sf-texas" aria-hidden="true">
               TEXAS
@@ -215,13 +250,18 @@ export function StatewideFootprintView({
                 !Number.isFinite(position.y)
               )
                 return null;
+              const marker = markers.find((m) => m.id === item.id)!;
               return (
                 <button
                   type="button"
                   key={item.id}
                   data-incident-pin={item.id}
                   className={`sf-incident-pin ${item.id === row?.id ? "sf-selected" : "sf-muted"}`}
-                  style={{ left: `${position.x}%`, top: `${position.y}%` }}
+                  style={{
+                    left: `${position.x}%`,
+                    top: `${position.y}%`,
+                    transform: `translate(calc(-50% + ${marker.offsetX}px), calc(-50% + ${marker.offsetY}px))`,
+                  }}
                   aria-pressed={item.id === row?.id}
                   aria-label={`${item.title} · ${item.id} · ${words(item.status ?? "unknown")}`}
                   onClick={() => onPick(item.id)}
@@ -241,6 +281,11 @@ export function StatewideFootprintView({
               );
             })}
           </div>
+          {leaders.length > 0 && (
+            <p className="sf-caption">
+              Lines connect spaced markers to recorded locations.
+            </p>
+          )}
           <div className="sf-legend" aria-label="Legend">
             <span>
               <i className="sf-legend-attack" />
@@ -369,6 +414,24 @@ export function StatewideFootprintView({
 }
 
 export default function StatewideFootprint(props: StatewideFootprintProps) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapSize, setMapSize] = useState({ width: 240, height: 370 });
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const measure = () => {
+      const { width, height } = map.getBoundingClientRect();
+      setMapSize((previous) =>
+        previous.width === width && previous.height === height
+          ? previous
+          : { width, height },
+      );
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, []);
   const [selection, setSelection] = useState<{
     scope: string | null;
     id: string | null;
@@ -388,6 +451,8 @@ export default function StatewideFootprint(props: StatewideFootprintProps) {
       model={model}
       onPick={pick}
       onOpenAnalyst={props.onOpenAnalyst}
+      mapRef={mapRef}
+      mapSize={mapSize}
     />
   );
 }
