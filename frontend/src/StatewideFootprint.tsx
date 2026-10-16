@@ -4,6 +4,7 @@ import { useState } from "react";
 import { idtEntry, idtSectorName } from "./idt.ts";
 import { words } from "./commandCenterModel.ts";
 import { analysisLabel } from "./caseFilePresentation.ts";
+import { TEXAS_PATH, TEXAS_BOUNDARY_SOURCE } from "./texasOutline.ts";
 import {
   statewideFootprint,
   type Coordinate,
@@ -193,6 +194,16 @@ export function StatewideFootprintView({
       <div className="sf-layout">
         <section className="sf-map-panel" aria-label="Statewide map">
           <div className="sf-state-map">
+            <svg
+              className="sf-state-boundary"
+              viewBox="0 0 1000 700"
+              aria-hidden="true"
+              focusable="false"
+              data-state-boundary="texas"
+              data-boundary-source={TEXAS_BOUNDARY_SOURCE}
+            >
+              <path d={TEXAS_PATH} />
+            </svg>
             <span className="sf-texas" aria-hidden="true">
               TEXAS
             </span>

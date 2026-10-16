@@ -121,6 +121,62 @@ def test_later_storage_failure_returns_generic_503_without_exception_details(tmp
         assert "internal connection" not in response.text
 
 
+def test_concurrent_cold_requests_initialize_one_complete_repository(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+    import time
+    from citride.storage import Repository
+    from citride.records import RecordsService
+
+    monkeypatch.setenv("CITRIDE_DATABASE_URL", "postgresql://test.invalid/not-used")
+    constructions, initializations = [], []
+    original = RecordsService.initialize
+
+    def factory(_url, fixture, **_kwargs):
+        constructions.append(True)
+        time.sleep(0.1)  # expose overlapping first-request construction
+        return Repository(tmp_path / "state", fixture)
+
+    def initialize(service):
+        initializations.append(True)
+        original(service)
+
+    monkeypatch.setattr("citride.postgres.PostgresRepository", factory)
+    monkeypatch.setattr(RecordsService, "initialize", initialize)
+    barrier = threading.Barrier(4)
+    with TestClient(create_app()) as client:
+        def load(_):
+            barrier.wait(timeout=5)
+            return client.get("/v1/bootstrap")
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            responses = list(pool.map(load, range(4)))
+    assert all(response.status_code == 200 for response in responses)
+    assert len(constructions) == len(initializations) == 1
+    assert all(response.json() == responses[0].json() for response in responses)
+
+
+def test_failed_initialization_is_not_published_and_can_retry(tmp_path, monkeypatch):
+    from citride.storage import Repository
+    from citride.records import RecordsService
+
+    monkeypatch.setenv("CITRIDE_DATABASE_URL", "postgresql://test.invalid/not-used")
+    original = RecordsService.initialize
+    calls = []
+    def initialize(service):
+        calls.append(True)
+        if len(calls) == 1:
+            raise StorageUnavailableError("private initialization failure")
+        original(service)
+    monkeypatch.setattr("citride.postgres.PostgresRepository", lambda _url, fixture, **_kw: Repository(tmp_path / "state", fixture))
+    monkeypatch.setattr(RecordsService, "initialize", initialize)
+    with TestClient(create_app()) as client:
+        first = client.get("/v1/bootstrap")
+        assert first.status_code == 503
+        assert first.json() == {"detail": "Demo storage is temporarily unavailable."}
+        assert client.get("/v1/bootstrap").status_code == 200
+    assert len(calls) == 2
+
+
 @pytest.mark.skipif(not os.environ.get("TEST_DATABASE_URL"), reason="Set TEST_DATABASE_URL for real Postgres integration")
 def test_hosted_api_survives_new_instances_and_preserves_owl_proofs(monkeypatch):
     monkeypatch.setenv("VERCEL", "1")

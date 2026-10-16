@@ -11,8 +11,10 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import hashlib
+import logging
 from pathlib import Path
 import threading
+import time
 
 import psycopg
 from rdflib import Dataset
@@ -62,15 +64,19 @@ class PostgresRepository(Repository):
         if getattr(self._state, "connection", None) is not None:
             yield
             return
+        started = time.monotonic()
+        phase = "connect"
         try:
             with psycopg.connect(self._database_url, connect_timeout=10,
                                  prepare_threshold=None) as connection:
                 with connection.transaction():
+                    phase = "configure_transaction"
                     # SET LOCAL is compatible with transaction poolers. Avoid
                     # indefinitely holding serverless workers behind an OWL run.
                     connection.execute("SET LOCAL lock_timeout = '30s'")
                     connection.execute("SET LOCAL statement_timeout = '60s'")
                     if initialize:
+                        phase = "initialize_schema"
                         connection.execute("SELECT pg_advisory_xact_lock(%s)",
                                            (_lock_id("citride:schema:v1"),))
                         connection.execute("""
@@ -80,7 +86,9 @@ class PostgresRepository(Repository):
                                 updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
                             )
                         """)
+                    phase = "state_lock"
                     connection.execute("SELECT pg_advisory_xact_lock(%s)", (self._state_lock_id,))
+                    phase = "repository_operation"
                     self._state.connection = connection
                     self._state.dataset = None
                     try:
@@ -88,7 +96,12 @@ class PostgresRepository(Repository):
                     finally:
                         self._state.connection = None
                         self._state.dataset = None
-        except psycopg.Error:
+        except psycopg.Error as error:
+            # Log only safe classifications, never exception text/DSNs or rows.
+            logging.getLogger(__name__).warning(
+                "durable_storage_failure phase=%s sqlstate=%s error_type=%s elapsed_seconds=%.3f",
+                phase, error.sqlstate, type(error).__name__, time.monotonic() - started,
+            )
             # psycopg messages can include hostnames, usernames and DSNs.
             # The HTTP boundary should return only this safe generic message.
             raise StorageUnavailableError("Durable storage is unavailable; retry later") from None
@@ -105,8 +118,8 @@ class PostgresRepository(Repository):
         ).fetchone()
         if row is None:
             raise StorageUnavailableError("Durable storage is unavailable; retry later")
-        dataset = Dataset()
-        dataset.parse(data=row[0], format="nquads")
+        from .nquads import parse_nquads
+        dataset = parse_nquads(row[0])
         self._state.dataset = dataset
         return dataset
 

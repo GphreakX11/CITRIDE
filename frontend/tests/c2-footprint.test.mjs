@@ -158,6 +158,26 @@ test("C2 phone maps use fixed touch targets instead of clipping long absolute-po
   );
 });
 
+test("C2 desktop schematic uses non-overlapping compact targets and the vendored state boundary", () => {
+  const css = readFileSync(
+    new URL("../src/statewide-footprint.css", import.meta.url),
+    "utf8",
+  );
+  const desktop = css.slice(0, css.indexOf("@media"));
+  assert.match(desktop, /\.sf-incident-pin\s*\{[^}]*width:\s*44px/);
+  assert.match(desktop, /\.sf-incident-pin\s*\{[^}]*height:\s*44px/);
+  assert.match(
+    desktop,
+    /\.sf-incident-pin\s+\.sf-pin-label\s*\{\s*display:\s*none/,
+  );
+  assert.match(desktop, /\.sf-pin-number[^}]*display:\s*inline-flex/);
+  const rendered = html();
+  assert.match(rendered, /data-state-boundary="texas"/);
+  assert.match(rendered, /PublicaMundi/);
+  for (const incident of props().records.statewideIncidents)
+    assert.ok(rendered.includes(incident.title));
+});
+
 test("C2 real captured run has exactly three windows and excluded fire service", () => {
   const m = statewideFootprint(props());
   assert.equal(m.active.id, "TX-26-0412");

@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import threading
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -168,37 +169,43 @@ def create_app(
             },
         )
 
+    repository_lock = threading.Lock()
+
     def repo() -> Repository:
         nonlocal repository
-        if repository is None:
-            try:
-                if database_url:
-                    from .postgres import PostgresRepository
+        # Browser startup makes parallel requests. Initialize exactly once and
+        # publish only after records are ready; a failed attempt remains retryable.
+        with repository_lock:
+            if repository is None:
+                try:
+                    if database_url:
+                        from .postgres import PostgresRepository
 
-                    repository = PostgresRepository(
-                        database_url,
-                        fixture_path,
-                        state_key=os.environ.get("CITRIDE_STATE_KEY")
-                        or (
-                            "citride-" + os.environ.get("VERCEL_ENV", "development")
-                            if hosted
-                            else "default"
-                        ),
-                    )
-                elif hosted:
+                        candidate = PostgresRepository(
+                            database_url,
+                            fixture_path,
+                            state_key=os.environ.get("CITRIDE_STATE_KEY")
+                            or (
+                                "citride-" + os.environ.get("VERCEL_ENV", "development")
+                                if hosted
+                                else "default"
+                            ),
+                        )
+                    elif hosted:
+                        raise HTTPException(
+                            status_code=503,
+                            detail="Set CITRIDE_DATABASE_URL or DATABASE_URL for durable hosted storage.",
+                            headers={"X-CITRIDE-Setup-Required": "database_not_configured"},
+                        )
+                    else:
+                        candidate = Repository(repository_path, fixture_path)
+                    RecordsService(candidate).initialize()
+                    repository = candidate
+                except (OSError, ValueError, InvalidModelError) as error:
                     raise HTTPException(
-                        status_code=503,
-                        detail="Set CITRIDE_DATABASE_URL or DATABASE_URL for durable hosted storage.",
-                        headers={"X-CITRIDE-Setup-Required": "database_not_configured"},
-                    )
-                else:
-                    repository = Repository(repository_path, fixture_path)
-                RecordsService(repository).initialize()
-            except (OSError, ValueError, InvalidModelError) as error:
-                raise HTTPException(
-                    status_code=503, detail=f"Demo model could not be loaded: {error}"
-                ) from error
-        return repository
+                        status_code=503, detail=f"Demo model could not be loaded: {error}"
+                    ) from error
+            return repository
 
     RepositoryDependency = Annotated[Repository, Depends(repo)]
 

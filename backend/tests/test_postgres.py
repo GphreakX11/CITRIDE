@@ -176,7 +176,35 @@ def test_legacy_event_index_repairs_without_replacing_baseline_or_history(state)
     }
 
 
-def test_connection_failure_never_exposes_credentials(monkeypatch):
+def test_large_saved_history_cold_reads_use_linear_parser_and_preserve_bytes(state, monkeypatch):
+    from unittest.mock import Mock
+
+    first = repository(state)
+    before = first.baseline()
+    captured = {"id": "large-captured-proof", "capturedProof": "x" * (3 * 1024 * 1024)}
+    with first._locked():
+        dataset = first._load()
+        first._record_graph(dataset, "inference", captured)
+        first._save(dataset)
+    with psycopg.connect(state[0]) as connection:
+        original = connection.execute("SELECT nquads FROM citride_state WHERE state_key=%s", (state[1],)).fetchone()[0]
+
+    guard = Mock()
+    guard.match.side_effect = AssertionError("quadratic chunk framing reached")
+    monkeypatch.setattr("rdflib.plugins.parsers.ntriples.r_line", guard)
+    def load(_):
+        store = repository(state)
+        assert store.baseline() == before
+        with store._locked():
+            assert store._record(store._load(), "inference", captured["id"]) == captured
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(load, range(4)))
+    guard.match.assert_not_called()
+    with psycopg.connect(state[0]) as connection:
+        assert connection.execute("SELECT nquads FROM citride_state WHERE state_key=%s", (state[1],)).fetchone()[0] == original
+
+
+def test_connection_failure_never_exposes_credentials(monkeypatch, caplog):
     def fail(*args, **kwargs):
         raise psycopg.OperationalError("postgres://private-user:secret-password@private-host/database")
 
@@ -186,3 +214,7 @@ def test_connection_failure_never_exposes_credentials(monkeypatch):
     assert str(caught.value) == "Durable storage is unavailable; retry later"
     assert caught.value.__suppress_context__ is True
     assert caught.value.__cause__ is None
+    assert "durable_storage_failure phase=connect" in caplog.text
+    assert "OperationalError" in caplog.text
+    for sensitive in ("private-user", "secret-password", "private-host", "postgres://"):
+        assert sensitive not in caplog.text
