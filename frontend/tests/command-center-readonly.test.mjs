@@ -15,29 +15,47 @@ const data = JSON.parse(
 const hookUrl = `data:text/javascript;base64,${Buffer.from(`let values=[],cursor=0;export function reset(){cursor=0}export function clear(){values=[];cursor=0}export function useState(initial){const i=cursor++;if(!(i in values))values[i]=typeof initial==='function'?initial():initial;return [values[i],value=>{values[i]=typeof value==='function'?value(values[i]):value}];}`).toString("base64")}`;
 const hooks = await import(hookUrl);
 async function loadComponent(hookHarness = false) {
-  let code = (
-    await transformWithOxc(source, sourceUrl.pathname, {
-      jsx: { runtime: "automatic" },
-    })
-  ).code;
-  code = code.replace(
-    /^import\s+["']\.\/command-center-views\.css["'];?\s*$/m,
-    "",
-  );
-  code = code.replace(/from\s+["']([^"']+)["']/g, (_match, specifier) => {
-    const url =
-      hookHarness && specifier === "react"
-        ? hookUrl
-        : specifier.startsWith(".")
-          ? new URL(specifier, sourceUrl).href
-          : import.meta.resolve(specifier);
-    return `from ${JSON.stringify(url)}`;
-  });
-  return (
-    await import(
-      `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
-    )
-  ).default;
+  async function compile(url) {
+    let code = (
+      await transformWithOxc(readFileSync(url, "utf8"), url.pathname, {
+        jsx: { runtime: "automatic" },
+      })
+    ).code;
+    code = code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm, "");
+    const imports = new Map();
+    for (const match of code.matchAll(/from\s+["']([^"']+)["']/g)) {
+      const specifier = match[1];
+      if (hookHarness && specifier === "react") imports.set(specifier, hookUrl);
+      // Parent callback tests isolate the child; actual SSR tests and browser QA
+      // exercise its real controls/hooks. No fake map is used for acceptance.
+      else if (
+        hookHarness &&
+        specifier.endsWith("CommandInfrastructureMap.tsx")
+      )
+        imports.set(
+          specifier,
+          "data:text/javascript,export default function IsolatedMap(){return null}",
+        );
+      else if (specifier.startsWith(".") && specifier.endsWith(".tsx"))
+        imports.set(specifier, await compile(new URL(specifier, url)));
+      else
+        imports.set(
+          specifier,
+          specifier.startsWith(".")
+            ? new URL(
+                /\.[cm]?[jt]s$/.test(specifier) ? specifier : `${specifier}.ts`,
+                url,
+              ).href
+            : import.meta.resolve(specifier),
+        );
+    }
+    code = code.replace(
+      /from\s+["']([^"']+)["']/g,
+      (_match, specifier) => `from ${JSON.stringify(imports.get(specifier))}`,
+    );
+    return `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
+  }
+  return (await import(await compile(sourceUrl))).default;
 }
 const CommandCenterViews = await loadComponent();
 const CallbackTreeComponent = await loadComponent(true);
@@ -276,7 +294,7 @@ test("C1 and C5 update from alternate saved records, not screen demo values", ()
   const html = render("uctf", cases);
   assert.match(html, /Alternate task label/);
   assert.match(html, /Recorded complete/);
-  assert.match(html, /Team, deployment, staffing, location/);
+  assert.match(html, /No teams deployed for this incident\./);
   assert.doesNotMatch(html, /CIRU Alpha|En route|Teams committed|ETA /);
 });
 
@@ -287,8 +305,24 @@ test("C2 is infrastructure only, and does not turn alert labels into utility sta
     html,
     /Dosing PLC A|network identity|Show ownership|Search|Filter/,
   );
-  assert.match(html, /not deployment locations or service boundaries/);
-  assert.match(html, /not a normal-status assertion/);
+  assert.match(html, /Reference record/);
+  assert.match(html, /Case context/);
+});
+
+test("C1/C2 map markers are selectable controls, not a flattened image", () => {
+  for (const view of ["command", "cop"]) {
+    const html = render(view);
+    assert.match(html, /data-infrastructure-map/);
+    assert.match(html, /role="button"[^>]*tabindex="0"/);
+    assert.match(html, /aria-label="Select Treatment Plant A/);
+    assert.match(html, /aria-label="Zoom in infrastructure map"/);
+    assert.match(html, /aria-label="Infrastructure details"/);
+  }
+});
+
+test("All incidents retains modeled highlights instead of turning every marker gray", () => {
+  const html = render("command", [incident()], null);
+  assert.match(html, /data-impact-count="1"/);
 });
 
 test("C3 is sourced plain-text evidence with captured anchor and explicit missing judgments", () => {
@@ -296,8 +330,8 @@ test("C3 is sourced plain-text evidence with captured anchor and explicit missin
   assert.match(html, /Captured case event/);
   assert.match(html, /simulated/);
   assert.match(html, /Controller session at Utility A/);
-  assert.match(html, /not automatically linked/);
-  assert.match(html, /active-hunt statuses are not supplied/);
+  assert.match(html, /CTIC analyst assessment/);
+  assert.match(html, /No additional attack assessments recorded\./);
   assert.doesNotMatch(html, /Campaign cluster|ATTACK ACTIVE|COMPROMISED/);
 });
 
@@ -305,7 +339,7 @@ test("C4 captured graph displays source records, not current-baseline facility l
   const html = render("consequence");
   assert.match(html, /Captured facility name/);
   assert.match(html, /IDT sector 10/);
-  assert.match(html, /2–4 scenario hours/);
+  assert.match(html, /2–4 h/);
   assert.match(html, /Captured assumption/);
   assert.match(html, /Show IDT sector 10/);
   assert.doesNotMatch(html, /0–100|risk score|Dialysis Center X/);
@@ -322,10 +356,10 @@ test("C6 exports are formatted local draft downloads, and includes closed cases"
   assert.match(html, /Brief for the Governor/);
   assert.match(html, /data:text\/markdown/);
   assert.match(html, /download="sitrep-draft.md"/);
-  assert.match(html, /Official TXCC performance measures/);
+  assert.match(html, /No approve or dispatch buttons here\./);
   assert.match(
     html,
-    /Chief response-option decisions and approved reference options are not supplied/,
+    /The duty officer records the Chief&#x27;s decision in the Analyst workspace\./,
   );
 });
 
@@ -333,13 +367,11 @@ test("C7 previews and notes never invent contact records or operational statuses
   const html = render("federation");
   assert.match(
     html,
-    /Contact-status and partner-role records are not supplied/,
+    /No partner coordination records\./,
   );
   assert.match(html, /CITRIDE does not send notifications/);
-  assert.match(html, /TXCC internal/);
-  assert.match(html, /Water-sector partners/);
-  assert.match(html, /TDEM and healthcare/);
-  assert.match(html, /Federal partners/);
+  for (const category of ["internal", "water", "health", "federal"])
+    assert.ok(html.includes(`<h3>${category}</h3>`)); // No authored reference titles were supplied to this fallback fixture.
   assert.doesNotMatch(html, /CONTACTED|ON STANDBY|WAITING ON CHIEF/);
 });
 

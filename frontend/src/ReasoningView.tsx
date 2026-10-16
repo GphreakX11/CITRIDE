@@ -9,6 +9,12 @@ import {
 } from "lucide-react";
 import { api, describe, humanize } from "./api";
 import { displayText } from "./presentation";
+import {
+  currentInferenceRun,
+  idtConclusion,
+  idtSectorIri,
+  isCurrentInferenceRun,
+} from "./idtProof";
 import type {
   Bootstrap,
   InferenceFact,
@@ -17,6 +23,7 @@ import type {
   InferenceRunSummary,
   OntologyMetadata,
 } from "./types";
+import { ctClock } from "./caseFilePresentation";
 import "./reasoning.css";
 
 function failureMessage(failure: unknown): string {
@@ -30,7 +37,7 @@ function factText(fact: InferenceFact): string {
 function createdLabel(timestamp?: string): string {
   if (!timestamp) return "Time not recorded";
   const date = new Date(timestamp);
-  return Number.isNaN(date.getTime()) ? timestamp : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? timestamp : ctClock(timestamp);
 }
 
 function diagnosticLabel(value: unknown): string {
@@ -43,7 +50,13 @@ function diagnosticLabel(value: unknown): string {
   return describe(value);
 }
 
-export default function ReasoningView({ data }: { data: Bootstrap }) {
+export default function ReasoningView({
+  data,
+  selectedEntityId,
+}: {
+  data: Bootstrap;
+  selectedEntityId?: string | null;
+}) {
   const [metadata, setMetadata] = useState<OntologyMetadata | null>(null);
   const [history, setHistory] = useState<InferenceRunSummary[]>([]);
   const [run, setRun] = useState<InferenceRun | null>(null);
@@ -61,6 +74,10 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
   const [search, setSearch] = useState("");
   const [predicate, setPredicate] = useState("");
   const capturedRunId = useRef("");
+  const autoSelectionKey = useRef("");
+  const requestedEntity = data.entities.find(
+    (entity) => entity.id === selectedEntityId,
+  );
 
   useEffect(() => {
     let active = true;
@@ -75,15 +92,24 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
         if (!active) return;
         setMetadata(ontology);
         setHistory(list.runs);
-        const runId = capturedRunId.current || list.runs[0]?.id;
-        if (runId) {
-          const result = await api<InferenceRun>(
-            `/v1/inference-runs/${encodeURIComponent(runId)}`,
+        let result: InferenceRun | null = null;
+        if (selectedEntityId) {
+          result = await currentInferenceRun(
+            api,
+            data.baselineRevision,
+            ontology,
+            list.runs,
           );
-          if (active) {
-            capturedRunId.current = result.id;
-            setRun(result);
-          }
+        } else {
+          const runId = capturedRunId.current || list.runs[0]?.id;
+          if (runId)
+            result = await api<InferenceRun>(
+              `/v1/inference-runs/${encodeURIComponent(runId)}`,
+            );
+        }
+        if (active) {
+          capturedRunId.current = result?.id ?? "";
+          setRun(result);
         }
       } catch (failure) {
         if (active) setError(failureMessage(failure));
@@ -95,7 +121,26 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
     return () => {
       active = false;
     };
-  }, [data.baselineRevision, reloadKey]);
+  }, [data.baselineRevision, reloadKey, selectedEntityId]);
+
+  useEffect(() => {
+    if (
+      !requestedEntity ||
+      !run ||
+      !isCurrentInferenceRun(run, data.baselineRevision, metadata)
+    )
+      return;
+    const key = `${run.id}:${requestedEntity.id}:${idtSectorIri(requestedEntity)}`;
+    if (autoSelectionKey.current === key) return;
+    autoSelectionKey.current = key;
+    const conclusion = idtConclusion(requestedEntity, run);
+    setSelectedFactId(conclusion?.id ?? "");
+    if (conclusion) {
+      setFilter(conclusion.status);
+      setPredicate("");
+      setSearch("");
+    }
+  }, [run, requestedEntity, data.baselineRevision, metadata]);
 
   useEffect(() => {
     let active = true;
@@ -135,6 +180,7 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
 
   function acceptRun(result: InferenceRun) {
     capturedRunId.current = result.id;
+    autoSelectionKey.current = "";
     setSelectedFactId("");
     setRun(result);
   }
@@ -322,6 +368,30 @@ export default function ReasoningView({ data }: { data: Bootstrap }) {
           </p>
         )}
       </section>
+
+      {selectedEntityId && !loading && (
+        <div className="notice" role="status">
+          <div>
+            <strong>
+              {displayText(requestedEntity?.label ?? selectedEntityId)} · IDT
+              classification
+            </strong>
+            <p>
+              {!requestedEntity || !idtSectorIri(requestedEntity)
+                ? "No coded IDT type assignment is recorded for this entity; no IDT type proof is implied."
+                : run &&
+                    isCurrentInferenceRun(
+                      run,
+                      data.baselineRevision,
+                      metadata,
+                    ) &&
+                    idtConclusion(requestedEntity, run)
+                  ? "The entity's sector type conclusion is selected on handoff. Its source trail is fetched from the saved run; workbook lookup is not a proof. You can select another fact below."
+                  : "Run reasoning to see the proof. Use Run OWL inference to explicitly capture the current baseline and ontology; navigation never creates a run."}
+            </p>
+          </div>
+        </div>
+      )}
 
       {run && (
         <>

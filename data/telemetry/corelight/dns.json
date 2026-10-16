@@ -1,0 +1,3257 @@
+[
+  {
+    "ts": 1791867600.0,
+    "uid": "CUZP18WeDbcnBIWPYf",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 58446,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791867600.001,
+    "id": "dns-a-000",
+    "relativeTimeHours": -2.0,
+    "timestamp": "2026-10-13T05:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791867600.0,
+    "uid": "CXHPrMgMojiDf390aW",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 52993,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791867600.001,
+    "id": "dns-b-000",
+    "relativeTimeHours": -2.0,
+    "timestamp": "2026-10-13T05:00:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791867600.0,
+    "uid": "CgHvJviXf5pVegDKWJ",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 55782,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791867600.001,
+    "id": "dns-c-000",
+    "relativeTimeHours": -2.0,
+    "timestamp": "2026-10-13T05:00:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791868200.0,
+    "uid": "CobUvAGoQbY4ASLSiD",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 45438,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791868200.001,
+    "id": "dns-a-001",
+    "relativeTimeHours": -1.833333,
+    "timestamp": "2026-10-13T05:10:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791868200.0,
+    "uid": "C3vwr20Jm1DIvCeTBk",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 52769,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791868200.001,
+    "id": "dns-b-001",
+    "relativeTimeHours": -1.833333,
+    "timestamp": "2026-10-13T05:10:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791868200.0,
+    "uid": "CDqnaKhmB8fJcZlQXo",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 56829,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791868200.001,
+    "id": "dns-c-001",
+    "relativeTimeHours": -1.833333,
+    "timestamp": "2026-10-13T05:10:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791868800.0,
+    "uid": "Cc4tjaKmKIMMdZHfoz",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 56572,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791868800.001,
+    "id": "dns-a-002",
+    "relativeTimeHours": -1.666667,
+    "timestamp": "2026-10-13T05:20:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791868800.0,
+    "uid": "CyTn3v7aqAlYlkXJsQ",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 45345,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791868800.001,
+    "id": "dns-b-002",
+    "relativeTimeHours": -1.666667,
+    "timestamp": "2026-10-13T05:20:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791868800.0,
+    "uid": "CC3xPW053bpxmdVkk1",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 41901,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791868800.001,
+    "id": "dns-c-002",
+    "relativeTimeHours": -1.666667,
+    "timestamp": "2026-10-13T05:20:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791869400.0,
+    "uid": "CBT2hNJ0qTXo3qgaoF",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 59577,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791869400.001,
+    "id": "dns-a-003",
+    "relativeTimeHours": -1.5,
+    "timestamp": "2026-10-13T05:30:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791869400.0,
+    "uid": "CIEDtkELtih4oTlkDT",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 46319,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791869400.001,
+    "id": "dns-b-003",
+    "relativeTimeHours": -1.5,
+    "timestamp": "2026-10-13T05:30:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791869400.0,
+    "uid": "CqYdOK6g3ojzc02vZV",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 40075,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791869400.001,
+    "id": "dns-c-003",
+    "relativeTimeHours": -1.5,
+    "timestamp": "2026-10-13T05:30:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791870000.0,
+    "uid": "Cl6vjlOyrRqGy6jaX7",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 54724,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791870000.001,
+    "id": "dns-a-004",
+    "relativeTimeHours": -1.333333,
+    "timestamp": "2026-10-13T05:40:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791870000.0,
+    "uid": "CzuVbWbkmlE2QPUm2A",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 58120,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791870000.001,
+    "id": "dns-b-004",
+    "relativeTimeHours": -1.333333,
+    "timestamp": "2026-10-13T05:40:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791870000.0,
+    "uid": "CQtKUlZyrqynAu5pSv",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 57824,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791870000.001,
+    "id": "dns-c-004",
+    "relativeTimeHours": -1.333333,
+    "timestamp": "2026-10-13T05:40:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791870600.0,
+    "uid": "CAPwx6bGBP7A24v7zn",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 42074,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791870600.001,
+    "id": "dns-a-005",
+    "relativeTimeHours": -1.166667,
+    "timestamp": "2026-10-13T05:50:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791870600.0,
+    "uid": "C4HI3DLJBj8z7QpdDO",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 57848,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791870600.001,
+    "id": "dns-b-005",
+    "relativeTimeHours": -1.166667,
+    "timestamp": "2026-10-13T05:50:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791870600.0,
+    "uid": "C3ZpvyBQ2dIjqM0Mjp",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 46259,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791870600.001,
+    "id": "dns-c-005",
+    "relativeTimeHours": -1.166667,
+    "timestamp": "2026-10-13T05:50:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791871200.0,
+    "uid": "CXdSVTW3oKmgIQ65Be",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 56663,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791871200.001,
+    "id": "dns-a-006",
+    "relativeTimeHours": -1.0,
+    "timestamp": "2026-10-13T06:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791871200.0,
+    "uid": "CGneTnj60YdQQ5Kwvt",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 50797,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791871200.001,
+    "id": "dns-b-006",
+    "relativeTimeHours": -1.0,
+    "timestamp": "2026-10-13T06:00:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791871200.0,
+    "uid": "CWM9yH9AkxY1OjqmOd",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 48129,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791871200.001,
+    "id": "dns-c-006",
+    "relativeTimeHours": -1.0,
+    "timestamp": "2026-10-13T06:00:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791871800.0,
+    "uid": "CYqCm0BcDLdgi2iPZP",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 53902,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791871800.001,
+    "id": "dns-a-007",
+    "relativeTimeHours": -0.833333,
+    "timestamp": "2026-10-13T06:10:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791871800.0,
+    "uid": "CM6LUpEqA35dZpk5gM",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 56155,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791871800.001,
+    "id": "dns-b-007",
+    "relativeTimeHours": -0.833333,
+    "timestamp": "2026-10-13T06:10:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791871800.0,
+    "uid": "CIfuw6gudGNO0sJJ4D",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 59727,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791871800.001,
+    "id": "dns-c-007",
+    "relativeTimeHours": -0.833333,
+    "timestamp": "2026-10-13T06:10:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791872400.0,
+    "uid": "CR8S5IXfusNgloxCbW",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 45876,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791872400.001,
+    "id": "dns-a-008",
+    "relativeTimeHours": -0.666667,
+    "timestamp": "2026-10-13T06:20:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791872400.0,
+    "uid": "CMj3nFTvvrCoqlGjod",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 54424,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791872400.001,
+    "id": "dns-b-008",
+    "relativeTimeHours": -0.666667,
+    "timestamp": "2026-10-13T06:20:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791872400.0,
+    "uid": "CEIDU3QZV5chgT7rHt",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 51963,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791872400.001,
+    "id": "dns-c-008",
+    "relativeTimeHours": -0.666667,
+    "timestamp": "2026-10-13T06:20:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791873000.0,
+    "uid": "CQXaBEGh0Z3LEkFWdK",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 45881,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791873000.001,
+    "id": "dns-a-009",
+    "relativeTimeHours": -0.5,
+    "timestamp": "2026-10-13T06:30:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791873000.0,
+    "uid": "CnzsnF9LG2fPB69oEM",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 54181,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791873000.001,
+    "id": "dns-b-009",
+    "relativeTimeHours": -0.5,
+    "timestamp": "2026-10-13T06:30:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791873000.0,
+    "uid": "CV0LzCTrXrrItHZV0y",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 46526,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791873000.001,
+    "id": "dns-c-009",
+    "relativeTimeHours": -0.5,
+    "timestamp": "2026-10-13T06:30:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791873600.0,
+    "uid": "CLoHYXwO9I21q7JRyY",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 54963,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791873600.001,
+    "id": "dns-a-010",
+    "relativeTimeHours": -0.333333,
+    "timestamp": "2026-10-13T06:40:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791873600.0,
+    "uid": "CPMVIRoU79Pm32f9yp",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 54124,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791873600.001,
+    "id": "dns-b-010",
+    "relativeTimeHours": -0.333333,
+    "timestamp": "2026-10-13T06:40:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791873600.0,
+    "uid": "C5gjGY5fNNyfECv6rJ",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 44462,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791873600.001,
+    "id": "dns-c-010",
+    "relativeTimeHours": -0.333333,
+    "timestamp": "2026-10-13T06:40:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791874200.0,
+    "uid": "CutOL0gZnDLrWNRcM7",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 59768,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791874200.001,
+    "id": "dns-a-011",
+    "relativeTimeHours": -0.166667,
+    "timestamp": "2026-10-13T06:50:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791874200.0,
+    "uid": "CrGb9yKW50vsehBY54",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 57760,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791874200.001,
+    "id": "dns-b-011",
+    "relativeTimeHours": -0.166667,
+    "timestamp": "2026-10-13T06:50:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791874200.0,
+    "uid": "CzoAG4DFyezwtSz7py",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 41270,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791874200.001,
+    "id": "dns-c-011",
+    "relativeTimeHours": -0.166667,
+    "timestamp": "2026-10-13T06:50:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791874800.0,
+    "uid": "C88x81dnLcuvQowssU",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 59108,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791874800.001,
+    "id": "dns-a-012",
+    "relativeTimeHours": 0.0,
+    "timestamp": "2026-10-13T07:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791874800.0,
+    "uid": "CzKEyiK8ciS5XfJC6p",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 59637,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791874800.001,
+    "id": "dns-b-012",
+    "relativeTimeHours": 0.0,
+    "timestamp": "2026-10-13T07:00:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791874800.0,
+    "uid": "COuj8cHLMz5Vn1cmg5",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 49603,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791874800.001,
+    "id": "dns-c-012",
+    "relativeTimeHours": 0.0,
+    "timestamp": "2026-10-13T07:00:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791875400.0,
+    "uid": "C17bldcvcEz0ESRTFQ",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 42049,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791875400.001,
+    "id": "dns-a-013",
+    "relativeTimeHours": 0.166667,
+    "timestamp": "2026-10-13T07:10:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791875400.0,
+    "uid": "CRpV5vQMvVZkMmvIUU",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 55875,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791875400.001,
+    "id": "dns-b-013",
+    "relativeTimeHours": 0.166667,
+    "timestamp": "2026-10-13T07:10:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791875400.0,
+    "uid": "CV6CoYezvIXRB8K2hZ",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 58586,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791875400.001,
+    "id": "dns-c-013",
+    "relativeTimeHours": 0.166667,
+    "timestamp": "2026-10-13T07:10:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791876000.0,
+    "uid": "Cp85kJsTif3lTkvE66",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 52035,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791876000.001,
+    "id": "dns-a-014",
+    "relativeTimeHours": 0.333333,
+    "timestamp": "2026-10-13T07:20:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791876000.0,
+    "uid": "CtUxB6F97rFlu5QYLW",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 46701,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791876000.001,
+    "id": "dns-b-014",
+    "relativeTimeHours": 0.333333,
+    "timestamp": "2026-10-13T07:20:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791876000.0,
+    "uid": "C7Z8xqQIrhte6KY5nJ",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 57462,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791876000.001,
+    "id": "dns-c-014",
+    "relativeTimeHours": 0.333333,
+    "timestamp": "2026-10-13T07:20:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791876600.0,
+    "uid": "C4cD8BgyjBkChJ6H5v",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 58276,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791876600.001,
+    "id": "dns-a-015",
+    "relativeTimeHours": 0.5,
+    "timestamp": "2026-10-13T07:30:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791876600.0,
+    "uid": "C5VSkE2QERkXbQvvoS",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 58964,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791876600.001,
+    "id": "dns-b-015",
+    "relativeTimeHours": 0.5,
+    "timestamp": "2026-10-13T07:30:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791876600.0,
+    "uid": "CQKXCfRBo1EPb9n6tC",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 49869,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791876600.001,
+    "id": "dns-c-015",
+    "relativeTimeHours": 0.5,
+    "timestamp": "2026-10-13T07:30:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791877200.0,
+    "uid": "C2U7ozRIPkK11BIMIh",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 47415,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791877200.001,
+    "id": "dns-a-016",
+    "relativeTimeHours": 0.666667,
+    "timestamp": "2026-10-13T07:40:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791877200.0,
+    "uid": "C9DAeWVxzXRRqqrC1T",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 55601,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791877200.001,
+    "id": "dns-b-016",
+    "relativeTimeHours": 0.666667,
+    "timestamp": "2026-10-13T07:40:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791877200.0,
+    "uid": "CeUfNwgXJsaBzpPFsD",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 48216,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791877200.001,
+    "id": "dns-c-016",
+    "relativeTimeHours": 0.666667,
+    "timestamp": "2026-10-13T07:40:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791877800.0,
+    "uid": "CGHMyzdY8kwD9oUXnv",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 57018,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791877800.001,
+    "id": "dns-a-017",
+    "relativeTimeHours": 0.833333,
+    "timestamp": "2026-10-13T07:50:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791877800.0,
+    "uid": "CLAQnU0t84klJsZG7z",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 57828,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791877800.001,
+    "id": "dns-b-017",
+    "relativeTimeHours": 0.833333,
+    "timestamp": "2026-10-13T07:50:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791877800.0,
+    "uid": "CQLOtBM60uNNFEXP5l",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 42973,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791877800.001,
+    "id": "dns-c-017",
+    "relativeTimeHours": 0.833333,
+    "timestamp": "2026-10-13T07:50:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791878400.0,
+    "uid": "CU5v35Ch9luJBQ7EgD",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 43046,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791878400.001,
+    "id": "dns-a-018",
+    "relativeTimeHours": 1.0,
+    "timestamp": "2026-10-13T08:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791878400.0,
+    "uid": "CcWbuBytr7XPh2KwLq",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 57231,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791878400.001,
+    "id": "dns-b-018",
+    "relativeTimeHours": 1.0,
+    "timestamp": "2026-10-13T08:00:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791878400.0,
+    "uid": "CVVkd7OKsiYdIhVWY6",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 53818,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791878400.001,
+    "id": "dns-c-018",
+    "relativeTimeHours": 1.0,
+    "timestamp": "2026-10-13T08:00:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791879000.0,
+    "uid": "Cf4USpdYHCOt3yCVSm",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 45361,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791879000.001,
+    "id": "dns-a-019",
+    "relativeTimeHours": 1.166667,
+    "timestamp": "2026-10-13T08:10:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791879000.0,
+    "uid": "C7gbOSi6sWtXcVVda0",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 55973,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791879000.001,
+    "id": "dns-b-019",
+    "relativeTimeHours": 1.166667,
+    "timestamp": "2026-10-13T08:10:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791879000.0,
+    "uid": "CBerFKmGzM2IPIDAAL",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 40332,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791879000.001,
+    "id": "dns-c-019",
+    "relativeTimeHours": 1.166667,
+    "timestamp": "2026-10-13T08:10:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791879600.0,
+    "uid": "CDyIfxWbw4Nqd1RJdu",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 44573,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791879600.001,
+    "id": "dns-a-020",
+    "relativeTimeHours": 1.333333,
+    "timestamp": "2026-10-13T08:20:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791879600.0,
+    "uid": "CghazPDal2G6FBtNtO",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 47263,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791879600.001,
+    "id": "dns-b-020",
+    "relativeTimeHours": 1.333333,
+    "timestamp": "2026-10-13T08:20:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791879600.0,
+    "uid": "C5m4mCeVOMCZTOEJIf",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 44084,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791879600.001,
+    "id": "dns-c-020",
+    "relativeTimeHours": 1.333333,
+    "timestamp": "2026-10-13T08:20:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791880200.0,
+    "uid": "CdPq5k4XaMOtFgBYtj",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 44015,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791880200.001,
+    "id": "dns-a-021",
+    "relativeTimeHours": 1.5,
+    "timestamp": "2026-10-13T08:30:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791880200.0,
+    "uid": "CuFBqOix5iMdKJV9Wp",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 58234,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791880200.001,
+    "id": "dns-b-021",
+    "relativeTimeHours": 1.5,
+    "timestamp": "2026-10-13T08:30:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791880200.0,
+    "uid": "CibyKKoUDzkg2dOZgH",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 46165,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791880200.001,
+    "id": "dns-c-021",
+    "relativeTimeHours": 1.5,
+    "timestamp": "2026-10-13T08:30:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791880800.0,
+    "uid": "CCAr9s6HSoapvFMlwS",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 48288,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791880800.001,
+    "id": "dns-a-022",
+    "relativeTimeHours": 1.666667,
+    "timestamp": "2026-10-13T08:40:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791880800.0,
+    "uid": "CarGDzIUhGRu46qejj",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 42110,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791880800.001,
+    "id": "dns-b-022",
+    "relativeTimeHours": 1.666667,
+    "timestamp": "2026-10-13T08:40:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791880800.0,
+    "uid": "CbngHgOTYlIVd7OD1s",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 45644,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791880800.001,
+    "id": "dns-c-022",
+    "relativeTimeHours": 1.666667,
+    "timestamp": "2026-10-13T08:40:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791881400.0,
+    "uid": "CuW3eVFFVlDVd1lhg4",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 44459,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791881400.001,
+    "id": "dns-a-023",
+    "relativeTimeHours": 1.833333,
+    "timestamp": "2026-10-13T08:50:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791881400.0,
+    "uid": "CLdyfgwUl4cY9zNhIF",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 45044,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791881400.001,
+    "id": "dns-b-023",
+    "relativeTimeHours": 1.833333,
+    "timestamp": "2026-10-13T08:50:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791881400.0,
+    "uid": "CZhmFsRX5noVTzEWem",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 41895,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791881400.001,
+    "id": "dns-c-023",
+    "relativeTimeHours": 1.833333,
+    "timestamp": "2026-10-13T08:50:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791882000.0,
+    "uid": "CTcvHjQvEKUYQbBmiu",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 54378,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791882000.001,
+    "id": "dns-a-024",
+    "relativeTimeHours": 2.0,
+    "timestamp": "2026-10-13T09:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791882000.0,
+    "uid": "Cdp8xewNFVPFkc6nzt",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 54157,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791882000.001,
+    "id": "dns-b-024",
+    "relativeTimeHours": 2.0,
+    "timestamp": "2026-10-13T09:00:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791882000.0,
+    "uid": "CeCj55sm5XBPDD1P0n",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 44940,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791882000.001,
+    "id": "dns-c-024",
+    "relativeTimeHours": 2.0,
+    "timestamp": "2026-10-13T09:00:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791882600.0,
+    "uid": "Ceeg3l0EtLKVOxoeD5",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 40870,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791882600.001,
+    "id": "dns-a-025",
+    "relativeTimeHours": 2.166667,
+    "timestamp": "2026-10-13T09:10:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791882600.0,
+    "uid": "Cyahsn017RuZYORWTS",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 56007,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791882600.001,
+    "id": "dns-b-025",
+    "relativeTimeHours": 2.166667,
+    "timestamp": "2026-10-13T09:10:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791882600.0,
+    "uid": "CVRHfB2BugFiNIScnv",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 54863,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791882600.001,
+    "id": "dns-c-025",
+    "relativeTimeHours": 2.166667,
+    "timestamp": "2026-10-13T09:10:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791883200.0,
+    "uid": "Cz5BRDWJdNOLobNOg9",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 52304,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791883200.001,
+    "id": "dns-a-026",
+    "relativeTimeHours": 2.333333,
+    "timestamp": "2026-10-13T09:20:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791883200.0,
+    "uid": "CKDONMhNonBwXOzkIS",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 42394,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791883200.001,
+    "id": "dns-b-026",
+    "relativeTimeHours": 2.333333,
+    "timestamp": "2026-10-13T09:20:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791883200.0,
+    "uid": "CPEhSA7I97LSOK8ux6",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 49700,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791883200.001,
+    "id": "dns-c-026",
+    "relativeTimeHours": 2.333333,
+    "timestamp": "2026-10-13T09:20:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791883800.0,
+    "uid": "CKJ4UW3dg0JWc7GRqH",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 56448,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791883800.001,
+    "id": "dns-a-027",
+    "relativeTimeHours": 2.5,
+    "timestamp": "2026-10-13T09:30:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791883800.0,
+    "uid": "CkoSPVOoNz3uUrwWnz",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 56634,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791883800.001,
+    "id": "dns-b-027",
+    "relativeTimeHours": 2.5,
+    "timestamp": "2026-10-13T09:30:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791883800.0,
+    "uid": "CZfB0sFEbzIj0iZrcQ",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 58036,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791883800.001,
+    "id": "dns-c-027",
+    "relativeTimeHours": 2.5,
+    "timestamp": "2026-10-13T09:30:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791884400.0,
+    "uid": "C84NnlomKuGME0LSwd",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 55154,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791884400.001,
+    "id": "dns-a-028",
+    "relativeTimeHours": 2.666667,
+    "timestamp": "2026-10-13T09:40:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791884400.0,
+    "uid": "CE5Mf4C6Ofa6Z8DIpA",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 55079,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791884400.001,
+    "id": "dns-b-028",
+    "relativeTimeHours": 2.666667,
+    "timestamp": "2026-10-13T09:40:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791884400.0,
+    "uid": "CwHKpZdGGPonBEGq71",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 44446,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "time.example.net",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.123"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791884400.001,
+    "id": "dns-c-028",
+    "relativeTimeHours": 2.666667,
+    "timestamp": "2026-10-13T09:40:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791885000.0,
+    "uid": "C3KlKlk6bQrpiO7VhS",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 49100,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-a.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.31"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791885000.001,
+    "id": "dns-a-029",
+    "relativeTimeHours": 2.833333,
+    "timestamp": "2026-10-13T09:50:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791885000.0,
+    "uid": "CrbkfCa6VxoyQXeh8Z",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 54513,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-b.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.32"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791885000.001,
+    "id": "dns-b-029",
+    "relativeTimeHours": 2.833333,
+    "timestamp": "2026-10-13T09:50:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791885000.0,
+    "uid": "C6KvFpQ879Sy6xRtaA",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 43401,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "historian.utility-c.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "192.0.2.33"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791885000.001,
+    "id": "dns-c-029",
+    "relativeTimeHours": 2.833333,
+    "timestamp": "2026-10-13T09:50:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791885600.0,
+    "uid": "CuDpVFSIODTbGxSP2P",
+    "id.orig_h": "192.0.2.51",
+    "id.orig_p": 46087,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791885600.001,
+    "id": "dns-a-030",
+    "relativeTimeHours": 3.0,
+    "timestamp": "2026-10-13T10:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791885600.0,
+    "uid": "CdLmZkCrHKo0vjC6Fy",
+    "id.orig_h": "192.0.2.52",
+    "id.orig_p": 57940,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791885600.001,
+    "id": "dns-b-030",
+    "relativeTimeHours": 3.0,
+    "timestamp": "2026-10-13T10:00:00Z",
+    "utilityId": "utility-b",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  {
+    "ts": 1791885600.0,
+    "uid": "CyYC6mwyt9LNesOfL8",
+    "id.orig_h": "192.0.2.53",
+    "id.orig_p": 48739,
+    "id.resp_h": "192.0.2.53",
+    "id.resp_p": 53,
+    "proto": "udp",
+    "query": "updates.vendor-v.example",
+    "qtype_name": "A",
+    "rcode_name": "NOERROR",
+    "answers": [
+      "198.51.100.80"
+    ],
+    "TTLs": [
+      300.0
+    ],
+    "_path": "dns",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791885600.001,
+    "id": "dns-c-030",
+    "relativeTimeHours": 3.0,
+    "timestamp": "2026-10-13T10:00:00Z",
+    "utilityId": "utility-c",
+    "observation": "normal_name_resolution",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  }
+]

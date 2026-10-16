@@ -1,0 +1,480 @@
+/* Authoritative mockup palette, self-hosted typography and shared presentation.
+   All screen styles refer to these tokens. No runtime font CDN is required. */
+:root {
+  color-scheme: dark;
+  --bg: #0a1120;
+  --bg-header: #0d1526;
+  --surface: #111a2c;
+  --surface-2: #16233b;
+  --nav-active: #1a2842;
+  --border: #22304a;
+  --border-strong: #2e4063;
+  --text: #e8eef7;
+  --text-strong: #ffffff;
+  --text-2: #c9d5e6;
+  --text-muted: #a3b1c6;
+  --link: #9cc7ff;
+  --link-hover: #cfe3ff;
+  --accent: #3b82f6;
+  --accent-bg: #13243f;
+  --mode-active: #1f3a66;
+  --red: #f97066;
+  --red-bg: #3a1c1c;
+  --red-text: #ffb3aa;
+  --amber: #f5a524;
+  --amber-bg: #2a2312;
+  --amber-text: #f5c76b;
+  --green: #2f7a4f;
+  --green-bg: #12301f;
+  --green-text: #a7f3c5;
+  --blue-bg: #13243f;
+  --blue-text: #9cc7ff;
+  --grey: #7c8ba3;
+  --sample-border: #5b4a1e;
+  --sample-text: #f5c76b;
+  --shadow: #000000;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius-card: 10px;
+  --radius-control: 8px;
+  --radius-small: 6px;
+  --radius-chip: 999px;
+  --radius-md: var(--radius-control);
+  --radius-sm: var(--radius-small);
+  --radius-pill: var(--radius-chip);
+  --font-body: var(--font-sans);
+  --border-width: 1px;
+  --lh-chip: 1.25;
+  --weight-label: 700;
+  --tracking-chip: 0.025em;
+  --space-chip-gap: 6px;
+  --space-chip-x: 8px;
+  --space-chip-y: 4px;
+  --status-red-text: var(--red-text);
+  --status-red-bg: var(--red-bg);
+  --status-amber-text: var(--amber-text);
+  --status-amber-bg: var(--amber-bg);
+  --status-green-text: var(--green-text);
+  --status-green-bg: var(--green-bg);
+  --status-blue-text: var(--blue-text);
+  --status-blue-bg: var(--blue-bg);
+  --status-grey-text: var(--text-muted);
+  --status-grey-bg: var(--surface-2);
+  --card-padding: 18px;
+  --card-gap: 18px;
+  --page-padding-block: 24px;
+  --page-padding-inline: 32px;
+  --nav-width: 232px;
+  --fs-brand: 18px;
+  --fs-nav-heading: 12px;
+  --fs-body: 15px;
+  --fs-title: 28px;
+  --fs-subtitle: 15px;
+  --fs-card-title: 17px;
+  --fs-number: 26px;
+  --fs-tile-label: 13px;
+  --fs-small: 13px;
+  --fs-chip: 12px;
+  --fs-menu: 15px;
+  --fs-mono: 13px;
+  --fs-edge: 13px;
+  /* White on the exact supplied accent passes AA at large bold text (3:1),
+     not at small body size (4.5:1). Keep the palette and use actual 19px/700. */
+  --fs-button: 19px;
+  --fs-watermark: 96px;
+  --control-height: 40px;
+  --table-cell-padding: 10px;
+  /* Compatibility aliases retain old class/layout contracts, never old colors. */
+  --blue: var(--link);
+  --navy: var(--bg-header);
+  --muted: var(--text-muted);
+  --line: var(--border);
+  --command-bg: var(--bg);
+  --command-panel: var(--surface);
+  --panel: var(--surface);
+  --command-border: var(--border);
+  --command-muted: var(--text-muted);
+}
+[data-mode="analyst"] {
+  --fs-body: 15px;
+  --fs-title: 28px;
+  --fs-subtitle: 15px;
+  --fs-card-title: 17px;
+  --fs-number: 26px;
+  --fs-tile-label: 13px;
+  --fs-small: 13px;
+  --fs-chip: 12px;
+  --fs-menu: 15px;
+  --fs-mono: 13px;
+  --control-height: 40px;
+  --table-cell-padding: 10px;
+}
+[data-mode="command"] {
+  --fs-body: 17px;
+  --fs-title: 32px;
+  --fs-subtitle: 17px;
+  --fs-card-title: 20px;
+  --fs-number: 34px;
+  --fs-tile-label: 15px;
+  --fs-small: 14px;
+  --fs-chip: 13px;
+  --fs-menu: 16px;
+  --fs-mono: 14px;
+  --control-height: 44px;
+  --table-cell-padding: 12px;
+}
+/* Navigation colors are theme roles, not the legacy per-route inline swatches. */
+.app-shell[data-mode] .sidebar .command-nav-code {
+  color: var(--text-muted) !important;
+  border-color: var(--border) !important;
+  background: transparent;
+}
+.app-shell[data-mode]
+  .sidebar
+  .nav-item[aria-current="page"]
+  .command-nav-code {
+  color: var(--text-strong) !important;
+}
+[data-mode] .command-table td:first-child small {
+  font-family: var(--font-mono);
+}
+[data-mode] .command-table td:last-child {
+  font-family: var(--font-mono);
+}
+[data-mode] .network-table :is(td, th) {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+}
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-synthesis: none;
+}
+[data-mode] {
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+.app-shell[data-mode] :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-sans);
+  color: var(--text-strong);
+  font-weight: 600;
+  letter-spacing: normal;
+}
+[data-mode] h1 {
+  font-size: var(--fs-title);
+  line-height: 1.25;
+}
+[data-mode] :is(h2, h3) {
+  font-size: var(--fs-card-title);
+}
+[data-mode] :is(.cc-page-heading, .page-heading, .page-header) :is(h1, h2) {
+  font-size: var(--fs-title);
+}
+[data-mode] :is(.cc-page-heading, .page-heading, .page-header) p {
+  font-size: var(--fs-subtitle);
+  color: var(--text-2);
+}
+[data-mode]
+  :is(
+    .command-panel,
+    .cc-panel,
+    .cc-card,
+    .panel,
+    .sc-panel,
+    .sa-panel,
+    .command-casework .cc-panel
+  ) {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+  min-width: 0;
+}
+[data-mode] :is(.command-panel-heading, .panel-heading, .cc-panel-heading) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+[data-mode]
+  :is(.command-panel-heading, .panel-heading, .cc-panel-heading)
+  :is(p, small, span) {
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+}
+[data-mode]
+  :is(
+    .command-two-grid,
+    .command-three-grid,
+    .sc-grid,
+    .cc-grid,
+    .command-metrics,
+    .cc-metrics,
+    .metric-grid
+  ) {
+  gap: var(--card-gap);
+}
+[data-mode] :is(.metric, .command-metric, .cc-metric, .sc-metric) {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+  min-width: 0;
+}
+[data-mode]
+  :is(
+    .metric-value,
+    .command-metric > strong,
+    .cc-metric > strong,
+    .sc-metric > strong,
+    .metric > strong
+  ) {
+  font-size: var(--fs-number);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+[data-mode] :is(.metric-label, .command-metric > span, .sc-metric > span) {
+  font-size: var(--fs-tile-label);
+  color: var(--text-2);
+}
+[data-mode] :is(small, .command-muted, .cc-muted, .sc-muted) {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+[data-mode]
+  :is(
+    code,
+    pre,
+    time,
+    .idt-code,
+    .idt-chip,
+    .technique-chip,
+    .network-record-id,
+    .prototype-hash,
+    .mono
+  ) {
+  font-family: var(--font-mono);
+}
+[data-mode] :is(code, pre, .idt-chip, .technique-chip) {
+  font-size: var(--fs-mono);
+}
+[data-mode] .idt-chip {
+  color: var(--link);
+}
+[data-mode] pre {
+  background: var(--bg-header);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+[data-mode] a {
+  color: var(--link);
+}
+[data-mode] a:hover {
+  color: var(--link-hover);
+}
+[data-mode] :is(button, .button, input, select, textarea) {
+  font-family: var(--font-sans);
+  border-radius: var(--radius-control);
+}
+[data-mode] :is(button, .button) {
+  min-height: var(--control-height);
+}
+[data-mode] button {
+  background: var(--bg-header);
+  color: var(--text-2);
+  border-color: var(--border-strong);
+}
+[data-mode] :is(input, select, textarea) {
+  background: var(--bg-header);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  font-size: var(--fs-body);
+}
+[data-mode] :is(.button.primary, button.primary, .cc-primary, .primary-button) {
+  color: var(--text-strong);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  font-size: var(--fs-button);
+  font-weight: 700;
+}
+[data-mode] :is(.button.secondary, button.secondary, .secondary-button) {
+  background: var(--accent-bg);
+  color: var(--link);
+  border: 1px solid var(--accent);
+}
+[data-mode] :is(.command-link, .link-button) {
+  color: var(--link);
+  background: transparent;
+}
+[data-mode]
+  :is(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+[data-mode]
+  :is(.command-table-wrap, .network-table-wrap, .table-scroll, .table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+  min-width: 0;
+}
+[data-mode] table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text);
+  background: var(--surface);
+  font-size: var(--fs-body);
+}
+[data-mode] :is(td, th) {
+  padding: var(--table-cell-padding);
+  border-color: var(--border);
+}
+[data-mode] th {
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+[data-mode] td {
+  font-size: var(--fs-body);
+  border-bottom: 1px solid var(--border);
+}
+[data-mode] :is(.empty-state, .cc-empty, .command-empty, .loading-state) {
+  background: transparent;
+  color: var(--text-muted);
+}
+[data-mode]
+  :is(
+    .map-stage,
+    .texas-map-canvas,
+    .cc-dependency-network,
+    .ac-network,
+    .sf-statewide,
+    .map-canvas,
+    .incident-graph
+  ) {
+  background-color: var(--bg);
+  border-color: var(--border);
+}
+[data-mode] :is(svg text, .map-edge-label) {
+  font-family: var(--font-sans);
+  font-size: var(--fs-edge);
+}
+[data-mode] :is(.map-watermark, .texas-watermark) {
+  fill: var(--text-muted);
+  opacity: 0.1;
+}
+[data-mode] :is(.selected-node, [data-selected="true"]) {
+  stroke: var(--text-strong);
+}
+[data-mode] dialog {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-card);
+}
+[data-mode] dialog::backdrop {
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
+}
+[data-mode] .prototype-status {
+  font-size: var(--fs-small);
+  gap: 10px;
+}
+[data-mode] .sc-pin {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  max-width: none;
+  border: 0;
+  border-radius: var(--radius-chip);
+  background: transparent;
+}
+[data-mode] .sc-pin-marker {
+  color: var(--link);
+}
+[data-mode] .sc-pin-label {
+  position: absolute;
+  left: 36px;
+  top: 0;
+  width: max-content;
+  max-width: min(220px, calc(45vw - 24px));
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--bg-header);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+}
+[data-mode] .sc-pin[data-label-side="left"] .sc-pin-label {
+  left: auto;
+  right: 36px;
+}
+[data-mode] .sc-pin.selected .sc-pin-label {
+  top: 38px;
+  border-color: var(--text-strong);
+}
+[data-mode] .sc-schematic::before {
+  content: "TEXAS";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-watermark);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  opacity: 0.08;
+  pointer-events: none;
+}
+@media (min-width: 1100px) {
+  [data-mode="command"] .scripted-command[data-screen="command"] {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  [data-mode="command"]
+    .scripted-command[data-screen="command"]
+    > :is(.cc-metrics, .sc-grid) {
+    grid-column: 1 / -1;
+  }
+  [data-mode="command"] .scripted-command[data-screen="command"] > .sc-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+@media (max-width: 700px) {
+  :root {
+    --page-padding-inline: 14px;
+    --page-padding-block: 16px;
+  }
+  [data-mode] :is(.command-two-grid, .command-three-grid, .cc-grid, .sc-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-mode]
+    :is(
+      .command-panel,
+      .panel,
+      .cc-panel,
+      .sc-panel,
+      .sa-panel,
+      .main-content,
+      .content
+    ) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  [data-mode]
+    :is(.command-table-wrap, .network-table-wrap, .table-scroll, .table-wrap) {
+    overflow-x: auto;
+  }
+}

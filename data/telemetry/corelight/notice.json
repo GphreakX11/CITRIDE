@@ -1,0 +1,154 @@
+[
+  {
+    "ts": 1791873000.0,
+    "uid": "C40mJUk54ecNP7PS2f",
+    "id.orig_h": "203.0.113.250",
+    "id.orig_p": 58288,
+    "id.resp_h": "198.51.100.41",
+    "id.resp_p": 443,
+    "note": "W250::Offsite_VPN_Login",
+    "msg": "Vendor account login outside its normal hours",
+    "sub": "Simulated Watershed scenario",
+    "src": "203.0.113.250",
+    "dst": "198.51.100.41",
+    "p": 443,
+    "actions": [
+      "Notice::ACTION_LOG"
+    ],
+    "suppress_for": 3600.0,
+    "_path": "notice",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791873000.001,
+    "id": "notice-vpn-a",
+    "relativeTimeHours": -0.5,
+    "timestamp": "2026-10-13T06:30:00Z",
+    "utilityId": "utility-a",
+    "observation": "W250::Offsite_VPN_Login",
+    "anomalous": true,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "interpretation": "Simulated activity at A; correlation is scenario evidence, not actor attribution or proof of a physical effect.",
+    "targetAssetId": "vpn-a",
+    "sharedSourceIdentity": "synthetic-campaign-01"
+  },
+  {
+    "ts": 1791874800.0,
+    "uid": "Cu4FMXXmM45Qp3OIha",
+    "id.orig_h": "192.0.2.240",
+    "id.orig_p": 59816,
+    "id.resp_h": "192.0.2.11",
+    "id.resp_p": 502,
+    "note": "W250::Modbus_Write_New_Source",
+    "msg": "A new VPN-pool source writes the simulated dosing register from 1 to 4.",
+    "sub": "Simulated Watershed scenario",
+    "src": "192.0.2.240",
+    "dst": "192.0.2.11",
+    "p": 502,
+    "actions": [
+      "Notice::ACTION_LOG"
+    ],
+    "suppress_for": 3600.0,
+    "_path": "notice",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791874800.001,
+    "id": "notice-modbus-a-write-001",
+    "relativeTimeHours": 0,
+    "timestamp": "2026-10-13T07:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "W250::Modbus_Write_New_Source",
+    "anomalous": true,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "interpretation": "Simulated activity at A; correlation is scenario evidence, not actor attribution or proof of a physical effect.",
+    "targetAssetId": "plc-a",
+    "sharedSourceIdentity": "synthetic-campaign-01"
+  },
+  {
+    "ts": 1791876600.0,
+    "uid": "CAglocG3VKmXv9SANK",
+    "id.orig_h": "203.0.113.250",
+    "id.orig_p": 52365,
+    "id.resp_h": "192.0.2.12",
+    "id.resp_p": 502,
+    "note": "Scan::Port_Scan",
+    "msg": "Shared simulated source probes four OT ports; attempts only, not compromise.",
+    "sub": "Simulated Watershed scenario",
+    "src": "203.0.113.250",
+    "dst": "192.0.2.12",
+    "p": 502,
+    "actions": [
+      "Notice::ACTION_LOG"
+    ],
+    "suppress_for": 3600.0,
+    "_path": "notice",
+    "_system_name": "w250-sensor-b",
+    "_write_ts": 1791876600.001,
+    "id": "notice-scan-b",
+    "relativeTimeHours": 0.5,
+    "timestamp": "2026-10-13T07:30:00Z",
+    "utilityId": "utility-b",
+    "observation": "Scan::Port_Scan",
+    "anomalous": true,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "interpretation": "Probe attempts only; no completed attacker session, control write, compromise, or physical effect is established.",
+    "targetAssetId": "plc-b",
+    "sharedSourceIdentity": "synthetic-campaign-01"
+  },
+  {
+    "ts": 1791877500.0,
+    "uid": "CYUhGwnpcydhl1GA69",
+    "id.orig_h": "203.0.113.250",
+    "id.orig_p": 43235,
+    "id.resp_h": "192.0.2.13",
+    "id.resp_p": 502,
+    "note": "Scan::Port_Scan",
+    "msg": "Shared simulated source probes four OT ports; attempts only, not compromise.",
+    "sub": "Simulated Watershed scenario",
+    "src": "203.0.113.250",
+    "dst": "192.0.2.13",
+    "p": 502,
+    "actions": [
+      "Notice::ACTION_LOG"
+    ],
+    "suppress_for": 3600.0,
+    "_path": "notice",
+    "_system_name": "w250-sensor-c",
+    "_write_ts": 1791877500.001,
+    "id": "notice-scan-c",
+    "relativeTimeHours": 0.75,
+    "timestamp": "2026-10-13T07:45:00Z",
+    "utilityId": "utility-c",
+    "observation": "Scan::Port_Scan",
+    "anomalous": true,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "interpretation": "Probe attempts only; no completed attacker session, control write, compromise, or physical effect is established.",
+    "targetAssetId": "plc-c",
+    "sharedSourceIdentity": "synthetic-campaign-01"
+  }
+]

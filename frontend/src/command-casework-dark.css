@@ -1,72 +1,72 @@
 /* Match the command shell while keeping expert tools in their existing theme. */
 .command-mode .command-casework {
-  --cc-surface: #101923;
-  --cc-border: #26364a;
-  --cc-muted: #a2b2c7;
-  --muted: #a2b2c7;
-  --text: #e5edf6;
-  color: #e5edf6;
+  --cc-surface: var(--surface);
+  --cc-border: var(--border);
+  --cc-muted: var(--text-muted);
+  --muted: var(--text-muted);
+  --text: var(--text-2);
+  color: var(--text-strong);
 }
 .command-mode .command-casework button,
 .command-mode .cc-dialog button {
-  background: #182638;
-  border-color: #435970;
-  color: #e5edf6;
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text-strong);
 }
 .command-mode .command-casework .cc-primary,
 .command-mode .cc-dialog .cc-primary {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--text-strong);
 }
 .command-mode .command-casework input:not([type="checkbox"]),
 .command-mode .command-casework select,
 .command-mode .command-casework textarea {
-  background: #0c1420;
-  border-color: #435970;
-  color: #e5edf6;
+  background: var(--bg-header);
+  border-color: var(--border-strong);
+  color: var(--text-strong);
 }
 .command-mode .cc-dialog {
-  background: #101923;
-  color: #e5edf6;
-  border-color: #435970;
+  background: var(--surface);
+  color: var(--text-strong);
+  border-color: var(--border);
 }
 .command-mode .cc-dialog header,
 .command-mode .cc-dialog footer {
-  border-color: #26364a;
+  border-color: var(--border);
 }
 .command-mode .cc-dialog h2 {
-  color: #e5edf6;
+  color: var(--text-strong);
 }
 .command-mode .cc-dialog .cc-metadata dd {
-  color: #e5edf6;
+  color: var(--text-muted);
 }
 .command-mode .command-casework .cc-warning {
-  background: #302212;
-  color: #f7d39a;
-  border-color: #866232;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  border-color: var(--amber);
 }
 .command-mode .command-casework .cc-warning h3 {
-  color: #f7d39a;
+  color: var(--amber-text);
 }
 .command-mode .command-casework .cc-chip {
-  background: #1a304a;
-  color: #c7defa;
-  border-color: #345377;
+  background: var(--surface);
+  color: var(--text-strong);
+  border-color: var(--border);
 }
 .command-mode .command-casework .cc-note,
 .command-mode .cc-dialog .cc-note {
-  background: #182638;
-  color: #e5edf6;
+  background: var(--surface);
+  color: var(--text-muted);
 }
 .command-mode .command-casework .cc-error {
-  background: #3b2027;
-  color: #fecaca;
-  border-color: #8d4654;
+  background: var(--red-bg);
+  color: var(--red-text);
+  border-color: var(--red);
 }
 @media (max-width: 600px) {
   .command-mode .page-heading p {
-    font-size: 13px;
+    font-size: var(--fs-body);
   }
   .command-mode .page-heading {
     margin-bottom: 20px;

@@ -23,7 +23,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "controller-baseline-b",
@@ -44,7 +45,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "controller-baseline-c",
@@ -65,7 +67,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "controller-auth-001",
@@ -74,17 +77,19 @@
       "assetId": "plc-a",
       "utilityId": "utility-a",
       "eventType": "authentication",
-      "user": "fictional-maintenance-session",
-      "sourceIp": "203.0.113.250",
+      "user": "vendor-v-support",
+      "sourceIp": "192.0.2.240",
       "outcome": "success",
       "anomalous": true,
+      "interpretation": "Simulated successful session from the assigned VPN client address.",
       "sourceRefs": [
         "src-controller"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "controller-change-001",
@@ -93,8 +98,8 @@
       "assetId": "plc-a",
       "utilityId": "utility-a",
       "eventType": "parameter_change",
-      "user": "fictional-maintenance-session",
-      "sourceIp": "203.0.113.250",
+      "user": "vendor-v-support",
+      "sourceIp": "192.0.2.240",
       "parameter": "dosing_setpoint",
       "before": 1.0,
       "after": 4.0,
@@ -108,7 +113,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     }
   ],
   "sourceRefs": [
@@ -117,5 +123,6 @@
   "classification": "U",
   "handling": [
     "SIMULATED"
-  ]
+  ],
+  "origin": "simulated"
 }

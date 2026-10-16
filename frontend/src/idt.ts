@@ -28,7 +28,8 @@ export type IdtAssignment =
   | Readonly<{ status: "unassigned" }>;
 export type IdtEntity = { id?: unknown; idt?: unknown };
 export type IdtLookupOptions = {
-  // Opt in ONLY for current inventory. Captured run/case history must leave false.
+  // Only inventory records WITHOUT inline idt may ever opt in. All record views
+  // and captured run/case history leave this false; it never repairs history.
   allowSeedLookup?: boolean;
 };
 export type IdtIndex = Readonly<{
@@ -176,6 +177,32 @@ export function createIdtIndex(value: unknown): IdtIndex {
     entries: Object.freeze(entries),
     assignments: Object.freeze(assignments),
   });
+}
+
+// Sector display names transcribed from the pinned idt_v4.json level-1 entries.
+// These are reference labels ONLY: never entity assignments or OWL entailments.
+const sectorNames: Readonly<Record<string, string>> = Object.freeze({
+  "1": "Agriculture and Food",
+  "2": "Banking and Finance",
+  "3": "Chemical and Hazardous Materials Industry",
+  "4": "Defense Industrial Base",
+  "5": "Energy",
+  "6": "Emergency Services",
+  "7": "Information Technology",
+  "8": "Communications",
+  "9": "Postal and Shipping",
+  "10": "Healthcare and Public Health",
+  "11": "Transportation",
+  "12": "Water",
+  "13": "National Monuments and Icons",
+  "14": "Commercial Facilities",
+  "15": "Government Facilities",
+  "16": "Dams",
+  "17": "Nuclear Reactors, Materials, and Waste",
+  "18": "Manufacturing",
+});
+export function idtSectorName(sector: string): string | null {
+  return Object.hasOwn(sectorNames, sector) ? sectorNames[sector]! : null;
 }
 
 export function idtEntry(

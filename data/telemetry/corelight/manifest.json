@@ -1,0 +1,95 @@
+{
+  "generatedWithSeed": 250,
+  "origin": "simulated",
+  "sourceRefs": [
+    "src-network"
+  ],
+  "classification": "U",
+  "handling": [
+    "SIMULATED"
+  ],
+  "label": "Network · Corelight format (simulated)",
+  "sourceFormatDisclaimer": "Corelight/Zeek JSON log format; simulated content for the Watershed 250 demo. Generated simulated records using Corelight/Zeek field conventions, not a Corelight sensor export or evidence of actual network activity. VPN records are synthetic authentication JSON, not a Zeek log. The 300–600 connection target takes precedence over the incompatible per-10-minute volume prose; persistent HTTP sessions carry one-minute application polling.",
+  "logs": [
+    {
+      "id": "corelight/conn",
+      "file": "data/telemetry/corelight/conn.json",
+      "recordCount": 358,
+      "startTs": 1791817200.0,
+      "endTs": 1791885600.0,
+      "format": "corelight_zeek_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    },
+    {
+      "id": "corelight/ssl",
+      "file": "data/telemetry/corelight/ssl.json",
+      "recordCount": 36,
+      "startTs": 1791817200.0,
+      "endTs": 1791885600.0,
+      "format": "corelight_zeek_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    },
+    {
+      "id": "corelight/http",
+      "file": "data/telemetry/corelight/http.json",
+      "recordCount": 905,
+      "startTs": 1791867600.0,
+      "endTs": 1791885600.0,
+      "format": "corelight_zeek_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    },
+    {
+      "id": "corelight/dns",
+      "file": "data/telemetry/corelight/dns.json",
+      "recordCount": 93,
+      "startTs": 1791867600.0,
+      "endTs": 1791885600.0,
+      "format": "corelight_zeek_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    },
+    {
+      "id": "corelight/modbus",
+      "file": "data/telemetry/corelight/modbus.json",
+      "recordCount": 185,
+      "startTs": 1791867600.0,
+      "endTs": 1791885600.0,
+      "format": "corelight_zeek_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    },
+    {
+      "id": "corelight/modbus_detailed",
+      "file": "data/telemetry/corelight/modbus_detailed.json",
+      "recordCount": 185,
+      "startTs": 1791867600.0,
+      "endTs": 1791885600.0,
+      "format": "corelight_zeek_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    },
+    {
+      "id": "corelight/notice",
+      "file": "data/telemetry/corelight/notice.json",
+      "recordCount": 4,
+      "startTs": 1791873000.0,
+      "endTs": 1791877500.0,
+      "format": "corelight_zeek_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    },
+    {
+      "id": "corelight/vpn",
+      "file": "data/telemetry/corelight/vpn.json",
+      "recordCount": 3,
+      "startTs": 1791817200.0,
+      "endTs": 1791873000.0,
+      "format": "synthetic_vpn_auth_json",
+      "origin": "simulated",
+      "label": "Network · Corelight format (simulated)"
+    }
+  ]
+}

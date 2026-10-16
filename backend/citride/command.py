@@ -11,9 +11,9 @@ from uuid import uuid4
 
 from .engine import compute_run
 from .incident_context import incident_context
-from .reference_investigations import reference_context, reference_task_labels
 from .storage import ConflictError, InvalidModelError, NotFoundError
 from .validation import validate_baseline
+from .records import RecordsService, ACTION_FIELDS as RECORD_ACTION_FIELDS, validate_action
 
 
 class CommandIncident(TypedDict):
@@ -40,6 +40,7 @@ class CommandIncident(TypedDict):
 
 KIND = "command-incident"
 TASK_LABELS = ("Review source evidence", "Review consequence assumptions", "Document coordination needs")
+RETIRED_EVENT_TYPES = {"ReferenceInvestigation", "PacketCaptureInvestigation"}
 PUBLIC_FIELDS = set(CommandIncident.__annotations__)
 PRIORITIES = {"critical", "high", "medium", "low"}
 STATUSES = {"open", "monitoring", "closed"}
@@ -47,7 +48,15 @@ ACTION_FIELDS = {
     "set_status": {"status", "note"}, "set_task": {"taskId", "completed"},
     "review_decision": {"decisionId", "note"}, "add_note": {"note"},
     "analyze": {"scenarioId", "evaluationHour", "horizonHours"},
+    **RECORD_ACTION_FIELDS,
 }
+
+
+def _retired(record):
+    """Only the retired event types are hidden; historical records stay intact."""
+    event = record.get("eventSnapshot") if isinstance(record, dict) else None
+    event_type = event.get("type") if isinstance(event, dict) else None
+    return isinstance(event_type, str) and event_type in RETIRED_EVENT_TYPES
 
 
 def _text(value, name, limit=256):
@@ -100,6 +109,8 @@ def _request(request, create=False):
     else:
         _integer(request["expectedVersion"], "expectedVersion")
         action = request["action"]
+        if action in RECORD_ACTION_FIELDS:
+            validate_action(request)
         if "note" in request:
             _text(request["note"], "note", 2000)
         if action == "set_status" and (not isinstance(request["status"], str) or request["status"] not in STATUSES):
@@ -165,7 +176,7 @@ class CommandService:
 
     def _records(self, dataset):
         try:
-            records = self.store._records(dataset, KIND)
+            records = [record for record in self.store._records(dataset, KIND) if not _retired(record)]
             if len(records) > 200:
                 raise InvalidModelError("Incident capacity exceeded")
             identifiers, receipts = set(), set()
@@ -182,6 +193,8 @@ class CommandService:
             raise InvalidModelError("Malformed stored incident") from exc
 
     def _public(self, dataset, record) -> CommandIncident:
+        if _retired(record):
+            raise NotFoundError("Incident was not found")
         try:
             if set(record) != (PUBLIC_FIELDS - {"runSnapshot"}) | {"_requests"}:
                 raise InvalidModelError("Malformed stored incident fields")
@@ -212,7 +225,7 @@ class CommandService:
                 refs = scenario["seed"]["eventRefs"]
                 if not isinstance(refs, list) or record["eventId"] not in refs:
                     raise InvalidModelError("Captured scenario is not linked to this event")
-            task_labels = reference_task_labels(record) or TASK_LABELS
+            task_labels = TASK_LABELS
             if not isinstance(record["tasks"], list) or len(record["tasks"]) != len(task_labels):
                 raise InvalidModelError("Invalid incident tasks")
             for task, label in zip(record["tasks"], task_labels):
@@ -357,13 +370,13 @@ class CommandService:
             if len(records) >= 200:
                 raise ConflictError("Incident capacity of 200 reached")
             try:
-                context = reference_context(request["eventId"], baseline["baselineRevision"])
-                if context is None:
-                    context = incident_context(baseline, request["eventId"])
+                event = next((event for event in baseline["events"] if event.get("id") == request["eventId"]), None)
+                if event is not None and event.get("type") in RETIRED_EVENT_TYPES:
+                    raise NotFoundError("Event was not found")
+                context = incident_context(baseline, request["eventId"])
             except ValueError as exc:
-                raise InvalidModelError("eventId must resolve to a baseline event or a supported reference investigation") from exc
-            manifest = context["event"].get("referenceInvestigation") or context["event"].get("pcapEvidence")
-            task_labels = tuple(task["label"] for task in manifest["tasks"]) if manifest else TASK_LABELS
+                raise InvalidModelError("eventId must resolve to a baseline event") from exc
+            task_labels = TASK_LABELS
             now = _timestamp()
             record = {
                 "id": _id(), "version": 1, "title": request["title"], "priority": request["priority"],
@@ -375,6 +388,7 @@ class CommandService:
                 "_requests": {request["clientRequestId"]: _fingerprint(request)},
             }
             result = self._public(dataset, record)
+            RecordsService(self.store).on_case_opened(dataset, record)
             self.store._record_graph(dataset, KIND, record)
             self.store._save(dataset)
             return result
@@ -429,6 +443,8 @@ class CommandService:
             elif action == "add_note":
                 record["notes"].append({"id": _id(), "text": request["note"], "createdAt": now})
                 message = "Local coordination note recorded; not sent."
+            elif action in RECORD_ACTION_FIELDS:
+                message = RecordsService(self.store).apply_action(dataset, record, request)
             else:
                 if record["runId"] is not None:
                     raise ConflictError("This case already captures an immutable run; it cannot be overwritten")

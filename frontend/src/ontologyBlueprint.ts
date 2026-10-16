@@ -1,7 +1,14 @@
 // Architectural intent from the supplied DOCX and full-landscape PDF extract.
 // This manifest is not an inventory of imported or connected dependencies.
+import type { OntologyMetadata } from "./types";
+
 export type IntegrationStatus =
-  "Planned integration" | "Optional integration" | "Design reference";
+  | "Planned integration"
+  | "Optional integration"
+  | "Design reference"
+  | "Loaded in runtime"
+  | "Not loaded in runtime"
+  | "Runtime status unknown";
 export type ResourceRole =
   | "ontology"
   | "taxonomy"
@@ -38,6 +45,38 @@ export interface DomainColumn {
   resources: readonly BlueprintResource[];
   classes: readonly string[];
   boundary: string;
+}
+
+/** Runtime overlay only; the document-backed target manifest remains separate. */
+export function idtRuntimeResource(
+  metadata: OntologyMetadata | null,
+): BlueprintResource {
+  const base: BlueprintResource = {
+    id: "idt-owl",
+    name: "IDT-OWL v0.1",
+    role: "ontology",
+    status: "Runtime status unknown",
+    scope: "Program-authored · IDT v4 mapping",
+    description:
+      "IDT runtime loading has not been reported by the ontology service. Reference lookup alone is not OWL proof.",
+  };
+  const sourceCount = metadata?.idtClassCount;
+  const loadedCount = metadata?.loadedIdtClassCount;
+  if (
+    typeof sourceCount !== "number" ||
+    !Number.isInteger(sourceCount) ||
+    sourceCount < 0 ||
+    typeof loadedCount !== "number" ||
+    !Number.isInteger(loadedCount) ||
+    loadedCount < 0 ||
+    loadedCount > sourceCount
+  )
+    return base;
+  return {
+    ...base,
+    status: loadedCount > 0 ? "Loaded in runtime" : "Not loaded in runtime",
+    description: `IDT v4: ${sourceCount} classes in the validated complete ontology source; ${loadedCount} IDT classes loaded in this service-reported ontology view. Load mode: ${metadata?.idtLoadMode ?? "not reported"}. Combined ontology SHA-256: ${typeof metadata?.sha256 === "string" && /^[a-f0-9]{64}$/.test(metadata.sha256) ? metadata.sha256 : "not reported"}. A run may load only the assigned ancestor closure; these counts are not entity classification proofs.`,
+  };
 }
 
 export const foundations: readonly Foundation[] = [
@@ -277,8 +316,7 @@ export const domainColumns: readonly DomainColumn[] = [
           "Intended provenance fields; the complete mapping is not implemented.",
       },
     ],
-    boundary:
-      "AN01–04 definitions and formal G1–G5 policies are not supplied. No gate passes or authorization are asserted.",
+    boundary: "AN01–04 and G1–G5 definitions are not configured.",
   },
 ];
 

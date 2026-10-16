@@ -138,14 +138,25 @@ const render = (overrides = {}) =>
     createElement(CommandCasework, { ...props, ...overrides }),
   );
 
-test("all eight full-case anchors resolve to mounted sections; Context defaults active", () => {
+test("public Case File header and renamed counted sections preserve all content and tracking anchors", () => {
+ const records={statewideIncidents:[{id:"TX-26-0412",caseId:selected.id,linkedEventIds:[selected.eventId]}]};
+ const before=JSON.stringify(selected),html=render({records});
+ assert.match(html,/CASE FILE · TX-26-0412 · version 7 · opened [0-9]{2}:[0-9]{2} CT from/);
+ assert.match(html,/class="[^"]*mono/);
+ const nav=html.match(/<nav[^>]+aria-label="Case file sections"[\s\S]*?<\/nav>/)[0];
+ for(const name of ['Context','Cyber Evidence','Consequences',`Reviews ${selected.decisions.filter(d=>d.reviewed).length}/${selected.decisions.length}`,`Tasks ${selected.tasks.filter(t=>t.completed).length}/${selected.tasks.length}`,'Notes','Activity','Case status','Advanced'])assert.ok(nav.includes('>'+name+'</a>'),name);
+ assert.match(nav,/href="#[^"]*-case-tracking"/);
+ const ordinary=html.split('data-case-section="advanced"')[0].replace(/<[^>]+>/g,'');assert.ok(!ordinary.includes(selected.id));
+ assert.equal(JSON.stringify(selected),before);
+});
+test("all nine full-case anchors resolve to mounted sections; Context defaults active", () => {
   const html = render();
   const nav = html.match(
     /<nav[^>]+aria-label="Case file sections"[\s\S]*?<\/nav>/,
   )[0];
   const links = [...nav.matchAll(/href="#([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(links.length, 8);
-  assert.equal(new Set(links).size, 8);
+  assert.equal(links.length, 9);
+  assert.equal(new Set(links).size, 9);
   for (const id of links) assert.ok(html.includes(`id="${id}"`), id);
   assert.match(nav, /aria-current="location">Context<\/a>/);
   for (const section of [
@@ -161,7 +172,7 @@ test("all eight full-case anchors resolve to mounted sections; Context defaults 
     assert.ok(html.includes(`data-case-section="${section}"`));
   for (const field of [
     "Coordination note",
-    "Advisory review note",
+    "Impact review note",
     "Required tracking / closure note",
     "Evaluation hour",
     "Horizon hours",
@@ -231,10 +242,10 @@ test("non-full modes retain their controls and create form survives no selected 
   const html = render({ selected: null });
   assert.match(
     html,
-    /<details class="cc-panel" open=""><summary>Create workspace case/,
+    /<details class="cc-panel" open=""><summary>Open case/,
   );
   assert.match(html, /maxLength="160"/);
-  assert.match(html, /No workspace case selected/);
+  assert.match(html, /No case selected/);
 });
 
 test("uncertain recovery, frozen optimistic versions, idempotency and dismissal guards remain", () => {
@@ -243,8 +254,14 @@ test("uncertain recovery, frozen optimistic versions, idempotency and dismissal 
   assert.match(html, /Retry same saved request/);
   assert.match(html, /aria-label="Coordination note"[^>]*disabled=""/);
   assert.match(html, /type="checkbox"[^>]*disabled=""/);
+  const createSource = readFileSync(
+    new URL("../src/CaseCreateForm.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(createSource, /clientRequestId: crypto\.randomUUID\(\)/);
+  assert.match(createSource, /if \(blocked \|\| guard\.current\) return/);
+  assert.match(caseSource, /<CaseCreateForm/);
   for (const expression of [
-    /clientRequestId: crypto\.randomUUID\(\)/,
     /if \(blocked \|\| guard\.current\) return/,
     /await onMutate\(action, version, caseId\)/,
     /confirmation\.action,\s*confirmation\.version,\s*confirmation\.caseId/,

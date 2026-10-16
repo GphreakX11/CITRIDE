@@ -20,6 +20,7 @@ Set these in Vercel's environment settings; never commit their values:
 | `CITRIDE_DEMO_PASSWORD` | Shared demo password, required on Vercel. |
 | `CITRIDE_DEMO_USERNAME` | Optional shared username; defaults to `demo`. |
 | `CITRIDE_STATE_KEY` | Optional durable state identity within this database. |
+| `CITRIDE_IDT_LOAD_MODE` | Optional `assigned_closure` (default) or explicit `full` diagnostic mode. The measured five-second gate selects assigned closure; complete source validation/hash and lookup data are retained. |
 
 The database role must be able to create and read/write the `citride_state` table. Each state occupies one row containing the RDF dataset. Transactions, transaction-scoped advisory locks, and row locks protect the complete read/modify/write operation across independent function instances. Prepared statements are disabled for compatibility with transaction poolers.
 
@@ -45,12 +46,12 @@ The setup and sign-in screens distinguish a missing deployment setting from an i
 
 ## Build and checks
 
-Each service builds independently. The backend uses Python 3.12 and its locked Python dependencies; its build helper packages the five fictional JSON inputs into `citride/demo_data`. The wheel includes these generated data artifacts and the ontology at `citride/ontology/watershed.ttl`. The backend build needs access to the repository's `data/` directory outside its service root. The frontend selects Node.js 24 through `package.json`, uses its npm lockfile, and builds with Vite.
+Each service builds independently. The backend uses Python 3.12 and its locked Python dependencies. Its build helper packages the generated scenario, authored reference and scripted replay configuration, telemetry, and IDT reference artifacts into `citride/demo_data` (18 fixture files for the current seed). The wheel includes these data artifacts and both runtime ontology sources: `citride/ontology/watershed.ttl` and `citride/ontology/idt_v4_owl.ttl`. The backend build needs access to the repository's `data/` directory outside its service root. The frontend selects Node.js 24 through `package.json`, uses its npm lockfile, and builds with Vite.
 
 Run `bash scripts/check.sh` for the existing checks and production frontend build. Set `TEST_DATABASE_URL` to an isolated disposable Postgres database to include real database tests. Those tests cover fresh-instance persistence, concurrent initialization and promotion conflicts, rollback, immutable inference history and captured source proofs. GitHub Actions starts a disposable Postgres service for these checks.
 
 Use `vercel dev` to test the services together once the project is linked and its development environment is configured. A Python function reuses no process cache as the source of database truth. Whole-dataset storage is intentionally suited to this small demo; review current Vercel duration, response-size and package-size limits as run history grows.
 
-Before promoting a deployment, verify anonymous API requests are rejected; sign-in works; all four telemetry streams load; dependency staging/validation/promotion work; unsafe-water results on a fresh seed remain dialysis 2–4 h, sterilization 4–8 h, and nursing support 1–4 h; OWL inference and captured proofs work; and saved data survives a fresh function instance. The local seed produces 177 useful inferred facts.
+Before promoting a deployment, verify anonymous API requests are rejected; sign-in works; controller, sensor, enterprise and configured Corelight telemetry load (11 streams for the current seed); dependency staging/validation/promotion work in an isolated acceptance state; unsafe-water results on a fresh seed remain dialysis 2–4 h, sterilization 4–8 h, and nursing support 1–4 h; OWL inference and captured proofs work; and saved data survives a fresh function instance. The generated 67-entity seed produces 243 useful inferred facts in both measured modes. Runtime/source fidelity and the measured fallback gate are documented in [IDT runtime verification](../.specs/idt-records-and-proof/verification.md). Existing durable baselines are not automatically upgraded to that seed: approve and verify a current-baseline migration or scoped reset separately, with an owner-controlled rollback export and explicit historical-data treatment.
 
 Only synthetic repository inputs belong in the deployment. Private planning attachments and transcripts are not build inputs. Deploying the code does not import an existing local `.local` history into Postgres; any such migration is a separate, explicitly selected operation.

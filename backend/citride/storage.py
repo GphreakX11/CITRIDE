@@ -30,7 +30,7 @@ BASELINE = URIRef("urn:citride:graph:baseline")
 ROOT = URIRef("urn:citride:baseline")
 REFERENCE_FIELDS = {
     "provider", "dependent", "dependentFunction", "partOf", "operatedBy",
-    "serves", "locatedIn", "hostsCyberAsset", "hostedBy", "facility", "sourceRefs", "seenOn",
+    "serves", "locatedIn", "hostsCyberAsset", "hostedBy", "facility", "sourceRefs", "seenOn", "supportAccountAt",
 }
 
 
@@ -90,7 +90,38 @@ class Repository:
         data["modelVersion"] = MODEL_VERSION
         dataset = Dataset()
         self._write_baseline(dataset, data)
+        from .records import RecordsService
+        # An event-free generic RDF fixture is not the scripted application.
+        # Actual app startup independently validates its record configuration.
+        if data.get("events"):
+            RecordsService(self).seed(dataset)
         return dataset
+
+    def reset_demo(self, expected_revision: int, client_request_id: str) -> dict:
+        """Explicit, revision-fenced, replay-safe replacement of this one store."""
+        with self._locked():
+            dataset = self._load()
+            try:
+                prior = self._record(dataset, "demo-reset", client_request_id)
+            except NotFoundError:
+                prior = None
+            if prior is not None:
+                if prior["expectedBaselineRevision"] != expected_revision:
+                    raise ConflictError("Reset request identifier was already used differently")
+                return deepcopy(prior)
+            baseline = self._baseline(dataset)
+            if baseline["baselineRevision"] != expected_revision:
+                raise ConflictError("Baseline changed; reload before resetting the demo")
+            receipts = self._records(dataset, "demo-reset")
+            replacement = self._seed_dataset()
+            fresh = self._baseline(replacement)
+            fresh["baselineRevision"] = expected_revision + 1
+            self._write_baseline(replacement, fresh)
+            receipt = {"id": client_request_id, "expectedBaselineRevision": expected_revision, "baselineRevision": fresh["baselineRevision"]}
+            for item in receipts + [receipt]:
+                self._record_graph(replacement, "demo-reset", item)
+            self._save(replacement)
+            return deepcopy(receipt)
 
     def _repair_seen_on(self, dataset: Dataset) -> bool:
         graph = dataset.graph(BASELINE)
@@ -385,15 +416,50 @@ class Repository:
             self._save(dataset)
             return {key: proposal[key] for key in ("id", "status", "baselineRevision", "dependency")}
 
-    def create_run(self, request: dict, compute: Callable) -> dict:
+    def create_run(self, request: dict, compute: Callable, expected_revision: int | None = None) -> dict:
         with self._locked():
             dataset = self._load()
+            # Capture submitted parameters before the engine derives sourceRef
+            # and trims notes. Canonical JSON ignores object key order, not any
+            # input fields or string whitespace. The submitted revision fence
+            # (including None) is part of identity, not today's baseline state.
+            fingerprint = "sha256-v1:" + hashlib.sha256(_json({
+                "request": request, "expectedBaselineRevision": expected_revision,
+            }).encode("utf-8")).hexdigest()
+            # Reconcile an accepted-but-lost response before checking today's
+            # baseline, under the same file lock / SQL transaction as the save.
+            request_id = request.get("clientRequestId")
+            if request_id:
+                for saved in self._records(dataset, "run"):
+                    if saved.get("request", {}).get("clientRequestId") != request_id:
+                        continue
+                    graph = dataset.graph(URIRef(f"urn:citride:graph:run:{quote(saved['id'], safe='')}"))
+                    captured = graph.value(_resource(saved["id"]), NS.submittedRequestFingerprint)
+                    if captured is None:
+                        # Legacy output cannot recover the original override
+                        # note or distinguish supplied and derived sourceRef.
+                        # Retain exact-capture replay only; never strip fields,
+                        # recompute, backfill a guessed receipt, or rewrite it.
+                        if saved["request"] != request or (
+                            expected_revision is not None and saved["baselineRevision"] != expected_revision
+                        ):
+                            raise ConflictError("Legacy request identity has no submitted-request fingerprint; planning parameters must match the captured request exactly")
+                    elif str(captured) != fingerprint:
+                        raise ConflictError("Request identity was already used for different planning parameters")
+                    return saved
             baseline = self._baseline(dataset)
+            if expected_revision is not None and expected_revision != baseline["baselineRevision"]:
+                raise ConflictError("Baseline changed; confirm the potential estimate again")
             if not any(scenario["id"] == request["scenarioId"] for scenario in baseline["scenarios"]):
                 raise NotFoundError(f"Scenario {request['scenarioId']} was not found")
             run_id = "run-" + uuid4().hex
             run = compute(deepcopy(baseline), deepcopy(request), run_id)
             self._record_graph(dataset, "run", run)
+            if request_id:
+                # Internal metadata is committed atomically with the immutable
+                # run, outside its public payload and history DTOs.
+                graph = dataset.graph(URIRef(f"urn:citride:graph:run:{quote(run_id, safe='')}"))
+                graph.add((_resource(run_id), NS.submittedRequestFingerprint, Literal(fingerprint)))
             self._save(dataset)
             return run
 

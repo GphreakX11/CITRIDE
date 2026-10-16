@@ -20,6 +20,8 @@ import {
   X,
 } from "lucide-react";
 import type { Bootstrap, Entity } from "./types";
+import type { CommandIncident } from "./commandTypes";
+import { utilityMapStatus, peopleServed } from "./whoActsFirst";
 import { displayText } from "./presentation";
 import { humanize, windowLabel } from "./api";
 import {
@@ -37,6 +39,8 @@ interface Props {
   idtIndex?: IdtIndex | null;
   data: Bootstrap;
   onOpenEntity: (id: string) => void;
+  incidents?: CommandIncident[];
+  onOpenEntityProfile?: (id: string) => void;
   selectedId: string | null;
   onSelectEntity: (id: string | null) => void;
   mapState: MapViewState;
@@ -63,6 +67,8 @@ export default function TexasInfrastructureMap({
   idtIndex = null,
   data,
   onOpenEntity,
+  incidents = [],
+  onOpenEntityProfile,
   selectedId,
   onSelectEntity,
   mapState,
@@ -97,7 +103,12 @@ export default function TexasInfrastructureMap({
   const selected = selectedId ? entities.get(selectedId) : undefined;
   const connections = selected ? connectedEdges(edges, selected.id) : [];
   const story = selected
-    ? relationshipStory(edges, selected.id, data.entities)
+    ? relationshipStory(
+        edges,
+        selected.id,
+        data.entities,
+        data.serviceFunctions,
+      )
     : undefined;
   const directional = !!selected && direction !== "all";
   const serviceEdges = selected
@@ -188,6 +199,28 @@ export default function TexasInfrastructureMap({
         : edge.kind === "dependency" || structural),
   );
   const name = (id: string) => displayText(entities.get(id)?.label ?? id);
+  const openProfile = onOpenEntityProfile ?? onOpenEntity;
+  const statuses = new Map(
+    data.entities
+      .filter((e) => e.type === "WaterServiceProvider")
+      .map((e) => [e.id, utilityMapStatus(e.id, data, incidents)]),
+  );
+  const statusChip = (id: string) => {
+    const status = statuses.get(id);
+    return status?.label ? (
+      <span className={`texas-status ${status.status}`}>{status.label}</span>
+    ) : null;
+  };
+  const profileLink = (entity: Entity) => (
+    <button
+      key={entity.id}
+      className="command-link"
+      data-entity-profile={entity.id}
+      onClick={() => openProfile(entity.id)}
+    >
+      {name(entity.id)}
+    </button>
+  );
   const choose = (id: string) => {
     if (!entities.has(id)) return;
     onSelectEntity(id);
@@ -282,6 +315,7 @@ export default function TexasInfrastructureMap({
           </button>
           {dependency && (
             <div className="texas-edge-detail">
+              <code>{dependency.id}</code>
               <span>
                 Service function:{" "}
                 {displayText(functionLabel ?? dependency.dependentFunction)}
@@ -345,13 +379,43 @@ export default function TexasInfrastructureMap({
           <span>{ids?.length ?? 0}</span>
         </h4>
         <ul className="texas-connection-list">
-          {relationRows(rows, outbound)}
+          {outbound
+            ? story?.dependentRows.map((row) => (
+                <li key={row.entityId}>
+                  <button
+                    className="texas-neighbor"
+                    onClick={() => choose(row.entityId)}
+                  >
+                    {displayText(row.summary)}
+                  </button>
+                  <button
+                    className="command-link"
+                    onClick={() => openProfile(row.entityId)}
+                  >
+                    Open {name(row.entityId)} entity profile
+                  </button>
+                </li>
+              ))
+            : [...new Set(rows.map((edge) => edge.source))].map((id) => (
+                <li key={id}>
+                  <button className="texas-neighbor" onClick={() => choose(id)}>
+                    <ArrowDownLeft size={17} />
+                    <strong>{name(id)}</strong>
+                  </button>
+                  <button
+                    className="command-link"
+                    onClick={() => openProfile(id)}
+                  >
+                    Open {name(id)} entity profile
+                  </button>
+                </li>
+              ))}
         </ul>
         {!rows.length && (
           <p className="texas-quiet">
             {outbound
               ? "No directly supported entities recorded."
-              : "No direct suppliers recorded. This does not establish that the entity has no external supply."}
+              : "No direct suppliers recorded."}
           </p>
         )}
       </section>
@@ -646,7 +710,7 @@ export default function TexasInfrastructureMap({
                     markerEnd={`url(#${uid}-${edge.kind})`}
                   />
                   <title>
-                    {name(edge.source)} → {name(edge.target)}: {edge.label}
+                    {`${name(edge.source)} → ${name(edge.target)}: ${edge.label}`}
                   </title>
                   {selected && isRelated && edge.kind === "dependency" && (
                     <g className="texas-edge-label">
@@ -676,6 +740,7 @@ export default function TexasInfrastructureMap({
                 <g
                   key={entity.id}
                   data-node-id={entity.id}
+                  data-utility-status={statuses.get(entity.id)?.status}
                   className={`texas-node ${isSelected ? "is-selected" : ""} ${isRelated ? "" : "is-dim"}`}
                   role="button"
                   tabIndex={0}
@@ -717,7 +782,14 @@ export default function TexasInfrastructureMap({
                     cx={point.x}
                     cy={point.y}
                     r={isSelected ? 14 : 11}
-                    fill={typeColor(entity)}
+                    className="texas-node-core"
+                    fill={
+                      statuses.get(entity.id)?.status === "under-attack"
+                        ? "#f97066"
+                        : statuses.get(entity.id)?.status === "probed"
+                          ? "#f5a524"
+                          : typeColor(entity)
+                    }
                     stroke="#e7f4fc"
                     strokeWidth="2"
                   />
@@ -745,15 +817,18 @@ export default function TexasInfrastructureMap({
                   >
                     {labels.get(entity.id)?.text ?? displayText(entity.label)}
                   </text>
+                  {statuses.get(entity.id)?.label && (
+                    <text
+                      className={`texas-node-status ${statuses.get(entity.id)?.status}`}
+                      x={point.x}
+                      y={(labels.get(entity.id)?.y ?? point.y + 33) + 23}
+                      textAnchor="middle"
+                    >
+                      {statuses.get(entity.id)?.label}
+                    </text>
+                  )}
                   <title>
-                    {displayText(entity.label)} ·{" "}
-                    {humanize(
-                      entity.type.replace(/([a-z0-9])([A-Z])/g, "$1 $2"),
-                    )}{" "}
-                    ·{" "}
-                    {point.placement === "illustrative"
-                      ? "Illustrative placement, not a verified address"
-                      : "Source coordinates"}
+                    {`${displayText(entity.label)} · ${humanize(entity.type.replace(/([a-z0-9])([A-Z])/g, "$1 $2"))} · ${point.placement === "illustrative" ? "Illustrative placement, not a verified address" : "Source coordinates"}${statuses.get(entity.id)?.label ? ` · ${statuses.get(entity.id)?.label}` : ""}`}
                   </title>
                 </g>
               );
@@ -765,6 +840,15 @@ export default function TexasInfrastructureMap({
             </div>
           )}
           <div className="texas-legend">
+            <span>
+              <i className="under-attack" />
+              Under attack · open/monitoring case + effect or suspected
+              compromise
+            </span>
+            <span>
+              <i className="probed" />
+              Probed · probing only, not compromise
+            </span>
             <span>
               <i className="service" />
               Service dependency →
@@ -841,12 +925,13 @@ export default function TexasInfrastructureMap({
               <div className="texas-inspector-title">
                 <span className="texas-eyebrow">SELECTED ENTITY</span>
                 <h3>{name(selected.id)}</h3>
+                {statusChip(selected.id)}
                 <p>
                   {humanize(
                     selected.type.replace(/([a-z0-9])([A-Z])/g, "$1 $2"),
                   )}
                 </p>
-                <IdtChip entity={selected} index={idtIndex} allowSeedLookup />
+                <IdtChip entity={selected} index={idtIndex} />
                 <code>{selected.id}</code>
               </div>
               <div className="texas-connections-scroll" ref={connectionsRef}>
@@ -856,16 +941,25 @@ export default function TexasInfrastructureMap({
                 >
                   {displayText(story?.summary ?? "")}
                 </p>
-                <div className="texas-inspector-stats">
-                  <span>
-                    <strong>{story?.supplierIds.length ?? 0}</strong>Direct
-                    suppliers
-                  </span>
-                  <span>
-                    <strong>{story?.dependentIds.length ?? 0}</strong>Supported
-                    entities
-                  </span>
-                </div>
+                <details className="texas-context-details">
+                  <summary>Advanced · IDs and raw links</summary>
+                  <p>{displayText(story?.advancedSummary ?? "")}</p>
+                  <code>{selected.id}</code>
+                  <div className="texas-inspector-stats">
+                    <span>
+                      <strong>{story?.supplierIds.length ?? 0}</strong>Direct
+                      suppliers
+                    </span>
+                    <span>
+                      <strong>{story?.dependentIds.length ?? 0}</strong>
+                      Supported entities
+                    </span>
+                  </div>
+                  <ul className="texas-connection-list">
+                    {relationRows(story?.suppliers ?? [], false)}
+                    {relationRows(story?.dependents ?? [], true)}
+                  </ul>
+                </details>
                 {(direction === "dependents"
                   ? (["dependents", "suppliers"] as const)
                   : (["suppliers", "dependents"] as const)
@@ -897,18 +991,13 @@ export default function TexasInfrastructureMap({
                     <p className="texas-quiet">No context links recorded.</p>
                   )}
                 </details>
-                <p className="texas-quiet">
-                  Only explicit model links are shown. Proximity does not
-                  establish a dependency. Conditional timing and backup are
-                  model assumptions, not live countdowns or current outages.
-                </p>
               </div>
               <button
                 className="secondary texas-record-button"
-                onClick={() => onOpenEntity(selected.id)}
+                onClick={() => openProfile(selected.id)}
               >
                 <ExternalLink size={15} />
-                Open entity in expert graph
+                Open entity profile
               </button>
             </>
           ) : (
@@ -916,8 +1005,8 @@ export default function TexasInfrastructureMap({
               <Network size={34} />
               <h3>Follow the connections</h3>
               <p>
-                Select a map node or search for an entity. See who supplies it,
-                what it supports, and its linked infrastructure.
+                Select a map node to see supplies, dependents and linked
+                records.
               </p>
               <button
                 className="secondary"
@@ -946,9 +1035,97 @@ export default function TexasInfrastructureMap({
           )}
         </aside>
       </div>
+      <section className="texas-service-areas" aria-label="Service areas">
+        <h3>Service areas</h3>
+        <div className="texas-area-grid">
+          {areas.map((area) => {
+            const providers = data.entities.filter(
+              (entity) =>
+                entity.type === "WaterServiceProvider" &&
+                (entity.serves === area.id ||
+                  (Array.isArray(entity.serves) &&
+                    entity.serves.includes(area.id))),
+            );
+            const activeCases = incidents.filter(
+              (incident) =>
+                (incident.status === "open" ||
+                  incident.status === "monitoring") &&
+                (incident.contextSnapshot?.serviceArea?.id === area.id ||
+                  providers.some(
+                    (provider) =>
+                      incident.contextSnapshot?.provider?.id === provider.id,
+                  )),
+            );
+            const members = data.entities.filter(
+              (entity) =>
+                entity.id !== area.id &&
+                !providers.includes(entity) &&
+                belongsToArea(entity, area.id),
+            );
+            const groups = [
+              [
+                "Facilities",
+                members.filter(
+                  (entity) =>
+                    !/Cyber|PhysicalOT|PhysicalIT|Population/.test(entity.type),
+                ),
+              ],
+              [
+                "Plant equipment",
+                members.filter((entity) =>
+                  /PhysicalOT|PhysicalIT/.test(entity.type),
+                ),
+              ],
+              [
+                "Cyber identities",
+                members.filter((entity) => /Cyber/.test(entity.type)),
+              ],
+              [
+                "Population records",
+                members.filter((entity) => /Population/.test(entity.type)),
+              ],
+            ] as const;
+            return (
+              <section
+                key={area.id}
+                className="texas-area-card"
+                data-service-area={area.id}
+              >
+                <h4>
+                  {profileLink(area)}{" "}
+                  <span>
+                    {activeCases.length}{" "}
+                    {activeCases.length === 1 ? "case" : "cases"}
+                  </span>
+                </h4>
+                <div className="texas-area-records">
+                  {providers.map((provider) => (
+                    <div key={provider.id}>
+                      {profileLink(provider)} {statusChip(provider.id)} ·{" "}
+                      {peopleServed(provider.id, data)?.toLocaleString() ??
+                        "Unknown"}{" "}
+                      people
+                    </div>
+                  ))}
+                </div>
+                {groups.map(([label, records]) => (
+                  <div key={label}>
+                    <strong>
+                      {label} ({records.length})
+                    </strong>
+                    <div className="texas-area-records">
+                      {records.map(profileLink)}
+                      {!records.length && <span>None recorded</span>}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            );
+          })}
+        </div>
+      </section>
       <p className="texas-provenance">
-        Texas boundary backdrop · reference infrastructure placement is
-        illustrative, not verified facility geography.{" "}
+        Illustrative map ·{" "}
         <a href={TEXAS_BOUNDARY_SOURCE} target="_blank" rel="noreferrer">
           Boundary source
         </a>

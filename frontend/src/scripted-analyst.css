@@ -1,0 +1,133 @@
+.scripted-analyst {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.scripted-analyst section {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border, var(--border));
+  border-radius: var(--radius-card);
+}
+.scripted-analyst h3,
+.scripted-analyst h4 {
+  margin: 0 0 0.75rem;
+}
+.scripted-analyst form {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border, var(--border));
+}
+.scripted-analyst fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  align-items: start;
+  gap: 0.8rem;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.scripted-analyst label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.scripted-analyst input:not([type="checkbox"]),
+.scripted-analyst select,
+.scripted-analyst textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-small);
+  color: inherit;
+  background: var(--panel, var(--bg-header));
+  font: inherit;
+}
+.scripted-analyst textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+.scripted-analyst button {
+  background: var(--surface);
+  color: var(--text-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.6rem 0.8rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+.scripted-analyst button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.scripted-analyst :focus-visible {
+  outline: 3px solid var(--text-muted);
+  outline-offset: 3px;
+}
+.scripted-analyst p,
+.scripted-analyst li {
+  overflow-wrap: anywhere;
+}
+.scripted-analyst .sa-chip {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-chip);
+  font-size: var(--fs-chip);
+}
+.scripted-analyst .sa-task {
+  margin-block: 0.75rem;
+  padding: 0.75rem;
+  border-left: 3px solid var(--border);
+}
+.scripted-analyst .sa-task > label {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.scripted-analyst input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+.scripted-analyst .sa-ranking {
+  display: grid;
+  gap: 1rem;
+  padding-left: 1.5rem;
+}
+.scripted-analyst .sa-ranking > li {
+  color: var(--text-strong);
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.scripted-analyst .sa-potential {
+  color: var(--text-strong);
+  border-left: 3px dashed var(--accent);
+  padding: 0.5rem;
+}
+.scripted-analyst .sa-clock {
+  border-left: 4px solid var(--accent);
+  padding: 0.65rem;
+}
+.scripted-analyst .sa-amber {
+  border-color: var(--amber);
+}
+.scripted-analyst .sa-red {
+  border-color: var(--red);
+}
+.scripted-analyst [role="alert"] {
+  border-left: 4px solid var(--amber);
+  padding: 0.7rem;
+}
+@media (max-width: 700px) {
+  .scripted-analyst section {
+    padding: 0.7rem;
+  }
+  .scripted-analyst fieldset {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

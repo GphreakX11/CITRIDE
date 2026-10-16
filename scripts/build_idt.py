@@ -204,6 +204,30 @@ def render_turtle(entries: list[dict]) -> bytes:
     return ("\n".join(lines).rstrip("\n") + "\n").encode("utf-8")
 
 
+def render_runtime_turtle(reference: dict) -> bytes:
+    """OWL hierarchy from canonical JSON; source absence is not a definition."""
+    lines = [f"# {reference['version']}; source SHA-256 {reference['sourceSha256']}",
+             "# Local runtime hierarchy. No ontology declaration or external imports.",
+             "@prefix c: <urn:citride:> .", "@prefix owl: <http://www.w3.org/2002/07/owl#> .",
+             "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .", ""]
+    for entry in sorted(reference["entries"], key=lambda item: tuple(map(int, item["path"].split(".")))):
+        path = entry["path"]
+        suffix = path.replace(".", "_")
+        subject = f"c:IDT_{suffix}"
+        parent = "c:IDT_" + entry["parent"].replace(".", "_") if entry["parent"] else "c:InfrastructureEntity"
+        name = entry["name"] or f"Unnamed IDT v4 entry {path}"
+        description = entry["description"] or f"No description in the IDT v4 workbook (path {path})."
+        lines.extend([f"{subject} a owl:Class ;", f"  rdfs:label {_literal('IDT ' + path + ' ' + name)} ;",
+                      f"  rdfs:comment {_literal(description)} ;"])
+        if not entry["description"]:
+            lines.append('  c:descriptionStatus "absent_in_source" ;')
+        lines.extend([f"  rdfs:subClassOf {parent} .", f"c:axiom-idt-{suffix}-parent a owl:Axiom ;",
+                      '  rdfs:label "IDT v4 hierarchy" ;', '  rdfs:comment "IDT v4 hierarchy" ;',
+                      f"  owl:annotatedSource {subject} ;", "  owl:annotatedProperty rdfs:subClassOf ;",
+                      f"  owl:annotatedTarget {parent} .", ""])
+    return ("\n".join(lines).rstrip("\n") + "\n").encode("utf-8")
+
+
 def build(source: Path) -> dict[str, bytes]:
     entries = read_entries(source)
     assignments = seed_assignments()
@@ -221,12 +245,12 @@ def build(source: Path) -> dict[str, bytes]:
         "sourceDiagnostics": {"unnamedEntries": sum(entry["name"] is None for entry in entries),
                               "missingDescriptions": sum(entry["description"] is None for entry in entries),
                               "numericPathCorrections": [{"cell": cell, "raw": raw, "path": path} for cell, (raw, path) in NUMERIC_CORRECTIONS.items()]},
-        "assignmentProvenance": "Stakeholder-supplied Billington beta design §10; exact existing 58 and proposed 9 IDs. Advisory reference lookup, not persisted assignments, containment evidence or OWL assertions.",
+        "assignmentProvenance": "Stakeholder-supplied Billington beta design §10; canonical assignments for the existing 58 and proposed 9 IDs, copied onto newly generated entity records. Historical snapshots remain as captured.",
         "assignmentLimitations": [
             "Sensor/pressure/tank component codes reflect the supplied design's monitoring-system classification, not independently verified facility status.",
             "Organization parent codes for workstations/VPN gateways are reference associations, not asserted physical containment.",
             "Historical snapshots without captured IDT remain unassigned; do not apply seed fallback to history.",
-            "No runtime IDT OWL merge, projection, entailment or witnesses are implemented.",
+            "Reference lookup is not an entailment proof; runtime OWL hierarchy and sourced witnesses are generated and recorded separately.",
         ],
         "proposedEntityIds": sorted([f"{prefix}-{suffix}" for suffix in "abc" for prefix in ("vpn", "cyber-vpn")] + ["vendor-v", "hospital-w", "dialysis-u"]),
         "assignments": assignments, "entries": entries,
@@ -239,6 +263,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=OUTPUT / SOURCE_NAME)
     parser.add_argument("--output-dir", type=Path, default=OUTPUT)
+    parser.add_argument("--owl-output", type=Path, default=ROOT / "backend/citride/ontology/idt_v4_owl.ttl")
     parser.add_argument("--check", action="store_true", help="Compare bytes only; never rewrite artifacts")
     args = parser.parse_args()
     artifacts = build(args.source)
@@ -251,7 +276,15 @@ def main() -> int:
         else:
             args.output_dir.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(contents)
-    print(f"IDT v4: 1985 entries, 18 sectors; {'verified' if args.check else 'generated'} deterministic JSON/Turtle (reference only)")
+    runtime = render_runtime_turtle(json.loads(artifacts["idt_v4.json"]))
+    if args.check:
+        if not args.owl_output.is_file() or args.owl_output.read_bytes() != runtime:
+            print(f"IDT runtime artifact differs: {args.owl_output}")
+            return 1
+    else:
+        args.owl_output.parent.mkdir(parents=True, exist_ok=True)
+        args.owl_output.write_bytes(runtime)
+    print(f"IDT v4: 1985 entries, 18 sectors; {'verified' if args.check else 'generated'} deterministic reference JSON/Turtle and separate runtime OWL")
     return 0
 
 

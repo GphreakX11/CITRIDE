@@ -1,0 +1,201 @@
+.network-evidence {
+  min-width: 0;
+}
+.network-tabs,
+.network-controls,
+.network-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+.network-tabs button,
+.network-tags button,
+.network-controls button {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  padding: 0.6rem 0.8rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.network-tabs button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text-strong);
+  border-color: var(--accent);
+}
+.network-evidence label {
+  display: grid;
+  gap: 0.4rem;
+}
+.network-evidence select {
+  max-width: 100%;
+  padding: 0.5rem;
+}
+.network-timeline {
+  padding-left: 1.5rem;
+}
+.network-timeline > li {
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.network-table {
+  max-height: 36rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+}
+.network-table table {
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+  width: 100%;
+}
+.network-table th,
+.network-table td {
+  padding: 0.6rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.network-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  color: var(--text-strong);
+}
+.network-evidence .network-table td {
+  color: var(--text-strong);
+}
+.network-linked-summary {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--link);
+}
+.network-linked-summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+}
+.network-table small,
+.network-table td > strong {
+  display: block;
+}
+.network-table .network-linked {
+  background: var(--surface);
+  color: var(--link);
+  outline: 2px solid var(--text-muted);
+  outline-offset: -2px;
+}
+.network-evidence pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 22rem;
+  overflow: auto;
+}
+.network-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.network-heading h2 {
+  margin-bottom: 0.35rem;
+}
+.network-evidence button {
+  cursor: pointer;
+}
+.network-evidence button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.network-evidence button:focus-visible,
+.network-evidence input:focus-visible,
+.network-evidence textarea:focus-visible,
+.network-evidence select:focus-visible {
+  outline: 3px solid var(--text-muted);
+  outline-offset: 3px;
+}
+.network-chip {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-chip);
+  padding: 0.2rem 0.5rem;
+  font-size: var(--fs-chip);
+}
+.network-attack {
+  border-color: var(--accent);
+}
+.network-timeline > li[data-case-event="true"] {
+  border-left: 3px solid var(--accent);
+}
+.network-caveat {
+  border-left: 3px solid var(--amber);
+  padding: 0.6rem 0.9rem;
+}
+.network-selected-record,
+.network-hunt-record {
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+}
+.network-hunt-record {
+  display: grid;
+  gap: 0.75rem;
+}
+.network-hunt-record textarea {
+  min-height: 6rem;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.network-hunt-record button {
+  justify-self: start;
+}
+.network-table .network-selected {
+  outline: 3px solid var(--text-muted);
+  outline-offset: -3px;
+  background: var(--bg-header);
+}
+.network-verdicts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+}
+.network-verdicts li {
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border);
+  padding: 0.9rem;
+  border-radius: var(--radius-control);
+}
+.network-verdicts [data-verdict="COMPROMISE"] {
+  border-top-color: var(--red);
+}
+.network-verdicts [data-verdict="PROBING ONLY"] {
+  border-top-color: var(--amber);
+}
+.network-hunt-matches {
+  max-height: 32rem;
+  overflow: auto;
+}
+.network-hunt-matches > li {
+  padding: 0.5rem 0;
+}
+.network-hunt-matches button {
+  margin-left: 0.65rem;
+}
+@media (max-width: 640px) {
+  .network-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .network-tabs button {
+    flex: 1;
+  }
+}

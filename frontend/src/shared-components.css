@@ -1,0 +1,68 @@
+.status-chip {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-chip-gap);
+  padding: var(--space-chip-y) var(--space-chip-x);
+  border: var(--border-width) solid currentColor;
+  border-radius: var(--radius-chip);
+  font-size: var(--fs-chip);
+  font-weight: var(--weight-label);
+  line-height: var(--lh-chip);
+  letter-spacing: var(--tracking-chip);
+  text-transform: uppercase;
+  color: var(--status-grey-text);
+  background: var(--status-grey-bg);
+}
+.status-chip.status-chip--red {
+  color: var(--status-red-text);
+  background: var(--status-red-bg);
+}
+.status-chip.status-chip--amber {
+  color: var(--status-amber-text);
+  background: var(--status-amber-bg);
+}
+.status-chip.status-chip--green {
+  color: var(--status-green-text);
+  background: var(--status-green-bg);
+}
+.status-chip.status-chip--blue {
+  color: var(--status-blue-text);
+  background: var(--status-blue-bg);
+}
+.status-chip.status-chip--grey {
+  color: var(--status-grey-text);
+  background: var(--status-grey-bg);
+}
+.chip-mono,
+.idt-chip.chip-mono > summary {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chip);
+}
+.technique-chip {
+  text-transform: none;
+}
+.status-chip--description {
+  text-transform: none;
+}
+.idt-chip.chip-mono .idt-chip-details {
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  text-transform: none;
+}
+.visual-card > :is(h2, h3) {
+  font-size: var(--fs-card-title);
+}
+.summary-tile > strong {
+  font-size: var(--fs-number);
+}
+.summary-tile > span {
+  font-size: var(--fs-tile-label);
+}
+.summary-tile > small {
+  font-size: var(--fs-small);
+}

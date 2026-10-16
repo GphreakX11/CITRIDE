@@ -1,6 +1,7 @@
 import type { CommandIncident } from "./commandTypes";
 import type { Entity } from "./types";
 import { displayText } from "./presentation";
+import { recordNoun } from "./caseFilePresentation";
 import {
   ArrowLeft,
   MapPin,
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 import "./investigation-context.css";
 export type InvestigationStep =
-  "cop" | "cyber" | "consequence" | "uctf" | "leadership";
+  "cop" | "cyber" | "consequence" | "coordination" | "uctf";
 interface Props {
   entity: Entity | undefined;
   selectedCase: CommandIncident | null;
@@ -74,9 +75,9 @@ export default function InvestigationBar({
           [
             { id: "cop", label: "Map", icon: MapPin },
             { id: "cyber", label: "Evidence", icon: FileText },
-            { id: "consequence", label: "Service impacts", icon: GitBranch },
+            { id: "consequence", label: "Consequences", icon: GitBranch },
+            { id: "coordination", label: "Who acts first", icon: FileText },
             { id: "uctf", label: "Tasks", icon: ListChecks },
-            { id: "leadership", label: "Brief", icon: FileText },
           ] as const
         ).map(({ id, label, icon: Icon }) => (
           <button
@@ -113,8 +114,7 @@ export default function InvestigationBar({
       </nav>
       {!selectedCase && (
         <p className="investigation-empty">
-          No saved case is linked to this entity. Evidence and map exploration
-          remain available; no impacts or tasks have been assumed.
+          No case is linked to this {recordNoun(entity)}.
         </p>
       )}
     </section>

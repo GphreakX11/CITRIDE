@@ -1,0 +1,428 @@
+.sf-statewide {
+  color: var(--text, var(--text-strong));
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+}
+.sf-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sf-heading h1 {
+  font-size: var(--fs-title);
+  margin: 0;
+}
+.sf-heading p,
+.sf-caption,
+.sf-map-disclosure {
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+.sf-heading p {
+  margin: 0;
+}
+.sf-incident-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sf-incident-nav button {
+  min-height: 44px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 12px;
+  text-align: left;
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+.sf-incident-nav button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--text-strong);
+  box-shadow: inset 0 0 0 1px var(--shadow);
+}
+.sf-incident-nav span {
+  display: block;
+  font-size: var(--fs-body);
+  color: var(--amber-text);
+  text-transform: capitalize;
+}
+.sf-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.sf-map-panel,
+.sf-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  min-width: 0;
+  padding: 16px;
+}
+.sf-state-map {
+  height: 330px;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background:
+    radial-gradient(var(--surface) 1px, transparent 1px) 0 0/24px 24px,
+    var(--surface);
+}
+.sf-texas {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  font-size: var(--fs-body);
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: var(--text);
+  pointer-events: none;
+}
+.sf-incident-pin {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transform: translate(-50%, -50%);
+  max-width: 205px;
+  min-height: 44px;
+  background: color-mix(in srgb, var(--surface) 93.7%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  color: var(--text-strong);
+  padding: 6px 8px;
+  font: inherit;
+  font-size: var(--fs-body);
+  text-align: left;
+  cursor: pointer;
+  z-index: 1;
+}
+.sf-incident-pin i {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  background: var(--amber-bg);
+  border-radius: var(--radius-small);
+}
+.sf-incident-pin small {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+  margin-top: 3px;
+}
+.sf-incident-pin.sf-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--shadow) 25.1%, transparent);
+  z-index: 2;
+}
+.sf-selected i {
+  background: var(--red-bg);
+}
+.sf-muted {
+  opacity: 0.58;
+}
+.sf-incident-pin.sf-muted:hover,
+.sf-incident-pin.sf-muted:focus-visible {
+  opacity: 1;
+  z-index: 3;
+}
+.sf-legend {
+  display: flex;
+  gap: 12px 18px;
+  flex-wrap: wrap;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  padding: 14px 0;
+}
+.sf-legend > span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.sf-legend i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  box-sizing: border-box;
+}
+.sf-legend-attack {
+  background: var(--red-bg);
+  border-radius: 50%;
+}
+.sf-legend-probe {
+  border: 2px solid var(--amber);
+  border-radius: 50%;
+}
+.sf-legend-facility {
+  background: var(--red-bg);
+  transform: rotate(45deg);
+}
+.sf-legend-other {
+  background: var(--amber-bg);
+  border-radius: var(--radius-small);
+}
+.sf-recorded-footprints {
+  display: grid;
+  gap: 12px;
+}
+.sf-local-footprint {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 12px;
+}
+.sf-local-footprint h3 {
+  color: var(--red-text);
+  font-size: var(--fs-card-title);
+  margin: 0;
+}
+.sf-local-footprint p {
+  margin: 7px 0;
+}
+.sf-local-footprint svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  min-height: 160px;
+}
+.sf-service-outline {
+  fill: color-mix(in srgb, var(--red-bg) 6.27%, transparent);
+  stroke: var(--red);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+.sf-utility circle {
+  fill: var(--surface);
+  stroke: var(--text-muted);
+  stroke-width: 2;
+}
+.sf-under-attack circle {
+  fill: var(--red-bg);
+  stroke: var(--red);
+}
+.sf-probed circle {
+  fill: var(--amber-bg);
+  stroke: var(--amber);
+}
+.sf-local-footprint text {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  fill: var(--text-strong);
+  paint-order: stroke;
+  stroke: var(--border);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.sf-facility path {
+  fill: var(--red-bg);
+  stroke: var(--red);
+}
+.sf-excluded circle {
+  fill: none;
+  stroke: var(--border);
+  stroke-dasharray: 3 2;
+  stroke-width: 2;
+}
+.sf-excluded text {
+  fill: var(--text-muted);
+}
+.sf-probes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--amber);
+  padding-top: 10px;
+}
+.sf-probe {
+  flex: 1;
+  min-width: 140px;
+  color: var(--amber-text);
+  font-size: var(--fs-body);
+}
+.sf-probe i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--amber);
+  border-radius: 50%;
+  margin-right: 7px;
+}
+.sf-probe small {
+  display: block;
+  color: var(--amber-text);
+  font-size: var(--fs-small);
+  margin-top: 4px;
+}
+.sf-map-disclosure {
+  margin-top: 12px;
+  font-size: var(--fs-body);
+}
+.sf-summary {
+  padding: 20px;
+  display: grid;
+  gap: 13px;
+}
+.sf-summary h2 {
+  font-size: var(--fs-card-title);
+  line-height: 1.3;
+  margin: 0;
+}
+.sf-summary p {
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  margin: 0;
+}
+.sf-summary .sf-eyebrow {
+  font-size: var(--fs-body);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.sf-summary .sf-id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  color: var(--text-muted);
+}
+.sf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.sf-chips span {
+  font-size: var(--fs-chip);
+  text-transform: capitalize;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  color: var(--link);
+  padding: 5px 9px;
+}
+.sf-chips span:first-child {
+  background: var(--red-bg);
+  color: var(--red-text);
+}
+.sf-summary dl {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+.sf-summary dt {
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+.sf-summary dd {
+  margin: 0;
+}
+.sf-facility-summary {
+  border-block: 1px solid var(--border);
+  padding: 13px 0;
+}
+.sf-facility-summary h3 {
+  font-size: var(--fs-card-title);
+  margin: 0 0 8px;
+}
+.sf-summary .sf-caption {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.sf-facility-summary ul {
+  padding: 0;
+  margin: 10px 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.sf-facility-summary li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: var(--fs-body);
+}
+.sf-facility-summary strong {
+  white-space: nowrap;
+  color: var(--red-text);
+  font-family: var(--font-mono);
+}
+.sf-summary .sf-excluded-note {
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+  margin-top: 8px;
+}
+.sf-excluded-note small,
+.sf-notice small {
+  display: block;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+.sf-summary .sf-notice {
+  margin-top: 10px;
+  color: var(--amber-text);
+}
+.sf-decisions strong {
+  color: var(--amber-text);
+}
+.sf-open {
+  min-height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--text-strong);
+  border-radius: var(--radius-control);
+  padding: 10px 14px;
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+.sf-statewide button:focus-visible {
+  outline: 3px solid var(--text-muted);
+  outline-offset: 3px;
+}
+@media (max-width: 1050px) {
+  .sf-layout {
+    grid-template-columns: 1fr;
+  }
+  .sf-state-map {
+    height: 380px;
+  }
+  .sf-summary {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .sf-map-panel {
+    padding: 10px;
+  }
+  .sf-state-map {
+    height: 370px;
+  }
+  .sf-incident-pin {
+    max-width: 125px;
+    font-size: var(--fs-body);
+    padding: 5px;
+  }
+  .sf-incident-pin small {
+    font-size: var(--fs-small);
+  }
+  .sf-summary {
+    padding: 16px;
+  }
+  .sf-local-footprint {
+    padding: 8px;
+  }
+  .sf-local-footprint text {
+    font-size: var(--fs-body);
+  }
+}

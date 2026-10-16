@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from hashlib import sha256
 from importlib.metadata import version
 from pathlib import Path
+import os
+import re
 from urllib.parse import quote
 
 from owlrl import DeductiveClosure, OWLRL_Semantics
@@ -26,10 +28,31 @@ from .validation import FACILITY_TYPES, SAFE_ID
 NS = Namespace("urn:citride:")
 RECORD_PREFIX = "urn:citride:record:"
 ONTOLOGY_PATH = Path(__file__).parent / "ontology" / "watershed.ttl"
+IDT_ONTOLOGY_PATH = Path(__file__).parent / "ontology" / "idt_v4_owl.ttl"
+IDT_SOURCE = "src-idt-v4"
+IDT_CLASS_PREFIX = str(NS) + "IDT_"
+IDT_MODES = frozenset({"full", "assigned_closure"})
+
+
+class _DefaultLoadMode(str):
+    """String default sentinel distinguishes omitted mode from explicit full."""
+
+
+_DEFAULT_IDT_LOAD_MODE = _DefaultLoadMode("assigned_closure")
+
+
+def _idt_mode(mode: str = _DEFAULT_IDT_LOAD_MODE) -> str:
+    if mode is _DEFAULT_IDT_LOAD_MODE:
+        mode = os.environ.get("CITRIDE_IDT_LOAD_MODE", str(_DEFAULT_IDT_LOAD_MODE))
+    if not isinstance(mode, str) or mode not in IDT_MODES:
+        raise OntologyConfigurationError("IDT load mode must be full or assigned_closure")
+    return mode
+
+
 PROFILE = "OWL 2 RL"
 ENGINE_VERSION = "7.6.2"
 LIMITATIONS = [
-    "Locally authored, versioned ontology slice; no imported BFO, CCO, or IDT conformance is claimed.",
+    "Local Watershed axioms plus a source-derived IDT v4 hierarchy; no imported BFO/CCO or official IDT OWL conformance is claimed.",
     "OWL 2 RL rule entailment is supported; this is not complete OWL 2 DL reasoning or a physical consequence model.",
     "Proofs are separate replayable witnesses for supported axioms; owlrl itself does not provide proofs.",
     "Dependency context comes only from promoted Dependency records, never geography, probing, or shared attacker infrastructure.",
@@ -60,9 +83,13 @@ class _Rule:
 
 
 def ontology_document() -> str:
-    """Read the bundled ontology verbatim; never resolve imports or fetch URLs."""
+    """Read both complete local documents verbatim; never resolve imports.
+
+    Even assigned_closure runs hash this complete capture, so a change to an
+    unused IDT branch also invalidates historical runs through existing gates.
+    """
     try:
-        return ONTOLOGY_PATH.read_text(encoding="utf-8")
+        return ONTOLOGY_PATH.read_text(encoding="utf-8") + "\n" + IDT_ONTOLOGY_PATH.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as error:
         raise OntologyConfigurationError("The bundled local ontology could not be read") from error
 
@@ -92,7 +119,8 @@ def _chain(graph: Graph, head) -> tuple[URIRef, URIRef]:
     return tuple(items)
 
 
-def _load_ontology() -> tuple[Graph, dict, list[_Rule], dict]:
+def _load_ontology(*, idt_load_mode: str = _DEFAULT_IDT_LOAD_MODE, data: dict | None = None) -> tuple[Graph, dict, list[_Rule], dict]:
+    mode = _idt_mode(idt_load_mode)
     document = ontology_document()
     graph = Graph()
     try:
@@ -127,7 +155,7 @@ def _load_ontology() -> tuple[Graph, dict, list[_Rule], dict]:
         RDF.type, RDF.first, RDF.rest, RDFS.label, RDFS.comment,
         RDFS.subClassOf, OWL.inverseOf, OWL.propertyChainAxiom, OWL.disjointWith,
         OWL.versionInfo, OWL.versionIRI, OWL.annotatedSource,
-        OWL.annotatedProperty, OWL.annotatedTarget,
+        OWL.annotatedProperty, OWL.annotatedTarget, NS.descriptionStatus,
     }
     allowed_types = {OWL.Ontology, OWL.Class, OWL.ObjectProperty, OWL.Axiom, OWL.TransitiveProperty}
     for subject, predicate, obj in graph:
@@ -135,6 +163,17 @@ def _load_ontology() -> tuple[Graph, dict, list[_Rule], dict]:
             raise OntologyConfigurationError(f"Unsupported ontology rule or declaration: {predicate} {obj}")
         if predicate == RDF.type and obj == OWL.TransitiveProperty and subject not in properties:
             raise OntologyConfigurationError("Transitivity requires a declared local object property")
+        if predicate == NS.descriptionStatus:
+            # Source absence cannot weaken definition requirements elsewhere.
+            if (subject not in classes or not str(subject).startswith(IDT_CLASS_PREFIX)
+                    or not isinstance(obj, Literal) or obj != Literal("absent_in_source")
+                    or len(list(graph.objects(subject, NS.descriptionStatus))) != 1):
+                raise OntologyConfigurationError("descriptionStatus must factually mark an IDT class absent_in_source")
+            path = str(subject).removeprefix(IDT_CLASS_PREFIX).replace("_", ".")
+            comment = str(_one(graph, subject, RDFS.comment))
+            expected = f"No description in the IDT v4 workbook (path {path})."
+            if comment != expected:
+                raise OntologyConfigurationError("An absent source description requires its exact factual workbook-absence comment")
 
     annotations = defaultdict(list)
     for axiom in graph.subjects(RDF.type, OWL.Axiom):
@@ -189,9 +228,70 @@ def _load_ontology() -> tuple[Graph, dict, list[_Rule], dict]:
         "profile": PROFILE, "engine": {"name": "owlrl", "version": ENGINE_VERSION},
         "axioms": sorted(axioms, key=lambda item: item["id"]), "limitations": list(LIMITATIONS),
     }
+    idt_classes = {term for term in classes if str(term).startswith(IDT_CLASS_PREFIX)}
+    metadata.update({"idtLoadMode": mode, "idtClassCount": len(idt_classes),
+                     "loadedIdtClassCount": len(idt_classes), "classCount": len(classes),
+                     "loadedClassCount": len(classes)})
+    # Metadata-only reads validate/hash everything but never select branches or
+    # invoke owlrl. Runtime pruning is strictly after the complete strict gate.
+    if mode == "assigned_closure" and data is not None:
+        graph, rules, classes, loaded = _assigned_closure(graph, rules, classes, idt_classes, data)
+        metadata.update({"loadedIdtClassCount": len(loaded), "loadedClassCount": len(classes)})
     return graph, metadata, sorted(rules, key=lambda rule: rule.axiom_id), {
         "classes": classes, "properties": properties, "labels": labels,
     }
+
+
+def _coded_idt(record: dict, classes: set) -> URIRef | None:
+    """Only canonical, explicitly coded inline assignments assert IDT types."""
+    assignment = record.get("idt")
+    if not isinstance(assignment, dict) or assignment.get("status") != "coded":
+        return None
+    path = assignment.get("path")
+    if not isinstance(path, str) or not re.fullmatch(r"[1-9][0-9]*(?:\.[1-9][0-9]*)*", path):
+        return None
+    term = NS["IDT_" + path.replace(".", "_")]
+    return term if term in classes else None
+
+
+def _assigned_closure(graph: Graph, rules: list[_Rule], classes: set, idt_classes: set, data: dict):
+    """Retain assigned classes, all ancestors, and their direct children.
+
+    Selection follows validated edges, not code prefixes; cycles terminate.
+    Complete hash/axiom metadata remains unchanged across runtime modes.
+    """
+    entities = data.get("entities", [])
+    if not isinstance(entities, list):
+        raise ReasoningError("Baseline entities must be a record list")
+    ancestors = {term for record in entities if isinstance(record, dict)
+                 if (term := _coded_idt(record, idt_classes)) is not None}
+    parents, children = defaultdict(set), defaultdict(set)
+    for child, parent in graph.subject_objects(RDFS.subClassOf):
+        if child in idt_classes:
+            parents[child].add(parent)
+            children[parent].add(child)
+    frontier = list(ancestors)
+    while frontier:
+        for parent in parents[frontier.pop()]:
+            if parent not in ancestors:
+                ancestors.add(parent)
+                frontier.append(parent)
+    retained = ancestors | set().union(*(children[term] for term in ancestors))
+    retained &= idt_classes
+    omitted = idt_classes - retained
+    retained_rules, removed_axioms = [], set()
+    for rule in rules:
+        if any(term in omitted for term in rule.terms):
+            if rule.kind != "subclass" or rule.terms[0] not in idt_classes:
+                raise OntologyConfigurationError("assigned_closure cannot prune non-taxonomy rules")
+            removed_axioms.add(URIRef(rule.axiom_id))
+        else:
+            retained_rules.append(rule)
+    pruned = Graph()
+    for subject, predicate, obj in graph:
+        if subject not in omitted and subject not in removed_axioms and obj not in omitted:
+            pruned.add((subject, predicate, obj))
+    return pruned, retained_rules, classes - omitted, retained
 
 
 def ontology_metadata() -> dict:
@@ -277,12 +377,20 @@ def _project(data: dict, vocabulary: dict) -> tuple[Graph, dict, dict, list[str]
             record_type = record_types[subject]
             if not isinstance(record_type, str) or not record_type:
                 raise ReasoningError(f"Record {record['id']} requires a class name")
-            if NS[record_type] not in vocabulary["classes"]:
+            if NS[record_type] not in vocabulary["classes"] or record_type.startswith("IDT_"):
                 warnings.append(f"Class {record_type} on {record['id']} is outside this local ontology slice; its class assertion was omitted.")
             else:
                 triple = (subject, RDF.type, NS[record_type])
                 graph.add(triple)
                 origins[triple].update(refs)
+            if collection == "entities":
+                idt_class = _coded_idt(record, vocabulary["classes"])
+                if idt_class is not None:
+                    if IDT_SOURCE not in source_ids:
+                        raise ReasoningError("Coded IDT projection requires captured source src-idt-v4")
+                    triple = (subject, RDF.type, idt_class)
+                    graph.add(triple)
+                    origins[triple].update([*refs, IDT_SOURCE])
             if record_type in FACILITY_TYPES:
                 triple = (subject, RDF.type, NS.PhysicalFacility)
                 graph.add(triple)
@@ -380,11 +488,14 @@ def _witnesses(asserted: set, delta: set, rules: list[_Rule]) -> dict:
         witnesses.update(candidates)
 
 
-def compute_inference(data: dict, run_id: str) -> dict:
+def compute_inference(data: dict, run_id: str, *, idt_load_mode: str = _DEFAULT_IDT_LOAD_MODE) -> dict:
     """Capture a baseline and compute OWL inference; API stamps createdAt.
 
     No mutation of the input or baseline occurs. A contradiction or unsupported
     ontology raises a typed ValueError before any inference run is publishable.
+    ``idt_load_mode`` is keyword-only, with default ``full``. An omitted mode
+    permits CITRIDE_IDT_LOAD_MODE as an operator override; an explicit keyword
+    always wins (including explicit ``full`` during benchmarking).
     """
     if not isinstance(data, dict):
         raise ReasoningError("Inference baseline must be an object")
@@ -394,7 +505,8 @@ def compute_inference(data: dict, run_id: str) -> dict:
     if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
         raise ReasoningError("Inference requires a positive promoted baseline revision")
     snapshot = deepcopy(data)
-    ontology_graph, metadata, rules, vocabulary = _load_ontology()
+    mode = _idt_mode(idt_load_mode)
+    ontology_graph, metadata, rules, vocabulary = _load_ontology(idt_load_mode=mode, data=snapshot)
     input_graph, records, origins, warnings = _project(snapshot, vocabulary)
     asserted_all = set(input_graph)
     closure = Graph()
@@ -444,8 +556,11 @@ def compute_inference(data: dict, run_id: str) -> dict:
 
     return {
         "id": run_id, "baselineRevision": revision, "profile": PROFILE,
-        "engine": metadata["engine"],
-        "ontology": {key: metadata[key] for key in ("id", "version", "sha256", "axioms")},
+        "engine": metadata["engine"], "idtLoadMode": mode,
+        "ontology": {key: metadata[key] for key in (
+            "id", "version", "sha256", "axioms", "idtLoadMode", "idtClassCount",
+            "loadedIdtClassCount", "classCount", "loadedClassCount",
+        )},
         "baselineSnapshot": snapshot,
         "assertedFacts": [fact(triple) for triple in sorted(asserted, key=_triple_key)],
         "inferredFacts": [fact(triple) for triple in sorted(traced_delta, key=_triple_key)],

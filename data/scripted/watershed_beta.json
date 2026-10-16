@@ -1,0 +1,1203 @@
+{
+  "version": "watershed-beta-scripted-v1",
+  "origin": "scripted",
+  "note": "Sample records for the Billington beta demo. Fictional. Loaded through the same record entry point that real feeds and analyst actions use. Every record can be changed by an analyst through normal actions.",
+  "timing": {
+    "storyTimezone": "America/Chicago",
+    "relativeTo": "scenario.json incidentOrigin (02:00 CT = 0.0)",
+    "storyClock": {
+      "startRelativeHours": 1.0,
+      "advancesWithWallClock": true,
+      "note": "After Reset demo the story clock reads 03:00 CT and advances in real time."
+    },
+    "watershedRecordsAppear": "when a case is opened from any event in incidents[TX-26-0412].linkedEventIds; their time = case-open story time + offsetMinutes"
+  },
+  "sources": [
+    {
+      "id": "src-scripted-beta",
+      "label": "Scripted sample records (Billington beta)",
+      "evidenceCategory": "simulated",
+      "description": "Hand-authored fictional incidents, team deployments, contact statuses and analyst judgments for the demo storyline.",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "TX-26-0412",
+      "title": "Water utility cyber attack",
+      "incidentType": "Cyber attack on a water utility",
+      "location": {
+        "label": "Utility A, Central Texas",
+        "region": "Central Texas",
+        "schematic": {
+          "x": 52,
+          "y": 58
+        }
+      },
+      "sectors": [
+        "12",
+        "10"
+      ],
+      "severity": "high",
+      "status": "from_case",
+      "startedRelativeHours": -0.5,
+      "linkedEventIds": [
+        "event-vpn-a",
+        "event-inbound-a",
+        "event-auth-a",
+        "event-dosing",
+        "event-sensor",
+        "event-probe-b",
+        "event-probe-c"
+      ],
+      "relatedNote": "Linked probes at 2 utilities",
+      "modeled": true,
+      "summary": "Vendor VPN account used to reach Utility A's plant controls; dosing setpoint changed; same source probed Utilities B and C.",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "TX-26-0409",
+      "title": "Ransomware on city network",
+      "incidentType": "Ransomware",
+      "location": {
+        "label": "Fictional City N, North Texas",
+        "region": "North Texas",
+        "schematic": {
+          "x": 56,
+          "y": 28
+        }
+      },
+      "sectors": [
+        "15"
+      ],
+      "severity": "medium",
+      "status": "containment",
+      "startedRelativeHours": -4.88,
+      "modeled": false,
+      "summary": "City servers encrypted; CIRU Team Bravo on site; restoring from backups.",
+      "updates": [
+        {
+          "relativeTimeHours": -1.0,
+          "text": "Containment confirmed on city network segment"
+        },
+        {
+          "relativeTimeHours": 1.17,
+          "text": "60% of priority servers restored"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "TX-26-0411",
+      "title": "DDoS on county emergency-alert site",
+      "incidentType": "Denial of service",
+      "location": {
+        "label": "Fictional County W, West Texas",
+        "region": "West Texas",
+        "schematic": {
+          "x": 24,
+          "y": 44
+        }
+      },
+      "sectors": [
+        "6"
+      ],
+      "severity": "medium",
+      "status": "monitoring",
+      "startedRelativeHours": 0.52,
+      "modeled": false,
+      "summary": "Traffic flood against the county's public alert page; hosting provider filtering in place.",
+      "updates": [
+        {
+          "relativeTimeHours": 0.9,
+          "text": "Provider filtering active; site reachable"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "TX-26-0404",
+      "title": "Hospital system IT outage",
+      "incidentType": "IT outage, cause under review",
+      "location": {
+        "label": "Fictional regional hospital network, Gulf Coast",
+        "region": "Gulf Coast",
+        "schematic": {
+          "x": 70,
+          "y": 72
+        }
+      },
+      "sectors": [
+        "10"
+      ],
+      "severity": "low",
+      "status": "recovering",
+      "startedRelativeHours": -13.13,
+      "modeled": false,
+      "summary": "Scheduling and records systems down for 9 hours; patient care continued on downtime procedures.",
+      "updates": [
+        {
+          "relativeTimeHours": 0.97,
+          "text": "Recovery underway; records system back online"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "TX-26-0398",
+      "title": "Phishing at a state agency",
+      "incidentType": "Phishing",
+      "location": {
+        "label": "Fictional state agency, Central Texas",
+        "region": "Central Texas",
+        "schematic": {
+          "x": 50,
+          "y": 52
+        }
+      },
+      "sectors": [
+        "15"
+      ],
+      "severity": "low",
+      "status": "closed",
+      "startedRelativeHours": -52.0,
+      "closedRelativeHours": -30.0,
+      "modeled": false,
+      "summary": "Credential phishing contained; affected accounts reset.",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "teams": [
+    {
+      "id": "team-ciru-alpha",
+      "name": "CIRU Team Alpha",
+      "short": "CIRU Alpha",
+      "unit": "CIRU",
+      "incidentId": "TX-26-0412",
+      "status": "en_route",
+      "statusText": "En route · remote support active",
+      "locationLabel": "Treatment Plant A, Central Texas",
+      "nearEntityId": "plant-a",
+      "schematic": {
+        "x": 50,
+        "y": 62
+      },
+      "people": {
+        "onSite": 0,
+        "remote": 2,
+        "traveling": 2,
+        "standby": 0
+      },
+      "workingOn": "Contain the misused vendor account; secure the dosing controller",
+      "forensics": "Confirming the dosing setpoint against the plant record; collecting controller and HMI logs",
+      "etaOffsetMinutes": 128,
+      "lead": "CIRU Alpha team lead",
+      "updates": [
+        {
+          "offsetMinutes": 15,
+          "text": "Remote access to the plant network established"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "team-dfl",
+      "name": "Digital Forensics Lab",
+      "short": "DFL",
+      "unit": "DFL",
+      "incidentId": "TX-26-0412",
+      "status": "standby",
+      "statusText": "Standby · awaiting evidence",
+      "locationLabel": "TXCC Digital Forensics Lab",
+      "schematic": {
+        "x": 58,
+        "y": 66
+      },
+      "people": {
+        "onSite": 2,
+        "remote": 0,
+        "traveling": 0,
+        "standby": 0
+      },
+      "workingOn": "Evidence intake for TX-26-0412",
+      "forensics": "Ready to image the HMI and dosing PLC configuration",
+      "lead": "DFL examiner on duty",
+      "updates": [
+        {
+          "offsetMinutes": 20,
+          "text": "Evidence request DFL-0412 opened; chain of custody started"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "team-rsoc",
+      "name": "Regional Security Operations Center",
+      "short": "Regional RSOC",
+      "unit": "RSOC",
+      "incidentId": "TX-26-0412",
+      "status": "remote",
+      "statusText": "Remote · hunting",
+      "locationLabel": "Remote, covering Utilities B and C",
+      "schematic": {
+        "x": 55,
+        "y": 48
+      },
+      "people": {
+        "onSite": 0,
+        "remote": 4,
+        "traveling": 0,
+        "standby": 0
+      },
+      "workingOn": "Sweep Watershed 250 utilities for the Vendor V account and the shared source",
+      "forensics": "Account and log review at Utilities B and C",
+      "lead": "RSOC shift lead",
+      "updates": [
+        {
+          "offsetMinutes": 4,
+          "text": "Vendor V account found at B and C; no logins yet"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "team-virt",
+      "name": "Volunteer Incident Response Team",
+      "short": "VIRT",
+      "unit": "VIRT",
+      "incidentId": "TX-26-0412",
+      "status": "standby",
+      "statusText": "Standby · on utility request",
+      "locationLabel": "Near Utility C",
+      "nearEntityId": "utility-c",
+      "schematic": {
+        "x": 40,
+        "y": 66
+      },
+      "people": {
+        "onSite": 0,
+        "remote": 0,
+        "traveling": 0,
+        "standby": 3
+      },
+      "workingOn": "Ready to support Utility C if requested",
+      "forensics": "None yet",
+      "lead": "VIRT coordinator",
+      "updates": [],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "team-ciru-bravo",
+      "name": "CIRU Team Bravo",
+      "short": "CIRU Bravo",
+      "unit": "CIRU",
+      "incidentId": "TX-26-0409",
+      "status": "on_site",
+      "statusText": "On site · 6 h",
+      "locationLabel": "City N IT office, North Texas",
+      "schematic": {
+        "x": 56,
+        "y": 30
+      },
+      "people": {
+        "onSite": 4,
+        "remote": 0,
+        "traveling": 0,
+        "standby": 0
+      },
+      "workingOn": "Containment and recovery of city servers",
+      "forensics": "Ransomware sample analysis; restore testing from backups",
+      "lead": "CIRU Bravo team lead",
+      "updates": [
+        {
+          "relativeTimeHours": 1.17,
+          "text": "60% of priority servers restored"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-ciru-disable-vendor",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-ciru-alpha",
+      "label": "Disable the Vendor V account at Utility A and end sessions",
+      "detail": "With Utility A operations · from A5 first actions",
+      "dueOffsetMinutes": 30,
+      "status": "done",
+      "doneOffsetMinutes": 9,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-ciru-confirm-setpoint",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-ciru-alpha",
+      "label": "Confirm the dosing setpoint against the plant record",
+      "dueOffsetMinutes": 55,
+      "status": "in_progress",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-ciru-collect-logs",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-ciru-alpha",
+      "label": "Collect controller and HMI logs for the lab",
+      "dueOffsetMinutes": 85,
+      "status": "in_progress",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-ciru-onsite",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-ciru-alpha",
+      "label": "Arrive on site at Treatment Plant A",
+      "dueOffsetMinutes": 128,
+      "status": "not_started",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-dfl-intake",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-dfl",
+      "label": "Open evidence intake and chain of custody",
+      "detail": "Evidence request DFL-0412",
+      "dueOffsetMinutes": 30,
+      "status": "done",
+      "doneOffsetMinutes": 20,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-dfl-image",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-dfl",
+      "label": "Image the HMI and the dosing PLC configuration",
+      "detail": "Waiting on logs from CIRU Alpha",
+      "dueOffsetMinutes": 150,
+      "status": "waiting",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-rsoc-vendor-sweep",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-rsoc",
+      "label": "Sweep Watershed 250 utilities for the Vendor V account",
+      "detail": "Hunt 1 · shows on C3",
+      "dueOffsetMinutes": 60,
+      "status": "in_progress",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-rsoc-source-sweep",
+      "incidentId": "TX-26-0412",
+      "teamId": "team-rsoc",
+      "label": "Sweep monitored networks for the shared attacker source",
+      "detail": "Hunt 2 · queued",
+      "dueOffsetMinutes": 120,
+      "status": "not_started",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-util-a-manual",
+      "incidentId": "TX-26-0412",
+      "teamId": "utilities",
+      "ownerRole": "Treatment Plant A superintendent",
+      "label": "Utility A: run chemical dosing in manual",
+      "dueOffsetMinutes": 20,
+      "status": "done",
+      "doneOffsetMinutes": 11,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-util-a-samples",
+      "incidentId": "TX-26-0412",
+      "teamId": "utilities",
+      "ownerRole": "Utility A operations",
+      "label": "Utility A: take confirmatory water samples",
+      "detail": "Results expected in about 2 hours",
+      "dueOffsetMinutes": 115,
+      "status": "in_progress",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-util-c-reset",
+      "incidentId": "TX-26-0412",
+      "teamId": "utilities",
+      "ownerRole": "Utility C IT lead",
+      "label": "Utility C: reset Vendor V credentials",
+      "detail": "Waiting on callback from IT lead",
+      "dueOffsetMinutes": 40,
+      "status": "waiting",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-util-b-reset",
+      "incidentId": "TX-26-0412",
+      "teamId": "utilities",
+      "ownerRole": "Utility B IT lead",
+      "label": "Utility B: reset Vendor V credentials",
+      "dueOffsetMinutes": -5,
+      "status": "not_started",
+      "note": "Due before the case opened, so it shows as late from the start of the demo.",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-watch-review",
+      "incidentId": "TX-26-0412",
+      "teamId": "watch-floor",
+      "ownerRole": "Watch officer",
+      "label": "Record the remaining impact review (Hospital Y)",
+      "dueOffsetMinutes": 30,
+      "status": "in_progress",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "task-watch-sitrep",
+      "incidentId": "TX-26-0412",
+      "teamId": "watch-floor",
+      "ownerRole": "Command duty officer",
+      "label": "CDO review of the SITREP draft for TDEM",
+      "detail": "Draft in A5",
+      "dueOffsetMinutes": 45,
+      "status": "not_started",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "taskGroups": [
+    {
+      "id": "team-ciru-alpha",
+      "label": "CIRU Team Alpha"
+    },
+    {
+      "id": "team-dfl",
+      "label": "Digital Forensics Lab"
+    },
+    {
+      "id": "team-rsoc",
+      "label": "Regional RSOC"
+    },
+    {
+      "id": "utilities",
+      "label": "Utilities",
+      "note": "Owners and operators · tracked by the watch floor"
+    },
+    {
+      "id": "watch-floor",
+      "label": "TXCC watch floor"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "contact-1",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Utility A",
+      "group": "act",
+      "status": "contacted",
+      "offsetMinutes": 2,
+      "entityId": "utility-a",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-2",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Utility C",
+      "group": "act",
+      "status": "attempted",
+      "offsetMinutes": 6,
+      "entityId": "utility-c",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-3",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Utility B",
+      "group": "act",
+      "status": "not_yet",
+      "entityId": "utility-b",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-4",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Vendor V",
+      "group": "act",
+      "status": "not_yet",
+      "entityId": "vendor-v",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-5",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Nursing Home Z",
+      "group": "know",
+      "status": "contacted",
+      "offsetMinutes": 8,
+      "entityId": "nursing-z",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-6",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Dialysis Center X",
+      "group": "know",
+      "status": "not_yet",
+      "entityId": "dialysis-x",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-7",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Hospital Y",
+      "group": "know",
+      "status": "not_yet",
+      "entityId": "hospital-y",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-8",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "TX-ISAO water-sector cohort",
+      "group": "know",
+      "status": "waiting_on_chief",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-9",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "State drinking-water regulator",
+      "group": "know",
+      "status": "not_yet",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-10",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "TDEM",
+      "group": "helping",
+      "status": "engaged",
+      "offsetMinutes": 4,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-11",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Regional RSOC",
+      "group": "helping",
+      "status": "engaged",
+      "offsetMinutes": 3,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-12",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "VIRT",
+      "group": "helping",
+      "status": "on_standby",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-13",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Watershed 250 pilot vendors",
+      "group": "helping",
+      "status": "not_yet",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-14",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Federal partners (CISA Region 6, FBI, EPA)",
+      "group": "helping",
+      "status": "not_shared_no_consent",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "contact-15",
+      "incidentId": "TX-26-0412",
+      "partnerRole": "Fusion center",
+      "group": "helping",
+      "status": "not_yet",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "contactStatusLabels": {
+    "contacted": "Contacted",
+    "attempted": "Attempted",
+    "not_yet": "Not yet",
+    "engaged": "Engaged",
+    "on_standby": "On standby",
+    "waiting_on_chief": "Waiting on the Chief",
+    "not_shared_no_consent": "Not shared · no owner consent"
+  },
+  "assessments": [
+    {
+      "id": "assess-attribution-0412",
+      "incidentId": "TX-26-0412",
+      "subject": "attribution",
+      "byUnit": "CTIC",
+      "offsetMinutes": 1,
+      "cluster": "Campaign cluster W250-01",
+      "actorLabel": "Unattributed actor (placeholder) · water-sector targeting",
+      "confidence": "medium",
+      "note": "CTIC analyst assessment. Placeholder actor; no real group is named.",
+      "publication": {
+        "format": "STIX 2.1",
+        "label": "CTIC intel update published"
+      },
+      "indicators": [
+        {
+          "type": "ipv4-addr",
+          "value": "203.0.113.250",
+          "label": "Shared attacker source",
+          "status": "confirmed"
+        },
+        {
+          "type": "user-account",
+          "value": "vendor-v-support",
+          "label": "Vendor V support account",
+          "status": "confirmed"
+        },
+        {
+          "type": "behavior",
+          "value": "vendor VPN login 00:00-05:00 CT",
+          "label": "Off-hours VPN session",
+          "status": "confirmed"
+        }
+      ],
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "assetStatuses": [
+    {
+      "id": "astat-vpn-a",
+      "incidentId": "TX-26-0412",
+      "entityId": "vpn-a",
+      "status": "confirmed",
+      "label": "Compromised",
+      "detail": "Vendor account misused · IT",
+      "offsetMinutes": 1,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-plc-a",
+      "incidentId": "TX-26-0412",
+      "entityId": "plc-a",
+      "status": "confirmed",
+      "label": "Manipulated",
+      "detail": "Chemical setpoint changed · plant controls",
+      "offsetMinutes": 1,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-hmi-a",
+      "incidentId": "TX-26-0412",
+      "entityId": "hmi-a",
+      "status": "suspected",
+      "label": "Suspected",
+      "detail": "On the attack path",
+      "offsetMinutes": 1,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-plc-b",
+      "incidentId": "TX-26-0412",
+      "entityId": "plc-b",
+      "status": "at_risk",
+      "label": "At risk",
+      "detail": "Probed by the same source",
+      "offsetMinutes": 1,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-plc-c",
+      "incidentId": "TX-26-0412",
+      "entityId": "plc-c",
+      "status": "at_risk",
+      "label": "At risk",
+      "detail": "Probed by the same source",
+      "offsetMinutes": 1,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-workstation-a",
+      "incidentId": "TX-26-0412",
+      "entityId": "workstation-a",
+      "status": "normal",
+      "label": "Normal",
+      "detail": "Business network A · no indicators of compromise",
+      "offsetMinutes": 1,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "hunts": [
+    {
+      "id": "hunt-1-vendor-account",
+      "incidentId": "TX-26-0412",
+      "number": 1,
+      "label": "Vendor V account sweep across Watershed 250 utilities",
+      "query": {
+        "kind": "account",
+        "value": "vendor-v-support",
+        "scope": "watershed-250-utilities"
+      },
+      "ownerTeamId": "team-rsoc",
+      "status": "running",
+      "resultNote": "Account exists at Utilities B and C; no logins yet",
+      "offsetMinutes": 2,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "hunt-2-shared-source",
+      "incidentId": "TX-26-0412",
+      "number": 2,
+      "label": "Shared attacker source sweep across all monitored networks",
+      "query": {
+        "kind": "source",
+        "value": "203.0.113.250",
+        "scope": "all-monitored"
+      },
+      "ownerTeamId": "team-rsoc",
+      "status": "queued",
+      "offsetMinutes": 3,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "huntStatusLabels": {
+    "running": "In progress",
+    "queued": "Queued",
+    "done": "Done",
+    "no_findings": "No findings",
+    "findings": "Findings"
+  },
+  "decisions": [
+    {
+      "id": "decision-ciru-0412",
+      "incidentId": "TX-26-0412",
+      "optionId": "opt-ciru-support",
+      "decision": "chosen",
+      "decidedBy": "Chief",
+      "recordedBy": "Command duty officer",
+      "offsetMinutes": 13,
+      "note": "Offer CIRU support to Utility A now.",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "decision-virt-0412",
+      "incidentId": "TX-26-0412",
+      "optionId": "opt-virt-on-request",
+      "decision": "standing_by",
+      "decidedBy": "Chief",
+      "recordedBy": "Command duty officer",
+      "offsetMinutes": 13,
+      "note": "VIRT on standby; deploy only if Utility B or C asks.",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "decisionLabels": {
+    "chosen": "Decided",
+    "deferred": "Deferred",
+    "not_chosen": "Not chosen",
+    "standing_by": "Standing by",
+    "none": "Waiting on the Chief"
+  },
+  "partnerProducts": [
+    {
+      "id": "product-sitrep-0412",
+      "incidentId": "TX-26-0412",
+      "label": "SITREP v1 for TDEM",
+      "status": "draft",
+      "detail": "Needs CDO review · 2 fields to confirm",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "product-isao-0412",
+      "incidentId": "TX-26-0412",
+      "label": "TX-ISAO advisory · water-sector cohort",
+      "status": "draft",
+      "detail": "Utility names withheld · release needs the Chief",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "product-health-0412",
+      "incidentId": "TX-26-0412",
+      "label": "Healthcare partner notice · dialysis and nursing home",
+      "status": "draft",
+      "detail": "For TDEM and facility administrators",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-beta"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ]
+}

@@ -22,6 +22,7 @@ import {
   exchangeFormats,
   foundations,
   graphRoles,
+  idtRuntimeResource,
   policyBoundary,
   runtimeProfile,
   sourceCaveat,
@@ -114,6 +115,13 @@ export default function OntologyBlueprint({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const idtResource = idtRuntimeResource(metadata);
+  const displayedColumns = domainColumns.map((column) => ({
+    ...column,
+    resources: column.resources.map((resource) =>
+      resource.id === "idt-owl" ? idtResource : resource,
+    ),
+  }));
 
   useEffect(() => {
     let active = true;
@@ -203,9 +211,10 @@ export default function OntologyBlueprint({
         <div className="ob-runtime-body">
           <p className="ob-runtime-description">
             {runtimeProfile.ontology} is a locally authored{" "}
-            <code>{runtimeProfile.namespace}</code> slice. BFO, CCO, IDT and C3O
-            are not imported. The target dependencies below are not an
-            installed-module inventory.
+            <code>{runtimeProfile.namespace}</code> slice. BFO, CCO and C3O
+            remain target integrations. IDT runtime status below comes from the
+            actual ontology service, not the reference lookup or target
+            manifest.
           </p>
           <div className="ob-metadata" aria-live="polite" aria-busy={loading}>
             {loading ? (
@@ -265,6 +274,10 @@ export default function OntologyBlueprint({
                 again.
               </p>
             )}
+          </div>
+          <div className="ob-runtime-description" aria-live="polite">
+            <strong>IDT · {idtResource.status}</strong>
+            <p>{idtResource.description}</p>
           </div>
           <ul className="ob-runtime-evidence">
             {runtimeProfile.evidence.map((item) => (
@@ -337,7 +350,7 @@ export default function OntologyBlueprint({
           </span>
         </div>
         <div className="ob-domain-grid">
-          {domainColumns.map((column) => (
+          {displayedColumns.map((column) => (
             <DomainCard key={column.id} column={column} />
           ))}
         </div>
@@ -388,10 +401,8 @@ export default function OntologyBlueprint({
         <div className="ob-policy-note">
           <Scale size={18} aria-hidden="true" />
           <p>
-            <strong>{policyBoundary.decisionMode}.</strong> AN01–04 definitions
-            and formal G1–G5 policy definitions were not supplied. This
-            blueprint does not assert gate passes, compliance or response
-            authority.
+            <strong>{policyBoundary.decisionMode}.</strong> AN01–04 and G1–G5
+            definitions are not configured.
           </p>
         </div>
       </section>

@@ -4,8 +4,8 @@
   line-height: 1.35;
 }
 .prototype-nav-label small {
-  font-size: 0.65rem;
-  color: #a4afc2;
+  font-size: var(--fs-menu);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -21,15 +21,15 @@
   align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
-  color: #9baac0;
-  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
 }
 .prototype-progress li[aria-current] {
-  color: #8dccff;
+  color: var(--link);
   font-weight: 700;
 }
 .prototype-progress li > span {
-  border: 1px solid #42546e;
+  border: 1px solid var(--border);
   border-radius: 50%;
   min-width: 1.6rem;
   height: 1.6rem;
@@ -46,19 +46,19 @@
   display: block;
 }
 .prototype-progress > div > span {
-  color: #9baac0;
-  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
 }
 .prototype-status {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-  font-size: 0.72rem;
-  color: #aebbd0;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
   padding: 0.75rem 0;
 }
 .prototype-status span {
-  border-left: 2px solid #587997;
+  border-left: 2px solid var(--border);
   padding-left: 0.5rem;
 }
 .prototype-alerts {
@@ -79,7 +79,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   max-width: 100%;
-  font-size: 0.8rem;
+  font-size: var(--fs-body);
 }
 .prototype-hash {
   overflow-wrap: anywhere;
@@ -90,8 +90,8 @@
   margin-top: 1rem;
 }
 .prototype-observations details {
-  border: 1px solid #283a53;
-  border-radius: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   padding: 0.7rem;
 }
 .prototype-observations summary {
@@ -101,8 +101,8 @@
   flex-wrap: wrap;
 }
 .prototype-observations summary span {
-  font-size: 0.72rem;
-  color: #8cabc7;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .prototype-observations p {
   overflow-wrap: anywhere;
@@ -116,15 +116,15 @@
 }
 .prototype-time-track {
   height: 1rem;
-  background: #152238;
+  background: var(--surface);
   position: relative;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-control);
   overflow: hidden;
 }
 .prototype-time-track > span {
   position: absolute;
   height: 100%;
-  background: #d1a157;
+  background: var(--amber-bg);
   min-width: 3px;
 }
 .prototype-cascade {
@@ -134,11 +134,11 @@
   padding: 0;
 }
 .prototype-cascade > li {
-  border-left: 3px solid #668eb6;
+  border-left: 3px solid var(--border);
   padding-left: 1rem;
 }
 .prototype-cascade p {
-  color: #b2c3d8;
+  color: var(--text);
 }
 .prototype-alerts textarea {
   display: block;
@@ -156,6 +156,6 @@
     align-items: start;
   }
   .prototype-nav-label small {
-    font-size: 0.58rem;
+    font-size: var(--fs-menu);
   }
 }

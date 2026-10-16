@@ -1,0 +1,375 @@
+import { StatusChip } from "./visualPrimitives.ts";
+import { useState } from "react";
+
+import { idtEntry, idtSectorName } from "./idt.ts";
+import { words } from "./commandCenterModel.ts";
+import { analysisLabel } from "./caseFilePresentation.ts";
+import {
+  statewideFootprint,
+  type Coordinate,
+  type StatewideFootprintModel,
+  type StatewideFootprintProps,
+} from "./statewideFootprint.ts";
+import "./statewide-footprint.css";
+
+export type { StatewideFootprintProps } from "./statewideFootprint.ts";
+const count = (v: number | null) =>
+  v === null ? "Not recorded" : v.toLocaleString("en-US");
+const windowLabel = (v: Coordinate | null) =>
+  v ? `${v[0]}–${v[1]} h` : "Timing unknown";
+
+function RecordedFootprints({ model }: { model: StatewideFootprintModel }) {
+  return (
+    <div
+      className="sf-recorded-footprints"
+      aria-label="Captured service footprints"
+    >
+      {model.layers
+        .filter((layer) => layer.utility)
+        .map((layer) => {
+          const coordinates = [
+            ...layer.serviceAreas.flatMap((area) => area.rings.flat()),
+            ...layer.facilities.flatMap((f) =>
+              f.coordinates ? [f.coordinates] : [],
+            ),
+            ...layer.excluded.flatMap((f) =>
+              f.coordinates ? [f.coordinates] : [],
+            ),
+            ...(layer.utility?.coordinates ? [layer.utility.coordinates] : []),
+          ];
+          const xs = coordinates.map((p) => p[0]),
+            ys = coordinates.map((p) => p[1]);
+          const minX = Math.min(...xs),
+            maxX = Math.max(...xs),
+            minY = Math.min(...ys),
+            maxY = Math.max(...ys);
+          const project = (p: Coordinate): Coordinate => [
+            55 + ((p[0] - minX) / (maxX - minX || 1)) * 610,
+            235 - ((p[1] - minY) / (maxY - minY || 1)) * 190,
+          ];
+          const utilityPoint = layer.utility?.coordinates
+            ? project(layer.utility.coordinates)
+            : null;
+          const muted = model.active?.caseId !== layer.caseId;
+          return (
+            <section
+              key={layer.caseId}
+              className={`sf-local-footprint ${muted ? "sf-muted" : ""}`}
+              data-footprint-case={layer.caseId}
+            >
+              <h3>
+                {layer.utility!.label} service area ·{" "}
+                {count(layer.utility!.people)} people
+              </h3>
+              <p className="sf-caption">
+                {layer.run ? analysisLabel(layer.run) : "Not yet modeled"} ·
+                recorded local coordinates
+              </p>
+              {coordinates.length ? (
+                <svg
+                  viewBox="0 0 720 285"
+                  role="img"
+                  aria-label={`${layer.utility!.label} recorded service outline and captured facilities`}
+                >
+                  {layer.serviceAreas.flatMap((area) =>
+                    area.rings.map((ring, index) => (
+                      <polygon
+                        key={`${area.id}-${index}`}
+                        data-service-area={area.id}
+                        points={ring.map((p) => project(p).join(",")).join(" ")}
+                        className="sf-service-outline"
+                      >
+                        <title>{`${area.label} · recorded schematic boundary`}</title>
+                      </polygon>
+                    )),
+                  )}
+                  {utilityPoint && (
+                    <g
+                      transform={`translate(${utilityPoint.join(" ")})`}
+                      className={`sf-utility sf-${layer.utility!.status}`}
+                    >
+                      <circle r="10" />
+                      <text x="15" y="5">
+                        {layer.utility!.label} ·{" "}
+                        {layer.utility!.label &&
+                          (layer.utility!.status === "under-attack"
+                            ? "Under attack"
+                            : layer.utility!.status === "probed"
+                              ? "Probed"
+                              : "No active attack label")}
+                      </text>
+                    </g>
+                  )}
+                  {layer.facilities.map((f) =>
+                    f.coordinates ? (
+                      <g
+                        key={`${f.id}-${f.functionId}`}
+                        data-modeled-facility={f.id}
+                        transform={`translate(${project(f.coordinates).join(" ")})`}
+                        className="sf-facility"
+                      >
+                        <path d="M 0 -7 L 7 0 L 0 7 L -7 0 Z" />
+                        <text x="12" y="-9">
+                          {f.label} · {windowLabel(f.windowHours)}
+                        </text>
+                        <title>{`${f.label}: modeled, ${windowLabel(f.windowHours)}`}</title>
+                      </g>
+                    ) : null,
+                  )}
+                  {layer.excluded.map((f) =>
+                    f.coordinates ? (
+                      <g
+                        key={f.id}
+                        transform={`translate(${project(f.coordinates).join(" ")})`}
+                        className="sf-excluded"
+                      >
+                        <circle r="6" />
+                        <text x="10" y="19">
+                          {f.label} · not affected
+                        </text>
+                        <title>{f.reason}</title>
+                      </g>
+                    ) : null,
+                  )}
+                </svg>
+              ) : (
+                <p>Recorded geometry unavailable; no boundary inferred.</p>
+              )}
+              <div className="sf-probes" aria-label="Related probes">
+                {layer.probed.map((p) => (
+                  <span key={p.id} className="sf-probe">
+                    <i aria-hidden="true" />
+                    {p.label} · Probed{" "}
+                    <small>
+                      {count(p.people)} people · no modeled consequence
+                    </small>
+                  </span>
+                ))}
+              </div>
+              {!layer.run && (
+                <p>Not yet modeled · no captured facility windows.</p>
+              )}
+            </section>
+          );
+        })}
+    </div>
+  );
+}
+
+/** Stateless rendering also makes navigation callbacks independently testable. */
+export function StatewideFootprintView({
+  model,
+  onPick,
+  onOpenAnalyst,
+}: {
+  model: StatewideFootprintModel;
+  onPick: (id: string) => void;
+  onOpenAnalyst: StatewideFootprintProps["onOpenAnalyst"];
+}) {
+  const row = model.active;
+  return (
+    <section className="sf-statewide" aria-label="Statewide incident footprint">
+      <header className="sf-heading">
+        <p>Statewide incident schematic</p>
+      </header>
+      <nav className="sf-incident-nav" aria-label="Statewide incidents">
+        {model.rows.map((item) => (
+          <button
+            type="button"
+            key={item.id}
+            aria-pressed={item.id === row?.id}
+            onClick={() => onPick(item.id)}
+          >
+            {item.title}{" "}
+            <StatusChip status={item.severity}>
+              {words(item.severity ?? "unknown")}
+            </StatusChip>
+          </button>
+        ))}
+      </nav>
+      <div className="sf-layout">
+        <section className="sf-map-panel" aria-label="Statewide map">
+          <div className="sf-state-map">
+            <span className="sf-texas" aria-hidden="true">
+              TEXAS
+            </span>
+            {model.rows.map((item) => {
+              const position = item.location?.schematic;
+              if (
+                !position ||
+                !Number.isFinite(position.x) ||
+                !Number.isFinite(position.y)
+              )
+                return null;
+              return (
+                <button
+                  type="button"
+                  key={item.id}
+                  data-incident-pin={item.id}
+                  className={`sf-incident-pin ${item.id === row?.id ? "sf-selected" : "sf-muted"}`}
+                  style={{ left: `${position.x}%`, top: `${position.y}%` }}
+                  aria-pressed={item.id === row?.id}
+                  onClick={() => onPick(item.id)}
+                  title={`${item.title} · ${item.id} · ${item.location?.label ?? ""}`}
+                >
+                  <i aria-hidden="true" />
+                  <span>
+                    {item.title}
+                    <small>
+                      {item.id} · {words(item.status ?? "unknown")}
+                    </small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="sf-legend" aria-label="Legend">
+            <span>
+              <i className="sf-legend-attack" />
+              Attacked utility
+            </span>
+            <span>
+              <i className="sf-legend-probe" />
+              Probed utility
+            </span>
+            <span>
+              <i className="sf-legend-facility" />
+              Facility at risk (modeled)
+            </span>
+            <span>
+              <i className="sf-legend-other" />
+              Other incident
+            </span>
+          </div>
+          <RecordedFootprints model={model} />
+          {model.rows.some((item) => !item.location?.schematic) && (
+            <p className="sf-caption">Some incident locations are unknown.</p>
+          )}
+        </section>
+        <aside
+          className="sf-summary"
+          aria-label="Read-only summary"
+          aria-live="polite"
+        >
+          <p className="sf-eyebrow">Selected incident · read-only summary</p>
+          {row ? (
+            <>
+              <h2>{row.title}</h2>
+              <p className="sf-id">
+                {row.id} ·{" "}
+                {model.elapsed === null
+                  ? "Elapsed unknown"
+                  : `${Math.floor(model.elapsed / 60)}h ${model.elapsed % 60}m elapsed`}
+              </p>
+              <div className="sf-chips">
+                <StatusChip status={row.severity}>
+                  Severity: {words(row.severity ?? "unknown")}
+                </StatusChip>
+                <StatusChip status={row.status}>
+                  {words(row.status ?? "unknown")}
+                </StatusChip>
+              </div>
+              <p>{row.summary}</p>
+              <dl>
+                <dt>Location</dt>
+                <dd>{row.location?.label ?? "Not recorded"}</dd>
+                <dt>IDT sectors</dt>
+                <dd>
+                  {row.sectors
+                    ?.map(
+                      (code) =>
+                        `${idtEntry(code, model.idtIndex)?.name ?? idtSectorName(code) ?? "Unassigned"} (${code})`,
+                    )
+                    .join(" · ") ?? "Not recorded"}
+                </dd>
+                <dt>People in affected service</dt>
+                <dd>{count(model.people)}</dd>
+                {model.probed.length > 0 && (
+                  <>
+                    <dt>Also probed</dt>
+                    <dd>
+                      {model.probed.map((p) => p.label).join(" and ")} (
+                      {count(model.probedPeople)} people) · probing only
+                    </dd>
+                  </>
+                )}
+              </dl>
+              <section className="sf-facility-summary">
+                <h3>Facilities at risk (modeled)</h3>
+                {model.run ? (
+                  <>
+                    <p className="sf-caption">{analysisLabel(model.run)}</p>
+                    <ul>
+                      {model.facilities.map((f) => (
+                        <li key={`${f.id}-${f.functionId}`}>
+                          <span>{f.label}</span>
+                          <strong>{windowLabel(f.windowHours)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                    {!model.facilities.length && (
+                      <p>No facilities at risk in this analysis.</p>
+                    )}
+                  </>
+                ) : (
+                  <p>Not yet modeled.</p>
+                )}
+                {model.excluded.map((f) => (
+                  <p key={f.id} className="sf-excluded-note">
+                    {f.label} · not affected <small>{f.reason}</small>
+                  </p>
+                ))}
+                {model.boilWaterRule && (
+                  <p className="sf-notice">
+                    {model.boilWaterRule.label}
+                    <small>{String(model.boilWaterRule.decidedBy ?? "")}</small>
+                  </p>
+                )}
+              </section>
+              <p className="sf-decisions">
+                <strong>{model.decisionsWaiting} decisions waiting</strong> ·
+                recorded response options
+              </p>
+              <button
+                type="button"
+                className="sf-open"
+                data-open-analyst="true"
+                onClick={() =>
+                  onOpenAnalyst("cop", model.caseRecord?.id, model.utility?.id)
+                }
+              >
+                Open in Analyst
+              </button>
+            </>
+          ) : (
+            <p>No statewide incident records available.</p>
+          )}
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+export default function StatewideFootprint(props: StatewideFootprintProps) {
+  const [selection, setSelection] = useState<{
+    scope: string | null;
+    id: string | null;
+  }>({ scope: null, id: null });
+  const scope = props.selected?.id ?? null;
+  const model = statewideFootprint(
+    props,
+    selection.scope === scope ? selection.id : null,
+  );
+  const pick = (id: string) => {
+    setSelection({ scope, id });
+    const caseId = model.rows.find((row) => row.id === id)?.caseId;
+    if (caseId && caseId !== props.selected?.id) props.onSelect?.(caseId);
+  };
+  return (
+    <StatewideFootprintView
+      model={model}
+      onPick={pick}
+      onOpenAnalyst={props.onOpenAnalyst}
+    />
+  );
+}

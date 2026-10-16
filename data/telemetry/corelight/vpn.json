@@ -1,0 +1,106 @@
+[
+  {
+    "ts": 1791817200.0,
+    "uid": "CW5xvsYgtEhFhByGIX",
+    "id.orig_h": "203.0.113.100",
+    "id.orig_p": 44064,
+    "id.resp_h": "198.51.100.41",
+    "id.resp_p": 443,
+    "user": "vendor-v-support",
+    "action": "login",
+    "result": "success",
+    "outcome": "success",
+    "sourceIp": "203.0.113.100",
+    "assignedIp": "192.0.2.240",
+    "gateway": "vpn.utility-a.example",
+    "sessionId": "CW5xvsYgtEhFhByGIX",
+    "_path": "vpn",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791817200.001,
+    "id": "vpn-a-normal-001",
+    "relativeTimeHours": -16,
+    "timestamp": "2026-10-12T15:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_vendor_vpn",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "targetAssetId": "vpn-a"
+  },
+  {
+    "ts": 1791828000.0,
+    "uid": "CH2IAvGgEmhU5nFjFn",
+    "id.orig_h": "203.0.113.100",
+    "id.orig_p": 51215,
+    "id.resp_h": "198.51.100.41",
+    "id.resp_p": 443,
+    "user": "vendor-v-support",
+    "action": "login",
+    "result": "success",
+    "outcome": "success",
+    "sourceIp": "203.0.113.100",
+    "assignedIp": "192.0.2.240",
+    "gateway": "vpn.utility-a.example",
+    "sessionId": "CH2IAvGgEmhU5nFjFn",
+    "_path": "vpn",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791828000.001,
+    "id": "vpn-a-normal-002",
+    "relativeTimeHours": -13,
+    "timestamp": "2026-10-12T18:00:00Z",
+    "utilityId": "utility-a",
+    "observation": "normal_vendor_vpn",
+    "anomalous": false,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "targetAssetId": "vpn-a"
+  },
+  {
+    "ts": 1791873000.0,
+    "uid": "C40mJUk54ecNP7PS2f",
+    "id.orig_h": "203.0.113.250",
+    "id.orig_p": 58288,
+    "id.resp_h": "198.51.100.41",
+    "id.resp_p": 443,
+    "user": "vendor-v-support",
+    "action": "login",
+    "result": "success",
+    "outcome": "success",
+    "sourceIp": "203.0.113.250",
+    "assignedIp": "192.0.2.240",
+    "gateway": "vpn.utility-a.example",
+    "sessionId": "C40mJUk54ecNP7PS2f",
+    "_path": "vpn",
+    "_system_name": "w250-sensor-a",
+    "_write_ts": 1791873000.001,
+    "id": "vpn-a-login-001",
+    "relativeTimeHours": -0.5,
+    "timestamp": "2026-10-13T06:30:00Z",
+    "utilityId": "utility-a",
+    "observation": "offsite_vpn_login",
+    "anomalous": true,
+    "origin": "simulated",
+    "sourceRefs": [
+      "src-network"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "targetAssetId": "vpn-a",
+    "sharedSourceIdentity": "synthetic-campaign-01",
+    "interpretation": "Simulated activity at A; correlation is scenario evidence, not actor attribution or proof of a physical effect."
+  }
+]

@@ -50,13 +50,13 @@ export function IdtChip({
   ].join("\n");
   if (!entry)
     return (
-      <span className="idt-chip" title={title}>
+      <span className="idt-chip chip-mono" title={title}>
         {label}
       </span>
     );
   return (
     <details
-      className="idt-chip"
+      className="idt-chip chip-mono"
       style={{ display: "inline-block", maxWidth: "100%" }}
     >
       <summary
@@ -66,7 +66,7 @@ export function IdtChip({
           border: "1px solid currentColor",
           borderRadius: "0.35rem",
           padding: "0.15rem 0.4rem",
-          fontSize: "0.8rem",
+          fontSize: "var(--fs-chip)",
         }}
       >
         {label}
@@ -95,7 +95,10 @@ export function IdtChip({
         )}
         <p>{source}</p>
         <p>
-          Reference lookup only; IDT is not loaded in runtime OWL reasoning.
+          Reference lookup only; this chip is not an OWL classification proof,
+          nor evidence that IDT is loaded or not loaded in runtime OWL
+          reasoning. Inspect a current inference run for the actual facts and
+          source trail.
         </p>
         <small>Workbook SHA-256: {index?.sourceSha256}</small>
       </div>

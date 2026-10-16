@@ -1,11 +1,11 @@
 .investigation-bar {
-  border: 1px solid #35506d;
-  border-left: 3px solid #63caff;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-card);
   padding: 14px 16px;
   margin: 0 0 20px;
-  background: #102235;
-  color: #e7f0fa;
+  background: var(--surface);
+  color: var(--text-strong);
   min-width: 0;
 }
 .investigation-identity {
@@ -21,13 +21,13 @@
   min-width: 0;
 }
 .investigation-kicker {
-  font-size: 10px;
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #9cb8d5;
+  color: var(--link);
 }
 .investigation-identity strong {
-  font-size: 17px;
+  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
 .investigation-identity label {
@@ -35,18 +35,18 @@
   gap: 4px;
   min-width: 0;
   width: min(420px, 50%);
-  font-size: 11px;
-  color: #a9bdd1;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .investigation-identity select {
   width: 100%;
   min-width: 0;
   min-height: 44px;
-  border: 1px solid #36516e;
-  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
   padding: 8px;
-  color: #edf5ff;
-  background: #142a40;
+  color: var(--text-strong);
+  background: var(--bg-header);
 }
 .investigation-steps {
   display: flex;
@@ -61,17 +61,17 @@
   gap: 7px;
   min-height: 44px;
   padding: 8px 12px;
-  border: 1px solid #354e68;
-  border-radius: 7px;
-  background: #142a40;
-  color: #c8d9e9;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--link);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-body);
 }
 .investigation-steps button.active {
-  border-color: #63caff;
-  color: #b8e7ff;
-  background: #183c54;
+  border-color: var(--accent);
+  color: var(--link);
+  background: var(--surface-2);
 }
 .investigation-steps button:disabled {
   opacity: 0.5;
@@ -79,7 +79,7 @@
 }
 .investigation-steps button:focus-visible,
 .investigation-identity select:focus-visible {
-  outline: 2px solid #63caff;
+  outline: 2px solid var(--text-muted);
   outline-offset: 3px;
 }
 .investigation-steps .investigation-back {
@@ -87,32 +87,32 @@
 }
 .investigation-empty {
   margin: 10px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-body);
   line-height: 1.6;
-  color: #a9bdd1;
+  color: var(--text);
 }
 .card.context-evidence {
-  border-left: 3px solid #63caff;
-  border-color: #35506d;
-  background: #102235;
-  color: #e7f0fa;
+  border-left: 3px solid var(--accent);
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-strong);
 }
 .context-evidence .eyebrow {
-  color: #9cb8d5;
+  color: var(--link);
 }
 .context-evidence .event-time {
-  color: #b5d1eb;
+  color: var(--link);
 }
 .context-evidence .event-card {
-  background: #102235;
-  border-color: #35506d;
+  background: var(--surface);
+  border-color: var(--border);
 }
 .context-evidence .event-card h3,
 .context-evidence h2 {
-  color: #e7f0fa;
+  color: var(--text-strong);
 }
 .context-evidence p {
-  color: #a9bdd1;
+  color: var(--text);
 }
 @media (max-width: 800px) {
   .investigation-identity {

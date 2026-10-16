@@ -1,0 +1,98 @@
+.scripted-command {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.sc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+}
+.sc-panel h2 {
+  margin-top: 0;
+}
+.scripted-command .cc-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+}
+.sc-panel small {
+  display: block;
+  color: var(--muted, var(--text-muted));
+  margin: 0.25rem 0;
+}
+.sc-option,
+.sc-summary {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-card);
+}
+.sc-option code {
+  overflow-wrap: anywhere;
+}
+.sc-schematic {
+  position: relative;
+  min-height: 28rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: radial-gradient(
+    ellipse at center,
+    var(--surface),
+    var(--surface)
+  );
+  overflow: hidden;
+}
+.sc-schematic > p {
+  padding: 0.5rem;
+  color: var(--text);
+  font-size: var(--fs-body);
+}
+.sc-pin {
+  position: absolute;
+  max-width: 43%;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 0.5rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: var(--fs-body);
+}
+.sc-pin.selected,
+.sc-pin:hover,
+.sc-pin:focus-visible {
+  border-color: var(--amber);
+  outline: 2px solid var(--text-muted);
+  z-index: 2;
+}
+.sc-summary {
+  margin-top: 1rem;
+}
+.sc-clock {
+  padding: 0.8rem;
+  border-left: 4px solid var(--border);
+}
+.sc-clock.amber {
+  border-color: var(--amber);
+  color: var(--amber-text);
+}
+.sc-clock.red {
+  border-color: var(--red);
+  color: var(--red-text);
+}
+.scripted-command code,
+.scripted-command td {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .sc-grid {
+    grid-template-columns: 1fr;
+  }
+  .sc-schematic {
+    min-height: 32rem;
+  }
+  .sc-pin {
+    font-size: var(--fs-body);
+    padding: 0.4rem;
+  }
+}

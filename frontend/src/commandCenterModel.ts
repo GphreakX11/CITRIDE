@@ -2,6 +2,9 @@ import type { Bootstrap, Entity, Event, Source } from "./types.ts";
 import type { CommandIncident } from "./commandTypes.ts";
 import { commandMetrics, orderIncidents } from "./commandMetrics.ts";
 import { impactRows, snapshot } from "./prototypeViews.ts";
+import { idtSectorName } from "./idt.ts";
+import { eventSourceChips } from "./networkEvidence.ts";
+import { analysisLabel } from "./caseFilePresentation.ts";
 
 export function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -30,17 +33,17 @@ export function originLabel(value: unknown): string {
 export function timeLabel(value: unknown): string {
   if (typeof value !== "string" || !Number.isFinite(Date.parse(value)))
     return "Time not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(new Date(value));
+  return (
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Chicago",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(new Date(value)) + " CT"
+  );
 }
 export function planningWindow(value: [number, number] | null): string {
-  return value ? `${value[0]}–${value[1]} scenario hours` : "Timing unknown";
+  return value ? `${value[0]}–${value[1]} h` : "Timing unknown";
 }
 export function capturedClassification(entity: Entity | undefined) {
   const idt = asRecord(asRecord(entity).idt);
@@ -50,11 +53,15 @@ export function capturedClassification(entity: Entity | undefined) {
       : idt.status === "below_idt_level"
         ? sourceText(idt.parentPath)
         : null;
-  if (path && /^[1-9]\d*(?:\.[1-9]\d*)*$/.test(path)) {
+  if (
+    path &&
+    /^[1-9]\d*(?:\.[1-9]\d*)*$/.test(path) &&
+    idtSectorName(path.split(".")[0]!)
+  ) {
     const sector = path.split(".")[0]!;
     return {
       key: `idt:${sector}`,
-      label: `IDT sector ${sector}`,
+      label: `IDT sector ${sector} · ${idtSectorName(sector)}`,
       lineage: `Captured IDT ${path}${idt.status === "below_idt_level" ? " (parent classification)" : ""}`,
       classified: true,
     };
@@ -62,7 +69,7 @@ export function capturedClassification(entity: Entity | undefined) {
   const type = entity?.type ?? "Unknown facility type";
   return {
     key: `unclassified:${type}`,
-    label: `${words(type)} · IDT unavailable`,
+    label: `${words(type)} · ${Object.values(idt).some((v) => typeof v === "string" && v !== "unassigned") ? "IDT reference not resolved" : "IDT code not assigned"}`,
     lineage: "IDT lineage not captured",
     classified: false,
   };
@@ -106,10 +113,58 @@ export function consequenceModel(incident: CommandIncident | null) {
       };
     },
   );
+  // Saved inventory membership is context, NOT a propagated consequence. The
+  // modeled-only groups and metrics stay separate. A code alone cannot turn an
+  // operator/provider or a below-level OT/IT asset into a physical facility.
+  const facilityTypes = new Set([
+    "TreatmentPlant",
+    "Hospital",
+    "HealthcareFacility",
+    "DialysisCenter",
+    "NursingHome",
+    "FireService",
+    "ElectricSupplyFacility",
+  ]);
+  const modeledEntities = new Set(rows.map((row) => row.entityId));
+  const seenFacilities = new Set<string>();
+  const inventoryNodes = captured.entities.flatMap((entity) => {
+    if (
+      !facilityTypes.has(entity.type) ||
+      asRecord(asRecord(entity).idt).status !== "coded" ||
+      seenFacilities.has(entity.id)
+    )
+      return [];
+    const classification = capturedClassification(entity);
+    if (!classification.classified) return [];
+    seenFacilities.add(entity.id);
+    return [
+      {
+        id: entity.id,
+        type: entity.type,
+        label: entity.label,
+        classification,
+        modeled: modeledEntities.has(entity.id),
+      },
+    ];
+  });
+  const inventorySectors = [
+    ...new Set(inventoryNodes.map((node) => node.classification.key)),
+  ]
+    .map((key) => {
+      const sector = key.slice("idt:".length);
+      return {
+        key,
+        sector,
+        label: `${idtSectorName(sector)} (${sector})`,
+        provenance: "captured_inventory" as const,
+        nodes: inventoryNodes.filter((node) => node.classification.key === key),
+      };
+    })
+    .sort((a, b) => Number(a.sector) - Number(b.sector));
   const seedEntity = captured.entities.find(
     (entity) => entity.id === run?.seed.provider,
   );
-  const areas = strings(seedEntity?.serves);
+  const areas = [...new Set(strings(seedEntity?.serves))];
   const populations = captured.entities.filter(
     (entity) =>
       entity.type === "PopulationGroup" &&
@@ -118,7 +173,11 @@ export function consequenceModel(incident: CommandIncident | null) {
   const areaCounts = areas.map((id) => {
     const area = captured.entities.find((entity) => entity.id === id);
     const direct = asRecord(area).peopleServed;
-    const population = populations.filter((entity) => entity.locatedIn === id);
+    const population = populations.filter((entity) => {
+      const locations = [...new Set(strings(entity.locatedIn))];
+      // A group spanning multiple areas cannot be allocated without evidence.
+      return locations.length === 1 && locations[0] === id;
+    });
     const count =
       typeof direct === "number" && Number.isFinite(direct) && direct >= 0
         ? direct
@@ -135,6 +194,7 @@ export function consequenceModel(incident: CommandIncident | null) {
     captured,
     rows,
     groups,
+    inventorySectors,
     areaCounts,
     sourceLabel: seedEntity?.label ?? "Source label not captured",
     facilities: new Set(rows.map((row) => row.entityId)).size,
@@ -220,6 +280,18 @@ export function recordedTasks(incidents: readonly CommandIncident[]) {
   );
 }
 
+function recordedTechniques(value: unknown): string[] {
+  if (!Array.isArray(value)) return strings(value);
+  return value
+    .map((item) =>
+      typeof item === "string"
+        ? item
+        : [asRecord(item).id, asRecord(item).name, asRecord(item).tactic]
+            .filter((part) => typeof part === "string" && part)
+            .join(" · "),
+    )
+    .filter(Boolean);
+}
 /** All supplied evidence is visible; only the case's captured event is asserted to belong to it. */
 export function eventTimeline(
   data: Bootstrap,
@@ -253,7 +325,7 @@ export function eventTimeline(
         origin: originLabel(event),
         stream: sourceText(raw.streamId),
         captured: incident?.eventId === event.id,
-        techniques: strings(
+        techniques: recordedTechniques(
           event.techniques ?? event.attackTechniques ?? event.attackTechnique,
         ),
       };
@@ -300,13 +372,14 @@ export function leadershipDraft(incident: CommandIncident) {
     description:
       incident.eventSnapshot.description ?? "No event description captured.",
     origin: originLabel(incident.eventSnapshot),
+    sourceChips: eventSourceChips(incident.eventSnapshot),
     impacts: model.rows.map(
       (row) =>
         `${row.label}: ${row.functionLabel}; ${words(row.state)} (modeled); ${planningWindow(row.windowHours)}.`,
     ),
     reviews: incident.decisions.map(
       (decision) =>
-        `${decision.title}: ${decision.reviewed ? "Advisory review recorded" : "Awaiting advisory review"}${decision.reviewedAt ? ` · ${timeLabel(decision.reviewedAt)}` : ""}.`,
+        `${decision.title}: ${decision.reviewed ? "Impact review recorded" : "Awaiting impact review"}${decision.reviewedAt ? ` · ${timeLabel(decision.reviewedAt)}` : ""}.`,
     ),
     tasks: incident.tasks.map(
       (task) =>
@@ -329,26 +402,21 @@ export function formattedBrief(
   const draft = leadershipDraft(incident);
   return [
     `# ${title}`,
-    "Draft — not sent",
+    "Draft · not sent",
     `## ${draft.title}`,
     "## What happened",
     draft.event,
     draft.description,
     `Origin: ${draft.origin}`,
     "## So what",
-    ...(draft.impacts.length
-      ? draft.impacts
-      : [
-          "No captured consequence run; physical service effects are not established.",
-        ]),
+    ...(draft.impacts.length ? draft.impacts : ["No analysis recorded."]),
     "## Recorded next steps",
     ...draft.reviews,
     ...draft.tasks,
-    "Task completion and advisory reviews do not authorize dispatch or confirm recovery.",
-    "Chief response-option decisions, deployment records and contact statuses are not supplied by the current case contract.",
+    "Advisory, not approvals",
+
     `Consequence model: ${draft.modelVersion ?? "Not captured"}; capture: ${timeLabel(draft.capturedAt)}`,
     `Captured source references: ${draft.sourceRefs.join(", ") || "None recorded"}`,
-    "Authority basis not configured. Policy gates not evaluated. Official TXCC performance measures are not populated.",
   ].join("\n\n");
 }
 
@@ -365,12 +433,7 @@ export function audiencePreview(
   incident: CommandIncident,
 ) {
   const model = consequenceModel(incident);
-  const titles = {
-    internal: "TXCC internal",
-    water: "Water-sector partners",
-    health: "TDEM and healthcare",
-    federal: "Federal partners",
-  };
+
   const shows =
     audience === "internal"
       ? [incident.title, ...leadershipDraft(incident).impacts]
@@ -383,12 +446,12 @@ export function audiencePreview(
             ),
           ]
         : [
-            `${model.rows.length} modeled function results in the selected captured run.`,
-            `Captured consequence run: ${model.run ? "available" : "not recorded"}.`,
+            `${model.rows.length} modeled function results · ${analysisLabel(model.run)}.`,
+            `Analysis: ${model.run ? "available" : "not recorded"}.`,
           ];
   return {
     audience,
-    title: titles[audience],
+    title: words(audience),
     shows,
     notShown:
       audience === "internal"
@@ -398,9 +461,8 @@ export function audiencePreview(
             "Network addresses, raw records, source identifiers and free-form notes",
             "Contact information and unrecorded analyst judgments",
           ],
-    status: "Draft — not sent",
-    boundary:
-      "Illustrative audience preview, not an access-control or release decision. Owner consent and delivery are not configured.",
+    status: "Draft · not sent",
+    boundary: "Draft · not sent",
   };
 }
 // Events are deliberately not reclassified as incidents, compromised assets or outages.

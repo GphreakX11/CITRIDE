@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { RefreshCw, Download, AlertTriangle } from "lucide-react";
 import { api, ApiError } from "./api";
-import type { Bootstrap, Event, Dependency } from "./types";
+import type {
+  Bootstrap,
+  Event,
+  Dependency,
+  Telemetry,
+  Run,
+  RunRequest,
+} from "./types";
+import type { DependencyPrefill } from "./dependencyDraft";
 import type { WorkspaceMode } from "./navigation";
 import type { MapViewState } from "./mapViewState";
 import type {
@@ -12,23 +21,39 @@ import type {
   CommandView,
 } from "./commandTypes";
 import { incidentBrief } from "./commandMetrics";
-import CommandCasework from "./CommandCasework";
+import CommandCasework, { ConfirmDialog } from "./CommandCasework";
+import { analysisIntent, type AnalysisIntent } from "./analystAnalysis";
 import CommandReadouts from "./CommandReadouts";
 import CommandCenterViews from "./CommandCenterViews";
 import AnalystEntityProfile from "./AnalystEntityProfile";
+import ScriptedAnalystViews, { LateTasks } from "./ScriptedAnalystViews";
+import ResetDemoControl from "./ResetDemoControl";
+import { defaultAlertPriority } from "./analystAlerts";
+import { caseDisplayId } from "./caseFilePresentation";
+import {
+  potentialScope,
+  potentialRequests,
+  type PendingPotential,
+} from "./whoActsFirst";
+
+import type { RecordsState, ReferenceData } from "./scriptedTypes";
 import "./command-shell.css";
 import "./prototype.css";
 import "./command-casework-dark.css";
 
 type SavedRequest = { url: string; body: CommandCreate | CommandActionRequest };
 export interface CommandWorkspaceProps {
+  telemetry?: Telemetry | null;
   mode: WorkspaceMode;
   onOpenAnalyst: (
     view: CommandView,
     caseId?: string,
     entityId?: string,
   ) => void;
-  onEditDependency: (dependency: Dependency | null) => void;
+  onEditDependency: (
+    dependency: Dependency | null,
+    prefill?: DependencyPrefill,
+  ) => void;
   data: Bootstrap;
   view: CommandView;
   selectedId: string | null;
@@ -56,6 +81,7 @@ export interface CommandWorkspaceProps {
 }
 
 export default function CommandWorkspace({
+  telemetry = null,
   mode,
   onOpenAnalyst,
   onEditDependency,
@@ -80,11 +106,30 @@ export default function CommandWorkspace({
   const [uncertain, setUncertain] = useState(false);
   const [error, setError] = useState("");
   const [refreshFailed, setRefreshFailed] = useState(false);
-  const [health, setHealth] = useState<{ demoMode: boolean } | null>(null);
+  const [health, setHealth] = useState<{
+    demoMode: boolean;
+    resetEnabled?: boolean;
+    storyNow?: string;
+  } | null>(null);
   const [notice, setNotice] = useState("");
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
+  const [records, setRecords] = useState<RecordsState | null>(null);
+  const [reference, setReference] = useState<ReferenceData | null>(null);
 
   const pending = useRef<SavedRequest | null>(null);
+  const pendingRun = useRef<RunRequest | null>(null);
+  const pendingRunCase = useRef<string | null>(null);
+  const pendingPotential = useRef<PendingPotential | null>(null);
+  const [potentialResults, setPotentialResults] = useState<
+    Record<string, Run[]>
+  >({});
+  const [lastPlanningRun, setLastPlanningRun] = useState<Run | null>(null);
+  const [lastPlanningCaseId, setLastPlanningCaseId] = useState<string | null>(
+    null,
+  );
+  const [analysisConfirmation, setAnalysisConfirmation] =
+    useState<AnalysisIntent | null>(null);
+  const [analysisError, setAnalysisError] = useState("");
   const writing = useRef(false);
   const active = useRef(true);
   const generation = useRef(0);
@@ -103,6 +148,9 @@ export default function CommandWorkspace({
   };
   selectedRef.current = selectedId;
   const selected = incidents.find((item) => item.id === selectedId) ?? null;
+  const estimateScope = potentialScope(data, selected, reference);
+  const estimateContext = useRef({ scope: estimateScope, view, mode });
+  estimateContext.current = { scope: estimateScope, view, mode };
   useEffect(() => {
     handlers.current.onWorkflowLockChange(loading || busy || uncertain);
   }, [loading, busy, uncertain]);
@@ -111,21 +159,26 @@ export default function CommandWorkspace({
     const ticket = ++generation.current;
     setLoading(true);
     try {
-      const response = await api<{ incidents: CommandIncident[] }>(
-        "/v1/command/incidents",
-      );
+      const [response, recordResponse, referenceResponse] = await Promise.all([
+        api<{ incidents: CommandIncident[] }>("/v1/command/incidents"),
+        api<RecordsState>("/v1/command/records"),
+        api<ReferenceData>("/v1/reference"),
+      ]);
       if (!Array.isArray(response.incidents))
         throw new Error(
           "Incident response is invalid; casework is unavailable.",
         );
       if (!active.current || ticket !== generation.current) return;
       setIncidents(response.incidents);
+      setRecords(recordResponse);
+      setReference(referenceResponse);
       setLoaded(true);
       setRefreshedAt(new Date().toISOString());
       setRefreshFailed(false);
       handlers.current.onCasesLoaded(response.incidents);
       setError("");
-      if (!pending.current) setUncertain(false);
+      if (!pending.current && !pendingRun.current && !pendingPotential.current)
+        setUncertain(false);
     } catch (failure) {
       if (!active.current || ticket !== generation.current) return;
       if (failure instanceof ApiError && failure.status === 401) {
@@ -136,7 +189,9 @@ export default function CommandWorkspace({
       }
       setError(failure instanceof Error ? failure.message : String(failure));
       setRefreshFailed(true);
-      setUncertain(!!pending.current);
+      setUncertain(
+        !!pending.current || !!pendingRun.current || !!pendingPotential.current,
+      );
       throw failure;
     } finally {
       if (active.current && ticket === generation.current) setLoading(false);
@@ -171,6 +226,8 @@ export default function CommandWorkspace({
         mode === "command" &&
         !writing.current &&
         !pending.current &&
+        !pendingRun.current &&
+        !pendingPotential.current &&
         document.visibilityState === "visible"
       )
         void loadCases().catch(() => {});
@@ -202,7 +259,7 @@ export default function CommandWorkspace({
     request: SavedRequest,
     replay = false,
   ): Promise<CommandIncident> {
-    if (writing.current || (uncertain && !replay))
+    if (writing.current || ((uncertain || pendingPotential.current) && !replay))
       throw new Error("Recheck the previous action before another change.");
     writing.current = true;
     ++generation.current;
@@ -216,9 +273,7 @@ export default function CommandWorkspace({
       accepted = true;
       if (!active.current) return result;
       mergeIncident(result);
-      setNotice(
-        "Saved to workspace. No operational action or external notification was sent.",
-      );
+      setNotice("Saved to case.");
       // Retain the exact idempotent request until the subsequent read is proven.
       await loadCases();
       pending.current = null;
@@ -263,10 +318,208 @@ export default function CommandWorkspace({
   function create(request: CommandCreate) {
     return submit({ url: "/v1/command/incidents", body: request });
   }
+  async function savePlanningRun(
+    request: RunRequest,
+    retry = false,
+  ): Promise<Run> {
+    if (!retry && !selected) throw new Error("Select a case first.");
+    if (writing.current || busy || loading || (uncertain && !retry))
+      throw new Error("Recheck the pending save before creating another run.");
+    if (
+      !retry &&
+      (pending.current || pendingRun.current || pendingPotential.current)
+    )
+      throw new Error("A saved request still needs reconciliation.");
+    const body = retry
+      ? pendingRun.current
+      : structuredClone({
+          ...request,
+          expectedBaselineRevision:
+            request.expectedBaselineRevision ??
+            selected?.runSnapshot?.baselineRevision ??
+            data.baselineRevision,
+          clientRequestId: request.clientRequestId ?? crypto.randomUUID(),
+        });
+    if (!body)
+      throw new Error("No planning request is awaiting reconciliation.");
+    writing.current = true;
+    ++generation.current;
+    setBusy(true);
+    setError("");
+    pendingRun.current = body;
+    if (!retry) pendingRunCase.current = selectedId;
+    try {
+      const saved = await api<Run>("/v1/cascade-runs", body);
+      if (!saved || typeof saved.id !== "string")
+        throw new Error(
+          "Planning response is incomplete; reconcile the saved request.",
+        );
+      if (active.current) {
+        setLastPlanningRun(saved);
+        setLastPlanningCaseId(pendingRunCase.current);
+        setNotice(
+          `Saved separate planning run ${saved.id}. The case's captured run is unchanged.`,
+        );
+        pendingRun.current = null;
+        setUncertain(false);
+      }
+      return saved;
+    } catch (failure) {
+      if (active.current) {
+        const rejected =
+          failure instanceof ApiError &&
+          failure.status >= 400 &&
+          failure.status < 500;
+        if (rejected) pendingRun.current = null;
+        setUncertain(!rejected);
+        setError(failure instanceof Error ? failure.message : String(failure));
+        if (failure instanceof ApiError && failure.status === 401)
+          onAccessFailure(failure);
+      }
+      throw failure;
+    } finally {
+      writing.current = false;
+      if (active.current) setBusy(false);
+    }
+  }
+  async function savePotential(
+    requests: RunRequest[],
+    retry = false,
+  ): Promise<Run[]> {
+    if (
+      writing.current ||
+      busy ||
+      loading ||
+      (!retry &&
+        (uncertain ||
+          pending.current ||
+          pendingRun.current ||
+          pendingPotential.current))
+    )
+      throw new Error("Recheck the pending save before creating another run.");
+    if (
+      !retry &&
+      (!selected ||
+        selected.status === "closed" ||
+        estimateContext.current.mode !== "analyst" ||
+        estimateContext.current.view !== "coordination" ||
+        estimateContext.current.scope !== estimateScope)
+    )
+      throw new Error("Select an open case before estimating.");
+    if (!retry) {
+      const expected = potentialRequests(data);
+      if (
+        requests.length !== 2 ||
+        requests.some(
+          (r, i) =>
+            r.scenarioId !== expected[i].scenarioId ||
+            r.expectedBaselineRevision !==
+              expected[i].expectedBaselineRevision ||
+            r.evaluationHour !== expected[i].evaluationHour ||
+            r.horizonHours !== expected[i].horizonHours ||
+            r.overrides.length ||
+            !r.clientRequestId,
+        ) ||
+        requests[0].clientRequestId === requests[1].clientRequestId
+      )
+        throw new Error(
+          "Potential estimate settings changed. Refresh before estimating.",
+        );
+      pendingPotential.current = {
+        scope: estimateScope,
+        caseId: selected!.id,
+        requests: structuredClone(requests),
+        saved: [null, null],
+        complete: [false, false],
+      };
+    }
+    const operation = pendingPotential.current;
+    if (!operation) throw new Error("No estimate is awaiting reconciliation.");
+    writing.current = true;
+    ++generation.current;
+    setBusy(true);
+    handlers.current.onWorkflowLockChange(true);
+    setError("");
+    let posting = false;
+    const publish = () =>
+      setPotentialResults((current) => ({
+        ...current,
+        [operation.scope]: operation.saved.filter(
+          (r, i): r is Run => !!r && operation.complete[i],
+        ),
+      }));
+    try {
+      for (let i = 0; i < operation.requests.length; i++) {
+        if (operation.complete[i]) continue;
+        if (
+          !active.current ||
+          (!retry &&
+            (estimateContext.current.view !== "coordination" ||
+              estimateContext.current.mode !== "analyst" ||
+              estimateContext.current.scope !== operation.scope))
+        )
+          throw new Error(
+            "Estimate paused. Reconcile the saved request before continuing.",
+          );
+        if (!operation.saved[i]) {
+          posting = true;
+          const saved = await api<Run>("/v1/runs", operation.requests[i]);
+          posting = false;
+          if (!saved || typeof saved.id !== "string")
+            throw new Error(
+              "Estimate response is incomplete; reconcile the saved request.",
+            );
+          operation.saved[i] = saved;
+        }
+        let saved = operation.saved[i]!;
+        if (!Array.isArray(saved.impacts) || !saved.baselineSnapshot)
+          saved = await api<Run>(`/v1/runs/${encodeURIComponent(saved.id)}`);
+        if (
+          !saved ||
+          !Array.isArray(saved.impacts) ||
+          !saved.baselineSnapshot ||
+          saved.scenarioId !== operation.requests[i].scenarioId
+        )
+          throw new Error(
+            "Estimate details are incomplete; reconcile the saved request.",
+          );
+        operation.saved[i] = saved;
+        operation.complete[i] = true;
+        publish();
+      }
+      pendingPotential.current = null;
+      setUncertain(false);
+      return operation.saved as Run[];
+    } catch (failure) {
+      // A rejected detail GET does not reject the already accepted POST.
+      const rejected =
+        posting &&
+        failure instanceof ApiError &&
+        failure.status >= 400 &&
+        failure.status < 500;
+      if (rejected) pendingPotential.current = null;
+      setUncertain(!rejected);
+      setError(failure instanceof Error ? failure.message : String(failure));
+      if (failure instanceof ApiError && failure.status === 401)
+        onAccessFailure(failure);
+      throw failure;
+    } finally {
+      writing.current = false;
+      setBusy(false);
+      handlers.current.onWorkflowLockChange(
+        !!pendingPotential.current || !!pending.current || !!pendingRun.current,
+      );
+    }
+  }
   async function investigate(event: Event) {
     if (writing.current || busy || loading || uncertain) return;
+    const linked = records?.statewideIncidents.find(
+      (item) => item.linkedEventIds?.includes(event.id) && item.caseId,
+    );
     const existing = incidents.find(
-      (record) => record.eventId === event.id && record.status !== "closed",
+      (record) =>
+        (record.eventId === event.id || record.id === linked?.caseId) &&
+        record.status !== "closed",
     );
     if (existing) {
       onSelect(existing.id);
@@ -276,8 +529,8 @@ export default function CommandWorkspace({
     try {
       await create({
         eventId: event.id,
-        title: `Investigation — ${event.label ?? event.title ?? event.id}`,
-        priority: "high",
+        title: String(event.label ?? event.title ?? event.id).slice(0, 160),
+        priority: defaultAlertPriority(event),
         expectedBaselineRevision: data.baselineRevision,
         clientRequestId: crypto.randomUUID(),
       });
@@ -304,7 +557,7 @@ export default function CommandWorkspace({
     try {
       await loadCases();
       setNotice(
-        pending.current
+        pending.current || pendingRun.current || pendingPotential.current
           ? "Workflow refreshed. The saved request is retained; use the same-request retry to reconcile an uncertain result without duplication."
           : "Workflow refreshed from storage.",
       );
@@ -313,12 +566,30 @@ export default function CommandWorkspace({
     }
   }
   async function retryPending() {
+    if (pendingPotential.current) {
+      try {
+        await savePotential(pendingPotential.current.requests, true);
+      } catch {
+        /* only explicit retries resume the retained operation */
+      }
+      return;
+    }
+    if (pendingRun.current) {
+      try {
+        await savePlanningRun(pendingRun.current, true);
+      } catch {
+        /* retained, never automatically replayed */
+      }
+      return;
+    }
     if (!pending.current) {
       await recheck();
       return;
     }
     try {
-      await submit(pending.current, true);
+      const retained = pending.current;
+      await submit(retained, true);
+      if (retained.url === "/v1/command/incidents") onNavigate("case-file");
     } catch {
       /* remain blocked until reconciled */
     }
@@ -355,6 +626,7 @@ export default function CommandWorkspace({
   const casework = (
     <CommandCasework
       data={data}
+      records={records}
       incidents={incidents}
       selected={selected}
       mode={caseMode}
@@ -396,18 +668,45 @@ export default function CommandWorkspace({
     />
   );
 
-  const dataStatus = (
-    <div className="prototype-status" aria-label="Data status">
-      <span>{health?.demoMode ? "Reference workspace" : "Workspace data"}</span>
-      <span>Offline packet evidence + conditional scenarios</span>
-      <span>Illustrative map positions · no live OT connection</span>
-      <span>
-        {refreshedAt
-          ? `Updated ${new Date(refreshedAt).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit" })} CT`
-          : "Update pending"}
-      </span>
-    </div>
+  const headerContext =
+    typeof document === "undefined"
+      ? null
+      : document.getElementById("workspace-header-context");
+  const openCaseFromAlert = (
+    <button
+      className="button primary"
+      disabled={busy || loading || uncertain || !loaded}
+      onClick={() => {
+        onNavigate("command");
+        requestAnimationFrame(() => {
+          const alerts = document.getElementById("analyst-alerts");
+          alerts?.scrollIntoView({ behavior: "smooth", block: "start" });
+          alerts?.focus({ preventScroll: true });
+        });
+      }}
+    >
+      Open case from alert
+    </button>
   );
+  const commandHeaderContext =
+    mode === "command" && headerContext
+      ? createPortal(
+          <>
+            {records?.storyNow && (
+              <time className="story-clock" dateTime={records.storyNow}>
+                {new Date(records.storyNow).toLocaleTimeString("en-US", {
+                  timeZone: "America/Chicago",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hourCycle: "h23",
+                })}{" "}
+                CT
+              </time>
+            )}
+          </>,
+          headerContext,
+        )
+      : null;
 
   if (mode === "command")
     return (
@@ -417,7 +716,7 @@ export default function CommandWorkspace({
         data-casework-loaded={loaded}
         aria-busy={loading || busy}
       >
-        {dataStatus}
+        {commandHeaderContext}
         {error && (
           <div className="command-error" role="alert">
             <strong>Couldn't refresh — saved picture may be stale.</strong>
@@ -438,13 +737,19 @@ export default function CommandWorkspace({
                 ? "Loading saved operating picture"
                 : "Operating picture unavailable"}
             </h2>
-            <p>No incident state has been assumed.</p>
+            <p>Case records are unavailable.</p>
           </section>
         ) : (
           <CommandCenterViews
+            records={records ?? undefined}
+            reference={reference ?? undefined}
             data={data}
             incidents={incidents}
             selected={selected}
+            selectedEntityId={selectedEntityId}
+            onSelectEntity={(id) => {
+              if (!busy && !loading && !uncertain) onSelectEntity(id);
+            }}
             view={view}
             onSelect={(id) => {
               if (!busy && !loading && !uncertain) onSelect(id);
@@ -464,15 +769,27 @@ export default function CommandWorkspace({
     >
       <div className="command-toolbar">
         <div>
-          <span className="command-source-tag">
-            REFERENCE MODEL · HUMAN REVIEW
-          </span>
-          <p>
-            Case tracking and conditional planning · not a live OT command
-            channel.
-          </p>
+          <span className="command-source-tag">CASEWORK</span>
+          <p>Track cases, review evidence and plan responses.</p>
         </div>
         <div className="command-toolbar-actions">
+          {headerContext
+            ? createPortal(openCaseFromAlert, headerContext)
+            : openCaseFromAlert}
+          {health?.resetEnabled && (
+            <ResetDemoControl
+              revision={data.baselineRevision}
+              disabled={busy || loading || uncertain}
+              onBusy={(value) => {
+                writing.current = value;
+                setBusy(value);
+              }}
+              onFailure={(message) => {
+                setError(message);
+                setUncertain(true);
+              }}
+            />
+          )}
           {selected && view !== "case-file" && (
             <button
               className="button secondary"
@@ -502,24 +819,25 @@ export default function CommandWorkspace({
           </button>
         </div>
       </div>
-      {uncertain && pending.current && (
-        <section className="command-panel" aria-label="Pending save recovery">
-          <h2>Check your previous save</h2>
-          <p>
-            The previous save could not be fully confirmed. Other changes are
-            paused to avoid duplicates. Refresh checks saved casework; retry
-            uses the original request, not a new case or action. Nothing is
-            retried automatically.
-          </p>
-          <button
-            className="button primary"
-            disabled={busy || loading}
-            onClick={() => void retryPending()}
-          >
-            Retry same saved request
-          </button>
-        </section>
-      )}
+      {uncertain &&
+        (pending.current || pendingRun.current || pendingPotential.current) && (
+          <section className="command-panel" aria-label="Pending save recovery">
+            <h2>Check your previous save</h2>
+            <p>
+              The previous save could not be fully confirmed. Other changes are
+              paused to avoid duplicates. Refresh checks saved casework; retry
+              uses the original request, not a new case or action. Nothing is
+              retried automatically.
+            </p>
+            <button
+              className="button primary"
+              disabled={busy || loading}
+              onClick={() => void retryPending()}
+            >
+              Retry same saved request
+            </button>
+          </section>
+        )}
       {error && (
         <div className="command-error" role="alert">
           <AlertTriangle size={18} />
@@ -540,23 +858,14 @@ export default function CommandWorkspace({
           {notice}
         </p>
       )}
-      <div className="prototype-status" aria-label="Data status">
-        <span>Offline evidence + reference scenarios</span>
-        <span>Illustrative map positions</span>
-        <span>No live OT connection</span>
-        <span>
-          {refreshedAt
-            ? `Refreshed ${new Date(refreshedAt).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit" })} CT`
-            : "Refresh pending"}
-        </span>
-      </div>
+
       {!loaded ? (
         <section className="command-panel">
           <h2>{loading ? "Loading saved casework" : "Casework unavailable"}</h2>
           <p>
             {loading
-              ? "Reading the current workspace from storage."
-              : "No workflow counts are available. Refresh to retry; no incident state has been assumed."}
+              ? "Loading cases."
+              : "Case records are unavailable. Refresh to retry."}
           </p>
         </section>
       ) : (
@@ -574,38 +883,172 @@ export default function CommandWorkspace({
               onBack={() => onNavigate("cop")}
             />
           )}
-          {view !== "case-file" && view !== "entity-profile" && (
-            <CommandReadouts
+          {records && view === "command" && <LateTasks records={records} />}
+          {view !== "case-file" &&
+            view !== "entity-profile" &&
+            !(
+              records &&
+              reference &&
+              ["coordination", "uctf"].includes(view)
+            ) && (
+              <CommandReadouts
+                records={records}
+                lastPlanningRun={
+                  lastPlanningCaseId === selectedId ? lastPlanningRun : null
+                }
+                onWhatIf={savePlanningRun}
+                onAnalyze={(scenarioId, horizonHours) => {
+                  if (!selected || busy || loading || uncertain) return;
+                  try {
+                    setAnalysisConfirmation(
+                      analysisIntent(selected, scenarioId, horizonHours),
+                    );
+                    setAnalysisError("");
+                  } catch (cause) {
+                    setError(
+                      cause instanceof Error ? cause.message : String(cause),
+                    );
+                  }
+                }}
+                onPropose={(entityId, role = "dependent") => {
+                  if (!busy && !loading && !uncertain)
+                    onEditDependency(null, { entityId, role });
+                }}
+                onMutate={async (action) => {
+                  if (!selected) throw new Error("Select a case first.");
+                  await mutate(action, selected.version, selected.id);
+                }}
+                onCreate={async (request) => {
+                  const saved = await create(request);
+                  onNavigate("case-file");
+                  return saved;
+                }}
+                reference={reference ?? undefined}
+                telemetry={telemetry}
+                data={data}
+                incidents={incidents}
+                selected={selected}
+                view={view}
+                refreshedAt={refreshedAt}
+                onSelect={focus}
+                onNavigate={onNavigate}
+                onOpenTool={onOpenTool}
+                selectedEntityId={selectedEntityId}
+                onSelectEntity={onSelectEntity}
+                mapState={mapState}
+                onMapStateChange={onMapStateChange}
+                onDownload={downloadBrief}
+                onNote={(note) =>
+                  selected
+                    ? mutate(
+                        { action: "add_note", note },
+                        selected.version,
+                        selected.id,
+                      )
+                    : Promise.reject(new Error("Select a case first"))
+                }
+                onInvestigate={(event) => void investigate(event)}
+                workflowLocked={busy || loading || uncertain}
+              />
+            )}
+          {records && reference && ["coordination", "uctf"].includes(view) && (
+            <ScriptedAnalystViews
               data={data}
               incidents={incidents}
               selected={selected}
               view={view}
-              refreshedAt={refreshedAt}
-              onSelect={focus}
-              onNavigate={onNavigate}
-              onOpenTool={onOpenTool}
-              selectedEntityId={selectedEntityId}
-              onSelectEntity={onSelectEntity}
-              mapState={mapState}
-              onMapStateChange={onMapStateChange}
-              onDownload={downloadBrief}
-              onNote={(note) =>
+              records={records}
+              reference={reference}
+              onEstimatePotential={savePotential}
+              potentialRuns={potentialResults[estimateScope] ?? []}
+              onMutate={(action) =>
                 selected
-                  ? mutate(
-                      { action: "add_note", note },
-                      selected.version,
-                      selected.id,
-                    )
+                  ? mutate(action, selected.version, selected.id)
                   : Promise.reject(new Error("Select a case first"))
               }
-              onInvestigate={(event) => void investigate(event)}
-              workflowLocked={busy || loading || uncertain}
+              busy={busy || loading}
+              uncertain={uncertain || refreshFailed}
+              onRefresh={loadCases}
             />
           )}
-          {(view === "case-file" ||
-            ["coordination", "uctf", "consequence"].includes(view)) &&
+          {(view === "case-file" || ["coordination", "uctf"].includes(view)) &&
             casework}
         </>
+      )}
+      {analysisConfirmation && (
+        <ConfirmDialog
+          title="Confirm analysis"
+          label="Run analysis"
+          disabled={busy || loading}
+          confirmDisabled={
+            uncertain ||
+            analysisConfirmation.caseId !== selected?.id ||
+            analysisConfirmation.version !== selected?.version
+          }
+          error={analysisError}
+          onCancel={() => setAnalysisConfirmation(null)}
+          onConfirm={async () => {
+            const frozen = analysisConfirmation;
+            if (
+              busy ||
+              loading ||
+              uncertain ||
+              frozen.caseId !== selected?.id ||
+              frozen.version !== selected?.version
+            )
+              return;
+            try {
+              if (frozen.kind === "capture")
+                await mutate(frozen.action, frozen.version, frozen.caseId);
+              else await savePlanningRun(frozen.request);
+              setAnalysisConfirmation(null);
+            } catch (cause) {
+              setAnalysisError(
+                cause instanceof Error ? cause.message : String(cause),
+              );
+            }
+          }}
+        >
+          <p>Run the modeled scenario with these settings.</p>
+          <p>
+            {analysisConfirmation.kind === "capture"
+              ? "This analysis feeds C4."
+              : "Separate analysis; the case's captured run stays unchanged."}
+          </p>
+          <dl className="cc-metadata">
+            <dt>Case</dt>
+            <dd>
+              {caseDisplayId(
+                {
+                  id: analysisConfirmation.caseId,
+                  eventId: selected?.eventId ?? "",
+                },
+                records,
+              ) ?? "Display ID not assigned"}
+            </dd>
+            <dt>Scenario</dt>
+            <dd>
+              {analysisConfirmation.kind === "capture" &&
+              analysisConfirmation.action.action === "analyze"
+                ? analysisConfirmation.action.scenarioId
+                : analysisConfirmation.kind === "separate"
+                  ? analysisConfirmation.request.scenarioId
+                  : "Unavailable"}
+            </dd>
+          </dl>
+          {uncertain && (
+            <button
+              className="button secondary"
+              disabled={busy || loading}
+              onClick={async () => {
+                await retryPending();
+                setAnalysisConfirmation(null);
+              }}
+            >
+              Reconcile same saved request
+            </button>
+          )}
+        </ConfirmDialog>
       )}
     </div>
   );

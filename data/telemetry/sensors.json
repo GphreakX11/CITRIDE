@@ -24,7 +24,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-000",
@@ -46,7 +47,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-000",
@@ -68,7 +70,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-005",
@@ -90,7 +93,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-005",
@@ -112,7 +116,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-005",
@@ -134,7 +139,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-010",
@@ -156,7 +162,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-010",
@@ -178,7 +185,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-010",
@@ -200,7 +208,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-015",
@@ -222,7 +231,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-015",
@@ -244,7 +254,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-015",
@@ -266,7 +277,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-020",
@@ -288,7 +300,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-020",
@@ -310,7 +323,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-020",
@@ -332,7 +346,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-025",
@@ -354,7 +369,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-025",
@@ -376,7 +392,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-025",
@@ -398,7 +415,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-030",
@@ -420,7 +438,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-030",
@@ -442,7 +461,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-030",
@@ -464,7 +484,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-035",
@@ -486,7 +507,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-035",
@@ -508,7 +530,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-035",
@@ -530,7 +553,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-040",
@@ -552,7 +576,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-040",
@@ -574,7 +599,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-040",
@@ -596,7 +622,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-045",
@@ -618,7 +645,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-045",
@@ -640,7 +668,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-045",
@@ -662,7 +691,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-050",
@@ -684,7 +714,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-050",
@@ -706,7 +737,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-050",
@@ -728,7 +760,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-055",
@@ -750,7 +783,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-055",
@@ -772,7 +806,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-055",
@@ -794,7 +829,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-060",
@@ -816,7 +852,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-060",
@@ -838,7 +875,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-060",
@@ -860,7 +898,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-065",
@@ -882,7 +921,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-065",
@@ -904,7 +944,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-065",
@@ -926,7 +967,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-070",
@@ -948,7 +990,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-070",
@@ -970,7 +1013,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-070",
@@ -992,7 +1036,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-075",
@@ -1014,7 +1059,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-075",
@@ -1036,7 +1082,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-075",
@@ -1058,7 +1105,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-080",
@@ -1080,7 +1128,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-080",
@@ -1102,7 +1151,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-080",
@@ -1124,7 +1174,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-085",
@@ -1146,7 +1197,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-085",
@@ -1168,7 +1220,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-085",
@@ -1190,7 +1243,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-090",
@@ -1212,7 +1266,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-090",
@@ -1234,7 +1289,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-090",
@@ -1256,7 +1312,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-095",
@@ -1278,7 +1335,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-095",
@@ -1300,7 +1358,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-095",
@@ -1322,7 +1381,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-100",
@@ -1344,7 +1404,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-100",
@@ -1366,7 +1427,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-100",
@@ -1388,7 +1450,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-105",
@@ -1410,7 +1473,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-105",
@@ -1432,7 +1496,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-105",
@@ -1454,7 +1519,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-110",
@@ -1476,7 +1542,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-110",
@@ -1498,7 +1565,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-110",
@@ -1520,7 +1588,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-115",
@@ -1542,7 +1611,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-115",
@@ -1564,7 +1634,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-115",
@@ -1586,7 +1657,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-120",
@@ -1608,7 +1680,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-120",
@@ -1630,7 +1703,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-120",
@@ -1652,7 +1726,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-125",
@@ -1674,7 +1749,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-125",
@@ -1696,7 +1772,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-125",
@@ -1718,7 +1795,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-130",
@@ -1740,7 +1818,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-130",
@@ -1762,7 +1841,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-130",
@@ -1784,7 +1864,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-135",
@@ -1806,7 +1887,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-135",
@@ -1828,7 +1910,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-135",
@@ -1850,7 +1933,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-140",
@@ -1872,7 +1956,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-140",
@@ -1894,7 +1979,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-140",
@@ -1916,7 +2002,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-145",
@@ -1938,7 +2025,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-145",
@@ -1960,7 +2048,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-145",
@@ -1982,7 +2071,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-150",
@@ -2004,7 +2094,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-150",
@@ -2026,7 +2117,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-150",
@@ -2048,7 +2140,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-155",
@@ -2070,7 +2163,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-155",
@@ -2092,7 +2186,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-155",
@@ -2114,7 +2209,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-160",
@@ -2136,7 +2232,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-160",
@@ -2158,7 +2255,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-160",
@@ -2180,7 +2278,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-165",
@@ -2202,7 +2301,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-165",
@@ -2224,7 +2324,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-165",
@@ -2246,7 +2347,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-170",
@@ -2268,7 +2370,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-170",
@@ -2290,7 +2393,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-170",
@@ -2312,7 +2416,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-175",
@@ -2334,7 +2439,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-175",
@@ -2356,7 +2462,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-175",
@@ -2378,7 +2485,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-180",
@@ -2400,7 +2508,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-180",
@@ -2422,7 +2531,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-180",
@@ -2444,7 +2554,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-185",
@@ -2466,7 +2577,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-185",
@@ -2488,7 +2600,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-185",
@@ -2510,7 +2623,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-190",
@@ -2532,7 +2646,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-190",
@@ -2554,7 +2669,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-190",
@@ -2576,7 +2692,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-195",
@@ -2598,7 +2715,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-195",
@@ -2620,7 +2738,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-195",
@@ -2642,7 +2761,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-200",
@@ -2664,7 +2784,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-200",
@@ -2686,7 +2807,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-200",
@@ -2708,7 +2830,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-205",
@@ -2730,7 +2853,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-205",
@@ -2752,7 +2876,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-205",
@@ -2774,7 +2899,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-210",
@@ -2796,7 +2922,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-210",
@@ -2818,7 +2945,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-210",
@@ -2840,7 +2968,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-215",
@@ -2862,7 +2991,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-215",
@@ -2884,7 +3014,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-215",
@@ -2906,7 +3037,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-220",
@@ -2928,7 +3060,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-220",
@@ -2950,7 +3083,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-220",
@@ -2972,7 +3106,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-225",
@@ -2994,7 +3129,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-225",
@@ -3016,7 +3152,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-225",
@@ -3038,7 +3175,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-230",
@@ -3060,7 +3198,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-230",
@@ -3082,7 +3221,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-230",
@@ -3104,7 +3244,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-235",
@@ -3126,7 +3267,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-235",
@@ -3148,7 +3290,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-235",
@@ -3170,7 +3313,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-240",
@@ -3192,7 +3336,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-240",
@@ -3214,7 +3359,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-240",
@@ -3236,7 +3382,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-245",
@@ -3258,7 +3405,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-245",
@@ -3280,7 +3428,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-245",
@@ -3302,7 +3451,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-250",
@@ -3324,7 +3474,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-250",
@@ -3346,7 +3497,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-250",
@@ -3368,7 +3520,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-255",
@@ -3390,7 +3543,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-255",
@@ -3412,7 +3566,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-255",
@@ -3434,7 +3589,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-260",
@@ -3456,7 +3612,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-260",
@@ -3478,7 +3635,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-260",
@@ -3500,7 +3658,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-265",
@@ -3522,7 +3681,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-265",
@@ -3544,7 +3704,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-265",
@@ -3566,7 +3727,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-270",
@@ -3588,7 +3750,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-270",
@@ -3610,7 +3773,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-270",
@@ -3632,7 +3796,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-275",
@@ -3654,7 +3819,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-275",
@@ -3676,7 +3842,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-275",
@@ -3698,7 +3865,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-280",
@@ -3720,7 +3888,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-280",
@@ -3742,7 +3911,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-280",
@@ -3764,7 +3934,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-285",
@@ -3786,7 +3957,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-285",
@@ -3808,7 +3980,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-285",
@@ -3830,7 +4003,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-290",
@@ -3852,7 +4026,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-290",
@@ -3874,7 +4049,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-290",
@@ -3896,7 +4072,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-295",
@@ -3918,7 +4095,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-295",
@@ -3940,7 +4118,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-295",
@@ -3962,7 +4141,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-a-300",
@@ -3984,7 +4164,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-b-300",
@@ -4006,7 +4187,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "sensor-c-300",
@@ -4028,7 +4210,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     }
   ],
   "sourceRefs": [
@@ -4037,5 +4220,6 @@
   "classification": "U",
   "handling": [
     "SIMULATED"
-  ]
+  ],
+  "origin": "simulated"
 }

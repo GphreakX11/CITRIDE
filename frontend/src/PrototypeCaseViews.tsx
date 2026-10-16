@@ -1,3 +1,4 @@
+import { StatusChip } from "./visualPrimitives.ts";
 import { useState } from "react";
 import type { CommandIncident, CommandView } from "./commandTypes";
 import { displayText } from "./presentation";
@@ -10,6 +11,7 @@ import {
   responseOptions,
 } from "./prototypeViews";
 import type { Audience } from "./prototypeViews";
+import type { ReferenceData } from "./scriptedTypes";
 function download(name: string, text: string, type = "text/markdown") {
   const url = URL.createObjectURL(
     new Blob([text], { type: `${type};charset=utf-8` }),
@@ -26,12 +28,14 @@ export default function PrototypeCaseViews({
   onOpenLab,
   onNote,
   locked,
+  reference,
 }: {
   incident: CommandIncident;
   view: CommandView;
   onOpenLab: () => void;
   onNote: (note: string) => Promise<unknown>;
   locked: boolean;
+  reference?: ReferenceData;
 }) {
   const [audience, setAudience] = useState<Audience>("txcc");
   const [note, setNote] = useState("");
@@ -39,18 +43,18 @@ export default function PrototypeCaseViews({
   const [feedback, setFeedback] = useState("");
   const run = incident.runSnapshot;
   const rows = run ? impactRows(run) : [];
-  const estimate = run ? exposure(run) : null;
-  const document = brief(incident);
+  const estimate = run ? exposure(run, reference) : null;
+  const document = brief(incident, reference);
   const options = (
     <section className="command-panel">
       <h2>Response options for review</h2>
-      <p>Reference catalog · no operational authorization or dispatch</p>
+      <p>Advisory, not approvals</p>
       <div className="prototype-alerts">
-        {responseOptions.map((item) => (
+        {responseOptions(reference).map((item) => (
           <article className="command-event" key={item.id}>
             <h3>{item.title}</h3>
             <p>{item.actor}</p>
-            <small>{item.basis} · Reference — needs legal review</small>
+            <small>{item.basis}</small>
             <button
               className="button secondary"
               disabled={locked}
@@ -108,14 +112,11 @@ export default function PrototypeCaseViews({
     </section>
   );
   if (view === "federation") {
-    const result = audienceView(audience, incident);
+    const result = audienceView(audience, incident, reference);
     return (
       <section className="command-panel">
         <h2>One case · audience-specific views</h2>
-        <p>
-          Draft — not sent. These previews demonstrate field filtering, not
-          connected agency access.
-        </p>
+        <p>Draft · not sent</p>
         <nav className="investigation-steps" aria-label="Brief audience">
           {(
             [
@@ -198,7 +199,7 @@ export default function PrototypeCaseViews({
         <section className="command-panel">
           <div className="command-panel-heading">
             <h2>Leadership brief</h2>
-            <span>Draft — not sent</span>
+            <span>Draft · not sent</span>
           </div>
           <h3>1. What happened</h3>
           {document.happened.map((text, i) => (
@@ -215,15 +216,14 @@ export default function PrototypeCaseViews({
           <h3>3. What can we do</h3>
           <p>
             Review source evidence, validate conditional service assumptions and
-            record coordination needs. The reference options below require
-            legal/SME confirmation.
+            record coordination needs.
           </p>
           <button
             className="button secondary"
             onClick={() =>
               download(
                 `citride-brief-${incident.id}-DRAFT.md`,
-                `# ${incident.title}\n\nDraft — not sent\n\n## What happened\n${document.happened.join("\n\n")}\n\n## So what\n${document.soWhat.join("\n\n")}\n\n## What can we do\n${document.options.map((item) => `- ${item.title} — ${item.actor}; ${item.basis}; ${item.verification}`).join("\n")}\n\nSources: ${document.sourceRefs.join(", ")}\n`,
+                `# ${incident.title}\n\nDraft · not sent\n\n## What happened\n${document.happened.join("\n\n")}\n\n## So what\n${document.soWhat.join("\n\n")}\n\n## What can we do\n${document.options.map((item) => `- ${item.title} — ${item.actor}; ${item.basis}; ${item.verification}`).join("\n")}\n\nSources: ${document.sourceRefs.join(", ")}\n`,
               )
             }
           >
@@ -252,7 +252,7 @@ export default function PrototypeCaseViews({
           <h2>Who needs attention first?</h2>
           <p>
             Prioritize captured evidence first, then the shortest modeled
-            service window. No unrelated utility is ranked as compromised.
+            service window.
           </p>
           {rows.length ? (
             <ol>
@@ -266,23 +266,19 @@ export default function PrototypeCaseViews({
                       : "Unknown timing — needs model review"}
                   </p>
                   <small>
-                    Role contact: facility administrator / affected utility
-                    operations lead · contact directory not configured
+                    {reference?.firstActions
+                      .filter((action) => action.scope === "facility")
+                      .map((action) =>
+                        action.contactRole?.replaceAll("{facility}", row.label),
+                      )
+                      .join(" · ") ?? "Reference contacts unavailable"}
                   </small>
                 </li>
               ))}
             </ol>
           ) : (
-            <p>
-              No captured service-impact run. Review the source observation and
-              validate utility linkage before consequence prioritization.
-            </p>
+            <p>No captured service-impact run.</p>
           )}
-          <p>
-            Other-utility probes alone establish neither compromise nor service
-            effects. Additional potential scenarios require explicit model
-            relationships.
-          </p>
         </section>
         {options}
       </>
@@ -292,7 +288,7 @@ export default function PrototypeCaseViews({
       <div className="command-panel-heading">
         <div>
           <h2>What breaks next?</h2>
-          <p>Modeled service impacts · never observed outages</p>
+          <p>Modeled · not observed outages</p>
         </div>
         <button
           className="button secondary"
@@ -303,10 +299,7 @@ export default function PrototypeCaseViews({
         </button>
       </div>
       {!run ? (
-        <p>
-          No captured consequence run. Use the linked-scenario confirmation
-          below; no service effect has been assumed.
-        </p>
+        <p>No captured consequence run.</p>
       ) : (
         <>
           <p>
@@ -319,9 +312,9 @@ export default function PrototypeCaseViews({
             {rows.map((row) => (
               <li key={row.id}>
                 <strong>{displayText(row.label)}</strong>
-                <span className="cc-chip">
+                <StatusChip status={row.state} className="cc-chip">
                   Modeled · {row.state.replaceAll("_", " ")}
-                </span>
+                </StatusChip>
                 {row.chains.map((chain, i) => (
                   <p key={i}>
                     {chain.map(displayText).join(" → ") ||
@@ -341,7 +334,7 @@ export default function PrototypeCaseViews({
             ))}
           </ol>
           <h3>Planning timeline</h3>
-          <p>Scenario-relative planning windows, not countdowns.</p>
+          <p>Scenario-relative planning windows</p>
           {rows.map((row) => (
             <article className="prototype-timeline-row" key={row.id}>
               <strong>{displayText(row.label)}</strong>

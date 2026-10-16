@@ -149,13 +149,14 @@ def test_lookup_lineage_detached_and_unknowns():
     assert reference.assignment_for_id("dialysis-x")["path"] == "10.1.2.4"
 
 
-def test_exact_58_existing_plus_9_proposed_and_semantic_boundaries():
+def test_existing_inventory_plus_gateway_story_and_remaining_reference_proposals():
     data = reference.idt_reference()
     scenario = json.loads((ROOT / "data/scenario.json").read_text())
     ids = {entity["id"] for entity in scenario["entities"]}
-    assert len(ids) == 58
+    assert len(ids) == 67
     assert set(data["assignments"]) == ids | set(data["proposedEntityIds"])
-    assert len(data["proposedEntityIds"]) == 9
+    assert set(data["proposedEntityIds"]) <= ids
+    assert set(data["assignments"]) == ids
     assert reference.assignment_for_id("dialysis-a") is None  # shorthand must not invent IDs
     assert reference.assignment_for_id("cyber-unverified-host") is None
     assert reference.assignment_for_id("org-electric-e") == {"status": "unassigned"}

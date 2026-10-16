@@ -1,0 +1,20 @@
+{"_path":"conn","ts":1760482800.0,"uid":"C00000000000000001","id.orig_h":"192.0.2.10","id.orig_p":41001,"id.resp_h":"198.51.100.20","id.resp_p":443,"proto":"tcp","service":"ssl","conn_state":"SF","custom":{"preserved":true}}
+{"_path":"conn","ts":1760482801.0,"uid":"C00000000000000002","id.orig_h":"192.0.2.11","id.orig_p":41002,"id.resp_h":"198.51.100.21","id.resp_p":443,"proto":"tcp","conn_state":"SF"}
+{"_path":"conn","ts":1760482802.0,"uid":"C00000000000000003","id.orig_h":"192.0.2.12","id.orig_p":41003,"id.resp_h":"198.51.100.22","id.resp_p":80,"proto":"tcp","conn_state":"SF"}
+{"_path":"conn","ts":1760482803.0,"uid":"C00000000000000004","id.orig_h":"192.0.2.13","id.orig_p":41004,"id.resp_h":"198.51.100.23","id.resp_p":502,"proto":"tcp","conn_state":"S0"}
+{"_path":"conn","ts":1760482804.0,"uid":"C00000000000000005","id.orig_h":"192.0.2.14","id.orig_p":41005,"id.resp_h":"198.51.100.24","id.resp_p":53,"proto":"udp","conn_state":"SF"}
+{"_path":"ssl","ts":1760482800.1,"uid":"C00000000000000001","id.orig_h":"192.0.2.10","id.resp_h":"198.51.100.20","version":"TLSv13","server_name":"status.example","established":true}
+{"_path":"ssl","ts":1760482801.1,"uid":"C00000000000000002","id.orig_h":"192.0.2.11","id.resp_h":"198.51.100.21","version":"TLSv12","server_name":"updates.example","established":true}
+{"_path":"ssl","ts":1760482805.1,"uid":"C00000000000000006","id.orig_h":"192.0.2.15","id.resp_h":"198.51.100.25","version":"TLSv13","server_name":"service.test","established":false}
+{"_path":"http","ts":1760482802.1,"uid":"C00000000000000003","id.orig_h":"192.0.2.12","id.resp_h":"198.51.100.22","method":"GET","host":"status.example","uri":"/status","status_code":200}
+{"_path":"http","ts":1760482802.2,"uid":"C00000000000000003","id.orig_h":"192.0.2.12","id.resp_h":"198.51.100.22","method":"GET","host":"status.example","uri":"/health","status_code":200}
+{"_path":"http","ts":1760482802.3,"uid":"C00000000000000003","id.orig_h":"192.0.2.12","id.resp_h":"198.51.100.22","method":"POST","host":"status.example","uri":"/login","status_code":403}
+{"_path":"dns","ts":1760482804.1,"uid":"C00000000000000005","id.orig_h":"192.0.2.14","id.resp_h":"198.51.100.24","proto":"udp","query":"status.example","qtype_name":"A","rcode_name":"NOERROR","answers":["203.0.113.20"],"TTLs":[60.0]}
+{"_path":"dns","ts":1760482804.2,"uid":"C00000000000000007","id.orig_h":"192.0.2.16","id.resp_h":"198.51.100.24","proto":"udp","query":"updates.example","qtype_name":"A","rcode_name":"NOERROR","answers":["203.0.113.21"],"TTLs":[120.0]}
+{"_path":"dns","ts":1760482804.3,"uid":"C00000000000000008","id.orig_h":"192.0.2.17","id.resp_h":"198.51.100.24","proto":"udp","query":"missing.test","qtype_name":"A","rcode_name":"NXDOMAIN","answers":[],"TTLs":[]}
+{"_path":"modbus","ts":1760482806.0,"uid":"C00000000000000009","id.orig_h":"192.0.2.18","id.resp_h":"198.51.100.26","unit_id":1,"func":"READ_HOLDING_REGISTERS","pdu_type":"request"}
+{"_path":"modbus","ts":1760482806.1,"uid":"C00000000000000009","id.orig_h":"192.0.2.18","id.resp_h":"198.51.100.26","unit_id":1,"func":"READ_HOLDING_REGISTERS","pdu_type":"response"}
+{"_path":"modbus_detailed","ts":1760482806.0,"uid":"C00000000000000009","id.orig_h":"192.0.2.18","id.resp_h":"198.51.100.26","unit_id":1,"func":"READ_HOLDING_REGISTERS","request_response":"request","address":40011,"quantity":1}
+{"_path":"modbus_detailed","ts":1760482806.1,"uid":"C00000000000000009","id.orig_h":"192.0.2.18","id.resp_h":"198.51.100.26","unit_id":1,"func":"READ_HOLDING_REGISTERS","request_response":"response","address":40011,"quantity":1,"values":[1]}
+{"_path":"notice","ts":1760482803.1,"uid":"C00000000000000004","id.orig_h":"192.0.2.13","id.resp_h":"198.51.100.23","note":"Scan::Port_Scan","msg":"Connection attempts","src":"192.0.2.13","dst":"198.51.100.23","p":502,"actions":["Notice::ACTION_LOG"]}
+{"_path":"notice","ts":1760482805.2,"uid":"C00000000000000006","id.orig_h":"192.0.2.15","id.resp_h":"198.51.100.25","note":"SSL::Invalid_Server_Cert","msg":"Certificate validation failed","src":"192.0.2.15","dst":"198.51.100.25","p":443,"actions":["Notice::ACTION_LOG"]}

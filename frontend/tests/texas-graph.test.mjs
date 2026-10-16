@@ -43,7 +43,7 @@ const point = (coordinates) => ({ type: "Point", coordinates });
 test("seed retains exactly the six explicit directed dependencies, with provenance", () => {
   const edges = graphEdges(freeze(structuredClone(seed)));
   const dependencies = edges.filter((edge) => edge.kind === "dependency");
-  assert.equal(dependencies.length, 6);
+  assert.equal(dependencies.length, 8);
   assert.deepEqual(pairs(dependencies), [
     "electric-e->plant-a",
     "plant-a->utility-a",
@@ -51,6 +51,8 @@ test("seed retains exactly the six explicit directed dependencies, with provenan
     "utility-a->fire-f",
     "utility-a->hospital-y",
     "utility-a->nursing-z",
+    "utility-b->hospital-w",
+    "utility-c->dialysis-u",
   ]);
   for (const edge of dependencies) {
     const record = seed.dependencies.find(
@@ -159,10 +161,12 @@ test("incident-edge traversal includes incoming and outgoing neighbors, never tr
 
 test("infrastructure includes source Points, water providers and dependency endpoints, not abstract context", () => {
   assert.deepEqual(infrastructureIds(seed).sort(), [
+    "dialysis-u",
     "dialysis-x",
     "electric-e",
     "facility-q",
     "fire-f",
+    "hospital-w",
     "hospital-y",
     "nursing-z",
     "plant-a",

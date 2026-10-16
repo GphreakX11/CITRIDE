@@ -1,0 +1,124 @@
+.analyst-consequences {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  gap: 1rem;
+}
+.analyst-consequences > *,
+.a4-controls > * {
+  min-width: 0;
+}
+.analyst-consequences h2 {
+  margin-top: 0;
+}
+.a4-controls,
+.a4-actions,
+.a4-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+}
+.a4-controls label,
+.a4-impact label {
+  display: grid;
+  gap: 0.35rem;
+}
+.a4-controls select,
+.a4-controls input,
+.a4-impact textarea {
+  font: inherit;
+  color: inherit;
+  background: var(--surface, var(--bg-header));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-small);
+  padding: 0.55rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.a4-impact {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.a4-impact textarea {
+  width: min(40rem, 100%);
+  min-height: 4rem;
+}
+.a4-impact button {
+  margin: 0.5rem 0;
+}
+.a4-toggles {
+  align-items: center;
+  border: 1px solid var(--border);
+  margin: 1rem 0;
+}
+.a4-toggles label {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.a4-network-nodes {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.6rem;
+  padding: 0;
+}
+.a4-network-nodes li {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+.a4-network-nodes [aria-pressed="true"] {
+  outline: 2px solid var(--text-muted);
+  outline-offset: 3px;
+}
+.a4-network-links {
+  padding-left: 1.2rem;
+  font-size: var(--fs-body);
+  overflow-wrap: anywhere;
+}
+.a4-network-links li {
+  margin: 0.45rem 0;
+}
+.a4-actions {
+  margin-top: 0.8rem;
+  align-items: center;
+}
+.a4-actions button,
+.a4-controls button {
+  font: inherit;
+  border-radius: var(--radius-control);
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+}
+.analyst-consequences button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.analyst-consequences button:focus-visible,
+.analyst-consequences input:focus-visible,
+.analyst-consequences textarea:focus-visible,
+.analyst-consequences select:focus-visible {
+  outline: 2px solid var(--text-muted);
+  outline-offset: 3px;
+}
+@media (max-width: 800px) {
+  .analyst-consequences .cc-network-layout {
+    grid-template-columns: 1fr;
+  }
+  .a4-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .a4-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .a4-controls select {
+    width: 100%;
+  }
+}

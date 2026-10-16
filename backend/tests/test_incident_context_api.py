@@ -33,7 +33,8 @@ def test_probes_do_not_create_consequences(client, event_id, provider):
     context = response.json()
     assert context["provider"]["id"] == provider
     assert context["scenarios"] == []
-    assert context["downstreamDependencies"] == []
+    assert [item["dependency"]["provider"] for item in context["downstreamDependencies"]] == [provider]
+    assert client.get("/v1/cascade-runs").json()["runs"] == []
 
 
 def test_missing_event_and_invalid_identifier(client):

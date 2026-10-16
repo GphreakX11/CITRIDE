@@ -16,8 +16,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .access import DemoAccessMiddleware
 from .billington_reference import idt_router
 from . import billington_reference
-from .pcap_reference import pcap_router
-from .command_requests import CommandActionRequest, CommandCreateRequest
+from .zeek_logs import load_zeek_json
+from .command_requests import CommandActionRequest, CommandCreateRequest, DemoResetRequest
+from .records import RecordsService
 from .storage import (
     ConflictError,
     InvalidModelError,
@@ -74,6 +75,8 @@ class BackupOverride(BaseModel):
 
 class RunRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    clientRequestId: Identifier | None = None
+    expectedBaselineRevision: Annotated[int | None, Field(strict=True, ge=1)] = None
     scenarioId: Identifier
     evaluationHour: FiniteHours = 1
     horizonHours: Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)] = 12
@@ -111,7 +114,7 @@ def create_app(
     if not billington_reference.REFERENCE_DIR.is_dir():
         billington_reference.REFERENCE_DIR = Path(__file__).parent / "demo_data/reference/idt"
     app.include_router(idt_router)
-    app.include_router(pcap_router)
+
     hosted = os.environ.get("VERCEL") == "1"
     database_url = (
         None
@@ -137,6 +140,11 @@ def create_app(
         local_fixture if local_fixture.is_file() else bundled_data / "scenario.json"
     )
     repository: Repository | None = None
+    reset_enabled = data_dir is not None or os.environ.get("CITRIDE_ALLOW_DEMO_RESET") == "1"
+    if scenario_path is None:
+        # Validate source configuration before traffic without durable writes.
+        from types import SimpleNamespace
+        RecordsService(SimpleNamespace(scenario_path=fixture_path))
 
     @app.exception_handler(StorageUnavailableError)
     async def unavailable_storage(_request, _error):
@@ -185,6 +193,7 @@ def create_app(
                     )
                 else:
                     repository = Repository(repository_path, fixture_path)
+                RecordsService(repository).initialize()
             except (OSError, ValueError, InvalidModelError) as error:
                 raise HTTPException(
                     status_code=503, detail=f"Demo model could not be loaded: {error}"
@@ -219,6 +228,8 @@ def create_app(
             "status": "ok",
             "baselineRevision": store.baseline()["baselineRevision"],
             "demoMode": True,
+            "storyNow": RecordsService(store).story_now(),
+            "resetEnabled": reset_enabled,
         }
 
     @app.get("/v1/login", include_in_schema=False)
@@ -227,6 +238,20 @@ def create_app(
         # then apply to subsequent same-origin /v1 requests, never JS storage.
         return RedirectResponse(url="/", status_code=303)
 
+    @app.get("/v1/reference")
+    def reference_data(store: RepositoryDependency):
+        return deepcopy(RecordsService(store).reference)
+
+    @app.get("/v1/command/records")
+    def command_records(store: RepositoryDependency, incidentId: QueryIdentifier | None = None):
+        return handle_operation(lambda: RecordsService(store).records(incidentId))
+
+    @app.post("/v1/demo/reset")
+    def reset_demo(request: DemoResetRequest, store: RepositoryDependency):
+        if not reset_enabled:
+            raise HTTPException(status_code=403, detail="Demo reset is disabled for this environment")
+        return handle_operation(lambda: store.reset_demo(request.expectedBaselineRevision, request.clientRequestId))
+
     @app.get("/v1/bootstrap")
     def bootstrap(store: RepositoryDependency):
         return store.baseline()
@@ -234,10 +259,36 @@ def create_app(
     @app.get("/v1/telemetry")
     def telemetry(store: RepositoryDependency):
         streams = []
-        for path in sorted((fixture_path.parent / "telemetry").glob("*.json")):
+        telemetry_dir = fixture_path.parent / "telemetry"
+        try:
+            corelight = load_zeek_json(telemetry_dir / "corelight")
+        except ValueError as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
+        for path in sorted(telemetry_dir.glob("*.json")):
+            # network.json is only a compatibility view of conn, not a second
+            # evidence stream when Corelight logs are available.
+            if path.name == "manifest.json" or (corelight and path.name == "network.json"):
+                continue
             with path.open(encoding="utf-8") as source:
                 payload = json.load(source)
             streams.extend(payload if isinstance(payload, list) else [payload])
+        for name, records in corelight.items():
+            simulated = bool(records) and all(row.get("origin") == "simulated" for row in records)
+            label = "VPN log" if name == "vpn" else "Network · Corelight format"
+            if simulated:
+                label += " (simulated)"
+            if name != "vpn":
+                label += f" · {name}"
+            stream = {
+                "id": f"corelight/{name}",
+                "label": label,
+                "sourceRef": "src-network",
+                "format": "synthetic_vpn_auth_json" if name == "vpn" else "corelight_zeek_json",
+                "records": records,
+            }
+            if simulated:
+                stream["origin"] = "simulated"
+            streams.append(stream)
         return {"streams": streams}
 
     @app.get("/v1/incident-context")
@@ -314,6 +365,7 @@ def create_app(
     def promote(proposal_id: str, store: RepositoryDependency):
         return handle_operation(lambda: store.promote(_safe_id(proposal_id)))
 
+    @app.post("/v1/runs", status_code=201, include_in_schema=False)
     @app.post("/v1/cascade-runs", status_code=201)
     def create_run(request: RunRequest, store: RepositoryDependency):
         from .engine import compute_run
@@ -323,7 +375,11 @@ def create_app(
             run["createdAt"] = datetime.now(timezone.utc).isoformat()
             return run
 
-        return handle_operation(lambda: store.create_run(request.model_dump(), compute))
+        return handle_operation(lambda: store.create_run(request.model_dump(exclude={"expectedBaselineRevision"}), compute, request.expectedBaselineRevision))
+
+    @app.get("/v1/runs", include_in_schema=False)
+    def compatible_run_list(store: RepositoryDependency):
+        return runs(store)["runs"]
 
     @app.get("/v1/cascade-runs")
     def runs(store: RepositoryDependency):
@@ -341,6 +397,7 @@ def create_app(
 
         return handle_operation(operation)
 
+    @app.get("/v1/runs/{run_id}", include_in_schema=False)
     @app.get("/v1/cascade-runs/{run_id}")
     def run_detail(run_id: str, store: RepositoryDependency):
         return handle_operation(lambda: store.run(_safe_id(run_id)))

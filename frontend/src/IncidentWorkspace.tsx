@@ -518,7 +518,7 @@ export default function IncidentWorkspace({
               </article>
               <article>
                 <span className="incident-step">Bridge 3</span>
-                <h3>Cascade → advisory review</h3>
+                <h3>Cascade → impact review</h3>
                 <p>
                   A matching consequence run supplies interval-model evidence
                   for human review. It does not supply decision authority.

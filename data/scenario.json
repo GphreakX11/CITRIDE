@@ -20,6 +20,8 @@
     "Facility Q starts without an operational dependency in the seed baseline. Utility B/C probes do not establish compromise or outages.",
     "Service-area populations overlap facility occupants and are not impact counts. No population ranking is supplied.",
     "Raw synthetic telemetry is stored outside the scenario graph and is referenced by curated events.",
+    "Corelight/Zeek JSON log format; simulated content for the Watershed 250 demo. Generated simulated records using Corelight/Zeek field conventions, not a Corelight sensor export or evidence of actual network activity. VPN records are synthetic authentication JSON, not a Zeek log. The 300–600 connection target takes precedence over the incompatible per-10-minute volume prose; persistent HTTP sessions carry one-minute application polling.",
+    "Workstation identities use 192.0.2.51/52/53. To avoid endpoint aliases, pressure sensors move from .51/52/53 to .71/72/73 and quality sensors from .31/32/33 to .81/82/83, leaving .31/32/33 for historian telemetry. The documentation-range DNS resolver is 198.51.100.53 to avoid workstation C's .53 identity. Historian/resolver background endpoints are not additional inventory assets.",
     "Recovery, unresolved cycles, and parallel supply adequacy require additional review; no resilience conclusion is inferred."
   ],
   "entities": [
@@ -29,12 +31,17 @@
       "label": "Utility A Operating Organization",
       "fictionalName": "Watershed Demo Operator A",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.10.2"
+      }
     },
     {
       "id": "utility-a",
@@ -43,12 +50,17 @@
       "operatedBy": "org-a",
       "serves": "area-a",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.6"
+      }
     },
     {
       "id": "plant-a",
@@ -65,12 +77,17 @@
         ]
       },
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.4"
+      }
     },
     {
       "id": "area-a",
@@ -106,12 +123,17 @@
       "geometryStatus": "synthetic_schematic",
       "coordinateNote": "Invented geometry near the coordinate origin; does not represent an actual watershed or utility boundary.",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "service_area"
+      }
     },
     {
       "id": "population-a",
@@ -122,12 +144,17 @@
       "countUnit": "fictional_people",
       "aggregationNote": "Illustrative area total; facility occupants overlap and must not be added to this total.",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "population_group"
+      }
     },
     {
       "id": "plc-a",
@@ -139,12 +166,18 @@
       "terrain": "OT_SCADA",
       "hostsCyberAsset": "cyber-plc-a",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "plant-a",
+        "parentPath": "12.4"
+      }
     },
     {
       "id": "cyber-plc-a",
@@ -156,12 +189,17 @@
       "exposure": "simulated_inbound_reachable",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "hmi-a",
@@ -173,12 +211,18 @@
       "terrain": "OT_SCADA",
       "hostsCyberAsset": "cyber-hmi-a",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "plant-a",
+        "parentPath": "12.4"
+      }
     },
     {
       "id": "cyber-hmi-a",
@@ -190,12 +234,17 @@
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "sensor-a",
@@ -207,12 +256,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-sensor-a",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-sensor-a",
@@ -220,16 +274,21 @@
       "label": "Water-quality Sensor A network identity",
       "hostedBy": "sensor-a",
       "terrain": "FIELD_SENSORS",
-      "ipAddress": "192.0.2.31",
+      "ipAddress": "192.0.2.81",
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "pressure-a",
@@ -241,12 +300,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-pressure-a",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-pressure-a",
@@ -254,16 +318,21 @@
       "label": "Pressure Sensor A network identity",
       "hostedBy": "pressure-a",
       "terrain": "FIELD_SENSORS",
-      "ipAddress": "192.0.2.51",
+      "ipAddress": "192.0.2.71",
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "tank-a",
@@ -275,12 +344,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-tank-a",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-tank-a",
@@ -292,12 +366,17 @@
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "workstation-a",
@@ -307,12 +386,18 @@
       "terrain": "ENTERPRISE_IT",
       "hostsCyberAsset": "cyber-workstation-a",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "org-a",
+        "parentPath": "12.10.2"
+      }
     },
     {
       "id": "cyber-workstation-a",
@@ -320,15 +405,62 @@
       "label": "Enterprise Workstation A identity",
       "hostedBy": "workstation-a",
       "terrain": "ENTERPRISE_IT",
-      "ipAddress": "198.51.100.41",
+      "ipAddress": "192.0.2.51",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
+    },
+    {
+      "id": "vpn-a",
+      "type": "PhysicalITAsset",
+      "label": "VPN Gateway A",
+      "operatedBy": "org-a",
+      "terrain": "ENTERPRISE_IT",
+      "hostsCyberAsset": "cyber-vpn-a",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "org-a",
+        "parentPath": "12.10.2"
+      }
+    },
+    {
+      "id": "cyber-vpn-a",
+      "type": "CyberAsset",
+      "label": "VPN Gateway A identity",
+      "hostedBy": "vpn-a",
+      "terrain": "ENTERPRISE_IT",
+      "ipAddress": "198.51.100.41",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "org-b",
@@ -336,12 +468,17 @@
       "label": "Utility B Operating Organization",
       "fictionalName": "Watershed Demo Operator B",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.10.2"
+      }
     },
     {
       "id": "utility-b",
@@ -350,12 +487,17 @@
       "operatedBy": "org-b",
       "serves": "area-b",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.6"
+      }
     },
     {
       "id": "plant-b",
@@ -372,12 +514,17 @@
         ]
       },
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.4"
+      }
     },
     {
       "id": "area-b",
@@ -413,12 +560,17 @@
       "geometryStatus": "synthetic_schematic",
       "coordinateNote": "Invented geometry near the coordinate origin; does not represent an actual watershed or utility boundary.",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "service_area"
+      }
     },
     {
       "id": "population-b",
@@ -429,12 +581,17 @@
       "countUnit": "fictional_people",
       "aggregationNote": "Illustrative area total; facility occupants overlap and must not be added to this total.",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "population_group"
+      }
     },
     {
       "id": "plc-b",
@@ -446,12 +603,18 @@
       "terrain": "OT_SCADA",
       "hostsCyberAsset": "cyber-plc-b",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "plant-b",
+        "parentPath": "12.4"
+      }
     },
     {
       "id": "cyber-plc-b",
@@ -463,12 +626,17 @@
       "exposure": "simulated_inbound_reachable",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "hmi-b",
@@ -480,12 +648,18 @@
       "terrain": "OT_SCADA",
       "hostsCyberAsset": "cyber-hmi-b",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "plant-b",
+        "parentPath": "12.4"
+      }
     },
     {
       "id": "cyber-hmi-b",
@@ -497,12 +671,17 @@
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "sensor-b",
@@ -514,12 +693,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-sensor-b",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-sensor-b",
@@ -527,16 +711,21 @@
       "label": "Water-quality Sensor B network identity",
       "hostedBy": "sensor-b",
       "terrain": "FIELD_SENSORS",
-      "ipAddress": "192.0.2.32",
+      "ipAddress": "192.0.2.82",
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "pressure-b",
@@ -548,12 +737,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-pressure-b",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-pressure-b",
@@ -561,16 +755,21 @@
       "label": "Pressure Sensor B network identity",
       "hostedBy": "pressure-b",
       "terrain": "FIELD_SENSORS",
-      "ipAddress": "192.0.2.52",
+      "ipAddress": "192.0.2.72",
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "tank-b",
@@ -582,12 +781,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-tank-b",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-tank-b",
@@ -599,12 +803,17 @@
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "workstation-b",
@@ -614,12 +823,18 @@
       "terrain": "ENTERPRISE_IT",
       "hostsCyberAsset": "cyber-workstation-b",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "org-b",
+        "parentPath": "12.10.2"
+      }
     },
     {
       "id": "cyber-workstation-b",
@@ -627,15 +842,62 @@
       "label": "Enterprise Workstation B identity",
       "hostedBy": "workstation-b",
       "terrain": "ENTERPRISE_IT",
-      "ipAddress": "198.51.100.42",
+      "ipAddress": "192.0.2.52",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
+    },
+    {
+      "id": "vpn-b",
+      "type": "PhysicalITAsset",
+      "label": "VPN Gateway B",
+      "operatedBy": "org-b",
+      "terrain": "ENTERPRISE_IT",
+      "hostsCyberAsset": "cyber-vpn-b",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "org-b",
+        "parentPath": "12.10.2"
+      }
+    },
+    {
+      "id": "cyber-vpn-b",
+      "type": "CyberAsset",
+      "label": "VPN Gateway B identity",
+      "hostedBy": "vpn-b",
+      "terrain": "ENTERPRISE_IT",
+      "ipAddress": "198.51.100.42",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "org-c",
@@ -643,12 +905,17 @@
       "label": "Utility C Operating Organization",
       "fictionalName": "Watershed Demo Operator C",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.10.2"
+      }
     },
     {
       "id": "utility-c",
@@ -657,12 +924,17 @@
       "operatedBy": "org-c",
       "serves": "area-c",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.6"
+      }
     },
     {
       "id": "plant-c",
@@ -679,12 +951,17 @@
         ]
       },
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.4"
+      }
     },
     {
       "id": "area-c",
@@ -720,12 +997,17 @@
       "geometryStatus": "synthetic_schematic",
       "coordinateNote": "Invented geometry near the coordinate origin; does not represent an actual watershed or utility boundary.",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "service_area"
+      }
     },
     {
       "id": "population-c",
@@ -736,12 +1018,17 @@
       "countUnit": "fictional_people",
       "aggregationNote": "Illustrative area total; facility occupants overlap and must not be added to this total.",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "population_group"
+      }
     },
     {
       "id": "plc-c",
@@ -753,12 +1040,18 @@
       "terrain": "OT_SCADA",
       "hostsCyberAsset": "cyber-plc-c",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "plant-c",
+        "parentPath": "12.4"
+      }
     },
     {
       "id": "cyber-plc-c",
@@ -770,12 +1063,17 @@
       "exposure": "simulated_inbound_reachable",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "hmi-c",
@@ -787,12 +1085,18 @@
       "terrain": "OT_SCADA",
       "hostsCyberAsset": "cyber-hmi-c",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "plant-c",
+        "parentPath": "12.4"
+      }
     },
     {
       "id": "cyber-hmi-c",
@@ -804,12 +1108,17 @@
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "sensor-c",
@@ -821,12 +1130,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-sensor-c",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-sensor-c",
@@ -834,16 +1148,21 @@
       "label": "Water-quality Sensor C network identity",
       "hostedBy": "sensor-c",
       "terrain": "FIELD_SENSORS",
-      "ipAddress": "192.0.2.33",
+      "ipAddress": "192.0.2.83",
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "pressure-c",
@@ -855,12 +1174,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-pressure-c",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-pressure-c",
@@ -868,16 +1192,21 @@
       "label": "Pressure Sensor C network identity",
       "hostedBy": "pressure-c",
       "terrain": "FIELD_SENSORS",
-      "ipAddress": "192.0.2.53",
+      "ipAddress": "192.0.2.73",
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "tank-c",
@@ -889,12 +1218,17 @@
       "terrain": "FIELD_SENSORS",
       "hostsCyberAsset": "cyber-tank-c",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.7"
+      }
     },
     {
       "id": "cyber-tank-c",
@@ -906,12 +1240,17 @@
       "exposure": "simulated_internal",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "workstation-c",
@@ -921,12 +1260,18 @@
       "terrain": "ENTERPRISE_IT",
       "hostsCyberAsset": "cyber-workstation-c",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "org-c",
+        "parentPath": "12.10.2"
+      }
     },
     {
       "id": "cyber-workstation-c",
@@ -934,15 +1279,62 @@
       "label": "Enterprise Workstation C identity",
       "hostedBy": "workstation-c",
       "terrain": "ENTERPRISE_IT",
-      "ipAddress": "198.51.100.43",
+      "ipAddress": "192.0.2.53",
       "networkIdentityStatus": "fictional_documentation_range",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
+    },
+    {
+      "id": "vpn-c",
+      "type": "PhysicalITAsset",
+      "label": "VPN Gateway C",
+      "operatedBy": "org-c",
+      "terrain": "ENTERPRISE_IT",
+      "hostsCyberAsset": "cyber-vpn-c",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "below_idt_level",
+        "parentEntity": "org-c",
+        "parentPath": "12.10.2"
+      }
+    },
+    {
+      "id": "cyber-vpn-c",
+      "type": "CyberAsset",
+      "label": "VPN Gateway C identity",
+      "hostedBy": "vpn-c",
+      "terrain": "ENTERPRISE_IT",
+      "ipAddress": "198.51.100.43",
+      "networkIdentityStatus": "fictional_documentation_range",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "not_idt_asset",
+        "reason": "cyber_identity"
+      }
     },
     {
       "id": "dialysis-x",
@@ -958,12 +1350,17 @@
       },
       "operationalDependencyStatus": "synthetic_assumption",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "10.1.2.4"
+      }
     },
     {
       "id": "hospital-y",
@@ -979,12 +1376,17 @@
       },
       "operationalDependencyStatus": "synthetic_assumption",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "10.1.1.1"
+      }
     },
     {
       "id": "nursing-z",
@@ -1000,12 +1402,17 @@
       },
       "operationalDependencyStatus": "synthetic_assumption",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "10.1.3.1"
+      }
     },
     {
       "id": "fire-f",
@@ -1021,12 +1428,17 @@
       },
       "operationalDependencyStatus": "synthetic_assumption",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "6.2.2"
+      }
     },
     {
       "id": "facility-q",
@@ -1042,24 +1454,33 @@
       },
       "operationalDependencyStatus": "not_established",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "10.1"
+      }
     },
     {
       "id": "org-electric-e",
       "type": "Organization",
       "label": "Fictional Electricity Operator E",
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "unassigned"
+      }
     },
     {
       "id": "electric-e",
@@ -1074,12 +1495,90 @@
         ]
       },
       "sourceRefs": [
-        "src-inventory"
+        "src-inventory",
+        "src-idt-v4"
       ],
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "5.1.3"
+      }
+    },
+    {
+      "id": "vendor-v",
+      "type": "Organization",
+      "label": "Vendor V remote support",
+      "supportAccountAt": [
+        "org-a",
+        "org-b",
+        "org-c"
+      ],
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "unassigned"
+      }
+    },
+    {
+      "id": "hospital-w",
+      "type": "Hospital",
+      "label": "Hospital W",
+      "locatedIn": "area-b",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.27,
+          0.06
+        ]
+      },
+      "operationalDependencyStatus": "synthetic_assumption",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "10.1.1.1"
+      }
+    },
+    {
+      "id": "dialysis-u",
+      "type": "DialysisCenter",
+      "label": "Dialysis Center U",
+      "locatedIn": "area-c",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.49,
+          0.06
+        ]
+      },
+      "operationalDependencyStatus": "synthetic_assumption",
+      "sourceRefs": [
+        "src-inventory",
+        "src-idt-v4"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "10.1.2.4"
+      }
     }
   ],
   "serviceFunctions": [
@@ -1231,6 +1730,32 @@
       "facility": "electric-e",
       "service": "electricity",
       "label": "Electricity supply",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "hospital-sterilization-w",
+      "facility": "hospital-w",
+      "service": "sterilization_support",
+      "label": "Hospital W sterilization support",
+      "sourceRefs": [
+        "src-inventory"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dialysis-treatment-u",
+      "facility": "dialysis-u",
+      "service": "dialysis_treatment",
+      "label": "Dialysis Center U treatment",
       "sourceRefs": [
         "src-inventory"
       ],
@@ -1500,6 +2025,94 @@
       "handling": [
         "SIMULATED"
       ]
+    },
+    {
+      "id": "dep-b-w",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "utility-b",
+      "dependent": "hospital-w",
+      "requiredService": "treated_water",
+      "dependentFunction": "hospital-sterilization-w",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 4,
+      "usableBackupMaxHours": 6,
+      "backupService": "treated_water",
+      "validForLossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "lossOfFunction": 0.5,
+      "outputLossType": null,
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-b-w-delay",
+        "backup": "asm-dep-b-w-backup",
+        "lossFraction": "asm-dep-b-w-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "dep-c-u",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "utility-c",
+      "dependent": "dialysis-u",
+      "requiredService": "treated_water",
+      "dependentFunction": "dialysis-treatment-u",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 2,
+      "usableBackupMaxHours": 2,
+      "backupService": "treated_water",
+      "validForLossTypes": [
+        "unsafe_water",
+        "no_water"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "backupIndependenceAssumption": "Usable reserve is assumed independent of the affected supply. Zero explicitly means no usable reserve in this scenario.",
+      "parameterAssertionRefs": {
+        "delay": "asm-dep-c-u-delay",
+        "backup": "asm-dep-c-u-backup",
+        "lossFraction": "asm-dep-c-u-lossFraction"
+      },
+      "assumptionNote": "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.",
+      "recovery": {
+        "status": "unknown",
+        "note": "Restoration requires separate service verification; no recovery sequence is modeled."
+      },
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
     }
   ],
   "sources": [
@@ -1561,9 +2174,9 @@
     },
     {
       "id": "src-network",
-      "title": "Synthetic Zeek-shaped connection stream",
-      "label": "Synthetic Zeek-shaped connection stream",
-      "description": "Documentation IP ranges and invented connection records; shared source supports a campaign hypothesis, not actor attribution.",
+      "title": "Network · Corelight format (simulated)",
+      "label": "Network · Corelight format (simulated)",
+      "description": "Corelight/Zeek JSON log format; simulated content for the Watershed 250 demo. Generated simulated records using Corelight/Zeek field conventions, not a Corelight sensor export or evidence of actual network activity. VPN records are synthetic authentication JSON, not a Zeek log. The 300–600 connection target takes precedence over the incompatible per-10-minute volume prose; persistent HTTP sessions carry one-minute application polling.",
       "version": "1",
       "createdOn": "2026-10-13",
       "author": "CITRIDE fictional scenario generator",
@@ -1610,6 +2223,20 @@
       "createdOn": "2026-10-13",
       "author": "CITRIDE fictional scenario generator",
       "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-idt-v4",
+      "title": "Infrastructure Data Taxonomy v4, 22 Jun 2011",
+      "label": "Infrastructure Data Taxonomy v4, 22 Jun 2011",
+      "description": "Canonical IDT v4 reference classifications; not operational evidence or physical-containment assertions.",
+      "version": "4",
+      "createdOn": "2011-06-22",
+      "author": "Infrastructure Data Taxonomy",
+      "evidenceCategory": "reference",
       "classification": "U",
       "handling": [
         "SIMULATED"
@@ -1978,6 +2605,126 @@
       ]
     },
     {
+      "id": "asm-dep-b-w-delay",
+      "dependencyId": "dep-b-w",
+      "parameter": "delay",
+      "value": [
+        0,
+        1
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-b-w-backup",
+      "dependencyId": "dep-b-w",
+      "parameter": "backup",
+      "value": [
+        4,
+        6
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-b-w-lossFraction",
+      "dependencyId": "dep-b-w",
+      "parameter": "lossFraction",
+      "value": 0.5,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-c-u-delay",
+      "dependencyId": "dep-c-u",
+      "parameter": "delay",
+      "value": [
+        0,
+        1
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-c-u-backup",
+      "dependencyId": "dep-c-u",
+      "parameter": "backup",
+      "value": [
+        2,
+        2
+      ],
+      "unit": "hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-dep-c-u-lossFraction",
+      "dependencyId": "dep-c-u",
+      "parameter": "lossFraction",
+      "value": 1.0,
+      "unit": "fraction",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Invented demonstration parameter, not a measured or clinical planning value.",
+      "sourceRefs": [
+        "src-dependencies"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
       "id": "asm-unsafe-water-effect",
       "scenarioId": "unsafe-water",
       "parameter": "seed_effect_and_persistence",
@@ -2051,9 +2798,107 @@
       "handling": [
         "SIMULATED"
       ]
+    },
+    {
+      "id": "asm-potential-unsafe-water-b-effect",
+      "scenarioId": "potential-unsafe-water-b",
+      "parameter": "seed_effect_and_persistence",
+      "value": {
+        "lossType": "unsafe_water",
+        "onsetWindowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12
+      },
+      "unit": "scenario_hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Potential only, not observed. Explicit hypothetical unsafe-water effect at B; not activated by probes or linked to a case.",
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "asm-potential-unsafe-water-c-effect",
+      "scenarioId": "potential-unsafe-water-c",
+      "parameter": "seed_effect_and_persistence",
+      "value": {
+        "lossType": "unsafe_water",
+        "onsetWindowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12
+      },
+      "unit": "scenario_hours",
+      "ownerRole": "scenario_author",
+      "reviewStatus": "synthetic_seed_only",
+      "evidenceCategory": "simulated",
+      "note": "Potential only, not observed. Explicit hypothetical unsafe-water effect at C; not activated by probes or linked to a case.",
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
     }
   ],
   "events": [
+    {
+      "id": "event-vpn-a",
+      "type": "CyberEvent",
+      "label": "Offsite vendor VPN login at Utility A",
+      "relativeTimeHours": -0.5,
+      "timestamp": "2026-10-13T06:30:00Z",
+      "seenOn": "cyber-vpn-a",
+      "observation": "vendor_vpn_login_off_hours",
+      "description": "Simulated successful vendor account login from the shared offsite source; assigns the VPN client pool address.",
+      "evidenceCategory": "simulated",
+      "rawRef": {
+        "streamId": "corelight/vpn",
+        "recordId": "vpn-a-login-001",
+        "sourceRef": "src-network"
+      },
+      "sourceRefs": [
+        "src-network"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "origin": "simulated",
+      "attackTechniques": [
+        {
+          "id": "T0822",
+          "name": "External Remote Services",
+          "tactic": "Initial Access"
+        },
+        {
+          "id": "T0859",
+          "name": "Valid Accounts",
+          "tactic": "Persistence, Lateral Movement"
+        }
+      ],
+      "networkEvidenceRefs": [
+        {
+          "streamId": "corelight/ssl",
+          "recordId": "ssl-vpn-a-login-001",
+          "sourceRef": "src-network"
+        },
+        {
+          "streamId": "corelight/notice",
+          "recordId": "notice-vpn-a",
+          "sourceRef": "src-network"
+        }
+      ]
+    },
     {
       "id": "event-inbound-a",
       "type": "CyberEvent",
@@ -2062,10 +2907,10 @@
       "timestamp": "2026-10-13T06:54:00Z",
       "seenOn": "cyber-plc-a",
       "observation": "unusual_inbound_connection",
-      "description": "A completed simulated connection to the previously exposed controller.",
+      "description": "A completed simulated VPN-pool connection to the previously exposed controller.",
       "evidenceCategory": "simulated",
       "rawRef": {
-        "streamId": "network",
+        "streamId": "corelight/conn",
         "recordId": "conn-a-unusual-001",
         "sourceRef": "src-network"
       },
@@ -2075,6 +2920,21 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
+      ],
+      "origin": "simulated",
+      "attackTechniques": [
+        {
+          "id": "T0886",
+          "name": "Remote Services",
+          "tactic": "Lateral Movement"
+        }
+      ],
+      "networkEvidenceRefs": [
+        {
+          "streamId": "corelight/modbus",
+          "recordId": "modbus-a-unusual-read-001",
+          "sourceRef": "src-network"
+        }
       ]
     },
     {
@@ -2098,6 +2958,26 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
+      ],
+      "origin": "simulated",
+      "attackTechniques": [
+        {
+          "id": "T0859",
+          "name": "Valid Accounts",
+          "tactic": "Persistence, Lateral Movement"
+        }
+      ],
+      "networkEvidenceRefs": [
+        {
+          "streamId": "corelight/http",
+          "recordId": "http-a-login-001",
+          "sourceRef": "src-network"
+        },
+        {
+          "streamId": "corelight/http",
+          "recordId": "http-a-login-002",
+          "sourceRef": "src-network"
+        }
       ]
     },
     {
@@ -2121,6 +3001,26 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
+      ],
+      "origin": "simulated",
+      "attackTechniques": [
+        {
+          "id": "T0836",
+          "name": "Modify Parameter",
+          "tactic": "Impair Process Control"
+        }
+      ],
+      "networkEvidenceRefs": [
+        {
+          "streamId": "corelight/modbus_detailed",
+          "recordId": "modbus-detailed-a-write-001",
+          "sourceRef": "src-network"
+        },
+        {
+          "streamId": "corelight/notice",
+          "recordId": "notice-modbus-a-write-001",
+          "sourceRef": "src-network"
+        }
       ]
     },
     {
@@ -2144,6 +3044,14 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
+      ],
+      "origin": "simulated",
+      "attackTechniques": [
+        {
+          "id": "T0831",
+          "name": "Manipulation of Control",
+          "tactic": "Impact"
+        }
       ]
     },
     {
@@ -2157,7 +3065,7 @@
       "description": "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at B.",
       "evidenceCategory": "simulated",
       "rawRef": {
-        "streamId": "network",
+        "streamId": "corelight/conn",
         "recordId": "conn-b-unusual-001",
         "sourceRef": "src-network"
       },
@@ -2167,6 +3075,21 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
+      ],
+      "origin": "simulated",
+      "attackTechniques": [
+        {
+          "id": "T0846",
+          "name": "Remote System Discovery",
+          "tactic": "Discovery"
+        }
+      ],
+      "networkEvidenceRefs": [
+        {
+          "streamId": "corelight/notice",
+          "recordId": "notice-scan-b",
+          "sourceRef": "src-network"
+        }
       ]
     },
     {
@@ -2180,7 +3103,7 @@
       "description": "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at C.",
       "evidenceCategory": "simulated",
       "rawRef": {
-        "streamId": "network",
+        "streamId": "corelight/conn",
         "recordId": "conn-c-unusual-001",
         "sourceRef": "src-network"
       },
@@ -2190,6 +3113,21 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
+      ],
+      "origin": "simulated",
+      "attackTechniques": [
+        {
+          "id": "T0846",
+          "name": "Remote System Discovery",
+          "tactic": "Discovery"
+        }
+      ],
+      "networkEvidenceRefs": [
+        {
+          "streamId": "corelight/notice",
+          "recordId": "notice-scan-c",
+          "sourceRef": "src-network"
+        }
       ]
     }
   ],
@@ -2232,6 +3170,7 @@
         ],
         "persistsThroughHour": 12,
         "eventRefs": [
+          "event-vpn-a",
           "event-dosing",
           "event-sensor"
         ],
@@ -2293,6 +3232,70 @@
         "provider": "electric-e",
         "service": "electricity",
         "lossType": "electricity_lost",
+        "windowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12,
+        "eventRefs": [],
+        "assumptionNote": "Explicit simulated effect and persistence; not an observed operational effect.",
+        "sourceRefs": [
+          "src-effects"
+        ],
+        "classification": "U",
+        "handling": [
+          "SIMULATED"
+        ]
+      },
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "potential-unsafe-water-b",
+      "label": "Potential: unsafe water at Utility B (if compromised, not observed)",
+      "description": "Potential only, not observed. Explicit hypothetical unsafe-water effect at B; not activated by probes or linked to a case.",
+      "evidenceCategory": "simulated",
+      "seed": {
+        "provider": "utility-b",
+        "service": "treated_water",
+        "lossType": "unsafe_water",
+        "windowHours": [
+          0,
+          1
+        ],
+        "persistsThroughHour": 12,
+        "eventRefs": [],
+        "assumptionNote": "Explicit simulated effect and persistence; not an observed operational effect.",
+        "sourceRefs": [
+          "src-effects"
+        ],
+        "classification": "U",
+        "handling": [
+          "SIMULATED"
+        ]
+      },
+      "sourceRefs": [
+        "src-effects"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "potential-unsafe-water-c",
+      "label": "Potential: unsafe water at Utility C (if compromised, not observed)",
+      "description": "Potential only, not observed. Explicit hypothetical unsafe-water effect at C; not activated by probes or linked to a case.",
+      "evidenceCategory": "simulated",
+      "seed": {
+        "provider": "utility-c",
+        "service": "treated_water",
+        "lossType": "unsafe_water",
         "windowHours": [
           0,
           1

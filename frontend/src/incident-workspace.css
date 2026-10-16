@@ -30,7 +30,7 @@
   gap: 14px;
 }
 .incident-header .incident-title {
-  font-size: clamp(26px, 2.5vw, 34px);
+  font-size: var(--fs-number);
   line-height: 1.18;
   margin-bottom: 12px;
 }
@@ -60,26 +60,26 @@
 }
 .incident-eyebrow,
 .incident-step {
-  color: #46627d;
-  font-size: 11px;
+  color: var(--text);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
 .incident-muted,
 .incident-relation {
-  color: #566b80;
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
 }
 .incident-tag,
 .incident-state {
   display: inline-flex;
   padding: 5px 9px;
-  border: 1px solid #dce4ee;
-  border-radius: 6px;
-  background: #f2f5fa;
-  color: #405b76;
-  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-chip);
   font-weight: 600;
 }
 .incident-field {
@@ -87,7 +87,7 @@
   gap: 7px;
   margin: 14px 0;
   max-width: 640px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 .incident-field select {
@@ -95,10 +95,10 @@
   max-width: 100%;
   min-height: 44px;
   padding: 10px 34px 10px 12px;
-  border: 1px solid #c9d6e6;
-  border-radius: 7px;
-  background: #fff;
-  color: #23364b;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-header);
+  color: var(--text);
   text-overflow: ellipsis;
 }
 .incident-sources {
@@ -110,11 +110,11 @@
 }
 .incident-source {
   max-width: 100%;
-  border: 1px solid #d5e2f4;
-  border-radius: 6px;
-  background: #f3f7fd;
-  font-size: 11px;
-  color: #305579;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .incident-source summary {
   padding: 7px 10px;
@@ -134,20 +134,20 @@
 }
 .incident-ribbon > li {
   position: relative;
-  border: 1px solid #dde6f1;
-  border-top: 3px solid #5279b7;
-  border-radius: 8px;
-  background: #fbfcff;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   padding: 13px;
 }
 .incident-ribbon h3 {
-  font-size: 13px;
+  font-size: var(--fs-card-title);
 }
 .incident-ribbon-arrow {
   position: absolute;
   right: -15px;
   top: 47%;
-  color: #5279b7;
+  color: var(--link);
   z-index: 1;
 }
 .incident-bridges {
@@ -158,33 +158,33 @@
 }
 .incident-bridges article {
   padding: 16px;
-  border: 1px solid #e3e8f0;
-  border-radius: 8px;
-  background: #f7f9fc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
 }
 .incident-bridges h3 {
-  font-size: 14px;
+  font-size: var(--fs-card-title);
 }
 .incident-bridges p {
-  font-size: 12px;
+  font-size: var(--fs-body);
 }
 .incident-detail {
   margin: 13px 0;
-  border-top: 1px solid #e6eaf0;
+  border-top: 1px solid var(--border);
   padding-top: 11px;
-  font-size: 12px;
+  font-size: var(--fs-body);
 }
 .incident-detail > summary {
   min-height: 36px;
   padding: 5px 0;
-  color: #365c85;
+  color: var(--text);
   font-weight: 600;
 }
 .incident-workspace ul,
 .incident-path {
   padding-left: 20px;
   line-height: 1.65;
-  font-size: 12px;
+  font-size: var(--fs-body);
 }
 .incident-workspace li + li {
   margin-top: 7px;
@@ -197,12 +197,12 @@
 }
 .incident-notice,
 .incident-warnings {
-  background: #fff8e9;
-  border: 1px solid #efdfb7;
-  border-radius: 7px;
-  color: #785615;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius-control);
+  color: var(--amber-text);
   padding: 13px 16px;
-  font-size: 12px;
+  font-size: var(--fs-body);
 }
 .incident-workspace .incident-warnings {
   padding-left: 32px;
@@ -230,50 +230,50 @@
   gap: 16px;
 }
 .incident-state-at_risk {
-  background: #fff6e0;
-  color: #785300;
-  border-color: #edd9a4;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  border-color: var(--amber);
 }
 .incident-state-degraded,
 .incident-state-failed {
-  background: #fff0ee;
-  color: #a33c32;
-  border-color: #edc5bf;
+  background: var(--red-bg);
+  color: var(--red-text);
+  border-color: var(--red);
 }
 .incident-state-unknown {
-  background: #edf0f5;
-  color: #526176;
+  background: var(--surface);
+  color: var(--text);
 }
 .incident-interval {
   display: grid;
   gap: 5px;
   margin: 16px 0 10px;
   padding: 13px;
-  border-left: 3px solid #6381b1;
-  border-radius: 5px;
-  background: #f4f7fc;
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
 }
 .incident-interval strong {
-  font-size: 20px;
-  color: #294c79;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .incident-interval span {
-  font-size: 11px;
-  color: #526982;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .incident-authority {
   margin: 18px 0;
-  border-top: 1px solid #e6eaf0;
-  border-bottom: 1px solid #e6eaf0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 12px 0;
-  font-size: 12px;
+  font-size: var(--fs-body);
 }
 .incident-authority > div + div {
   margin-top: 9px;
 }
 .incident-authority dt {
   font-weight: 700;
-  color: #506780;
+  color: var(--text);
 }
 .incident-authority dd {
   margin: 3px 0 0;
@@ -327,6 +327,6 @@
     max-width: 100%;
   }
   .incident-workspace h1 {
-    font-size: 27px;
+    font-size: var(--fs-title);
   }
 }

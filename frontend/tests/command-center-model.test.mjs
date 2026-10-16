@@ -70,7 +70,7 @@ test("missing snapshot labels and IDT remain missing; no lookup by known seed ID
   assert.equal(model.rows[0].classification.classified, false);
   assert.equal(model.people, null);
   assert.equal(model.sourceLabel, "Source label not captured");
-  assert.match(model.groups[0].label, /IDT unavailable/);
+  assert.match(model.groups[0].label, /IDT code not assigned/);
   assert.equal(capturedClassification({ id: "dialysis-x", type: "DialysisCenter" }).classified, false);
 });
 
@@ -99,6 +99,42 @@ test("service-area population is captured, deduplicated and never facility occup
   assert.equal(consequenceModel(a).rows.some((row) => /utility-[bc]/.test(row.entityId)), false);
 });
 
+test("conflicting saved populations never become an order-dependent numeric total", () => {
+  const a = fixture(), b = structuredClone(a);
+  b.id = "case-b";
+  b.runSnapshot.id = "run-b";
+  b.runSnapshot.baselineSnapshot.entities.find(e => e.id === "population-a").count = 19000;
+  for (const cases of [[a,b],[b,a]]) assert.equal(overviewModel(cases).people, null);
+});
+
+test("known and unknown captured service-area populations are explicitly incomplete", () => {
+  const a = fixture(), b = structuredClone(a);
+  b.id = "case-b";
+  b.runSnapshot.id = "run-b";
+  delete b.runSnapshot.baselineSnapshot.entities.find(e => e.id === "population-a").count;
+  assert.equal(overviewModel([a,b]).people, null);
+});
+
+test("duplicate captured service-area references cannot double-count selected population", () => {
+  const record = fixture();
+  record.runSnapshot.baselineSnapshot.entities.find(e => e.id === "utility-a").serves = ["area-a", "area-a"];
+  assert.equal(consequenceModel(freeze(record)).people, 18000);
+});
+
+test("array-form captured population references resolve like scalar references", () => {
+  const record = fixture();
+  record.runSnapshot.baselineSnapshot.entities.find(e => e.id === "population-a").locatedIn = ["area-a"];
+  assert.equal(consequenceModel(freeze(record)).people, 18000);
+  assert.equal(overviewModel([record]).people, 18000);
+});
+
+test("population groups spanning multiple areas stay unknown rather than being counted twice", () => {
+  const record = fixture();
+  record.runSnapshot.baselineSnapshot.entities.find(e => e.id === "utility-a").serves = ["area-a", "area-b"];
+  record.runSnapshot.baselineSnapshot.entities.find(e => e.id === "population-a").locatedIn = ["area-a", "area-b"];
+  assert.equal(consequenceModel(freeze(record)).people, null);
+});
+
 test("event timeline shows all supplied sources but only marks the captured anchor", () => {
   const record = fixture();
   record.eventSnapshot.label = "Historical anchor";
@@ -116,10 +152,10 @@ test("event timeline shows all supplied sources but only marks the captured anch
 test("briefs have formatted sections, captured provenance and never claim Chief decisions or dispatch", () => {
   const record = fixture();
   const text = formattedBrief(freeze(record), "SITREP for TDEM");
-  for (const label of ["# SITREP for TDEM", "Draft — not sent", "## What happened", "## So what", "## Recorded next steps", "src-network", "Policy gates not evaluated", "not populated"]) assert.ok(text.includes(label), label);
+  for (const label of ["# SITREP for TDEM", "Draft · not sent", "## What happened", "## So what", "## Recorded next steps", "src-network"]) assert.ok(text.includes(label), label);
   assert.equal(text.includes("people on unsafe water"), false);
   assert.equal(leadershipDraft(fixture({ runSnapshot: null })).impacts.length, 0);
-  assert.match(text, /do not authorize dispatch/);
+  assert.match(text, /Advisory, not approvals/);
 });
 
 test("external audience projections omit every identifying or free-form input", () => {
@@ -129,8 +165,8 @@ test("external audience projections omit every identifying or free-form input", 
   for (const audience of ["water", "health", "federal"]) {
     const text = JSON.stringify(audiencePreview(audience, freeze(record)));
     for (const blocked of ["PRIVATE CASE", "PRIVATE NOTE", "PRIVATE FACILITY", "PRIVATE ACCOUNT", "src-network", "utility-a", "dialysis-x"]) assert.equal(text.includes(blocked), false, `${audience}: ${blocked}`);
-    assert.match(text, /Draft — not sent/);
-    assert.match(text, /not an access-control or release decision/);
+    assert.match(text, /Draft · not sent/);
+    assert.equal(audiencePreview(audience, record).boundary, "Draft · not sent");
   }
 });
 

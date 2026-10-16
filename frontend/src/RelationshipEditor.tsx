@@ -3,10 +3,12 @@ import { Check, CheckCircle2, GitPullRequest, Save, X } from "lucide-react";
 import { api, ApiError, humanize } from "./api";
 import { displayText } from "./presentation";
 import type { Bootstrap, Dependency, Proposal, Validation } from "./types";
+import { newDependencyDraft, type DependencyPrefill } from "./dependencyDraft";
 
 interface Props {
   data: Bootstrap;
   initial: Dependency | null;
+  prefill?: DependencyPrefill;
   onClose: () => void;
   onPromoted: () => Promise<void>;
 }
@@ -24,35 +26,10 @@ const physicalTypes = new Set([
 const ownerOf = (item: Bootstrap["serviceFunctions"][number]) =>
   item.facility ?? item.entityId ?? item.entity ?? item.belongsTo;
 
-function newDependency(data: Bootstrap): Dependency {
-  const template = data.dependencies[0];
-  return {
-    id: `dep-${crypto.randomUUID()}`,
-    revision: 1,
-    provider: template.provider,
-    dependent: template.dependent,
-    requiredService: template.requiredService,
-    dependentFunction: template.dependentFunction,
-    dependencyType: "physical",
-    coupling: "tight",
-    lossTypes: [...template.lossTypes],
-    propagationDelayMinHours: 0,
-    propagationDelayMaxHours: 0,
-    usableBackupMinHours: null,
-    usableBackupMaxHours: null,
-    validForLossTypes: [],
-    lossOfFunction: 1,
-    outputLossType: null,
-    sourceRefs: [],
-    assumptionNote: "",
-    classification: "U",
-    handling: ["SIMULATED"],
-  };
-}
-
 export default function RelationshipEditor({
   data: initialData,
   initial,
+  prefill,
   onClose,
   onPromoted,
 }: Props) {
@@ -61,7 +38,7 @@ export default function RelationshipEditor({
   const [draft, setDraft] = useState<Dependency>(() =>
     initial
       ? { ...initial, assumptionNote: displayText(initial.assumptionNote) }
-      : newDependency(data),
+      : newDependencyDraft(data, prefill),
   );
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [validation, setValidation] = useState<Validation | null>(null);

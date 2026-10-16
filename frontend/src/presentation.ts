@@ -24,6 +24,10 @@ const referenceCopy: Readonly<Record<string, string>> = {
     "Reference authentication and dosing-parameter records for the Watershed environment.",
   "A completed simulated connection to the previously exposed controller.":
     "A completed connection to the previously exposed controller.",
+  "A completed simulated VPN-pool connection to the previously exposed controller.":
+    "A completed VPN-pool connection to the previously exposed controller.",
+  "Simulated successful vendor account login from the shared offsite source; assigns the VPN client pool address.":
+    "Successful vendor account login from the shared offsite source; assigns the VPN client pool address.",
   "Simulated successful controller authentication from the unusual source.":
     "Successful controller authentication from the unusual source.",
   "Synthetic quality indicator drifts after the change while pressure remains stable.":

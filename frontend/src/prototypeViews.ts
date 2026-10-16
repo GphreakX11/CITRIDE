@@ -6,13 +6,21 @@ import type {
   Run,
   Source,
 } from "./types.ts";
-export const planningVersion = "billington-prototype-v1";
-export const planningRates: Record<string, [number, number]> = {
-  "dialysis-treatment": [8000, 15000],
-  "hospital-sterilization": [20000, 40000],
-  "nursing-safe-water": [3000, 6000],
-  "fire-flow": [5000, 10000],
-};
+import type { ReferenceData } from "./scriptedTypes.ts";
+export function planningRates(
+  reference?: ReferenceData,
+): Record<string, [number, number]> {
+  return Object.fromEntries(
+    (reference?.planningRates ?? [])
+      .filter(
+        (r) =>
+          typeof r.functionId === "string" &&
+          typeof r.low === "number" &&
+          typeof r.high === "number",
+      )
+      .map((r) => [r.functionId!, [r.low!, r.high!]]),
+  );
+}
 export function snapshot(run: Run | null) {
   const raw = run?.baselineSnapshot as
     | {
@@ -58,7 +66,8 @@ export function impactRows(run: Run) {
         a.entityId.localeCompare(b.entityId),
     );
 }
-export function exposure(run: Run) {
+export function exposure(run: Run, reference?: ReferenceData) {
+  const rates = planningRates(reference);
   let minHours = 0,
     maxHours = 0,
     minCost = 0,
@@ -78,7 +87,7 @@ export function exposure(run: Run) {
         i.lossOfFunction;
     minHours += lo;
     maxHours += hi;
-    const rate = planningRates[i.functionId];
+    const rate = rates[i.functionId];
     if (!rate) {
       notEstimated.push(`${i.entityId}: no planning rate`);
       continue;
@@ -91,36 +100,19 @@ export function exposure(run: Run) {
     serviceHours: [minHours, maxHours],
     costUsd: estimatedRates ? [minCost, maxCost] : null,
     notEstimated,
-    referenceVersion: planningVersion,
+    referenceVersion: reference?.referenceVersion ?? "unavailable",
   };
 }
-export const responseOptions = [
-  {
-    id: "isao",
-    title: "Prepare a water-sector advisory",
-    actor: "TX-ISAO",
-    basis: "Tex. Gov't Code ch. 2063",
-  },
-  {
-    id: "ciru",
-    title: "Offer incident response coordination",
-    actor: "CIRU / affected utility",
-    basis: "Tex. Gov't Code ch. 2063",
-  },
-  {
-    id: "virt",
-    title: "Coordinate support if requested",
-    actor: "VIRT / utility owner",
-    basis: "Tex. Gov't Code ch. 2063",
-  },
-  {
-    id: "health",
-    title: "Contact facilities with the shortest planning windows",
-    actor: "TDEM / healthcare partners",
-    basis: "Tex. Gov't Code ch. 418",
-  },
-];
-export function brief(incident: CommandIncident) {
+export function responseOptions(reference?: ReferenceData) {
+  return (reference?.responseOptions ?? []).map((option) => ({
+    id: option.id,
+    title: option.title ?? option.id,
+    actor: option.actor ?? option.unit ?? "",
+    basis: option.citation ?? "",
+    verification: option.verification ?? "reference",
+  }));
+}
+export function brief(incident: CommandIncident, reference?: ReferenceData) {
   const context = incident.contextSnapshot;
   const happened = [
     incident.eventSnapshot.label ??
@@ -143,21 +135,22 @@ export function brief(incident: CommandIncident) {
     title: incident.title,
     happened,
     soWhat,
-    options: responseOptions.map((o) => ({
-      ...o,
-      verification: "Reference — needs legal review",
-    })),
+    options: responseOptions(reference),
     sourceRefs: context.sourceRefs,
     status: "Draft — not sent",
   };
 }
 export type Audience = "txcc" | "water_partners" | "tdem_health" | "federal";
-export function audienceView(audience: Audience, incident: CommandIncident) {
+export function audienceView(
+  audience: Audience,
+  incident: CommandIncident,
+  reference?: ReferenceData,
+) {
   if (audience === "txcc")
     return {
       audience,
       title: "TXCC internal",
-      shows: brief(incident),
+      shows: brief(incident, reference),
       notShown: [],
       status: "Draft — not sent",
     };

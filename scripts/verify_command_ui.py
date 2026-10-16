@@ -42,14 +42,19 @@ with sync_playwright() as p:
 
     before = fingerprint()
     names = [
-        "S1 Command overview",
-        "S2 Service-area COP",
-        "S3 Cyber operations",
-        "S4 Coordination",
-        "S5 Task force workspace",
-        "S6 Consequence",
-        "S7 Leadership brief",
-        "S8 Organizations & handoff",
+        "C1 Command Overview",
+        "C2 Statewide Map",
+        "C3 Attack Picture CTIC",
+        "C4 Consequences",
+        "C5 Response Teams UCTF",
+        "C6 Leadership Brief",
+        "C7 Partner and Stakeholder Coordination",
+        "A1 Case Queue",
+        "A2 Investigation Map",
+        "A3 Cyber Evidence CTIC",
+        "A4 Consequence Analysis",
+        "A5 Who Acts First",
+        "A6 Response Tasks UCTF",
     ]
     tools = [
         "Situation overview",
@@ -76,9 +81,9 @@ with sync_playwright() as p:
         page.on("pageerror", lambda error: errors.append(str(error)))
 
         def ready():
-            expect(
-                page.get_by_role("button", name="Refresh casework", exact=True)
-            ).to_be_enabled()
+            loaded = page.locator('.command-workspace[data-casework-loaded="true"]')
+            expect(loaded).to_be_attached()
+            expect(loaded).to_have_attribute("aria-busy", "false")
 
         def layout(label):
             widths = page.evaluate(
@@ -88,6 +93,10 @@ with sync_playwright() as p:
             assert page.locator("h1:visible").count() == 1, label
 
         def nav(name, tool=False):
+            mode = "Analyst" if tool or name.startswith("A") else "Command Center"
+            switch = page.get_by_role("button", name=mode, exact=True)
+            if switch.get_attribute("aria-pressed") != "true":
+                switch.click()
             if device == "phone":
                 page.get_by_role("button", name="Open navigation", exact=True).click()
             if (
@@ -96,7 +105,7 @@ with sync_playwright() as p:
                     "navigation", name="Model and evidence tools"
                 ).is_visible()
             ):
-                page.get_by_text("Model & evidence tools", exact=True).click()
+                page.get_by_text("Advanced tools", exact=True).click()
             page.get_by_role(
                 "navigation",
                 name="Model and evidence tools" if tool else "Main navigation",
@@ -104,6 +113,11 @@ with sync_playwright() as p:
             ).get_by_role("button", name=name, exact=True).click()
             page.wait_for_timeout(250)
             layout(name)
+            if not tool:
+                code, label = name.split(" ", 1)
+                expect(page.get_by_role("heading", level=1)).to_have_text(
+                    f"{code} · {label}"
+                )
 
         def change(button, **kwargs):
             with page.expect_response(
@@ -123,22 +137,23 @@ with sync_playwright() as p:
             nav(name)
         for name in tools:
             nav(name, tool=True)
-        nav(names[0])
-        page.get_by_role("button", name="Start incident", exact=True).click()
-        page.get_by_label("Source event", exact=True).select_option("event-dosing")
+        nav("A1 Case Queue")
+        alert = page.locator('[data-alert-id="event-dosing"]')
+        alert.get_by_role("button", name="Open case", exact=True).click()
+        form = alert.get_by_role("form", name="Open case from alert", exact=True)
         title = f"{device} dosing observation acceptance"
         page.get_by_label("Case title", exact=True).fill(title)
         page.get_by_label("Local triage priority", exact=True).select_option("high")
         created = change(
-            page.get_by_role("button", name="Create workspace case", exact=True)
+            form.get_by_role("button", name="Open case", exact=True)
         )
         case_id = created["id"]
         assert created["title"] == title
         expect(
-            page.get_by_role("button", name="Close workspace case…", exact=True)
+            page.get_by_role("button", name="Close case…", exact=True)
         ).to_be_disabled()
-        nav(names[5])
-        page.get_by_role("button", name="Analyze linked scenario…", exact=True).click()
+        nav("A4 Consequence Analysis")
+        page.get_by_role("button", name="Run analysis", exact=True).click()
         dialog = page.get_by_role("dialog")
         expect(dialog).to_be_visible()
         bounds = dialog.bounding_box()
@@ -149,10 +164,10 @@ with sync_playwright() as p:
         )
         dialog.get_by_role("button", name="Cancel", exact=True).click()
         assert not next(i for i in state() if i["id"] == case_id)["runId"]
-        page.get_by_role("button", name="Analyze linked scenario…", exact=True).click()
+        page.get_by_role("button", name="Run analysis", exact=True).click()
         analyzed = change(
             page.get_by_role("dialog").get_by_role(
-                "button", name="Analyze captured scenario", exact=True
+                "button", name="Run analysis", exact=True
             )
         )
         assert len(analyzed["decisions"]) == 3
@@ -161,21 +176,23 @@ with sync_playwright() as p:
             [2.0, 4.0],
             [4.0, 8.0],
         ]
+        page.get_by_role("button", name="Open full case file", exact=True).click()
+        ready()
         expect(page.locator(".cc-review")).to_have_count(3)
         layout("populated consequence")
         page.screenshot(path=str(out / f"{device}-consequence.png"), full_page=True)
         for index in range(3):
             card = page.locator(".cc-review").nth(index)
-            card.get_by_label("Advisory review note", exact=True).fill(
-                "Captured assumptions checked; advisory review only."
+            card.get_by_label("Impact review note", exact=True).fill(
+                "Captured assumptions checked; impact review only."
             )
             change(
-                card.get_by_role("button", name="Record advisory review", exact=True)
+                card.get_by_role("button", name="Record review", exact=True)
             )
-        nav(names[4])
+        nav("A6 Response Tasks UCTF")
         for index in range(page.locator(".cc-task input").count()):
             change(page.locator(".cc-task input").nth(index))
-        nav(names[3])
+        nav("A5 Who Acts First")
         note = "Local handoff retained. No partner notification sent."
         page.get_by_label("Coordination note", exact=True).fill(note)
         change(
@@ -186,15 +203,15 @@ with sync_playwright() as p:
         page.get_by_label("Required tracking / closure note", exact=True).fill(
             "All app reviews and tasks complete; no physical recovery claim."
         )
-        page.get_by_role("button", name="Close workspace case…", exact=True).click()
+        page.get_by_role("button", name="Close case…", exact=True).click()
         page.get_by_role("dialog").get_by_role(
             "button", name="Cancel", exact=True
         ).click()
         assert next(i for i in state() if i["id"] == case_id)["status"] == "open"
-        page.get_by_role("button", name="Close workspace case…", exact=True).click()
+        page.get_by_role("button", name="Close case…", exact=True).click()
         closed = change(
             page.get_by_role("dialog").get_by_role(
-                "button", name="Close workspace case", exact=True
+                "button", name="Close case", exact=True
             )
         )
         assert closed["status"] == "closed"
@@ -202,12 +219,12 @@ with sync_playwright() as p:
             "Explicitly reopen local tracking for recheck."
         )
         reopened = change(
-            page.get_by_role("button", name="Reopen workspace case", exact=True)
+            page.get_by_role("button", name="Reopen case", exact=True)
         )
         assert reopened["status"] == "open"
         page.reload()
         ready()
-        nav(names[3])
+        nav("A5 Who Acts First")
         expect(
             page.locator(".cc-timeline .cc-user-text").filter(has_text=note).first
         ).to_be_visible()
@@ -217,16 +234,17 @@ with sync_playwright() as p:
         page.get_by_label("Required tracking / closure note", exact=True).fill(
             "Close after verified reload; local tracking only."
         )
-        page.get_by_role("button", name="Close workspace case…", exact=True).click()
+        page.get_by_role("button", name="Close case…", exact=True).click()
         change(
             page.get_by_role("dialog").get_by_role(
-                "button", name="Close workspace case", exact=True
+                "button", name="Close case", exact=True
             )
         )
-        nav(names[7])
+        nav("C7 Partner and Stakeholder Coordination")
+        nav("A1 Case Queue")
         with page.expect_download() as download:
             page.get_by_role(
-                "button", name="Download selected brief", exact=True
+                "button", name="Download structured brief (JSON)", exact=True
             ).click()
         path = out / f"{device}-brief.json"
         download.value.save_as(path)
@@ -242,7 +260,7 @@ with sync_playwright() as p:
                 "device": device,
                 "caseId": case_id,
                 "runId": analyzed["runId"],
-                "navigation": 16,
+                "navigation": len(names) + len(tools),
                 "reviews": 3,
                 "savedTasks": len(closed["tasks"]),
                 "closureReopeningReload": True,

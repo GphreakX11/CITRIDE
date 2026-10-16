@@ -8,7 +8,6 @@ import {
   CircleHelp,
   Clock3,
   Database,
-  Download,
   Droplets,
   FileText,
   FlaskConical,
@@ -35,7 +34,7 @@ import CommandWorkspace from "./CommandWorkspace";
 import { commandNavigation, analystNavigation } from "./commandTypes";
 import { modeForView, modeLanding, type WorkspaceMode } from "./navigation";
 import "./workspace-modes.css";
-import { telemetryExport } from "./telemetryDownload";
+import NetworkEvidence from "./NetworkEvidence";
 import type { CommandView, CommandIncident } from "./commandTypes";
 import InvestigationBar from "./InvestigationBar";
 import {
@@ -45,8 +44,7 @@ import {
 } from "./investigationContext";
 import { initialMapView } from "./mapViewState";
 import { ApiError, api, describe, humanize, windowLabel } from "./api";
-import { referenceFromEvent } from "./referenceInvestigation";
-import ReferenceInvestigationEvidence from "./ReferenceInvestigationEvidence";
+
 import { displayText } from "./presentation";
 import { reviewDisplayText } from "./incidentDecisions";
 import type {
@@ -209,9 +207,10 @@ export default function App() {
   const [selectedEntity, setSelectedEntity] = useState<string | null>(
     () => readPrototypeLocation(window.location.href).entityId,
   );
-  const [editor, setEditor] = useState<{ initial: Dependency | null } | null>(
-    null,
-  );
+  const [editor, setEditor] = useState<{
+    initial: Dependency | null;
+    prefill?: { entityId: string; role: "provider" | "dependent" };
+  } | null>(null);
   const [scenarioId, setScenarioId] = useState("");
   const [evaluationHour, setEvaluationHour] = useState(1);
   const [horizonHours, setHorizonHours] = useState(12);
@@ -227,7 +226,6 @@ export default function App() {
   const [explainError, setExplainError] = useState("");
   const [compareId, setCompareId] = useState("");
   const [comparison, setComparison] = useState<Comparison | null>(null);
-  const [streamId, setStreamId] = useState("");
 
   function selectEntity(id: string | null) {
     if (workflowLocked) return;
@@ -347,7 +345,6 @@ export default function App() {
       setTelemetry(feeds);
       setRuns(history.runs);
       setScenarioId((current) => current || baseline.defaultScenarioId);
-      setStreamId((current) => current || feeds.streams[0]?.id || "");
     } catch (failure) {
       reportFailure(failure);
     } finally {
@@ -482,14 +479,7 @@ export default function App() {
     ? evidenceForContext(data, contextCase, selectedEntity)
     : [];
   const currentImpact = run?.impacts.find((item) => item.id === selectedImpact);
-  const selectedStream = telemetry?.streams.find(
-    (item) => item.id === streamId,
-  );
-  const recordKeys = [
-    ...new Set(
-      selectedStream?.records.flatMap((item) => Object.keys(item)) ?? [],
-    ),
-  ];
+
   const workspaceNavigation =
     mode === "command" ? commandNavigation : analystNavigation;
   const commandView = [
@@ -557,45 +547,43 @@ export default function App() {
 
   return (
     <div
+      data-mode={mode}
       data-workspace-mode={mode}
       className={`app-shell ${commandView ? "command-mode" : ""} workspace-${mode}`}
     >
-      <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
-        <a
-          className="brand"
-          href="#"
-          onClick={(event) => {
-            event.preventDefault();
-            changeView("command");
-          }}
-        >
-          <span className="brand-symbol">
-            <Droplets size={24} />
-          </span>
-          <span>
-            CITRIDE
-            <small>
-              {mode === "command" ? "COMMAND CENTER" : "ANALYST WORKSPACE"}
-            </small>
-          </span>
-        </a>
-        <button
-          type="button"
-          className="mobile-close icon-button"
-          aria-label="Close navigation"
-          onClick={() => setMobileMenu(false)}
-        >
-          <X size={20} />
-        </button>
-        <div className="workspace-selector">
-          <span className="workspace-icon">
-            <Building2 size={18} />
-          </span>
-          <div>
-            <strong>Watershed 250</strong>
-            <small>Water infrastructure workspace</small>
-          </div>
-          <span className="workspace-dot" />
+      <header className="topbar shell-header">
+        <div className="shell-brand-group">
+          <button
+            type="button"
+            className="mobile-menu icon-button"
+            aria-label="Open navigation"
+            onClick={() => setMobileMenu(true)}
+          >
+            <Menu size={20} />
+          </button>
+          <a
+            className="brand"
+            href="#"
+            onClick={(event) => {
+              event.preventDefault();
+              changeView("command");
+            }}
+          >
+            <span className="brand-symbol">
+              <Droplets size={24} />
+            </span>
+            <span>
+              CITRIDE
+              <small>
+                {mode === "command" ? "COMMAND CENTER" : "ANALYST WORKSPACE"}
+              </small>
+              <small className="shell-subtitle">
+                {mode === "command"
+                  ? "Texas Cyber Command · Statewide Command Center"
+                  : "Analyst workspace · CTIC watch floor"}
+              </small>
+            </span>
+          </a>
         </div>
         <nav className="workspace-mode-switch" aria-label="Workspace mode">
           <button
@@ -615,8 +603,50 @@ export default function App() {
             Analyst
           </button>
         </nav>
-        <p className="nav-label">
-          {mode === "command" ? "SITUATIONAL AWARENESS" : "ANALYST WORKFLOW"}
+        <div className="topbar-status">
+          <div id="workspace-header-context" className="shell-header-context">
+            <span className="sample-data">
+              Sample data · not connected to live systems
+            </span>
+          </div>
+          <span className="revision">
+            Baseline r{data?.baselineRevision ?? "—"}
+          </span>
+          {mode === "analyst" && (
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Reload model"
+              title="Reload model"
+              onClick={() => void refresh()}
+              disabled={loading}
+            >
+              <RefreshCw size={16} className={loading ? "spin" : ""} />
+            </button>
+          )}
+        </div>
+      </header>
+      <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
+        <button
+          type="button"
+          className="mobile-close icon-button"
+          aria-label="Close navigation"
+          onClick={() => setMobileMenu(false)}
+        >
+          <X size={20} />
+        </button>
+        <div className="workspace-selector">
+          <span className="workspace-icon">
+            <Building2 size={18} />
+          </span>
+          <div>
+            <strong>Watershed 250</strong>
+            <small>Water infrastructure workspace</small>
+          </div>
+          <span className="workspace-dot" />
+        </div>
+        <p className="shell-nav-heading">
+          {mode === "command" ? "COMMAND CENTER" : "ANALYST"}
         </p>
         <nav aria-label="Main navigation">
           {workspaceNavigation.map(({ id, code, label, unit, color }) => (
@@ -675,12 +705,10 @@ export default function App() {
         )}
         <div className="sidebar-footer">
           <span className="badge simulation">DECISION SUPPORT</span>
-          <p>Trace infrastructure dependencies and downstream consequences.</p>
           <div className="environment-status">
             <i />
             Watershed workspace
           </div>
-          <small>Human review required for decisions.</small>
         </div>
       </aside>
       {mobileMenu && (
@@ -692,41 +720,13 @@ export default function App() {
         />
       )}
       <main>
-        <header className="topbar">
+        <div className="shell-breadcrumbs">
           <div className="breadcrumbs">
-            <button
-              type="button"
-              className="mobile-menu icon-button"
-              aria-label="Open navigation"
-              onClick={() => setMobileMenu(true)}
-            >
-              <Menu size={20} />
-            </button>
             <span>Watershed 250</span>
             <ChevronRight size={14} />
             <strong>{title}</strong>
           </div>
-          <div className="topbar-status">
-            <span className="badge simulation">
-              {mode === "command" ? "READ-ONLY PICTURE" : "ANALYST WORKSPACE"}
-            </span>
-            <span className="revision">
-              Baseline r{data?.baselineRevision ?? "—"}
-            </span>
-            {mode === "analyst" && (
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Reload model"
-                title="Reload model"
-                onClick={() => void refresh()}
-                disabled={loading}
-              >
-                <RefreshCw size={16} className={loading ? "spin" : ""} />
-              </button>
-            )}
-          </div>
-        </header>
+        </div>
         <div className="content">
           <div className="page-heading">
             <div>
@@ -734,15 +734,24 @@ export default function App() {
                 WATERSHED 250 · INFRASTRUCTURE INTELLIGENCE
               </div>
               <h1>
-                {view === "overview"
-                  ? "From incident to downstream impact"
-                  : title}
+                {commandView && "code" in commandView ? (
+                  <>
+                    {commandView.code} · {commandView.label}
+                    {commandView.unit && (
+                      <span className="muted-text"> {commandView.unit}</span>
+                    )}
+                  </>
+                ) : view === "overview" ? (
+                  "From incident to downstream impact"
+                ) : (
+                  title
+                )}
               </h1>
               <p>
                 {commandView
                   ? mode === "command"
-                    ? "Read-only situational awareness from the same saved evidence analysts work with."
-                    : "Investigate evidence, maintain casework, and review conditional consequences."
+                    ? "Current incidents, modeled impacts and response activity."
+                    : "Review evidence, track cases and assess modeled consequences."
                   : view === "overview"
                     ? "Trace a water-control incident through infrastructure, dependencies, and essential services."
                     : view === "incident"
@@ -853,10 +862,11 @@ export default function App() {
               )}
               <div hidden={!commandView}>
                 <CommandWorkspace
+                  telemetry={telemetry}
                   mode={mode}
                   onOpenAnalyst={openAnalyst}
-                  onEditDependency={(dependency) =>
-                    setEditor({ initial: dependency })
+                  onEditDependency={(dependency, prefill) =>
+                    setEditor({ initial: dependency, prefill })
                   }
                   data={data}
                   view={(commandView?.id ?? "command") as CommandView}
@@ -1916,14 +1926,7 @@ export default function App() {
                       )}
                     </section>
                   )}
-                  {contextCase &&
-                    referenceFromEvent(contextCase.eventSnapshot) && (
-                      <ReferenceInvestigationEvidence
-                        reference={referenceFromEvent(
-                          contextCase.eventSnapshot,
-                        )!}
-                      />
-                    )}
+
                   <div className="notice">
                     <Activity size={20} />
                     <div>
@@ -1970,107 +1973,20 @@ export default function App() {
                       ))}
                     </div>
                   </section>
-                  <section className="card telemetry">
-                    <div className="panel-heading">
-                      <div>
-                        <span className="eyebrow">
-                          Raw evidence · outside the knowledge graph
-                        </span>
-                        <h2>
-                          <Database size={18} />
-                          Telemetry streams
-                        </h2>
-                      </div>
-                    </div>
-                    <div className="telemetry-controls">
-                      <label>
-                        Stream
-                        <select
-                          value={streamId}
-                          onChange={(event) => setStreamId(event.target.value)}
-                        >
-                          {telemetry?.streams.map((stream) => (
-                            <option key={stream.id} value={stream.id}>
-                              {displayText(stream.label)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {selectedStream && (
-                        <div>
-                          <strong>
-                            {selectedStream.records.length} records
-                          </strong>
-                          {renderSources([selectedStream.sourceRef])}
-                          <button
-                            className="button secondary"
-                            onClick={() => {
-                              const exported = telemetryExport(selectedStream);
-                              const url = URL.createObjectURL(
-                                new Blob([exported.contents], {
-                                  type: "application/json;charset=utf-8",
-                                }),
-                              );
-                              const a = document.createElement("a");
-                              a.href = url;
-                              a.download = exported.filename;
-                              a.click();
-                              URL.revokeObjectURL(url);
-                            }}
-                          >
-                            <Download size={15} />
-                            Download complete stream
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {selectedStream && (
-                      <>
-                        <div className="table-scroll telemetry-table">
-                          <table>
-                            <thead>
-                              <tr>
-                                {recordKeys.map((key) => (
-                                  <th key={key}>{humanize(key)}</th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedStream.records
-                                .slice(0, 200)
-                                .map((record, index) => (
-                                  <tr key={index}>
-                                    {recordKeys.map((key) => (
-                                      <td key={key}>
-                                        {record[key] === undefined ||
-                                        record[key] === null
-                                          ? "—"
-                                          : typeof record[key] === "string"
-                                            ? displayText(record[key] as string)
-                                            : displayText(
-                                                describe(record[key]),
-                                              )}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        {selectedStream.records.length > 200 && (
-                          <p className="field-help telemetry-note">
-                            Showing the first 200 records. Download complete
-                            stream includes every record.
-                          </p>
-                        )}
-                      </>
-                    )}
-                    {telemetry?.streams.length === 0 && (
-                      <p className="notice compact">
-                        No telemetry streams are configured.
-                      </p>
-                    )}
-                  </section>
+                  <NetworkEvidence
+                    data={data}
+                    telemetry={telemetry}
+                    events={
+                      contextCase
+                        ? [
+                            ...data.events.filter(
+                              (event) => event.id !== contextCase.eventId,
+                            ),
+                            contextCase.eventSnapshot,
+                          ]
+                        : data.events
+                    }
+                  />
                 </>
               )}
 
@@ -2088,7 +2004,9 @@ export default function App() {
                   onOpenReasoning={() => changeView("reasoning")}
                 />
               )}
-              {view === "reasoning" && <ReasoningView data={data} />}
+              {view === "reasoning" && (
+                <ReasoningView data={data} selectedEntityId={selectedEntity} />
+              )}
               {view === "sources" && (
                 <>
                   <div className="notice">
@@ -2200,6 +2118,7 @@ export default function App() {
           key={editor.initial?.id ?? "new"}
           data={data}
           initial={editor.initial}
+          prefill={editor.prefill}
           onClose={() => setEditor(null)}
           onPromoted={refresh}
         />

@@ -34,12 +34,12 @@
       }
     ]
   },
-  "assignmentProvenance": "Stakeholder-supplied Billington beta design §10; exact existing 58 and proposed 9 IDs. Advisory reference lookup, not persisted assignments, containment evidence or OWL assertions.",
+  "assignmentProvenance": "Stakeholder-supplied Billington beta design §10; canonical assignments for the existing 58 and proposed 9 IDs, copied onto newly generated entity records. Historical snapshots remain as captured.",
   "assignmentLimitations": [
     "Sensor/pressure/tank component codes reflect the supplied design's monitoring-system classification, not independently verified facility status.",
     "Organization parent codes for workstations/VPN gateways are reference associations, not asserted physical containment.",
     "Historical snapshots without captured IDT remain unassigned; do not apply seed fallback to history.",
-    "No runtime IDT OWL merge, projection, entailment or witnesses are implemented."
+    "Reference lookup is not an entailment proof; runtime OWL hierarchy and sourced witnesses are generated and recorded separately."
   ],
   "proposedEntityIds": [
     "cyber-vpn-a",

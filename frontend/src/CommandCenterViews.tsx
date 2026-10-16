@@ -1,10 +1,14 @@
+import { StatusChip } from "./visualPrimitives.ts";
+import { VisualCard } from "./visualPrimitives.ts";
+import { SummaryTile } from "./visualPrimitives.ts";
+import DependencyNetwork from "./components/DependencyNetwork.tsx";
 import { useState, type ReactNode } from "react";
-import type { Bootstrap, Entity, Source } from "./types.ts";
+import type { Bootstrap, Source } from "./types.ts";
 import type { CommandIncident, CommandView } from "./commandTypes.ts";
 import { orderIncidents } from "./commandMetrics.ts";
 import { displayText } from "./presentation.ts";
-import { graphEdges, mapPositions } from "./texasGraph.ts";
-import { TEXAS_PATH, TEXAS_BOUNDARY_SOURCE } from "./texasOutline.ts";
+import { activityDisplayText } from "./caseFilePresentation.ts";
+import CommandInfrastructureMap from "./CommandInfrastructureMap.tsx";
 import {
   audiencePreview,
   contextChain,
@@ -26,11 +30,18 @@ import {
   type ConsequenceModel,
 } from "./commandCenterModel.ts";
 import "./command-center-views.css";
+import { eventSourceChips } from "./networkEvidence.ts";
+import ScriptedCommandViews from "./ScriptedCommandViews.tsx";
+import type { RecordsState, ReferenceData } from "./scriptedTypes.ts";
 
 export interface CommandCenterViewsProps {
+  records?: RecordsState;
+  reference?: ReferenceData;
   data: Bootstrap;
   incidents: CommandIncident[];
   selected: CommandIncident | null;
+  selectedEntityId?: string | null;
+  onSelectEntity?: (id: string | null) => void;
   view: CommandView;
   onSelect: (id: string) => void;
   onOpenAnalyst: (
@@ -44,9 +55,9 @@ export interface CommandCenterViewsProps {
 const headings: Partial<Record<CommandView, [string, string]>> = {
   command: ["C1", "Command Overview"],
   cop: ["C2", "Statewide Map"],
-  cyber: ["C3", "Attack Picture"],
+  cyber: ["C3", "Attack Picture CTIC"],
   consequence: ["C4", "Consequences"],
-  uctf: ["C5", "Response Teams"],
+  uctf: ["C5", "Response Teams UCTF"],
   leadership: ["C6", "Leadership Brief"],
   federation: ["C7", "Partner and Stakeholder Coordination"],
 };
@@ -60,13 +71,13 @@ function Panel({
   note?: string;
 }) {
   return (
-    <section className="command-panel cc-panel">
+    <VisualCard className="command-panel cc-panel">
       <div className="command-panel-heading">
         <h2>{title}</h2>
         {note && <span>{note}</span>}
       </div>
       {children}
-    </section>
+    </VisualCard>
   );
 }
 function Empty({ children }: { children: ReactNode }) {
@@ -79,11 +90,13 @@ function Metrics({ values }: { values: [ReactNode, string, string][] }) {
       aria-label="Recorded measures"
     >
       {values.map(([value, label, note]) => (
-        <article className="command-metric" key={label}>
-          <strong>{value}</strong>
+        <SummaryTile className="command-metric" key={label}>
+          <strong>
+            {typeof value === "number" ? value.toLocaleString("en-US") : value}
+          </strong>
           <span>{label}</span>
           <small>{note}</small>
-        </article>
+        </SummaryTile>
       ))}
     </section>
   );
@@ -116,17 +129,10 @@ function ImpactList({ model }: { model: ConsequenceModel }) {
           </small>
         </li>
       ))}
-      {!model.rows.length && (
-        <li>
-          No impacts in this captured run. This does not establish normal
-          operations.
-        </li>
-      )}
+      {!model.rows.length && <li>No modeled impacts.</li>}
     </ul>
   ) : (
-    <Empty>
-      No captured consequence run. Physical service effects are not established.
-    </Empty>
+    <Empty>No analysis recorded.</Empty>
   );
 }
 function CaseRegister({
@@ -173,12 +179,17 @@ function CaseRegister({
                 </small>
               </td>
               <td>
-                <span className={`command-priority ${incident.priority}`}>
+                <StatusChip
+                  status={incident.priority}
+                  className={`command-priority ${incident.priority}`}
+                >
                   {words(incident.priority)}
-                </span>
+                </StatusChip>
               </td>
               <td>
-                {words(incident.status)}
+                <StatusChip status={incident.status}>
+                  {words(incident.status)}
+                </StatusChip>
                 <small>Case tracking only</small>
               </td>
               <td>
@@ -186,7 +197,7 @@ function CaseRegister({
                   incident.decisions.filter((decision) => decision.reviewed)
                     .length
                 }{" "}
-                / {incident.decisions.length} advisory reviews
+                / {incident.decisions.length} impact reviews
                 <small>
                   {incident.tasks.filter((task) => task.completed).length} /{" "}
                   {incident.tasks.length} tasks recorded complete
@@ -198,9 +209,7 @@ function CaseRegister({
       </table>
     </div>
   ) : (
-    <Empty>
-      No saved cases. Source alerts do not become incidents automatically.
-    </Empty>
+    <Empty>No saved cases.</Empty>
   );
 }
 function CaseSummary({
@@ -253,25 +262,22 @@ function CaseSummary({
           ))}
         </ul>
       )}
-      <h4>Captured impacts</h4>
+      <h4>Captured impacts · Modeled · not observed outages</h4>
       <ImpactList model={model} />
       <h4>Recorded progress</h4>
       <p>
         {incident.decisions.filter((decision) => decision.reviewed).length} of{" "}
-        {incident.decisions.length} advisory reviews ·{" "}
+        {incident.decisions.length} impact reviews ·{" "}
         {incident.tasks.filter((task) => task.completed).length} of{" "}
         {incident.tasks.length} tasks recorded complete
       </p>
-      <p className="command-muted">
-        Chief response-option decisions are not supplied. Advisory reviews are
-        not approvals; completed tasks do not establish dispatch or recovery.
-      </p>
+      <p className="command-muted">Advisory, not approvals</p>
       <h4>Latest activity</h4>
       {recordedActivity([incident])
         .slice(0, 3)
         .map((item) => (
           <p key={item.id}>
-            {item.message}
+            {activityDisplayText(item.message)}
             <small className="cc-block">{timeLabel(item.createdAt)}</small>
           </p>
         ))}
@@ -287,373 +293,6 @@ function CaseSummary({
   );
 }
 
-/** Infrastructure-only topology; no equipment, inventory search or Analyst map controls. */
-function InfrastructureSchematic({
-  data,
-  selected,
-}: {
-  data: Bootstrap;
-  selected: CommandIncident | null;
-}) {
-  const model = consequenceModel(selected);
-  const entities = [
-    ...new Map(
-      [
-        ...data.entities,
-        ...(selected ? contextChain(selected) : []),
-        ...model.captured.entities,
-      ].map((entity) => [entity.id, entity]),
-    ).values(),
-  ];
-  const equipment = (entity: Entity) =>
-    /Cyber|PhysicalITAsset|PhysicalOTAsset|NetworkIdentity/i.test(entity.type);
-  const ids = new Set(
-    [...data.dependencies, ...model.captured.dependencies].flatMap(
-      (dependency) => [dependency.provider, dependency.dependent],
-    ),
-  );
-  const nodes = entities.filter(
-    (entity) =>
-      !equipment(entity) &&
-      (ids.has(entity.id) ||
-        entity.type === "WaterServiceProvider" ||
-        entity.type === "TreatmentPlant"),
-  );
-  const visible = new Set(nodes.map((entity) => entity.id));
-  const positions = mapPositions(entities);
-  const edges = graphEdges({ ...data, entities }).filter(
-    (edge) =>
-      edge.kind === "dependency" &&
-      visible.has(edge.source) &&
-      visible.has(edge.target),
-  );
-  const impacts = new Set(
-    model.rows
-      .filter((row) =>
-        model.captured.entities.some((entity) => entity.id === row.entityId),
-      )
-      .map((row) => row.entityId),
-  );
-  return (
-    <>
-      <div className="cc-map-frame">
-        <svg
-          className="cc-schematic"
-          viewBox="50 35 880 670"
-          role="img"
-          aria-label="Infrastructure schematic; positions are illustrative, not incident locations"
-        >
-          <path className="cc-state-outline" d={TEXAS_PATH} />
-          {edges.map((edge) => {
-            const from = positions.get(edge.source),
-              to = positions.get(edge.target);
-            return from && to ? (
-              <line
-                key={edge.id}
-                x1={from.x}
-                y1={from.y}
-                x2={to.x}
-                y2={to.y}
-                className="cc-map-edge"
-              >
-                <title>{`${edge.label} · reference dependency`}</title>
-              </line>
-            ) : null;
-          })}
-          {nodes.map((entity) => {
-            const position = positions.get(entity.id);
-            if (!position) return null;
-            const affected = impacts.has(entity.id),
-              context = selected?.contextSnapshot.provider?.id === entity.id;
-            return (
-              <g
-                key={entity.id}
-                className={
-                  affected
-                    ? "cc-map-node modeled"
-                    : context
-                      ? "cc-map-node context"
-                      : "cc-map-node"
-                }
-              >
-                <title>{`${displayText(entity.label)} · ${affected ? "captured modeled result, not observed outage" : context ? "captured case context, not confirmed outage" : "reference infrastructure; operational status not established"}`}</title>
-                <circle
-                  cx={position.x}
-                  cy={position.y}
-                  r={affected || context ? 10 : 6}
-                />
-                <text x={position.x + 13} y={position.y + 4}>
-                  {displayText(entity.label)}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      <p className="command-muted">
-        Schematic topology, not deployment locations or service boundaries.
-        Orange: captured modeled results. Blue: selected case context. Gray:
-        reference infrastructure, not a normal-status assertion.
-      </p>
-      <a
-        className="command-link"
-        href={TEXAS_BOUNDARY_SOURCE}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Texas boundary source
-      </a>
-    </>
-  );
-}
-function ConsequenceNetwork({ model }: { model: ConsequenceModel }) {
-  const [sector, setSector] = useState<string | null>(null);
-  const [asset, setAsset] = useState<string | null>(null);
-  const group = model.groups.find((item) => item.key === sector);
-  const rows = group?.items ?? model.rows;
-  const row = rows.find((item) => item.id === asset) ?? rows[0];
-  const count = model.groups.length;
-  return (
-    <>
-      <div className="cc-network-layout">
-        <Panel
-          title={group ? group.label : "Captured Dependency Network"}
-          note="Modeled · not observed outages"
-        >
-          {group && (
-            <button
-              className="command-link"
-              onClick={() => {
-                setSector(null);
-                setAsset(null);
-              }}
-            >
-              ← All sectors
-            </button>
-          )}
-          {!group && (
-            <>
-              <div className="cc-network-graphic">
-                <svg
-                  viewBox="0 0 640 360"
-                  role="img"
-                  aria-label="Captured source linked to modeled impact groups"
-                >
-                  {model.groups.map((item, i) => {
-                    const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-                    const x = 320 + Math.cos(angle) * 225,
-                      y = 180 + Math.sin(angle) * 120;
-                    const radius = 18 + Math.sqrt(item.count) * 6;
-                    const services = [
-                      ...new Set(
-                        item.items.flatMap((impact) =>
-                          impact.dependencies.map((dependency) =>
-                            words(dependency.requiredService),
-                          ),
-                        ),
-                      ),
-                    ];
-                    return (
-                      <g
-                        key={item.key}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Show ${item.label}: ${item.count} facilities`}
-                        onClick={() => {
-                          setSector(item.key);
-                          setAsset(null);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            setSector(item.key);
-                            setAsset(null);
-                          }
-                        }}
-                      >
-                        <line x1="320" y1="180" x2={x} y2={y} />
-                        <circle cx={x} cy={y} r={radius} />
-                        <text x={x} y={y + 5} textAnchor="middle">
-                          {item.count}
-                        </text>
-                        <title>{`${item.label}: ${item.count} modeled facilities · ${services.join(", ") || "Dependency labels not captured"}`}</title>
-                      </g>
-                    );
-                  })}
-                  <circle
-                    cx="320"
-                    cy="180"
-                    r="38"
-                    className="cc-network-source"
-                  />
-                  <text x="320" y="245" textAnchor="middle">
-                    {displayText(model.sourceLabel)}
-                  </text>
-                </svg>
-              </div>
-              <p className="command-muted">
-                Circle size: unique facilities with modeled results. Select a
-                sector below to drill down. Classification gaps remain explicit.
-              </p>
-              <div className="cc-sector-buttons">
-                {model.groups.map((item) => (
-                  <button
-                    key={item.key}
-                    className="cc-sector-button"
-                    onClick={() => {
-                      setSector(item.key);
-                      setAsset(null);
-                    }}
-                  >
-                    <strong>{item.label}</strong>
-                    <span>
-                      {item.count} facilities · {planningWindow(item.earliest)}
-                    </span>
-                    <small>
-                      {[
-                        ...new Set(
-                          item.items.flatMap((impact) =>
-                            impact.dependencies.map((dependency) =>
-                              words(dependency.requiredService),
-                            ),
-                          ),
-                        ),
-                      ].join(" · ") || "Dependency labels not captured"}
-                    </small>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          {group && (
-            <ul className="command-record-list">
-              {rows.map((item) => (
-                <li key={item.id}>
-                  <button
-                    className="command-link"
-                    onClick={() => setAsset(item.id)}
-                    aria-pressed={row?.id === item.id}
-                  >
-                    {displayText(item.label)} ·{" "}
-                    {displayText(item.functionLabel)}
-                  </button>
-                  <small>
-                    {words(item.state)} · {planningWindow(item.windowHours)} ·
-                    modeled
-                  </small>
-                </li>
-              ))}
-            </ul>
-          )}
-          {!model.rows.length && (
-            <Empty>No modeled impacts in this captured run.</Empty>
-          )}
-        </Panel>
-        <Panel title="Why It's at Risk">
-          {row ? (
-            <>
-              <h3>{displayText(row.label)}</h3>
-              <p>{row.classification.lineage}</p>
-              <dl className="cc-facts">
-                <dt>Modeled state</dt>
-                <dd>{words(row.state)}</dd>
-                <dt>Window</dt>
-                <dd>{planningWindow(row.windowHours)}</dd>
-                <dt>Reserve</dt>
-                <dd>
-                  {row.dependencies.length
-                    ? [
-                        ...new Set(
-                          row.dependencies.map((dependency) =>
-                            dependency.usableBackupMinHours === null ||
-                            dependency.usableBackupMaxHours === null
-                              ? "Unknown captured reserve"
-                              : `${dependency.usableBackupMinHours}–${dependency.usableBackupMaxHours} hours`,
-                          ),
-                        ),
-                      ].join("; ")
-                    : "No dependency reserve captured"}
-                </dd>
-                <dt>Path</dt>
-                <dd>
-                  {row.chains.flat().map(displayText).join(" → ") ||
-                    "Path labels not captured"}
-                </dd>
-              </dl>
-              <h4>Captured assumptions</h4>
-              <ul>
-                {row.assumptions.map((assumption, i) => (
-                  <li key={i}>{displayText(assumption)}</li>
-                ))}
-              </ul>
-              <Sources refs={row.sourceRefs} sources={model.captured.sources} />
-            </>
-          ) : (
-            <Empty>No modeled result to inspect.</Empty>
-          )}
-        </Panel>
-      </div>
-      <Panel
-        title="Who Runs Out First"
-        note="Scenario-relative planning intervals, not live countdowns"
-      >
-        <ImpactList model={model} />
-      </Panel>
-      <Panel title="By Sector">
-        <div className="command-table-wrap">
-          <table className="command-table">
-            <thead>
-              <tr>
-                <th scope="col">Captured classification</th>
-                <th scope="col">Facilities in results</th>
-                <th scope="col">Earliest window</th>
-              </tr>
-            </thead>
-            <tbody>
-              {model.groups.map((item) => (
-                <tr key={item.key}>
-                  <td>
-                    <button
-                      className="command-link"
-                      onClick={() => {
-                        setSector(item.key);
-                        setAsset(null);
-                      }}
-                    >
-                      {item.label}
-                    </button>
-                  </td>
-                  <td>{item.count}</td>
-                  <td>{planningWindow(item.earliest)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="command-muted">
-          Consequence model: {model.run?.modelVersion} · Captured{" "}
-          {timeLabel(model.run?.createdAt)} · Baseline revision{" "}
-          {model.run?.baselineRevision}
-        </p>
-        {!!model.run?.warnings.length && (
-          <p className="cc-notice">
-            Needs model review:{" "}
-            {model.run.warnings
-              .map((warning) =>
-                typeof warning === "string" ? warning : JSON.stringify(warning),
-              )
-              .join("; ")}
-          </p>
-        )}
-        <p className="command-muted">
-          {model.run?.excluded.length} excluded path records remain excluded; a
-          facility absent from results is not asserted unaffected.
-        </p>
-      </Panel>
-    </>
-  );
-}
-
 function DraftExports({ incident }: { incident: CommandIncident }) {
   return (
     <div className="cc-actions">
@@ -665,7 +304,7 @@ function DraftExports({ incident }: { incident: CommandIncident }) {
             href={`data:text/markdown;charset=utf-8,${encodeURIComponent(formattedBrief(incident, title))}`}
             download={i === 0 ? "leadership-brief-draft.md" : "sitrep-draft.md"}
           >
-            {title} · draft
+            {title} · Draft · not sent
           </a>
         ),
       )}
@@ -677,10 +316,14 @@ export default function CommandCenterViews({
   data,
   incidents,
   selected,
+  selectedEntityId,
+  onSelectEntity,
   view,
   onSelect,
   onOpenAnalyst,
   onNavigate,
+  records,
+  reference,
 }: CommandCenterViewsProps) {
   const overview = overviewModel(incidents);
   const model = consequenceModel(selected);
@@ -708,6 +351,26 @@ export default function CommandCenterViews({
       </div>
     );
   let content: ReactNode;
+  const scripted =
+    records &&
+    reference &&
+    ["command", "cop", "cyber", "uctf", "leadership", "federation"].includes(
+      view,
+    ) ? (
+      <ScriptedCommandViews
+        data={data}
+        incidents={incidents}
+        selected={selected}
+        view={view}
+        records={records}
+        reference={reference}
+        onSelect={onSelect}
+        onOpenAnalyst={onOpenAnalyst}
+        onNavigate={onNavigate}
+        onSelectEntity={onSelectEntity}
+      />
+    ) : null;
+  if (scripted && view !== "cop") return scripted;
   if (view === "command") {
     content = (
       <>
@@ -723,23 +386,40 @@ export default function CommandCenterViews({
               "IDT sectors in modeled results",
               overview.unclassifiedImpacts
                 ? "Some captured impacts lack IDT classification"
-                : "Captured run classification only",
+                : "Analysis classification",
             ],
             [
               overview.people ?? "Not captured",
               "People in modeled service areas",
-              "Inventory population, not confirmed outage exposure",
+              "Modeled · not observed outages",
             ],
             [
               overview.metrics.pendingDecisions,
-              "Advisory reviews waiting",
-              "Chief decisions are not supplied",
+              "Impact reviews waiting",
+              "Advisory, not approvals",
             ],
           ]}
         />
-        <div className="cc-two-columns">
+        <div className="cc-map-dashboard">
           <Panel title="Statewide Picture">
-            <InfrastructureSchematic data={data} selected={selected} />
+            <CommandInfrastructureMap
+              key={selected?.id ?? "all"}
+              data={data}
+              incidents={incidents}
+              selected={selected}
+              selectedEntityId={selectedEntityId}
+              onSelectEntity={onSelectEntity}
+              onOpenEntity={(id, caseId) =>
+                onOpenAnalyst(
+                  data.entities.some((entity) => entity.id === id)
+                    ? "entity-profile"
+                    : "case-file",
+                  caseId,
+                  id,
+                )
+              }
+              onSelectCase={openSummary}
+            />
           </Panel>
           <Panel title="Reviews Waiting">
             {overview.pending.map(({ incident, decision }) => (
@@ -755,27 +435,28 @@ export default function CommandCenterViews({
                 </button>
                 <p>{decision.title}</p>
                 <small>
-                  {planningWindow(decision.windowHours)} · advisory, not
-                  approval
+                  {planningWindow(decision.windowHours)} · Advisory, not
+                  approvals
                 </small>
               </article>
             ))}
             {!overview.pending.length && (
-              <Empty>No pending advisory reviews in active cases.</Empty>
+              <Empty>No pending impact reviews in active cases.</Empty>
             )}
           </Panel>
         </div>
-        <Panel
-          title="Saved Incident Register"
-          note="Source alerts are not outage declarations"
-        >
+        <Panel title="Saved Incident Register" note="Saved cases">
           <CaseRegister incidents={incidents} onSummary={openSummary} />
         </Panel>
         <div className="cc-two-columns">
-          <Panel title="Facilities in Modeled Results">
+          <Panel
+            title="Facilities in Modeled Results"
+            note="Modeled · not observed outages"
+          >
             {overview.facilities.map((row) => (
               <article className="cc-list-card" key={`${row.caseId}:${row.id}`}>
                 <strong>{displayText(row.label)}</strong>
+                <small>{row.classification.label}</small>
                 <p>
                   {planningWindow(row.windowHours)} · modeled {words(row.state)}
                 </p>
@@ -800,7 +481,7 @@ export default function CommandCenterViews({
                 key={`${item.caseId}:${item.id}`}
               >
                 <small>{timeLabel(item.createdAt)}</small>
-                <p>{item.message}</p>
+                <p>{activityDisplayText(item.message)}</p>
                 <button
                   className="command-link"
                   onClick={() => openSummary(item.caseId)}
@@ -823,7 +504,7 @@ export default function CommandCenterViews({
       </>
     );
   } else if (view === "cop") {
-    content = (
+    const infrastructure = (
       <>
         <div className="cc-case-buttons" aria-label="Saved incidents">
           {orderIncidents(incidents).map((incident) => (
@@ -840,11 +521,31 @@ export default function CommandCenterViews({
             </button>
           ))}
         </div>
-        <div className="cc-two-columns">
+        <div className="cc-map-dashboard">
           <Panel title="Infrastructure Schematic">
-            <InfrastructureSchematic data={data} selected={selected} />
+            <CommandInfrastructureMap
+              key={selected?.id ?? "all"}
+              data={data}
+              incidents={incidents}
+              selected={selected}
+              selectedEntityId={selectedEntityId}
+              onSelectEntity={onSelectEntity}
+              onOpenEntity={(id, caseId) =>
+                onOpenAnalyst(
+                  data.entities.some((entity) => entity.id === id)
+                    ? "entity-profile"
+                    : "case-file",
+                  caseId,
+                  id,
+                )
+              }
+              onSelectCase={openSummary}
+            />
           </Panel>
-          <Panel title="Selected Incident">
+          <Panel
+            title="Selected Incident"
+            note="Modeled · not observed outages"
+          >
             {selected ? (
               <>
                 <h3>{selected.title}</h3>
@@ -879,19 +580,26 @@ export default function CommandCenterViews({
         </div>
       </>
     );
+    content = (
+      <>
+        {scripted}
+        {scripted ? (
+          <details>
+            <summary>Advanced · infrastructure inventory</summary>
+            {infrastructure}
+          </details>
+        ) : (
+          infrastructure
+        )}
+      </>
+    );
   } else if (view === "cyber") {
     const timeline = eventTimeline(data, selected);
     content = (
       <>
-        <Panel
-          title="Recorded Event Timeline"
-          note="CTIC · source observations, not outage or attribution judgments"
-        >
-          <p className="command-muted">
-            All supplied event records are shown. The selected case's captured
-            event is marked; other events are not automatically linked to that
-            case.
-          </p>
+        <Panel title="Recorded Event Timeline" note="CTIC analyst assessment">
+          <p>Network · Corelight format (simulated)</p>
+
           <ol className="cc-event-timeline">
             {timeline.map((item) => (
               <li
@@ -955,16 +663,7 @@ export default function CommandCenterViews({
             )}
           </Panel>
           <Panel title="Attack Picture Coverage">
-            <p>
-              Actor attribution, analyst confidence, compromise-status records,
-              ATT&CK stage judgments and active-hunt statuses are not supplied
-              by the current case contract.
-            </p>
-            <p>
-              No attack-stage duration or vendor exposure count is inferred from
-              unrelated observations. A source observation alone does not
-              establish a physical outage.
-            </p>
+            <p>No additional attack assessments recorded.</p>
             {selected && (
               <button
                 className="command-link"
@@ -985,12 +684,12 @@ export default function CommandCenterViews({
             [
               model.people ?? "Not captured",
               "People in modeled service areas",
-              "Captured population, not observed exposure",
+              "Modeled · not observed outages",
             ],
             [
               model.facilities,
               "Facilities in modeled results",
-              "Not observed outages",
+              "Modeled · not observed outages",
             ],
             [
               planningWindow(model.earliest),
@@ -1004,13 +703,13 @@ export default function CommandCenterViews({
             ],
           ]}
         />
-        <ConsequenceNetwork key={model.run.id} model={model} />
+        <DependencyNetwork key={model.run.id} model={model} mode="display" />
       </>
     ) : (
       <Panel title="Captured Consequences">
         <Empty>
           {selected
-            ? "No captured consequence run for this case. Run analysis in Analyst; no current-baseline results are substituted."
+            ? "No captured consequence run for this case."
             : "Select a saved case with a captured consequence run."}
         </Empty>
         {selected && (
@@ -1037,22 +736,17 @@ export default function CommandCenterViews({
             [
               tasks.filter((task) => task.completed).length,
               "Recorded complete",
-              "Not confirmed dispatch or recovery",
+              "Saved tasks",
             ],
             [
               tasks.filter((task) => !task.completed).length,
               "Recorded incomplete",
-              "No due dates supplied",
+              "Due dates unknown",
             ],
           ]}
         />
         <Panel title="Deployment Coverage" note="UCTF">
-          <p>
-            Team, deployment, staffing, location, en-route, forensics/testing
-            and response-clock target records are not supplied. No deployment
-            map, team count or response-clock status can be established from
-            task completion.
-          </p>
+          <p>No teams deployed for this incident.</p>
         </Panel>
         <Panel title="Recorded Response Tasks">
           {tasks.length ? (
@@ -1110,6 +804,27 @@ export default function CommandCenterViews({
         {selected && draft ? (
           <>
             <DraftExports incident={selected} />
+            <Panel
+              title="Available evidence sources"
+              note="Event source provenance"
+            >
+              <div className="cc-sources">
+                {[
+                  ...new Set(
+                    [
+                      ...data.events.filter(
+                        (event) => event.id !== selected.eventId,
+                      ),
+                      selected.eventSnapshot,
+                    ].flatMap(eventSourceChips),
+                  ),
+                ].map((label) => (
+                  <span className="cc-tag" key={label}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </Panel>
             <Panel title="What Happened">
               <h3>{draft.event}</h3>
               <p>{displayText(draft.description)}</p>
@@ -1121,7 +836,7 @@ export default function CommandCenterViews({
                 sources={model.captured.sources}
               />
             </Panel>
-            <Panel title="So What">
+            <Panel title="So What" note="Modeled · not observed outages">
               <ImpactList model={model} />
               <button
                 className="command-link"
@@ -1130,10 +845,7 @@ export default function CommandCenterViews({
                 See Consequences →
               </button>
             </Panel>
-            <Panel
-              title="What Can We Do"
-              note="Recorded next steps, not dispatch instructions"
-            >
+            <Panel title="What Can We Do" note="Advisory, not approvals">
               <ul className="command-record-list">
                 {draft.reviews.map((review, i) => (
                   <li key={`review:${i}`}>{review}</li>
@@ -1145,12 +857,7 @@ export default function CommandCenterViews({
               {!draft.tasks.length && !draft.reviews.length && (
                 <Empty>No next-step records captured.</Empty>
               )}
-              <p className="command-muted">
-                Chief response-option decisions and approved reference options
-                are not supplied. Advisory reviews do not constitute Chief
-                decisions; authority is not configured and policy gates are not
-                evaluated.
-              </p>
+
               <button
                 className="command-link"
                 onClick={() => openCase(selected)}
@@ -1163,7 +870,7 @@ export default function CommandCenterViews({
                 .filter((item) => /review|analy|decision/.test(item.kind))
                 .map((item) => (
                   <p key={item.id}>
-                    {item.message}
+                    {activityDisplayText(item.message)}
                     <small className="cc-block">
                       {timeLabel(item.createdAt)}
                     </small>
@@ -1172,18 +879,11 @@ export default function CommandCenterViews({
               {!selected.activity.some((item) =>
                 /review|analy|decision/.test(item.kind),
               ) && <Empty>No review or analysis activity recorded.</Empty>}
-              <p className="command-muted">
-                Case activity, not a certified audit system or Chief decision
-                record.
-              </p>
             </Panel>
           </>
         ) : (
           <Panel title="Leadership Draft">
-            <Empty>
-              Select a saved case to prepare its formatted draft. Nothing is
-              sent.
-            </Empty>
+            <Empty>Select a saved case to prepare its draft.</Empty>
           </Panel>
         )}
         <Metrics
@@ -1196,11 +896,11 @@ export default function CommandCenterViews({
             [
               overview.metrics.closedIncidents,
               "Closed cases",
-              "Tracking only, not confirmed recovery",
+              "Saved casework",
             ],
             [
               overview.metrics.pendingDecisions,
-              "Advisory reviews waiting",
+              "Impact reviews waiting",
               "Active cases",
             ],
             [
@@ -1208,13 +908,13 @@ export default function CommandCenterViews({
                 ? "Not recorded"
                 : `${overview.metrics.firstReviewMedianSeconds} seconds`,
               "Case opened → first review",
-              "Median of recorded advisory review timestamps",
+              "Median of recorded impact review timestamps",
             ],
           ]}
         />
         <p className="command-muted">
-          Official TXCC performance measures (detection, mitigation and
-          dissemination) are not populated.
+          No approve or dispatch buttons here. The duty officer records the
+          Chief's decision in the Analyst workspace.
         </p>
         <Panel
           title="Cases Behind This Brief"
@@ -1228,20 +928,12 @@ export default function CommandCenterViews({
     content = (
       <>
         <Panel title="Who We Need, and Where We Are">
-          <p>
-            Contact-status and partner-role records are not supplied. Need to
-            act / Need to know / Helping us group counts cannot be established
-            from coordination notes.
-          </p>
-          <p className="command-muted">
-            Status must be recorded by analysts. CITRIDE does not send
-            notifications. Saved notes do not establish that a partner was
-            contacted or engaged.
-          </p>
+          <p>No partner coordination records.</p>
+          <p className="command-muted">CITRIDE does not send notifications</p>
         </Panel>
         <Panel
           title="What Each Partner and Stakeholder Can See"
-          note="Draft audience previews · not sent"
+          note="Audience previews"
         >
           {selected ? (
             <div className="cc-audiences">
@@ -1263,7 +955,7 @@ export default function CommandCenterViews({
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
-                    <p className="command-muted">{preview.boundary}</p>
+
                     <a
                       className="command-link"
                       download={`audience-${audience}-draft.md`}
@@ -1283,21 +975,20 @@ export default function CommandCenterViews({
     );
   }
   return (
-    <div className="command-center-views">
-      <header className="cc-page-heading">
-        <p>
-          {heading[0]} · Read-only display
-          {view === "cyber"
-            ? " · CTIC"
-            : view === "uctf"
-              ? " · UCTF"
-              : view === "leadership"
-                ? " · Chief"
-                : ""}
-        </p>
-        <h2>{heading[1]}</h2>
-        {selected && <p>{selected.title}</p>}
-      </header>
+    <div
+      className="command-center-views"
+      aria-label={`${heading[0]} ${heading[1]}`}
+    >
+      {!scripted && (
+        <header className="cc-page-heading">
+          <p>
+            {heading[0]} · Read-only display
+            {view === "cyber" ? " · CTIC" : view === "uctf" ? " · UCTF" : ""}
+          </p>
+
+          {selected && <p>{selected.title}</p>}
+        </header>
+      )}
       {content}
       {summary && (view === "command" || view === "leadership") && (
         <CaseSummary

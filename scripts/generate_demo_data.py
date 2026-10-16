@@ -9,18 +9,36 @@ clinical threshold is asserted by this fixture.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import random
+from hashlib import sha256
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SEED = 250
+class AuthoredJSON(dict):
+    """Validated stakeholder JSON with exact original formatting, including EOF."""
+    def __init__(self, source: str):
+        super().__init__(json.loads(source))
+        self.source_text = source
 EPOCH = datetime(2026, 10, 13, 7, 0, tzinfo=timezone.utc)
+
+# Resolve alongside this file, including importlib-based test callers and execution
+# from outside the repository. No dependence on the caller's working directory.
+_corelight_spec = importlib.util.spec_from_file_location("watershed_corelight_generator", Path(__file__).with_name("generate_corelight.py"))
+assert _corelight_spec is not None and _corelight_spec.loader is not None
+corelight_generator = importlib.util.module_from_spec(_corelight_spec)
+_corelight_spec.loader.exec_module(corelight_generator)
 
 
 def metadata(source: str) -> dict:
-    return {"sourceRefs": [source], "classification": "U", "handling": ["SIMULATED"]}
+    provenance = {"sourceRefs": [source], "classification": "U", "handling": ["SIMULATED"]}
+    if source in {"src-network", "src-controller", "src-sensors", "src-enterprise"}:
+        provenance["origin"] = "simulated"
+    return provenance
 
 
 def instant(hours: float) -> dict:
@@ -43,18 +61,29 @@ def entity(entity_id: str, kind: str, label: str, **fields) -> dict:
     return {"id": entity_id, "type": kind, "label": label, **fields, **metadata("src-inventory")}
 
 
-def generate() -> dict[str, dict]:
+def generate() -> dict[str, dict | list[dict]]:
     """Return every generated relative path and its JSON object, deterministically."""
+    authored_path = ROOT / "data/scripted/watershed_beta.json"
+    if not authored_path.is_file():
+        authored_path = Path(__file__).resolve().parents[1] / "data/scripted/watershed_beta.json"
+    authored = authored_path.read_bytes()
+    if sha256(authored).hexdigest() != "80e536d67c35322dfc928656bb3e156f1f374e36b2210825e952f4870cdcee79":
+        raise ValueError("Stakeholder-authored scripted records changed; reconcile the approved source before generation")
     rng = random.Random(SEED)
     sources = [
         source("src-inventory", "Synthetic infrastructure inventory", "Invented assets, operators, service polygons, facilities, and population groups; no real facility identifiers."),
         source("src-dependencies", "Synthetic dependency assumptions", "Illustrative service links, independent reserves, and timing parameters. Not measured or validated utility or clinical planning data."),
         source("src-effects", "Explicit scenario effects", "Authored loss-type conversion and 12-hour persistence assumptions. Telemetry alone does not establish an operational loss."),
         source("src-assessment", "Fictional prior OT assessment", "Invented historical exposure finding for Utility A; no actual assessment has been performed."),
-        source("src-network", "Synthetic Zeek-shaped connection stream", "Documentation IP ranges and invented connection records; shared source supports a campaign hypothesis, not actor attribution."),
+        source("src-network", corelight_generator.LABEL, corelight_generator.SOURCE_FORMAT_DISCLAIMER),
         source("src-controller", "Synthetic controller audit stream", "Invented authentication and dosing parameter changes, using fictional users and assets."),
         source("src-sensors", "Synthetic sensor time series", "Invented normal baseline, quality drift, stable pressure, and tank levels. Values assert no actual safety threshold."),
         source("src-enterprise", "Synthetic enterprise background stream", "Quiet IT baseline records; absence of evidence here is not proof that enterprise IT is safe."),
+        {
+            **source("src-idt-v4", "Infrastructure Data Taxonomy v4, 22 Jun 2011", "Canonical IDT v4 reference classifications; not operational evidence or physical-containment assertions."),
+            "version": "4", "createdOn": "2011-06-22", "author": "Infrastructure Data Taxonomy",
+            "evidenceCategory": "reference",
+        },
     ]
 
     entities = []
@@ -71,8 +100,8 @@ def generate() -> dict[str, dict]:
         ot_assets = [
             ("plc", "PLC", "Dosing PLC", "OT_SCADA", 11 + index),
             ("hmi", "HMI", "Operator HMI", "OT_SCADA", 21 + index),
-            ("sensor", "water_quality_sensor", "Water-quality Sensor", "FIELD_SENSORS", 31 + index),
-            ("pressure", "pressure_sensor", "Pressure Sensor", "FIELD_SENSORS", 51 + index),
+            ("sensor", "water_quality_sensor", "Water-quality Sensor", "FIELD_SENSORS", 81 + index),
+            ("pressure", "pressure_sensor", "Pressure Sensor", "FIELD_SENSORS", 71 + index),
             ("tank", "tank_level_sensor", "Tank-level Sensor", "FIELD_SENSORS", 61 + index),
         ]
         for prefix, asset_type, label, terrain, host in ot_assets:
@@ -84,7 +113,9 @@ def generate() -> dict[str, dict]:
             ])
         entities.extend([
             entity(f"workstation-{letter}", "PhysicalITAsset", f"Enterprise Workstation {upper}", operatedBy=f"org-{letter}", terrain="ENTERPRISE_IT", hostsCyberAsset=f"cyber-workstation-{letter}"),
-            entity(f"cyber-workstation-{letter}", "CyberAsset", f"Enterprise Workstation {upper} identity", hostedBy=f"workstation-{letter}", terrain="ENTERPRISE_IT", ipAddress=f"198.51.100.{41 + index}", networkIdentityStatus="fictional_documentation_range"),
+            entity(f"cyber-workstation-{letter}", "CyberAsset", f"Enterprise Workstation {upper} identity", hostedBy=f"workstation-{letter}", terrain="ENTERPRISE_IT", ipAddress=f"192.0.2.{51 + index}", networkIdentityStatus="fictional_documentation_range"),
+            entity(f"vpn-{letter}", "PhysicalITAsset", f"VPN Gateway {upper}", operatedBy=f"org-{letter}", terrain="ENTERPRISE_IT", hostsCyberAsset=f"cyber-vpn-{letter}"),
+            entity(f"cyber-vpn-{letter}", "CyberAsset", f"VPN Gateway {upper} identity", hostedBy=f"vpn-{letter}", terrain="ENTERPRISE_IT", ipAddress=f"198.51.100.{41 + index}", networkIdentityStatus="fictional_documentation_range"),
         ])
     facilities = [
         ("dialysis-x", "DialysisCenter", "Dialysis Center X", [0.04, 0.03]),
@@ -100,6 +131,18 @@ def generate() -> dict[str, dict]:
         entity("electric-e", "ElectricSupplyFacility", "Electric Supply E", operatedBy="org-electric-e", geometry={"type": "Point", "coordinates": [-0.02, 0.02]}),
     ])
 
+    # Stakeholder-authored storyline additions; no dependency is inferred from geography.
+    entities.extend([
+        entity("vendor-v", "Organization", "Vendor V remote support", supportAccountAt=["org-a", "org-b", "org-c"]),
+        entity("hospital-w", "Hospital", "Hospital W", locatedIn="area-b", geometry={"type": "Point", "coordinates": [0.27, 0.06]}, operationalDependencyStatus="synthetic_assumption"),
+        entity("dialysis-u", "DialysisCenter", "Dialysis Center U", locatedIn="area-c", geometry={"type": "Point", "coordinates": [0.49, 0.06]}, operationalDependencyStatus="synthetic_assumption"),
+    ])
+    # One authoritative assignment table, including explicit unassigned records.
+    assignments = json.loads((ROOT / "data/reference/idt/idt_v4.json").read_text(encoding="utf-8"))["assignments"]
+    for item in entities:
+        item["idt"] = deepcopy(assignments[item["id"]])
+        item["sourceRefs"].append("src-idt-v4")
+
     function_specs = [
         ("water-a", "utility-a", "treated_water", "Utility A treated-water supply"),
         ("water-b", "utility-b", "treated_water", "Utility B treated-water supply"),
@@ -113,6 +156,8 @@ def generate() -> dict[str, dict]:
         ("q-safe-water", "facility-q", "safe_water_support", "Facility Q safe-water support"),
         ("fire-flow", "fire-f", "fire_flow", "Fire-flow supply"),
         ("electric-supply", "electric-e", "electricity", "Electricity supply"),
+        ("hospital-sterilization-w", "hospital-w", "sterilization_support", "Hospital W sterilization support"),
+        ("dialysis-treatment-u", "dialysis-u", "dialysis_treatment", "Dialysis Center U treatment"),
     ]
     functions = [{"id": fid, "facility": facility, "service": service, "label": label, **metadata("src-inventory")} for fid, facility, service, label in function_specs]
 
@@ -124,6 +169,8 @@ def generate() -> dict[str, dict]:
         ("dep-a-f", "utility-a", "fire-f", "treated_water", "fire-flow", ["low_pressure", "no_water"], [0, 0.5], [0, 0], 1.0, None),
         ("dep-e-plant", "electric-e", "plant-a", "electricity", "plant-treatment", ["electricity_lost"], [0, 0.25], [1, 1], 1.0, "water_treatment_unavailable"),
         ("dep-plant-a", "plant-a", "utility-a", "water_treatment", "water-a", ["water_treatment_unavailable"], [1, 2], [0, 0], 1.0, "no_water"),
+        ("dep-b-w", "utility-b", "hospital-w", "treated_water", "hospital-sterilization-w", ["unsafe_water", "no_water"], [0, 1], [4, 6], 0.5, None),
+        ("dep-c-u", "utility-c", "dialysis-u", "treated_water", "dialysis-treatment-u", ["unsafe_water", "no_water"], [0, 1], [2, 2], 1.0, None),
     ]
     for dep_id, provider, dependent, service, function, losses, delay, backup, fraction, output in specs:
         assertions = {}
@@ -148,39 +195,15 @@ def generate() -> dict[str, dict]:
             **metadata("src-dependencies"),
         })
 
-    network_records = []
-    for index, letter in enumerate("abc"):
-        for number, hour in enumerate([-2, -1.5, -1, -0.75, -0.5, -0.25], start=1):
-            network_records.append({
-                "id": f"conn-{letter}-baseline-{number:03d}", "ts": (EPOCH + timedelta(hours=hour)).timestamp(),
-                **instant(hour), "uid": f"SIM{letter.upper()}BASE{number:03d}",
-                "id.orig_h": f"192.0.2.{21 + index}", "id.orig_p": 45000 + number,
-                "id.resp_h": f"192.0.2.{11 + index}", "id.resp_p": 502, "proto": "tcp", "service": "modbus",
-                "duration": 1.5, "orig_bytes": 64, "resp_bytes": 96, "conn_state": "SF",
-                "utilityId": f"utility-{letter}", "targetAssetId": f"plc-{letter}", "observation": "normal_polling",
-                "anomalous": False, **metadata("src-network"),
-            })
-    for letter, hour, state, observation in [("a", -0.1, "SF", "unusual_inbound_connection"), ("b", 0.5, "S0", "probing_only"), ("c", 0.75, "S0", "probing_only")]:
-        index = "abc".index(letter)
-        network_records.append({
-            "id": f"conn-{letter}-unusual-001", "ts": (EPOCH + timedelta(hours=hour)).timestamp(),
-            **instant(hour), "uid": f"SIM{letter.upper()}INBOUND001", "id.orig_h": "203.0.113.250", "id.orig_p": 49000 + index,
-            "id.resp_h": f"192.0.2.{11 + index}", "id.resp_p": 502, "proto": "tcp", "service": "modbus",
-            "duration": 3.0 if letter == "a" else 0.0, "orig_bytes": 128 if letter == "a" else 0,
-            "resp_bytes": 96 if letter == "a" else 0, "conn_state": state,
-            "utilityId": f"utility-{letter}", "targetAssetId": f"plc-{letter}", "observation": observation,
-            "anomalous": True, "sharedSourceIdentity": "synthetic-campaign-01",
-            "interpretation": "Simulated completed connection at A." if letter == "a" else "Probe attempt only; no authentication, control change, compromise, or physical effect is established.",
-            **metadata("src-network"),
-        })
-    network_records.sort(key=lambda row: (row["relativeTimeHours"], row["id"]))
+    corelight_logs = corelight_generator.generate_corelight(SEED, EPOCH)
+    network_records = corelight_logs["conn"]
 
     controller_records = []
     for letter in "abc":
         controller_records.append({"id": f"controller-baseline-{letter}", **instant(-1.0), "assetId": f"plc-{letter}", "utilityId": f"utility-{letter}", "eventType": "status_read", "user": f"fictional-operator-{letter}", "outcome": "success", "parameter": "dosing_setpoint", "value": 1.0, "unit": "synthetic_index", "anomalous": False, **metadata("src-controller")})
     controller_records.extend([
-        {"id": "controller-auth-001", **instant(-0.05), "assetId": "plc-a", "utilityId": "utility-a", "eventType": "authentication", "user": "fictional-maintenance-session", "sourceIp": "203.0.113.250", "outcome": "success", "anomalous": True, **metadata("src-controller")},
-        {"id": "controller-change-001", **instant(0), "assetId": "plc-a", "utilityId": "utility-a", "eventType": "parameter_change", "user": "fictional-maintenance-session", "sourceIp": "203.0.113.250", "parameter": "dosing_setpoint", "before": 1.0, "after": 4.0, "unit": "synthetic_index", "outcome": "applied", "anomalous": True, "interpretation": "An invented parameter change. It does not by itself prove unsafe water.", **metadata("src-controller")},
+        {"id": "controller-auth-001", **instant(-0.05), "assetId": "plc-a", "utilityId": "utility-a", "eventType": "authentication", "user": "vendor-v-support", "sourceIp": "192.0.2.240", "outcome": "success", "anomalous": True, "interpretation": "Simulated successful session from the assigned VPN client address.", **metadata("src-controller")},
+        {"id": "controller-change-001", **instant(0), "assetId": "plc-a", "utilityId": "utility-a", "eventType": "parameter_change", "user": "vendor-v-support", "sourceIp": "192.0.2.240", "parameter": "dosing_setpoint", "before": 1.0, "after": 4.0, "unit": "synthetic_index", "outcome": "applied", "anomalous": True, "interpretation": "An invented parameter change. It does not by itself prove unsafe water.", **metadata("src-controller")},
     ])
     controller_records.sort(key=lambda row: (row["relativeTimeHours"], row["id"]))
 
@@ -209,30 +232,57 @@ def generate() -> dict[str, dict]:
     enterprise_records.sort(key=lambda row: (row["relativeTimeHours"], row["id"]))
 
     streams = [
-        {"id": "network", "label": "Zeek-shaped network connections", "sourceRef": "src-network", "format": "zeek_conn_shaped_json", "records": network_records, **metadata("src-network")},
+        {"id": "network", "label": corelight_generator.LABEL, "sourceRef": "src-network", "format": "corelight_zeek_json", "compatibilityViewOf": "corelight/conn", "sourceFormatDisclaimer": corelight_generator.SOURCE_FORMAT_DISCLAIMER, "records": network_records, **metadata("src-network")},
         {"id": "controller", "label": "Controller authentication and changes", "sourceRef": "src-controller", "format": "synthetic_controller_audit_json", "records": controller_records, **metadata("src-controller")},
         {"id": "sensors", "label": "Water-quality, pressure, and tank series", "sourceRef": "src-sensors", "format": "synthetic_sensor_json", "records": sensor_records, **metadata("src-sensors")},
         {"id": "enterprise", "label": "Enterprise IT background activity", "sourceRef": "src-enterprise", "format": "synthetic_it_audit_json", "records": enterprise_records, **metadata("src-enterprise")},
     ]
     event_specs = [
-        ("event-inbound-a", "Unusual inbound connection at Utility A", -0.1, "cyber-plc-a", "unusual_inbound_connection", "network", "conn-a-unusual-001", "src-network", "A completed simulated connection to the previously exposed controller."),
+        ("event-vpn-a", "Offsite vendor VPN login at Utility A", -0.5, "cyber-vpn-a", "vendor_vpn_login_off_hours", "corelight/vpn", "vpn-a-login-001", "src-network", "Simulated successful vendor account login from the shared offsite source; assigns the VPN client pool address."),
+        ("event-inbound-a", "Unusual inbound connection at Utility A", -0.1, "cyber-plc-a", "unusual_inbound_connection", "corelight/conn", "conn-a-unusual-001", "src-network", "A completed simulated VPN-pool connection to the previously exposed controller."),
         ("event-auth-a", "Controller session at Utility A", -0.05, "cyber-plc-a", "controller_authentication", "controller", "controller-auth-001", "src-controller", "Simulated successful controller authentication from the unusual source."),
         ("event-dosing", "Dosing parameter changed", 0, "cyber-plc-a", "dosing_parameter_change", "controller", "controller-change-001", "src-controller", "A dosing-setpoint change is recorded; unsafe water requires a separate explicit scenario assumption."),
         ("event-sensor", "Water-quality readings drift", 0.25, "cyber-sensor-a", "water_quality_drift", "sensors", "sensor-a-135", "src-sensors", "Synthetic quality indicator drifts after the change while pressure remains stable."),
-        ("event-probe-b", "Related source probes Utility B", 0.5, "cyber-plc-b", "probing_only", "network", "conn-b-unusual-001", "src-network", "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at B."),
-        ("event-probe-c", "Related source probes Utility C", 0.75, "cyber-plc-c", "probing_only", "network", "conn-c-unusual-001", "src-network", "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at C."),
+        ("event-probe-b", "Related source probes Utility B", 0.5, "cyber-plc-b", "probing_only", "corelight/conn", "conn-b-unusual-001", "src-network", "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at B."),
+        ("event-probe-c", "Related source probes Utility C", 0.75, "cyber-plc-c", "probing_only", "corelight/conn", "conn-c-unusual-001", "src-network", "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at C."),
     ]
     events = [{
         "id": event_id, "type": "CyberEvent", "label": label, **instant(hour), "seenOn": seen_on,
         "observation": observation, "description": description, "evidenceCategory": "simulated",
         "rawRef": {"streamId": stream_id, "recordId": record_id, "sourceRef": src}, **metadata(src),
     } for event_id, label, hour, seen_on, observation, stream_id, record_id, src, description in event_specs]
+    # IDs, names and tactic membership checked against MITRE's official ICS STIX dataset.
+    techniques = {
+        "event-vpn-a": [("T0822", "External Remote Services", "Initial Access"), ("T0859", "Valid Accounts", "Persistence, Lateral Movement")],
+        "event-inbound-a": [("T0886", "Remote Services", "Lateral Movement")],
+        "event-auth-a": [("T0859", "Valid Accounts", "Persistence, Lateral Movement")],
+        "event-dosing": [("T0836", "Modify Parameter", "Impair Process Control")],
+        "event-sensor": [("T0831", "Manipulation of Control", "Impact")],
+        "event-probe-b": [("T0846", "Remote System Discovery", "Discovery")],
+        "event-probe-c": [("T0846", "Remote System Discovery", "Discovery")],
+    }
+    for event in events:
+        event["attackTechniques"] = [{"id": identifier, "name": name, "tactic": tactic} for identifier, name, tactic in techniques[event["id"]]]
+    network_refs = {
+        "event-vpn-a": [("ssl", "ssl-vpn-a-login-001"), ("notice", "notice-vpn-a")],
+        "event-inbound-a": [("modbus", "modbus-a-unusual-read-001")],
+        "event-auth-a": [("http", "http-a-login-001"), ("http", "http-a-login-002")],
+        "event-dosing": [("modbus_detailed", "modbus-detailed-a-write-001"), ("notice", "notice-modbus-a-write-001")],
+        "event-probe-b": [("notice", "notice-scan-b")],
+        "event-probe-c": [("notice", "notice-scan-c")],
+    }
+    for event in events:
+        if event["id"] in network_refs:
+            event["networkEvidenceRefs"] = [{"streamId": f"corelight/{kind}", "recordId": record_id, "sourceRef": "src-network"}
+                                            for kind, record_id in network_refs[event["id"]]]
 
     scenarios = []
     for scenario_id, label, description, provider, service, loss, event_refs in [
-        ("unsafe-water", "Unsafe-water incident", "Illustrative unsafe treated-water effect at Utility A, supported by synthetic control-change and sensor events. Stable pressure means no fire-flow loss is inferred.", "utility-a", "treated_water", "unsafe_water", ["event-dosing", "event-sensor"]),
+        ("unsafe-water", "Unsafe-water incident", "Illustrative unsafe treated-water effect at Utility A, supported by synthetic control-change and sensor events. Stable pressure means no fire-flow loss is inferred.", "utility-a", "treated_water", "unsafe_water", ["event-vpn-a", "event-dosing", "event-sensor"]),
         ("low-pressure", "Alternate pressure-loss scenario", "An independent authored pressure-loss seed. This replaces the unsafe-water seed and is not claimed to have been observed in the default sensor stream.", "utility-a", "treated_water", "low_pressure", []),
         ("power-loss", "Alternate electricity-loss cascade", "Independent authored loss at Electric Supply E. Explicit dependency conversions model electricity loss to treatment loss to no water at Utility A; no reverse propagation is allowed.", "electric-e", "electricity", "electricity_lost", []),
+        ("potential-unsafe-water-b", "Potential: unsafe water at Utility B (if compromised, not observed)", "Potential only, not observed. Explicit hypothetical unsafe-water effect at B; not activated by probes or linked to a case.", "utility-b", "treated_water", "unsafe_water", []),
+        ("potential-unsafe-water-c", "Potential: unsafe water at Utility C (if compromised, not observed)", "Potential only, not observed. Explicit hypothetical unsafe-water effect at C; not activated by probes or linked to a case.", "utility-c", "treated_water", "unsafe_water", []),
     ]:
         scenarios.append({
             "id": scenario_id, "label": label, "description": description, "evidenceCategory": "simulated",
@@ -260,6 +310,8 @@ def generate() -> dict[str, dict]:
             "Facility Q starts without an operational dependency in the seed baseline. Utility B/C probes do not establish compromise or outages.",
             "Service-area populations overlap facility occupants and are not impact counts. No population ranking is supplied.",
             "Raw synthetic telemetry is stored outside the scenario graph and is referenced by curated events.",
+            corelight_generator.SOURCE_FORMAT_DISCLAIMER,
+            "Workstation identities use 192.0.2.51/52/53. To avoid endpoint aliases, pressure sensors move from .51/52/53 to .71/72/73 and quality sensors from .31/32/33 to .81/82/83, leaving .31/32/33 for historian telemetry. The documentation-range DNS resolver is 198.51.100.53 to avoid workstation C's .53 identity. Historian/resolver background endpoints are not additional inventory assets.",
             "Recovery, unresolved cycles, and parallel supply adequacy require additional review; no resilience conclusion is inferred.",
         ],
         "entities": entities, "serviceFunctions": functions, "dependencies": dependencies, "sources": sources,
@@ -273,12 +325,17 @@ def generate() -> dict[str, dict]:
         }],
         "scenarios": scenarios,
     }
-    outputs = {"data/scenario.json": scenario}
+    outputs: dict[str, dict | list[dict]] = {"data/scenario.json": scenario}
     outputs.update({f"data/telemetry/{stream['id']}.json": stream for stream in streams})
+    outputs.update({f"data/telemetry/corelight/{kind}.json": rows for kind, rows in corelight_logs.items()})
+    outputs["data/telemetry/corelight/manifest.json"] = corelight_generator.manifest(corelight_logs, SEED)
+    outputs["data/scripted/watershed_beta.json"] = AuthoredJSON(authored.decode("utf-8"))
     return outputs
 
 
-def serialized(value: dict) -> str:
+def serialized(value: dict | list[dict]) -> str:
+    if isinstance(value, AuthoredJSON):
+        return value.source_text
     return json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
 
 

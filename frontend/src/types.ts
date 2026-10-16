@@ -85,6 +85,7 @@ export interface Event {
 }
 
 export interface Bootstrap {
+  incidentOrigin?: string;
   baselineRevision: number;
   modelVersion: string;
   entities: Entity[];
@@ -106,6 +107,8 @@ export interface Override {
 }
 
 export interface RunRequest {
+  clientRequestId?: string;
+  expectedBaselineRevision?: number;
   scenarioId: string;
   evaluationHour: number;
   horizonHours: number;
@@ -180,6 +183,8 @@ export interface Telemetry {
     id: string;
     label: string;
     sourceRef: string;
+    format?: string;
+    origin?: string;
     records: Record<string, unknown>[];
   }[];
 }
@@ -198,6 +203,12 @@ export interface OntologyMetadata {
   profile: string;
   engine: { name: string; version: string };
   limitations?: string[];
+  /** Complete validated ontology source counts, distinct from a run's loaded slice. */
+  idtClassCount?: number;
+  classCount?: number;
+  loadedIdtClassCount?: number;
+  loadedClassCount?: number;
+  idtLoadMode?: "full" | "assigned_closure";
 }
 
 export interface InferenceTerm {

@@ -57,11 +57,13 @@ def dialysis(run_record):
 
 
 def test_bootstrap_telemetry_and_rdf_export(client):
-    assert client.get("/health").json() == {
+    health = client.get("/health").json()
+    assert {key: health[key] for key in ("status", "baselineRevision", "demoMode")} == {
         "status": "ok",
         "baselineRevision": 1,
         "demoMode": True,
     }
+    assert health["storyNow"] and health["resetEnabled"] is True
     model = client.get("/v1/bootstrap").json()
     assert model["dependencies"] and model["sources"]
     streams = client.get("/v1/telemetry").json()["streams"]

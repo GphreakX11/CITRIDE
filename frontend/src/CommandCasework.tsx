@@ -1,26 +1,34 @@
+import { StatusChip } from "./visualPrimitives.ts";
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Bootstrap, Event, Source } from "./types";
+import type { Bootstrap, Event, Run, Source } from "./types";
+import { api } from "./api";
+import { createIdtIndex, type IdtIndex } from "./idt";
+import { IdtChip } from "./IdtChip";
+import { impactRows, snapshot } from "./prototypeViews";
 import type {
   CommandAction,
   CommandCreate,
   CommandIncident,
-  IncidentPriority,
 } from "./commandTypes";
 import { displayText } from "./presentation";
+import type { RecordsState } from "./scriptedTypes";
+import {
+  caseDisplayId,
+  activityDisplayText,
+  caseFileHeader,
+  caseFileTabs,
+  ctClock,
+} from "./caseFilePresentation";
 import { reviewDisplayText, reviewWarning } from "./incidentDecisions";
 import "./command-casework.css";
 import "./analyst-detail.css";
-import {
-  referenceSourceEvent,
-  referenceFromEvent,
-} from "./referenceInvestigation";
-import ReferenceInvestigationEvidence from "./ReferenceInvestigationEvidence";
+
 import CaseProgress from "./CaseProgress";
-import { pcapFromEvent } from "./pcapEvidence";
-import PcapEvidencePanel from "./PcapEvidencePanel";
+import { CaseCreateForm } from "./CaseCreateForm";
 
 export interface CommandCaseworkProps {
+  records?: RecordsState | null;
   data: Bootstrap;
   incidents: CommandIncident[];
   selected: CommandIncident | null;
@@ -59,6 +67,48 @@ function snapshotSources(snapshot: unknown): Source[] {
       )
     : [];
 }
+/** Immutable run entities only. Reference metadata names a saved code, never fills it. */
+export function CapturedImpactRows({
+  run,
+  index,
+}: {
+  run: Run;
+  index: IdtIndex | null;
+}) {
+  const captured = snapshot(run);
+  const rows = impactRows(run);
+  return rows.length ? (
+    <ul
+      className="command-record-list"
+      aria-label="Captured modeled impact classifications"
+    >
+      {rows.map((row) => (
+        <li key={row.id}>
+          <strong>{displayText(row.label)}</strong> ·{" "}
+          {displayText(row.functionLabel)}
+          <small>
+            Modeled {row.state.replaceAll("_", " ")} ·{" "}
+            {row.windowHours
+              ? `${row.windowHours.join("–")} scenario hours`
+              : "Timing unknown"}
+            ; not observed
+          </small>
+          <IdtChip
+            entity={
+              captured.entities.find(
+                (entity) => entity.id === row.entityId,
+              ) ?? { id: row.entityId }
+            }
+            index={index}
+          />
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>No modeled impacts in this captured run.</p>
+  );
+}
+
 function Sources({ refs, sources }: { refs: string[]; sources: Source[] }) {
   return (
     <div className="cc-chips" aria-label="Source references">
@@ -86,7 +136,7 @@ function Sources({ refs, sources }: { refs: string[]; sources: Source[] }) {
     </div>
   );
 }
-function ConfirmDialog({
+export function ConfirmDialog({
   title,
   children,
   disabled,
@@ -171,78 +221,36 @@ export default function CommandCasework(props: CommandCaseworkProps) {
     onRetryPending,
     onOpenEvidence,
   } = props;
-  const sourceEvents = [...data.events, referenceSourceEvent];
-  const [eventId, setEventId] = useState(
-    () =>
-      data.events.find((event) => event.id === "event-dosing")?.id ||
-      data.events[0]?.id ||
-      "",
-  );
-  const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState<IncidentPriority>("medium");
-  const [baseline, setBaseline] = useState(data.baselineRevision);
-  const [error, setError] = useState("");
+  const sourceEvents = data.events;
   const [creating, setCreating] = useState(false);
-  const createGuard = useRef(false);
   const blocked = busy || uncertain || creating;
-  async function create() {
-    if (blocked || createGuard.current) return;
-    setError("");
-    if (
-      !title.trim() ||
-      !eventId.trim() ||
-      !sourceEvents.some((event) => event.id === eventId)
-    ) {
-      setError(
-        "Select an available source event and enter a nonempty case title.",
-      );
-      return;
-    }
-    createGuard.current = true;
-    setCreating(true);
-    try {
-      const created = await onCreate({
-        eventId: eventId.trim(),
-        title: title.trim(),
-        priority,
-        expectedBaselineRevision: baseline,
-        clientRequestId: crypto.randomUUID(),
-      });
-      setTitle("");
-      setPriority("medium");
-      setBaseline(data.baselineRevision);
-      onSelect(created.id);
-    } catch (cause) {
-      setError(failure(cause));
-    } finally {
-      createGuard.current = false;
-      setCreating(false);
-    }
-  }
   return (
-    <section className="command-casework" aria-label="Workspace casework">
+    <section className="command-casework" aria-label="Casework">
       <header className="cc-panel cc-header">
         <div>
-          <h2>{props.mode === "full" ? "Case File" : "Workspace casework"}</h2>
-          <p className="cc-muted">
-            Durable local triage and advisory review. Priority and status are
-            user-assigned tracking, not source-system severity.
-          </p>
+          <h2>{props.mode === "full" ? "Case File" : "Casework"}</h2>
+          {selected && (
+            <p className="cc-muted mono" data-case-header="true">
+              {caseFileHeader(selected, props.records)}
+            </p>
+          )}
         </div>
         <label>
-          Workspace case
+          Case
           <select
-            aria-label="Workspace case"
+            aria-label="Case"
             value={selected?.id || ""}
             onChange={(event) => onSelect(event.target.value)}
             disabled={blocked}
           >
             <option value="" disabled>
-              Select a workspace case
+              Select a case
             </option>
             {incidents.map((incident) => (
               <option key={incident.id} value={incident.id}>
-                {incident.title} — {incident.id.slice(0, 8)}
+                {incident.title} —{" "}
+                {caseDisplayId(incident, props.records) ??
+                  "Display ID not assigned"}
               </option>
             ))}
           </select>
@@ -278,88 +286,16 @@ export default function CommandCasework(props: CommandCaseworkProps) {
         </aside>
       )}
       <details className="cc-panel" open={!selected}>
-        <summary>Create workspace case from a source event</summary>
-        <p className="cc-muted">
-          Captures reference-source context; this is not a real incident report
-          or a source-event update.
-        </p>
-        <form
-          className="cc-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void create();
-          }}
-        >
-          <label>
-            Source event
-            <select
-              aria-label="Source event"
-              value={eventId}
-              disabled={blocked}
-              onChange={(event) => setEventId(event.target.value)}
-            >
-              <option value="" disabled>
-                Select a source event
-              </option>
-              {sourceEvents.map((event) => (
-                <option key={event.id} value={event.id}>
-                  {eventName(event)} — {event.id}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Case title
-            <input
-              value={title}
-              required
-              maxLength={160}
-              disabled={blocked}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Describe the review to track"
-            />
-          </label>
-          <label>
-            Local triage priority
-            <select
-              aria-label="Local triage priority"
-              value={priority}
-              disabled={blocked}
-              onChange={(event) =>
-                setPriority(event.target.value as IncidentPriority)
-              }
-            >
-              {["critical", "high", "medium", "low"].map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </label>
-          <p className="cc-muted">
-            Captured source baseline: revision {baseline}. Current source
-            baseline: revision {data.baselineRevision}.
-          </p>
-          {baseline !== data.baselineRevision && (
-            <button
-              type="button"
-              disabled={blocked}
-              onClick={() => setBaseline(data.baselineRevision)}
-            >
-              Use current source baseline
-            </button>
-          )}
-          {error && (
-            <p className="cc-error" role="alert">
-              {error}
-            </p>
-          )}
-          <button
-            className="cc-primary"
-            disabled={blocked || !sourceEvents.length}
-            type="submit"
-          >
-            {creating ? "Saving workspace case…" : "Create workspace case"}
-          </button>
-        </form>
+        <summary>Open case from a source event</summary>
+
+        <CaseCreateForm
+          data={data}
+          busy={busy || creating}
+          uncertain={uncertain}
+          onCreate={onCreate}
+          onCreated={(created) => onSelect(created.id)}
+          onBusy={setCreating}
+        />
       </details>
       {selected ? (
         <CaseDetails
@@ -370,10 +306,10 @@ export default function CommandCasework(props: CommandCaseworkProps) {
         />
       ) : (
         <div className="cc-panel cc-empty">
-          <h2>No workspace case selected</h2>
+          <h2>No case selected</h2>
           <p>
             Select an existing case by its ID, or create a case from an
-            available source event above. Tasks, notes and advisory reviews are
+            available source event above. Tasks, notes and impact reviews are
             saved to that case.
           </p>
           {!sourceEvents.length && (
@@ -401,6 +337,7 @@ type Confirmation = {
 };
 function CaseDetails({
   data,
+  records,
   selected,
   mode,
   onNavigate,
@@ -412,18 +349,12 @@ function CaseDetails({
   uncertain,
 }: CommandCaseworkProps & { selected: CommandIncident }) {
   const sectionPrefix = useId();
-  const sectionId = (section: string) => `${sectionPrefix}-case-${section}`;
+  const sectionId = (section: string) =>
+    `${sectionPrefix}-case-${section === "status" ? "tracking" : section}`;
   const [activeSection, setActiveSection] = useState("context");
-  const sections = [
-    ["context", "Context"],
-    ["cyber", "Cyber"],
-    ["consequence", "Consequences"],
-    ["decisions", "Decisions"],
-    ["tasks", "Response"],
-    ["notes", "Coordination"],
-    ["activity", "History"],
-    ["advanced", "Advanced"],
-  ] as const;
+  const sections = caseFileTabs(selected).map(
+    ({ id, label }) => [id, label] as const,
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const guard = useRef(false);
@@ -434,10 +365,25 @@ function CaseDetails({
   const [evaluation, setEvaluation] = useState("1");
   const [horizon, setHorizon] = useState("12");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [idtIndex, setIdtIndex] = useState<IdtIndex | null>(null);
+  const [idtError, setIdtError] = useState("");
+  useEffect(() => {
+    let active = true;
+    api<unknown>("/v1/reference/idt")
+      .then((value) => {
+        if (active) setIdtIndex(createIdtIndex(value));
+      })
+      .catch(() => {
+        if (active) setIdtError("IDT reference unavailable.");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
   const blocked = busy || uncertain || saving;
   const locked = blocked || selected.status === "closed";
   const context = selected.contextSnapshot;
-  const reference = referenceFromEvent(selected.eventSnapshot);
+
   const scenarios = context.scenarios.filter((scenario) =>
     scenario.seed.eventRefs.includes(selected.eventId),
   );
@@ -458,24 +404,11 @@ function CaseDetails({
     selected.decisions.every((decision) => decision.reviewed);
   const run = selected.runSnapshot;
   const sources = snapshotSources(run?.baselineSnapshot);
-  const contextSources = reference
-    ? [
-        {
-          id: reference.source.id,
-          type: "SourceRecord",
-          title: reference.source.title,
-          label: reference.source.filename,
-          evidenceCategory: "user_supplied_report",
-          confidence: "unverified",
-          notes:
-            "Original report fingerprint. Actual PCAP not supplied; payment-key literal redacted in case summaries.",
-        },
-      ]
-    : sources.length
-      ? sources
-      : baselineMatches
-        ? data.sources
-        : [];
+  const contextSources = sources.length
+    ? sources
+    : baselineMatches
+      ? data.sources
+      : [];
   const show = (section: CommandCaseworkProps["mode"]) =>
     mode === "full" || mode === section;
   async function mutate(
@@ -533,13 +466,10 @@ function CaseDetails({
         horizonHours,
       },
       title: "Confirm advisory analysis",
-      label: "Analyze captured scenario",
+      label: "Run analysis",
       detail: (
         <>
-          <p>
-            This creates one immutable modeled analysis, not an observed outage
-            or an operational authorization.
-          </p>
+          <p>Advisory, not approvals</p>
           <dl className="cc-metadata">
             <dt>Source event</dt>
             <dd>
@@ -573,9 +503,7 @@ function CaseDetails({
   function closeCase() {
     setError("");
     if (!statusNote.trim()) {
-      setError(
-        "Enter a tracking note explaining why this workspace case can be closed.",
-      );
+      setError("Enter a tracking note explaining why this case can be closed.");
       return;
     }
     if (locked || !closureReady) return;
@@ -587,16 +515,11 @@ function CaseDetails({
         status: "closed",
         note: statusNote.trim(),
       },
-      title: "Close workspace case",
-      label: "Close workspace case",
+      title: "Close case",
+      label: "Close case",
       detail: (
         <>
-          <p>
-            All captured checklist tasks are complete and all captured decisions
-            have an app review. Closing this workspace case does not remove its
-            source event, establish recovery, notify partners, or authorize
-            execution.
-          </p>
+          <p>Close this case after completing all tasks and impact reviews.</p>
           <p className="cc-note">{statusNote.trim()}</p>
         </>
       ),
@@ -626,10 +549,6 @@ function CaseDetails({
               onClick={() => setActiveSection(id)}
             >
               {label}
-              {id === "tasks" &&
-                ` ${selected.tasks.filter((task) => task.completed).length}/${selected.tasks.length}`}
-              {id === "decisions" &&
-                ` ${selected.decisions.filter((decision) => decision.reviewed).length}/${selected.decisions.length}`}
             </a>
           ))}
         </nav>
@@ -647,15 +566,17 @@ function CaseDetails({
         <div className="cc-heading">
           <h2>{selected.title}</h2>
           <div className="cc-chips">
-            <span className="cc-chip">Local priority: {selected.priority}</span>
-            <span className="cc-chip">Tracking: {selected.status}</span>
+            <StatusChip status={selected.priority} className="cc-chip">
+              Local priority: {selected.priority}
+            </StatusChip>
+            <StatusChip status={selected.status} className="cc-chip">
+              Tracking: {selected.status}
+            </StatusChip>
           </div>
         </div>
         <p>
           {eventName(selected.eventSnapshot)} ·{" "}
-          {reference
-            ? "Case-local reference assets · no modeled provider"
-            : displayText(context.provider?.label ?? "Provider unresolved")}
+          {displayText(context.provider?.label ?? "Provider unresolved")}
         </p>
         <h3>Context · how this event reaches people</h3>
         <ol
@@ -707,7 +628,8 @@ function CaseDetails({
           <dl className="cc-metadata">
             <dt>Case / version</dt>
             <dd>
-              {selected.id} / {selected.version}
+              {caseDisplayId(selected, records) ?? "Display ID not assigned"} /{" "}
+              {selected.version}
             </dd>
             <dt>Source event</dt>
             <dd>
@@ -729,15 +651,16 @@ function CaseDetails({
             <dd>Revision {selected.baselineRevision}</dd>
             <dt>Created / updated</dt>
             <dd>
-              <time dateTime={selected.createdAt}>{selected.createdAt}</time> /{" "}
-              <time dateTime={selected.updatedAt}>{selected.updatedAt}</time>
+              <time dateTime={selected.createdAt}>
+                {ctClock(selected.createdAt)}
+              </time>{" "}
+              /{" "}
+              <time dateTime={selected.updatedAt}>
+                {ctClock(selected.updatedAt)}
+              </time>
             </dd>
           </dl>
-          <p className="cc-muted">
-            Captured reference-source snapshot, not live telemetry. Source
-            aliases are presentation-only; identifiers and raw evidence exports
-            are unchanged.
-          </p>
+
           <Sources refs={context.sourceRefs} sources={contextSources} />
         </details>
         {!baselineMatches && (
@@ -775,19 +698,8 @@ function CaseDetails({
               ),
             )}
           </p>
-          <p className="cc-muted">
-            Captured source event: {selected.eventId}. Case tracking and modeled
-            consequences do not alter this evidence.
-          </p>
+          <p className="cc-muted">Source event: {selected.eventId}.</p>
           <Sources refs={context.sourceRefs} sources={contextSources} />
-          {pcapFromEvent(selected.eventSnapshot) && (
-            <PcapEvidencePanel
-              evidence={pcapFromEvent(selected.eventSnapshot)!}
-            />
-          )}
-          {reference && (
-            <ReferenceInvestigationEvidence reference={reference} />
-          )}
         </section>
       )}
       {show("tasks") && (
@@ -817,16 +729,7 @@ function CaseDetails({
                 />
                 <span>
                   {displayText(task.label)}
-                  {reference?.tasks.find((item) => item.label === task.label)
-                    ?.acceptance && (
-                    <small className="reference-task-acceptance">
-                      {
-                        reference.tasks.find(
-                          (item) => item.label === task.label,
-                        )?.acceptance
-                      }
-                    </small>
-                  )}
+
                   {task.completedAt && (
                     <time dateTime={task.completedAt}>{task.completedAt}</time>
                   )}
@@ -844,10 +747,7 @@ function CaseDetails({
           data-case-section="consequence"
         >
           <h2>Consequence analysis</h2>
-          <p className="cc-muted">
-            Conditional modeled consequences; not observed failures. One
-            analysis can be attached to this case, without replacement.
-          </p>
+          <p className="cc-muted">Modeled · not observed outages</p>
           {selected.runId || run ? (
             <>
               <h3>Immutable captured run</h3>
@@ -901,6 +801,12 @@ function CaseDetails({
                     {run.impacts.length} captured modeled impacts. Advisory
                     decision records appear below.
                   </p>
+                  {idtError && (
+                    <p className="cc-warning" role="status">
+                      {idtError}
+                    </p>
+                  )}
+                  <CapturedImpactRows run={run} index={idtIndex} />
                 </>
               ) : (
                 <p>
@@ -997,16 +903,12 @@ function CaseDetails({
           id={sectionId("decisions")}
           data-case-section="decisions"
         >
-          <h2>Advisory decision reviews</h2>
+          <h2>Advisory, not approvals</h2>
           <div className="cc-chips">
             <span className="cc-chip">Authority not configured</span>
             <span className="cc-chip">Formal gates not evaluated</span>
           </div>
-          <p className="cc-muted">
-            Reviewed means app review only. These records do not approve,
-            execute, dispatch, or establish recovery. Timing windows are
-            scenario-relative planning intervals, not countdowns.
-          </p>
+
           <div className="cc-stack">
             {selected.decisions.map((decision) => (
               <article className="cc-review" key={decision.id}>
@@ -1059,7 +961,7 @@ function CaseDetails({
                       ).trim();
                       if (!reviewNote) {
                         setError(
-                          "Enter a nonempty advisory review note for this decision.",
+                          "Enter a nonempty impact review note for this decision.",
                         );
                         return;
                       }
@@ -1080,9 +982,9 @@ function CaseDetails({
                     }}
                   >
                     <label>
-                      Advisory review note
+                      Impact review note
                       <textarea
-                        aria-label="Advisory review note"
+                        aria-label="Impact review note"
                         required
                         value={reviewNotes[decision.id] || ""}
                         disabled={locked}
@@ -1095,7 +997,7 @@ function CaseDetails({
                       />
                     </label>
                     <button disabled={locked} type="submit">
-                      Record advisory review
+                      Record review
                     </button>
                   </form>
                 )}
@@ -1113,7 +1015,7 @@ function CaseDetails({
           id={sectionId("notes")}
           data-case-section="notes"
         >
-          <h2>Coordination notes</h2>
+          <h2>Notes</h2>
           <p className="cc-muted">
             Saved locally to this case. Notes are not sent to partners.
           </p>
@@ -1150,7 +1052,7 @@ function CaseDetails({
           <ol className="cc-timeline">
             {selected.notes.map((item) => (
               <li key={item.id}>
-                <time dateTime={item.createdAt}>{item.createdAt}</time>
+                <time dateTime={item.createdAt}>{ctClock(item.createdAt)}</time>
                 <p className="cc-user-text">{item.text}</p>
               </li>
             ))}
@@ -1164,13 +1066,15 @@ function CaseDetails({
           id={sectionId("activity")}
           data-case-section="activity"
         >
-          <h2>Activity timeline</h2>
+          <h2>Activity</h2>
           <ol className="cc-timeline">
             {selected.activity.map((item) => (
               <li key={item.id}>
-                <time dateTime={item.createdAt}>{item.createdAt}</time>
+                <time dateTime={item.createdAt}>{ctClock(item.createdAt)}</time>
                 <span className="cc-chip">{item.kind}</span>
-                <p className="cc-user-text">{item.message}</p>
+                <p className="cc-user-text">
+                  {activityDisplayText(item.message)}
+                </p>
               </li>
             ))}
           </ol>
@@ -1183,10 +1087,7 @@ function CaseDetails({
         data-case-section="tracking"
       >
         <h2>Case status</h2>
-        <p className="cc-muted">
-          Local tracking only; status changes do not change source events or
-          modeled evidence.
-        </p>
+
         <label>
           Required tracking / closure note
           <textarea
@@ -1203,7 +1104,7 @@ function CaseDetails({
               disabled={blocked}
               onClick={() => track("open")}
             >
-              Reopen workspace case
+              Reopen case
             </button>
           ) : (
             <>
@@ -1226,7 +1127,7 @@ function CaseDetails({
                 disabled={locked || !closureReady}
                 onClick={closeCase}
               >
-                Close workspace case…
+                Close case…
               </button>
             </>
           )}
@@ -1245,6 +1146,10 @@ function CaseDetails({
           data-case-section="advanced"
         >
           <h2>Advanced</h2>
+          <dl className="cc-metadata">
+            <dt>Internal case ID</dt>
+            <dd className="mono">{selected.id}</dd>
+          </dl>
           <div className="cc-actions">
             {onDownloadRecord && (
               <button
@@ -1310,7 +1215,12 @@ function CaseDetails({
           }
         >
           <p className="cc-note">
-            Case {confirmation.caseId} · frozen version {confirmation.version}
+            Case{" "}
+            {caseDisplayId(
+              { id: confirmation.caseId, eventId: selected.eventId },
+              records,
+            ) ?? "Display ID not assigned"}{" "}
+            · version {confirmation.version}
           </p>
           {confirmation.detail}
         </ConfirmDialog>

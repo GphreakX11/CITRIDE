@@ -1,7 +1,7 @@
 .command-casework {
-  --cc-surface: var(--surface, #fff);
-  --cc-border: var(--line, #e6eaf0);
-  --cc-muted: var(--muted, #65788c);
+  --cc-surface: var(--surface, var(--surface));
+  --cc-border: var(--line, var(--border));
+  --cc-muted: var(--muted, var(--text-muted));
   display: grid;
   gap: 16px;
   min-width: 0;
@@ -16,7 +16,7 @@
 .command-casework .cc-panel {
   padding: clamp(16px, 2vw, 24px);
   border: 1px solid var(--cc-border);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: var(--cc-surface);
 }
 .command-casework .cc-header,
@@ -36,12 +36,12 @@
 .command-casework h2,
 .cc-dialog h2 {
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: var(--fs-card-title);
   line-height: 1.4;
 }
 .command-casework h3 {
   margin: 16px 0 8px;
-  font-size: 15px;
+  font-size: var(--fs-card-title);
 }
 .command-casework p,
 .cc-dialog p {
@@ -56,7 +56,7 @@
 .cc-dialog label {
   display: grid;
   gap: 7px;
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 .command-casework button,
@@ -64,20 +64,20 @@
   min-height: 44px;
   max-width: 100%;
   padding: 10px 15px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  background: #fff;
-  color: #23364b;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-body);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .command-casework .cc-primary,
 .cc-dialog .cc-primary {
-  background: var(--blue, #275cc5);
-  color: #fff;
-  border-color: var(--blue, #275cc5);
+  background: var(--blue, var(--surface));
+  color: var(--text-strong);
+  border-color: var(--blue, var(--accent));
 }
 .command-casework input:not([type="checkbox"]),
 .command-casework select,
@@ -85,12 +85,12 @@
   width: 100%;
   min-height: 44px;
   max-width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
   padding: 10px 12px;
   background: var(--cc-surface);
   color: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 .command-casework textarea {
   min-height: 100px;
@@ -130,12 +130,12 @@
   grid-template-columns: minmax(115px, 0.35fr) minmax(0, 1fr);
   gap: 8px 18px;
   margin: 16px 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.65;
 }
 .command-casework .cc-metadata dt,
 .cc-dialog .cc-metadata dt {
-  color: var(--cc-muted, #65788c);
+  color: var(--cc-muted, var(--text-muted));
 }
 .command-casework .cc-metadata dd,
 .cc-dialog .cc-metadata dd {
@@ -153,25 +153,25 @@
 .cc-dialog .cc-chip {
   display: inline-block;
   padding: 5px 9px;
-  border-radius: 6px;
-  background: #eef3f9;
-  color: #39516c;
-  border: 1px solid #dee7f1;
-  font-size: 12px;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: var(--fs-chip);
   line-height: 1.5;
   overflow-wrap: anywhere;
   max-width: 100%;
 }
 .command-casework .cc-muted {
   color: var(--cc-muted);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .command-casework .cc-warning {
-  background: #fff8e6;
-  border: 1px solid #e8ce91;
-  color: #76531b;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber);
+  color: var(--amber-text);
   padding: 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   margin-top: 12px;
 }
 .command-casework .cc-warning h3 {
@@ -180,28 +180,28 @@
 .command-casework .cc-error,
 .cc-dialog .cc-error {
   margin: 0;
-  background: #fff1f1;
-  border: 1px solid #f0b8b8;
+  background: var(--red-bg);
+  border: 1px solid var(--red);
   padding: 14px;
-  border-radius: 8px;
-  color: #9e2929;
+  border-radius: var(--radius-control);
+  color: var(--red-text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .command-casework .cc-note,
 .cc-dialog .cc-note {
   padding: 12px;
-  border-radius: 7px;
-  background: #f5f7fa;
+  border-radius: var(--radius-control);
+  background: var(--surface);
   margin: 12px 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .command-casework .cc-review {
   border: 1px solid var(--cc-border);
-  border-left: 3px solid #7da5df;
+  border-left: 3px solid var(--accent);
   padding: 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 .command-casework .cc-review > h3:first-child {
   margin-top: 0;
@@ -213,7 +213,7 @@
   min-height: 44px;
   padding: 10px 8px;
   border: 1px solid var(--cc-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   cursor: pointer;
 }
 .command-casework .cc-task input {
@@ -221,7 +221,7 @@
   height: 22px;
   flex-shrink: 0;
   margin: 0 6px 0 0;
-  accent-color: var(--blue, #275cc5);
+  accent-color: var(--blue, var(--text-muted));
 }
 .command-casework .cc-task span {
   flex: 1;
@@ -230,7 +230,7 @@
 .command-casework .cc-task time,
 .command-casework .cc-timeline time {
   display: block;
-  font-size: 12px;
+  font-size: var(--fs-mono);
   color: var(--cc-muted);
   font-weight: 400;
   overflow-wrap: anywhere;
@@ -243,7 +243,7 @@
   gap: 14px;
 }
 .command-casework .cc-timeline li {
-  border-left: 2px solid #cddcf0;
+  border-left: 2px solid var(--accent);
   padding-left: 14px;
 }
 .command-casework .cc-user-text {
@@ -271,22 +271,22 @@
   max-width: calc(100vw - 24px);
   height: fit-content;
   max-height: min(90dvh, 800px);
-  border: 1px solid #d1dae6;
-  border-radius: 12px;
-  background: #fff;
-  color: #23364b;
-  box-shadow: 0 24px 80px #10273d40;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--shadow) 25.1%, transparent);
 }
 .cc-dialog[open] {
   display: flex;
   flex-direction: column;
 }
 .cc-dialog::backdrop {
-  background: #10273d99;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
 }
 .cc-dialog header {
   padding: 16px 20px;
-  border-bottom: 1px solid #e6eaf0;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -304,13 +304,13 @@
 }
 .cc-dialog footer {
   padding: 14px 20px;
-  border-top: 1px solid #e6eaf0;
+  border-top: 1px solid var(--border);
   margin: 0;
   justify-content: flex-end;
   flex-shrink: 0;
 }
 .cc-dialog button:focus-visible {
-  outline: 3px solid #6498ee;
+  outline: 3px solid var(--text-muted);
   outline-offset: 2px;
 }
 @media (max-width: 520px) {

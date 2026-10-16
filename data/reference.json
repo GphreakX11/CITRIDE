@@ -1,0 +1,278 @@
+{
+  "referenceVersion": "billington-v1",
+  "sources": [
+    {
+      "id": "src-response-options",
+      "label": "Response option reference list",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "src-planning-rates",
+      "label": "Planning rate assumptions",
+      "evidenceCategory": "simulated",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "responseOptions": [
+    {
+      "id": "opt-tdem-health-notice",
+      "title": "Coordinate with TDEM and healthcare partners",
+      "detail": "Nursing home and dialysis center first.",
+      "actor": "TXCC with TDEM",
+      "unit": null,
+      "triggers": {
+        "eventObservations": [],
+        "impactFunctions": [
+          "dialysis-treatment",
+          "nursing-safe-water",
+          "hospital-sterilization"
+        ]
+      },
+      "basisText": "TDEM coordinates state emergency management.",
+      "citation": "Tex. Gov't Code ch. 418",
+      "verification": "beta_reference",
+      "sourceRefs": [
+        "src-response-options"
+      ]
+    },
+    {
+      "id": "opt-ciru-support",
+      "title": "Offer CIRU incident response support to Utility A",
+      "detail": "Contain the vendor account; secure the dosing controller.",
+      "actor": "TXCC",
+      "unit": "CIRU",
+      "triggers": {
+        "eventObservations": [
+          "dosing_parameter_change"
+        ],
+        "impactFunctions": []
+      },
+      "basisText": "TXCC provides incident response support to Texas entities.",
+      "citation": "Tex. Gov't Code ch. 2063",
+      "verification": "beta_reference",
+      "sourceRefs": [
+        "src-response-options"
+      ]
+    },
+    {
+      "id": "opt-isao-advisory",
+      "title": "Issue a TX-ISAO advisory to water utilities",
+      "detail": "Same attacker probed B and C; names withheld.",
+      "actor": "TXCC",
+      "unit": "TX-ISAO",
+      "triggers": {
+        "eventObservations": [
+          "probing_only",
+          "dosing_parameter_change"
+        ],
+        "impactFunctions": []
+      },
+      "basisText": "TXCC operates the Texas information sharing and analysis organization.",
+      "citation": "Tex. Gov't Code ch. 2063",
+      "verification": "beta_reference",
+      "sourceRefs": [
+        "src-response-options"
+      ]
+    },
+    {
+      "id": "opt-virt-on-request",
+      "title": "Deploy the VIRT if Utility B or C asks",
+      "detail": "On standby near Utility C.",
+      "actor": "TXCC",
+      "unit": "VIRT",
+      "triggers": {
+        "eventObservations": [
+          "probing_only"
+        ],
+        "impactFunctions": []
+      },
+      "basisText": "Volunteer incident response support on request of the affected entity.",
+      "citation": "Tex. Gov't Code ch. 2063",
+      "verification": "beta_reference",
+      "sourceRefs": [
+        "src-response-options"
+      ]
+    }
+  ],
+  "optionTimingLabels": {
+    "opt-ciru-support": "Now",
+    "opt-isao-advisory": "Before B or C escalate",
+    "opt-virt-on-request": "On request"
+  },
+  "planningRates": [
+    {
+      "id": "rate-dialysis-treatment",
+      "functionId": "dialysis-treatment",
+      "unit": "USD per lost service-hour",
+      "low": 8000,
+      "high": 15000,
+      "reviewStatus": "synthetic_seed_only",
+      "sourceRefs": [
+        "src-planning-rates"
+      ]
+    },
+    {
+      "id": "rate-hospital-sterilization",
+      "functionId": "hospital-sterilization",
+      "unit": "USD per lost service-hour",
+      "low": 20000,
+      "high": 40000,
+      "reviewStatus": "synthetic_seed_only",
+      "sourceRefs": [
+        "src-planning-rates"
+      ]
+    },
+    {
+      "id": "rate-nursing-safe-water",
+      "functionId": "nursing-safe-water",
+      "unit": "USD per lost service-hour",
+      "low": 3000,
+      "high": 6000,
+      "reviewStatus": "synthetic_seed_only",
+      "sourceRefs": [
+        "src-planning-rates"
+      ]
+    },
+    {
+      "id": "rate-fire-flow",
+      "functionId": "fire-flow",
+      "unit": "USD per lost service-hour",
+      "low": 5000,
+      "high": 10000,
+      "reviewStatus": "synthetic_seed_only",
+      "sourceRefs": [
+        "src-planning-rates"
+      ]
+    },
+    {
+      "id": "rate-dialysis-treatment-u",
+      "functionId": "dialysis-treatment-u",
+      "unit": "USD per lost service-hour",
+      "low": 8000,
+      "high": 15000,
+      "reviewStatus": "synthetic_seed_only",
+      "sourceRefs": [
+        "src-planning-rates"
+      ]
+    },
+    {
+      "id": "rate-hospital-sterilization-w",
+      "functionId": "hospital-sterilization-w",
+      "unit": "USD per lost service-hour",
+      "low": 20000,
+      "high": 40000,
+      "reviewStatus": "synthetic_seed_only",
+      "sourceRefs": [
+        "src-planning-rates"
+      ]
+    }
+  ],
+  "boilWaterRules": [
+    {
+      "id": "bwn-unsafe-water",
+      "when": {
+        "seedLossType": "unsafe_water",
+        "providerType": "WaterServiceProvider",
+        "minPersistHours": 1
+      },
+      "label": "Boil-water notice: possible",
+      "explanation": "Unsafe treated water at a public water system for an hour or more can lead to a boil-water notice.",
+      "decidedBy": "The utility and the state drinking-water regulator decide.",
+      "verification": "needs_sme_review",
+      "sourceRefs": [
+        "src-response-options"
+      ]
+    }
+  ],
+  "firstActions": [
+    {
+      "id": "fa-vpn-disable",
+      "when": {
+        "observation": "vendor_vpn_login_off_hours"
+      },
+      "scope": "utility",
+      "text": "Disable the vendor remote-access account and end active sessions.",
+      "contactRole": "Utility {u} operations manager (on call)"
+    },
+    {
+      "id": "fa-dosing-manual",
+      "when": {
+        "observation": "dosing_parameter_change"
+      },
+      "scope": "utility",
+      "text": "Confirm the dosing setpoint at the plant and run the process in manual.",
+      "contactRole": "Treatment Plant {u} superintendent"
+    },
+    {
+      "id": "fa-boil-water",
+      "when": {
+        "boilWaterRule": "bwn-unsafe-water"
+      },
+      "scope": "utility",
+      "text": "Coordinate on a possible boil-water notice. The utility and the state regulator decide.",
+      "contactRole": "Utility {u} operations manager (on call)"
+    },
+    {
+      "id": "fa-sample",
+      "when": {
+        "observation": "water_quality_drift"
+      },
+      "scope": "utility",
+      "text": "Take confirmatory water-quality samples.",
+      "contactRole": "Treatment Plant {u} superintendent"
+    },
+    {
+      "id": "fa-vendor-check",
+      "when": {
+        "observation": "probing_only"
+      },
+      "scope": "utility",
+      "text": "Check for the Vendor V account, reset its credentials, and block the shared source address.",
+      "contactRole": "Utility {u} IT lead"
+    },
+    {
+      "id": "fa-login-review",
+      "when": {
+        "observation": "probing_only",
+        "utilityServesSector": "10.1.2"
+      },
+      "scope": "utility",
+      "text": "Review recent controller logins.",
+      "contactRole": "Utility {u} IT lead"
+    },
+    {
+      "id": "fa-vendor-notify",
+      "when": {
+        "observation": "vendor_vpn_login_off_hours"
+      },
+      "scope": "vendor",
+      "text": "Tell Vendor V its support account was misused at one utility and is in use at others.",
+      "contactRole": "Vendor V remote support lead"
+    },
+    {
+      "id": "fa-health-call",
+      "when": {
+        "impactFacilitySector": "10"
+      },
+      "scope": "facility",
+      "text": "Call the facility with the earliest modeled window first.",
+      "contactRole": "{facility} administrator"
+    }
+  ],
+  "firstActionsLabel": "Suggested — cyber SME to confirm",
+  "responseClock": {
+    "startsAt": "case_opened",
+    "targetMinutes": 120,
+    "amberMinutes": 60,
+    "redMinutes": 90,
+    "verification": "needs_txcc_confirmation",
+    "note": "Placeholder target until TXCC supplies its response-time standard."
+  }
+}

@@ -359,6 +359,8 @@ def compute_run(data: dict, request: dict, run_id: str) -> dict:
         results.append(impact)
     normalized_request = {"scenarioId": scenario_id, "evaluationHour": evaluation_hour,
                           "horizonHours": horizon, "overrides": overrides}
+    if request.get("clientRequestId") is not None:
+        normalized_request["clientRequestId"] = request["clientRequestId"]
     return {"id": run_id, "scenarioId": scenario_id, "baselineRevision": data.get("baselineRevision", 1),
             "modelVersion": MODEL_VERSION, "request": normalized_request, "seed": seed,
             "impacts": results, "excluded": excluded, "warnings": warnings,

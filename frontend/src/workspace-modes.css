@@ -18,28 +18,28 @@
   gap: 4px;
   margin: 16px 13px 20px;
   padding: 4px;
-  background: #0b1221;
-  border: 1px solid #26354c;
-  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
 }
 .workspace-mode-switch button {
   min-height: 40px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   background: transparent;
-  color: #a8bad1;
+  color: var(--text);
   font: inherit;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--fs-body);
+  font-weight: 600;
   cursor: pointer;
 }
 .workspace-mode-switch button[aria-pressed="true"] {
-  background: #24466b;
-  color: #fff;
-  box-shadow: 0 1px 5px #0005;
+  background: var(--surface);
+  color: var(--text-strong);
+  box-shadow: 0 1px 5px color-mix(in srgb, var(--shadow) 33.3%, transparent);
 }
 .workspace-mode-switch button:focus-visible {
-  outline: 2px solid #67c5ff;
+  outline: 2px solid var(--text-muted);
   outline-offset: 2px;
 }
 .workspace-mode-switch button:disabled,
@@ -51,17 +51,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #a9bdd5;
-  font-size: 12px;
+  color: var(--text);
+  font-size: var(--fs-body);
   margin-bottom: 16px;
 }
 .command-incident-picker select {
-  background: #101d30;
-  color: #e5efff;
-  border: 1px solid #30445f;
+  background: var(--bg-header);
+  color: var(--text-strong);
+  border: 1px solid var(--border-strong);
   max-width: min(640px, 85%);
   min-height: 38px;
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   padding: 8px 12px;
 }
 .analyst-filters {
@@ -74,8 +74,8 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
-  font-size: 12px;
-  color: #b1c4db;
+  font-size: var(--fs-body);
+  color: var(--text);
   flex: 1 1 140px;
 }
 .analyst-filters input,
@@ -83,10 +83,10 @@
   min-width: 0;
   width: 100%;
   min-height: 38px;
-  border: 1px solid #30445f;
-  background: #101d30;
-  color: #e6f0ff;
-  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-header);
+  color: var(--text-strong);
+  border-radius: var(--radius-small);
   padding: 8px 10px;
 }
 .evidence-picker {
@@ -96,8 +96,8 @@
   margin: 15px 0;
 }
 .evidence-picker [aria-pressed="true"] {
-  outline: 2px solid #5aa5df;
-  background: #17324f;
+  outline: 2px solid var(--text-muted);
+  background: var(--surface);
 }
 .workspace-command .content-footer {
   opacity: 0.75;

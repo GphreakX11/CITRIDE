@@ -14,6 +14,20 @@ from urllib.parse import quote
 from pyshacl import validate as shacl_validate
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, XSD
 
+from .billington_reference import ReferenceUnavailableError, idt_entry
+
+
+def validate_scripted(data: dict, scenario: dict) -> list[str]:
+    """Validate supplied scripted records without modifying either input."""
+    from .scripted_validation import validate_scripted as check
+    return check(data, scenario)
+
+
+def validate_reference(data: dict, scenario: dict) -> list[str]:
+    """Validate source-inheriting reference configuration without rewriting it."""
+    from .scripted_validation import validate_reference as check
+    return check(data, scenario)
+
 
 NS = Namespace("urn:citride:")
 SAFE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9._:-]{0,255}$")
@@ -46,6 +60,14 @@ OPTIONAL_DEPENDENCY_FIELDS = frozenset({
     "supplyGroup", "multiSupply", "status", "backupService",
     "backupIndependenceAssumption", "parameterAssertionRefs", "recovery",
 })
+
+IDT_FIELDS = {
+    "coded": frozenset({"status", "path"}),
+    "below_idt_level": frozenset({"status", "parentEntity", "parentPath"}),
+    "not_idt_asset": frozenset({"status", "reason"}),
+    "unassigned": frozenset({"status"}),
+}
+IDT_REASONS = frozenset({"cyber_identity", "service_area", "population_group"})
 
 SHAPES = """
 @prefix c: <urn:citride:> .
@@ -147,6 +169,39 @@ def _range(low: Any, high: Any, label: str, errors: list[str], nullable: bool = 
 
 def _uri(identifier: str) -> URIRef:
     return URIRef("urn:citride:record:" + quote(identifier, safe="._-:"))
+
+
+def _idt(entity: dict, entities: dict, errors: list[str], prefix: str) -> None:
+    """Strict current-baseline IDT shape; never fill or rewrite historical data."""
+    if "idt" not in entity:
+        errors.append(prefix + "idt is required")
+        return
+    assignment = entity["idt"]
+    if not isinstance(assignment, dict):
+        errors.append(prefix + "idt must be an object")
+        return
+    status = assignment.get("status")
+    if not isinstance(status, str) or status not in IDT_FIELDS:
+        errors.append(prefix + "idt.status must be coded, below_idt_level, not_idt_asset, or unassigned")
+        return
+    if assignment.keys() != IDT_FIELDS[status]:
+        errors.append(prefix + f"idt {status} must contain exactly: " + ", ".join(sorted(IDT_FIELDS[status])))
+    if status in ("coded", "below_idt_level"):
+        field = "path" if status == "coded" else "parentPath"
+        path = assignment.get(field)
+        try:
+            canonical = isinstance(path, str) and idt_entry(path) is not None
+        except ReferenceUnavailableError:
+            errors.append(prefix + "idt canonical reference is unavailable")
+        else:
+            if not canonical:
+                errors.append(prefix + f"idt.{field} must be a canonical IDT v4 reference path")
+    if status == "below_idt_level":
+        parent = assignment.get("parentEntity")
+        if not _id(parent) or parent not in entities or parent == entity.get("id"):
+            errors.append(prefix + "idt.parentEntity must reference an existing, distinct entity with a safe ID")
+    if status == "not_idt_asset" and not _enum(assignment.get("reason"), IDT_REASONS):
+        errors.append(prefix + "idt.reason must be cyber_identity, service_area, or population_group")
 
 
 def dependency_graph(dependency: dict, data: dict | None = None) -> Graph:
@@ -328,6 +383,8 @@ def validate_baseline(data: dict) -> list[str]:
             _handling(item, errors, prefix)
             if key != "sources":
                 _source_refs(item, sources, errors, prefix)
+            if key == "entities":
+                _idt(item, entities, errors, prefix)
     for entity in entities.values():
         for field in ("partOf", "operatedBy", "serves", "locatedIn", "hostsCyberAsset", "hostedBy"):
             value = entity.get(field)
@@ -337,10 +394,14 @@ def validate_baseline(data: dict) -> list[str]:
             if any(not _id(ref) or ref not in entities for ref in values):
                 errors.append(f"entity {entity['id']}: {field} contains an unknown entity reference")
     for source in sources.values():
-        if source.get("evidenceCategory") not in ("simulated", "analyst_assumed"):
-            errors.append(f"source {source['id']}: evidenceCategory must be simulated or analyst_assumed")
+        if source.get("evidenceCategory") not in ("simulated", "analyst_assumed", "reference"):
+            errors.append(f"source {source['id']}: evidenceCategory must be simulated, analyst_assumed, or reference")
     for key in ("events", "assessments"):
         for record in _records(data, key):
+            if "attackTechniques" in record:
+                techniques = record["attackTechniques"]
+                if not isinstance(techniques, list) or any(not isinstance(t, dict) or set(t) != {"id", "name", "tactic"} or any(not isinstance(t[k], str) or not t[k].strip() for k in ("id", "name", "tactic")) for t in techniques):
+                    errors.append(f"{key} {record.get('id', '?')}: attackTechniques must be a list of nonempty id/name/tactic objects")
             for field in ("seenOn", "assetId", "cyberAssetId", "utilityId"):
                 if field in record and (not _id(record[field]) or record[field] not in entities):
                     errors.append(f"{key} {record.get('id', '?')}: {field} must reference an existing entity")

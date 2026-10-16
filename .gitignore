@@ -16,4 +16,8 @@ backend/citride/demo_data/
 !.env.example
 playwright-report/
 test-results/
+artifacts/visual-compare/
+artifacts/navigation-wording/
+artifacts/release-readonly/
+.vercel/
 .DS_Store

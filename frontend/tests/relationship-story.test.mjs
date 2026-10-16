@@ -22,8 +22,9 @@ test("reference utility story contains actual direct suppliers and four distinct
     "hospital-y",
     "nursing-z",
   ]);
-  assert.match(story.summary, /1 recorded direct supplier/);
-  assert.match(story.summary, /directly supports 4 entities/);
+  assert.match(story.summary, /supplies treated water to 4 facilities/);
+  assert.match(story.advancedSummary, /1 recorded direct supplier/);
+  assert.match(story.advancedSummary, /directly supports 4 entities/);
   assert.ok(
     story.suppliers.every((edge) => edge.dependency && edge.sourceRefs.length),
   );
@@ -76,7 +77,11 @@ test("location alone does not imply supply, impact or an outage", () => {
     [...serviceNeighborhood(edges, "facility-q", "suppliers")],
     ["facility-q"],
   );
-  assert.match(story.summary, /0 recorded direct suppliers/);
+  assert.equal(
+    story.summary,
+    "Facility Q is inside Service Area A, but no service dependency is recorded.",
+  );
+  assert.match(story.advancedSummary, /0 recorded direct suppliers/);
   assert.doesNotMatch(story.summary, /outage|failed|water supply/i);
 });
 
@@ -141,7 +146,7 @@ test("invalid endpoints and self-links do not count; frozen input remains unchan
   assert.deepEqual(story.supplierIds, []);
   assert.deepEqual(story.dependentIds, []);
   assert.equal(
-    story.summary,
+    story.advancedSummary,
     "A has 0 recorded direct suppliers. It directly supports 0 entities.",
   );
 });

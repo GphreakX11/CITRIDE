@@ -4,14 +4,14 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 c:WatershedOntology a owl:Ontology ;
-  owl:versionInfo "1.0.0" ;
-  owl:versionIRI c:WatershedOntology-1.0.0 ;
+  owl:versionInfo "1.1.0" ;
+  owl:versionIRI c:WatershedOntology-1.1.0 ;
   rdfs:label "CITRIDE local Watershed ontology" ;
-  rdfs:comment "Locally authored OWL 2 RL demo slice. No BFO, CCO, IDT, external ontology, physical prediction, or complete OWL 2 DL conformance is claimed. No remote imports." .
+  rdfs:comment "Locally authored OWL 2 RL slice with a separately generated local IDT v4 hierarchy. No BFO, CCO, remote ontology imports, physical prediction, or complete OWL 2 DL conformance is claimed." .
 
 c:InfrastructureEntity a owl:Class ;
   rdfs:label "Infrastructure entity" ;
-  rdfs:comment "A modeled physical or cyber infrastructure component; classification alone implies no loss of service." .
+  rdfs:comment "An infrastructure inventory or taxonomy entity, including physical and cyber components and operating agencies classified by IDT. Membership does not itself assert physical-facility identity or loss of service." .
 
 c:PhysicalFacility a owl:Class ;
   rdfs:label "Physical facility" ;
@@ -390,10 +390,26 @@ c:axiom-disjoint-Event-InfrastructureEntity a owl:Axiom ;
   rdfs:label "Event and InfrastructureEntity are distinct categories" ;
   rdfs:comment "A record classified in both Event and InfrastructureEntity is semantically inconsistent in this local demo ontology." .
 
-c:Organization owl:disjointWith c:InfrastructureEntity .
-c:axiom-disjoint-Organization-InfrastructureEntity a owl:Axiom ;
+c:Organization owl:disjointWith c:PhysicalFacility .
+c:axiom-disjoint-Organization-PhysicalFacility a owl:Axiom ;
   owl:annotatedSource c:Organization ;
   owl:annotatedProperty owl:disjointWith ;
-  owl:annotatedTarget c:InfrastructureEntity ;
-  rdfs:label "Organization and InfrastructureEntity are distinct categories" ;
-  rdfs:comment "A record classified in both Organization and InfrastructureEntity is semantically inconsistent in this local demo ontology." .
+  owl:annotatedTarget c:PhysicalFacility ;
+  rdfs:label "Organizations and physical facilities are distinct categories" ;
+  rdfs:comment "An operating agency may have an IDT infrastructure classification without being the physical facility it operates." .
+
+c:Organization owl:disjointWith c:PhysicalAsset .
+c:axiom-disjoint-Organization-PhysicalAsset a owl:Axiom ;
+  owl:annotatedSource c:Organization ;
+  owl:annotatedProperty owl:disjointWith ;
+  owl:annotatedTarget c:PhysicalAsset ;
+  rdfs:label "Organizations and physical assets are distinct categories" ;
+  rdfs:comment "An operating organization is not one of its tangible infrastructure assets." .
+
+c:Organization owl:disjointWith c:CyberAsset .
+c:axiom-disjoint-Organization-CyberAsset a owl:Axiom ;
+  owl:annotatedSource c:Organization ;
+  owl:annotatedProperty owl:disjointWith ;
+  owl:annotatedTarget c:CyberAsset ;
+  rdfs:label "Organizations and cyber identities are distinct categories" ;
+  rdfs:comment "An operating organization is not a network or software identity." .

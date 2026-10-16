@@ -1,10 +1,10 @@
 /* Detail pages share the casework vocabulary; no global shell/tool overrides. */
 .analyst-entity-profile,
 .command-casework:has(> .analyst-section-nav) {
-  --cc-surface: #101b2b;
-  --cc-border: #2c3d55;
-  --cc-muted: #a9bbd1;
-  color: #e5edf6;
+  --cc-surface: var(--surface);
+  --cc-border: var(--border);
+  --cc-muted: var(--text-muted);
+  color: var(--text-strong);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -13,37 +13,37 @@
   flex-wrap: wrap;
   gap: 6px;
   padding: 8px;
-  border: 1px solid #2c3d55;
-  border-radius: 10px;
-  background: #111c2e;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
 }
 .analyst-section-nav a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   padding: 8px 12px;
-  border-radius: 7px;
-  color: #cfe3ff;
-  font-size: 14px;
+  border-radius: var(--radius-control);
+  color: var(--text-strong);
+  font-size: var(--fs-body);
   font-weight: 600;
   text-decoration: none;
 }
 .analyst-section-nav a:hover,
 .analyst-section-nav a[aria-current="location"] {
-  background: #24456d;
-  color: #fff;
+  background: var(--surface-2);
+  color: var(--link);
 }
 .analyst-section-nav a:focus-visible,
 .command-casework .analyst-record-link:focus-visible,
 .analyst-entity-profile summary:focus-visible {
-  outline: 2px solid #8abfff;
+  outline: 2px solid var(--text-muted);
   outline-offset: 3px;
 }
 .analyst-detail-section {
   scroll-margin-block-start: 24px;
 }
 .analyst-detail-section:target {
-  outline: 2px solid #759ed6;
+  outline: 2px solid var(--text-muted);
   outline-offset: 2px;
 }
 .analyst-context-chain {
@@ -61,11 +61,11 @@
   min-width: 0;
   padding: 12px;
   border: 1px solid var(--cc-border);
-  border-radius: 8px;
-  background: #0d1725;
+  border-radius: var(--radius-control);
+  background: var(--surface);
 }
 .analyst-context-chain small {
-  color: #a9bbd1;
+  color: var(--text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -75,9 +75,9 @@
   padding: 4px 0;
   text-align: left;
   border: 0;
-  border-radius: 3px;
+  border-radius: var(--radius-small);
   background: transparent;
-  color: #a8cfff;
+  color: var(--link);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -97,10 +97,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  color: #a9bbd1;
+  color: var(--text);
 }
 .analyst-entity-profile .cc-header h2 {
-  font-size: clamp(23px, 3vw, 30px);
+  font-size: var(--fs-title);
 }
 .analyst-profile-summary {
   margin: 0;
@@ -122,10 +122,10 @@
   overflow-wrap: anywhere;
   padding: 12px;
   border: 1px solid var(--cc-border);
-  border-radius: 6px;
-  background: #0a1422;
-  color: #cfe3f5;
-  font-size: 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--text-strong);
+  font-size: var(--fs-body);
   line-height: 1.6;
 }
 .analyst-source-record {
@@ -133,24 +133,24 @@
   max-width: 100%;
   padding: 0 10px;
   border: 1px solid var(--cc-border);
-  border-radius: 6px;
-  background: #132840;
-  color: #cfe3ff;
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--text-strong);
 }
 .command-casework.analyst-entity-profile button:not(.analyst-record-link) {
-  background: #182b42;
-  color: #d9eaff;
-  border-color: #435d7b;
+  background: var(--surface);
+  color: var(--link);
+  border-color: var(--border-strong);
 }
 .command-casework.analyst-entity-profile .cc-chip {
-  background: #1a304a;
-  color: #cfe3ff;
-  border-color: #345377;
+  background: var(--surface);
+  color: var(--text-strong);
+  border-color: var(--border);
 }
 .command-casework.analyst-entity-profile .cc-warning {
-  background: #302212;
-  color: #f7d39a;
-  border-color: #866232;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  border-color: var(--amber);
 }
 @media (max-width: 720px) {
   .analyst-detail-columns {

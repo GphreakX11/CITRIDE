@@ -27,6 +27,9 @@ def dataset():
 @pytest.fixture(scope="module")
 def streams():
     values = [json.loads(path.read_text(encoding="utf-8")) for path in sorted((ROOT / "data" / "telemetry").glob("*.json"))]
+    from citride.zeek_logs import load_zeek_json
+    values.extend({"id": f"corelight/{name}", "sourceRef": "src-network", "handling": ["SIMULATED"], "records": records}
+                  for name, records in load_zeek_json(ROOT / "data/telemetry/corelight").items())
     return {stream["id"]: stream for stream in values}
 
 
@@ -74,7 +77,11 @@ def test_source_and_assumption_references_resolve_with_simulation_labels(dataset
             assert row["classification"] == "U"
             assert row["handling"] == ["SIMULATED"]
     for source in dataset["sources"]:
-        assert source["evidenceCategory"] == "simulated"
+        if source["id"] == "src-idt-v4":
+            assert source["evidenceCategory"] == "reference"
+            assert source["title"] == "Infrastructure Data Taxonomy v4, 22 Jun 2011"
+        else:
+            assert source["evidenceCategory"] == "simulated"
         assert source["handling"] == ["SIMULATED"]
     assumptions = {row["id"]: row for row in dataset["assumptions"]}
     for dep in dataset["dependencies"]:
@@ -173,10 +180,12 @@ def test_negative_controls_do_not_claim_compromise_or_operational_effect(dataset
     assert candidate_function["facility"] == "facility-q"
     assert candidate_function["service"] == "safe_water_support"
     assert candidate_function["sourceRefs"] == ["src-inventory"]
-    assert not any(row["seed"]["provider"] in {"utility-b", "utility-c"} for row in dataset["scenarios"])
+    potential = [row for row in dataset["scenarios"] if row["seed"]["provider"] in {"utility-b", "utility-c"}]
+    assert {row["id"] for row in potential} == {"potential-unsafe-water-b", "potential-unsafe-water-c"}
+    assert all(row["seed"]["eventRefs"] == [] for row in potential)
     probes = [row for row in streams["network"]["records"] if row["observation"] == "probing_only"]
     assert {row["utilityId"] for row in probes} == {"utility-b", "utility-c"}
-    assert all(row["conn_state"] == "S0" and row["resp_bytes"] == 0 for row in probes)
+    assert all(row["conn_state"] in {"S0", "REJ"} and row["resp_bytes"] == 0 for row in probes)
     assert len({row["id.orig_h"] for row in probes}) == 1
     assert not any(row["utilityId"] != "utility-a" and row["eventType"] in {"parameter_change", "authentication"} for row in streams["controller"]["records"])
     assert all(not row["anomalous"] for row in streams["enterprise"]["records"])
@@ -186,7 +195,7 @@ def test_scenario_seeds_are_explicit_independent_assumptions(dataset):
     events = {row["id"] for row in dataset["events"]}
     functions = {(row["facility"], row["service"]) for row in dataset["serviceFunctions"]}
     scenarios = {row["id"]: row for row in dataset["scenarios"]}
-    assert set(scenarios) == {"unsafe-water", "low-pressure", "power-loss"}
+    assert set(scenarios) == {"unsafe-water", "low-pressure", "power-loss", "potential-unsafe-water-b", "potential-unsafe-water-c"}
     assert dataset["defaultScenarioId"] == "unsafe-water"
     for scenario in scenarios.values():
         seed = scenario["seed"]
@@ -196,7 +205,7 @@ def test_scenario_seeds_are_explicit_independent_assumptions(dataset):
         assert set(seed["eventRefs"]) <= events
         assert seed["sourceRefs"] == ["src-effects"]
         assert seed["handling"] == ["SIMULATED"]
-    assert scenarios["unsafe-water"]["seed"]["eventRefs"] == ["event-dosing", "event-sensor"]
+    assert scenarios["unsafe-water"]["seed"]["eventRefs"] == ["event-vpn-a", "event-dosing", "event-sensor"]
     assert scenarios["low-pressure"]["seed"]["eventRefs"] == []
     assert scenarios["power-loss"]["seed"]["eventRefs"] == []
 

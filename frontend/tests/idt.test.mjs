@@ -90,11 +90,11 @@ test("source nulls and duplicated IDs survive and fallbacks are display only", (
   assert.equal(unnamed.name, null);
 });
 
-test("all exact existing58 and proposed9 IDs, no inferred wildcard IDs", () => {
+test("all exact existing inventory and authored proposal IDs, no inferred wildcard IDs", () => {
   const seed = JSON.parse(
     readFileSync(new URL("../../data/scenario.json", import.meta.url)),
   );
-  assert.equal(seed.entities.length, 58);
+  assert.equal(seed.entities.length, 67); // Includes all nine explicitly approved storyline entities.
   assert.equal(Object.keys(index.assignments).length, 67);
   assert.equal(raw.proposedEntityIds.length, 9);
   assert.deepEqual(

@@ -72,7 +72,71 @@ class AnalyzeAction(ActionBase):
         return self
 
 
+class AssessmentAction(ActionBase):
+    action: Literal["record_assessment"]
+    subject: Identifier
+    cluster: Note
+    actorLabel: Note
+    confidence: Literal["low", "medium", "high"]
+    note: Note
+
+class AssetStatusAction(ActionBase):
+    action: Literal["set_asset_status"]
+    entityId: Identifier
+    status: Literal["confirmed", "suspected", "at_risk", "normal"]
+    note: Note
+
+class HuntAction(ActionBase):
+    action: Literal["record_hunt"]
+    huntId: Identifier
+    status: Literal["running", "queued", "done", "no_findings", "findings"]
+    resultNote: Note
+
+class ContactAction(ActionBase):
+    action: Literal["set_contact_status"]
+    contactId: Identifier
+    status: Literal["contacted", "attempted", "not_yet", "engaged", "on_standby", "waiting_on_chief", "not_shared_no_consent"]
+    note: Note
+
+class RecordDecisionAction(ActionBase):
+    action: Literal["record_decision"]
+    optionId: Identifier
+    decision: Literal["chosen", "deferred", "not_chosen", "standing_by"]
+    decidedBy: Note
+    note: Note
+
+class TeamPeople(CommandModel):
+    onSite: Annotated[int, Field(strict=True, ge=0)]
+    remote: Annotated[int, Field(strict=True, ge=0)]
+    traveling: Annotated[int, Field(strict=True, ge=0)]
+    standby: Annotated[int, Field(strict=True, ge=0)]
+
+class TeamStatusAction(ActionBase):
+    action: Literal["set_team_status"]
+    teamId: Identifier
+    status: Literal["en_route", "standby", "remote", "on_site"]
+    people: TeamPeople
+    locationLabel: Note
+    updateText: Note
+
+class AddResponseTaskAction(ActionBase):
+    action: Literal["add_task"]
+    label: Note
+    teamId: Identifier
+    ownerRole: Note
+    dueAt: Note
+
+class ResponseTaskStatusAction(ActionBase):
+    action: Literal["set_task_status"]
+    taskId: Identifier
+    status: Literal["not_started", "in_progress", "waiting", "done"]
+
+class DemoResetRequest(CommandModel):
+    expectedBaselineRevision: Version
+    clientRequestId: Identifier
+    confirm: Literal["RESET DEMO"]
+
 CommandActionRequest = Annotated[
-    StatusAction | TaskAction | ReviewAction | CoordinationAction | AnalyzeAction,
+    StatusAction | TaskAction | ReviewAction | CoordinationAction | AnalyzeAction | AssessmentAction | AssetStatusAction | HuntAction | ContactAction | RecordDecisionAction | TeamStatusAction | AddResponseTaskAction | ResponseTaskStatusAction,
     Field(discriminator="action"),
 ]

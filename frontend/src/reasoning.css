@@ -11,26 +11,26 @@
 }
 .reasoning-view .reasoning-metadata span {
   display: block;
-  font-size: 10px;
-  color: #70839a;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
   margin-bottom: 7px;
 }
 .reasoning-view .reasoning-metadata strong {
-  font-size: 13px;
-  color: #315f9d;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 .reasoning-view .reasoning-ontology-details {
   margin: 0 23px 22px;
-  border-top: 1px solid #e8eef5;
+  border-top: 1px solid var(--border);
   padding-top: 15px;
 }
 .reasoning-view summary {
-  font-size: 11px;
-  color: #456b96;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .reasoning-view details p {
-  font-size: 11px;
+  font-size: var(--fs-body);
   margin-top: 10px;
   overflow-wrap: anywhere;
 }
@@ -38,8 +38,8 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 11px;
-  color: #65788c;
+  font-size: var(--fs-body);
+  color: var(--text);
   padding: 0 23px 20px;
 }
 .reasoning-view .reasoning-run-heading {
@@ -52,8 +52,8 @@
 }
 .reasoning-view .reasoning-run-heading p {
   margin-top: 9px;
-  font-size: 10px;
-  color: #687f99;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 .reasoning-view .reasoning-result-grid {
@@ -67,18 +67,18 @@
   gap: 22px;
   flex-wrap: wrap;
   padding: 0 23px;
-  font-size: 11px;
-  color: #65788c;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .reasoning-view .reasoning-counts strong {
-  font-size: 20px;
-  color: #315f9d;
+  font-size: var(--fs-body);
+  color: var(--text);
   margin-right: 4px;
 }
 .reasoning-view .reasoning-projection-note {
   padding: 11px 23px 0;
-  color: #687f99;
-  font-size: 10px;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
 }
 .reasoning-view .reasoning-filters {
   display: grid;
@@ -95,15 +95,15 @@
   flex-wrap: wrap;
   gap: 9px 15px;
   padding: 0 23px;
-  color: #65788c;
-  font-size: 10px;
+  color: var(--text);
+  font-size: var(--fs-body);
 }
 .reasoning-view .reasoning-examples .text-button {
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 .reasoning-view .reasoning-result-count {
-  font-size: 10px;
-  color: #687f99;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
   padding: 15px 23px;
 }
 .reasoning-view .reasoning-fact-table {
@@ -116,7 +116,7 @@
   z-index: 1;
 }
 .reasoning-view .reasoning-fact-table td {
-  font-size: 11px;
+  font-size: var(--fs-body);
   padding: 14px 20px;
 }
 .reasoning-view .reasoning-fact-button {
@@ -131,27 +131,27 @@
   width: 100%;
 }
 .reasoning-view .reasoning-fact-button strong {
-  font-size: 11px;
+  font-size: var(--fs-body);
   font-weight: 500;
-  color: #2b4c6d;
+  color: var(--text);
   overflow-wrap: anywhere;
 }
 .reasoning-view .reasoning-fact-button span {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #5f82ab;
-  font-size: 10px;
+  color: var(--text);
+  font-size: var(--fs-body);
 }
 .reasoning-view .reasoning-inferred {
-  background: #eef1ff;
-  border-color: #d9dff6;
-  color: #5c659d;
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--text);
 }
 .reasoning-view .reasoning-asserted {
-  background: #edf7f2;
-  border-color: #d2e9dc;
-  color: #4b8067;
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green-text);
 }
 .reasoning-view .reasoning-facts > .notice {
   margin: 17px 20px 20px;
@@ -161,11 +161,11 @@
 }
 .reasoning-view .reasoning-selected-fact {
   padding: 14px;
-  background: #f1f6fe;
-  border: 1px solid #dbe5f3;
-  border-radius: 7px;
-  font-size: 12px;
-  color: #315f9d;
+  background: var(--bg-header);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-body);
+  color: var(--text);
   margin-bottom: 12px;
 }
 .reasoning-view .reasoning-proof-content > details {
@@ -183,8 +183,8 @@
 .reasoning-view .reasoning-diagnostic-list {
   padding-left: 18px;
   margin: 0;
-  font-size: 11px;
-  color: #526b85;
+  font-size: var(--fs-body);
+  color: var(--text);
   line-height: 1.7;
 }
 .reasoning-view .reasoning-premises li,
@@ -196,11 +196,11 @@
   margin: 7px 7px 0 0;
 }
 .reasoning-view .reasoning-premises code {
-  font-size: 9px;
+  font-size: var(--fs-mono);
 }
 .reasoning-view .reasoning-premise-refs {
-  font-size: 9px;
-  color: #65788c;
+  font-size: var(--fs-body);
+  color: var(--text);
   overflow-wrap: anywhere;
   margin-top: 8px;
 }
@@ -211,15 +211,15 @@
 .reasoning-view .reasoning-axiom-list code,
 .reasoning-view .reasoning-source-list code {
   display: block;
-  font-size: 9px;
-  color: #687f99;
+  font-size: var(--fs-mono);
+  color: var(--text-muted);
 }
 .reasoning-view .reasoning-witness-note {
-  border-top: 1px solid #e8eef5;
+  border-top: 1px solid var(--border);
   padding-top: 14px;
   margin-top: 20px;
-  font-size: 10px;
-  color: #687f99;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
 }
 .reasoning-view .reasoning-diagnostics > .alert,
 .reasoning-view .reasoning-diagnostics > details {
@@ -232,11 +232,11 @@
 .reasoning-view .reasoning-scope {
   margin: 0 23px 20px;
   padding: 15px 17px;
-  border: 1px solid #e3eaf3;
-  border-radius: 7px;
-  background: #f8fafd;
-  color: #526b85;
-  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-body);
   line-height: 1.8;
 }
 .reasoning-view .reasoning-scope ul {
@@ -245,11 +245,11 @@
 }
 .reasoning-view .reasoning-empty-history {
   padding: 0 23px 23px;
-  font-size: 11px;
-  color: #687f99;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
 }
 .reasoning-view .reasoning-history td {
-  font-size: 11px;
+  font-size: var(--fs-body);
 }
 .reasoning-view .reasoning-history .table-wrap {
   width: 100%;
@@ -257,11 +257,11 @@
   border-radius: 0 0 9px 9px;
 }
 .reasoning-view .reasoning-history .cell-subtitle {
-  font-size: 9px;
+  font-size: var(--fs-body);
 }
 .reasoning-view .reasoning-history .button {
   white-space: nowrap;
-  font-size: 10px;
+  font-size: var(--fs-body);
 }
 @media (max-width: 1240px) {
   .reasoning-view .reasoning-result-grid {
@@ -275,10 +275,10 @@
     padding-right: 20px;
   }
   .reasoning-view .reasoning-run-heading .button {
-    font-size: 10px;
+    font-size: var(--fs-body);
   }
   .reasoning-view .reasoning-controls .button {
-    font-size: 11px;
+    font-size: var(--fs-body);
   }
 }
 @media (max-width: 420px) {

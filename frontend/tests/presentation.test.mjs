@@ -10,7 +10,12 @@ const legacyWording = /\b(synthetic|demo|demonstration|simulated)\b/i;
 
 test("reference titles and event descriptions use professional display copy", () => {
   for (const source of scenario.sources) {
-    assert.equal(legacyWording.test(displayText(source.label)), false);
+    if (source.id === "src-network") {
+      assert.equal(source.label, "Network · Corelight format (simulated)");
+      assert.equal(displayText(source.label), source.label);
+    } else {
+      assert.equal(legacyWording.test(displayText(source.label)), false);
+    }
   }
   for (const event of scenario.events) {
     assert.equal(legacyWording.test(displayText(event.description)), false);

@@ -20,7 +20,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-b-001",
@@ -38,7 +39,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-c-001",
@@ -56,7 +58,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-a-002",
@@ -74,7 +77,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-b-002",
@@ -92,7 +96,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-c-002",
@@ -110,7 +115,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-a-003",
@@ -128,7 +134,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-b-003",
@@ -146,7 +153,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-c-003",
@@ -164,7 +172,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-a-004",
@@ -182,7 +191,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-b-004",
@@ -200,7 +210,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     },
     {
       "id": "enterprise-c-004",
@@ -218,7 +229,8 @@
       "classification": "U",
       "handling": [
         "SIMULATED"
-      ]
+      ],
+      "origin": "simulated"
     }
   ],
   "sourceRefs": [
@@ -227,5 +239,6 @@
   "classification": "U",
   "handling": [
     "SIMULATED"
-  ]
+  ],
+  "origin": "simulated"
 }

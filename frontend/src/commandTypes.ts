@@ -7,6 +7,7 @@ import type {
   ServiceFunction,
   Source,
 } from "./types.ts";
+import type { RecordAction } from "./scriptedTypes.ts";
 
 export const commandNavigation = [
   {
@@ -19,52 +20,58 @@ export const commandNavigation = [
   {
     id: "cop",
     code: "C2",
-    label: "Operational Landscape",
+    label: "Statewide Map",
     unit: "",
     color: "#fb923c",
   },
   {
     id: "cyber",
     code: "C3",
-    label: "Cyber Situation",
+    label: "Attack Picture",
     unit: "CTIC",
     color: "#34d399",
   },
   {
     id: "consequence",
     code: "C4",
-    label: "Consequence Picture",
+    label: "Consequences",
     unit: "",
     color: "#a78bfa",
   },
   {
     id: "uctf",
     code: "C5",
-    label: "Response Posture",
+    label: "Response Teams",
     unit: "UCTF",
     color: "#f472b6",
   },
   {
     id: "leadership",
     code: "C6",
-    label: "Briefs & Cases",
-    unit: "Chief",
+    label: "Leadership Brief",
+    unit: "",
     color: "#22d3ee",
   },
   {
     id: "federation",
     code: "C7",
-    label: "Partner Status",
-    unit: "TX-ISAO",
+    label: "Partner and Stakeholder Coordination",
+    unit: "",
     color: "#cbd5e1",
   },
 ] as const;
 export const analystNavigation = [
-  { id: "command", code: "A1", label: "My Work", unit: "", color: "#60a5fa" },
+  {
+    id: "command",
+    code: "A1",
+    label: "Case Queue",
+    unit: "",
+    color: "#60a5fa",
+  },
   {
     id: "cop",
     code: "A2",
-    label: "Infrastructure & Dependencies",
+    label: "Investigation Map",
     unit: "",
     color: "#fb923c",
   },
@@ -78,21 +85,21 @@ export const analystNavigation = [
   {
     id: "consequence",
     code: "A4",
-    label: "Consequences",
+    label: "Consequence Analysis",
     unit: "",
     color: "#a78bfa",
   },
   {
     id: "coordination",
     code: "A5",
-    label: "Decisions & Coordination",
-    unit: "TX-ISAO",
+    label: "Who Acts First",
+    unit: "",
     color: "#fbbf24",
   },
   {
     id: "uctf",
     code: "A6",
-    label: "Response Workspace",
+    label: "Response Tasks",
     unit: "UCTF",
     color: "#f472b6",
   },
@@ -175,6 +182,7 @@ export interface CommandCreate {
   clientRequestId: string;
 }
 export type CommandAction =
+  | RecordAction
   | { action: "set_status"; status: IncidentStatus; note: string }
   | { action: "set_task"; taskId: string; completed: boolean }
   | { action: "review_decision"; decisionId: string; note: string }

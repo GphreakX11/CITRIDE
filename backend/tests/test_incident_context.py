@@ -51,7 +51,7 @@ def test_exact_a_context_and_original_record_metadata(baseline):
         assert item["dependent"] == entity(baseline, dep["dependent"])
         assert item["function"] in baseline["serviceFunctions"]
         assert item["function"]["facility"] == dep["dependent"]
-    assert set(result["sourceRefs"]) == {"src-controller", "src-inventory", "src-dependencies", "src-effects"}
+    assert set(result["sourceRefs"]) == {"src-controller", "src-inventory", "src-dependencies", "src-effects", "src-idt-v4", "src-network"}
     assert len(result["sourceRefs"]) == len(set(result["sourceRefs"]))
     assert any("provisional" in warning.lower() for warning in result["warnings"])
     assert any("assumption" in warning.lower() and "outage" in warning.lower() for warning in result["warnings"])
@@ -64,7 +64,8 @@ def test_probe_context_is_isolated_and_does_not_inherit_a_scenarios(baseline, su
         "cyberAsset", "physicalAsset", "facility", "provider", "serviceArea",
     )] == [f"cyber-plc-{suffix}", f"plc-{suffix}", f"plant-{suffix}", f"utility-{suffix}", f"area-{suffix}"]
     assert result["scenarios"] == []
-    assert result["downstreamDependencies"] == []
+    assert [item["dependency"]["id"] for item in result["downstreamDependencies"]] == [f"dep-{suffix}-{'w' if suffix == 'b' else 'u'}"]
+    assert all(item["dependency"]["provider"] == f"utility-{suffix}" for item in result["downstreamDependencies"])
     assert "src-effects" not in result["sourceRefs"]
     assert any("No scenario" in warning for warning in result["warnings"])
 

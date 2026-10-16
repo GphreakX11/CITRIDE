@@ -22,9 +22,9 @@ def baseline():
     }
     return {
         "entities": [
-            {"id": "utility-a", "type": "WaterServiceProvider", "label": "Utility A", **sourced},
-            {"id": "hospital", "type": "Hospital", "label": "Hospital", **sourced},
-            {"id": "plc-a", "type": "PLC", "label": "Controller", "partOf": "utility-a", **sourced},
+            {"id": "utility-a", "type": "WaterServiceProvider", "label": "Utility A", "idt": {"status": "unassigned"}, **sourced},
+            {"id": "hospital", "type": "Hospital", "label": "Hospital", "idt": {"status": "unassigned"}, **sourced},
+            {"id": "plc-a", "type": "PLC", "label": "Controller", "partOf": "utility-a", "idt": {"status": "unassigned"}, **sourced},
         ],
         "serviceFunctions": [
             {"id": "water-a", "facility": "utility-a", "service": "treated_water", **sourced},
@@ -92,7 +92,7 @@ def test_terminal_functions_cannot_emit_unconfigured_service_loss(baseline):
 
 def test_explicit_dependency_can_be_authored_for_spatial_only_healthcare_candidate(baseline):
     sourced = {"sourceRefs": ["src-assumptions"], "classification": "U", "handling": ["SIMULATED"]}
-    baseline["entities"].append({"id": "facility-q", "type": "HealthcareFacility", "label": "Facility Q", **sourced})
+    baseline["entities"].append({"id": "facility-q", "type": "HealthcareFacility", "label": "Facility Q", "idt": {"status": "unassigned"}, **sourced})
     baseline["serviceFunctions"].append({"id": "q-safe-water", "facility": "facility-q", "service": "safe_water_support", **sourced})
     # A function on a candidate facility does not itself assert an operational
     # dependency. An explicitly authored physical link is valid once added.

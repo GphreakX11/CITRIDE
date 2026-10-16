@@ -1,12 +1,20 @@
+import { StatusChip } from "./visualPrimitives.ts";
 import { useEffect, useId, useState } from "react";
-import type { Bootstrap, Dependency } from "./types";
+import type {
+  Bootstrap,
+  Dependency,
+  InferenceRunSummary,
+  OntologyMetadata,
+} from "./types";
 import type { CommandIncident } from "./commandTypes";
 import type { MapEdge } from "./texasGraph";
+import type { DependencyPrefill } from "./dependencyDraft";
 import { api, humanize, windowLabel } from "./api";
 import { displayText } from "./presentation";
 import { reviewDisplayText } from "./incidentDecisions";
 import { createIdtIndex, type IdtIndex } from "./idt";
 import { IdtChip } from "./IdtChip";
+import { currentInferenceRun, idtConclusion, idtSectorIri } from "./idtProof";
 import {
   analystEntityModel,
   recordFields,
@@ -26,7 +34,10 @@ export interface AnalystEntityProfileProps {
     tool: "relationships" | "reasoning" | "evidence" | "lab" | "sources",
     entityId?: string,
   ) => void;
-  onEditDependency: (dependency: Dependency | null) => void;
+  onEditDependency: (
+    dependency: Dependency | null,
+    prefill?: DependencyPrefill,
+  ) => void;
   onBack: () => void;
 }
 
@@ -47,6 +58,59 @@ export default function AnalystEntityProfile({
   const { entity } = model;
   const [idtIndex, setIdtIndex] = useState<IdtIndex | null>(null);
   const [idtError, setIdtError] = useState("");
+  const sectorIri = entity ? idtSectorIri(entity) : null;
+  const [proofStatus, setProofStatus] = useState<{
+    entityId: string;
+    baselineRevision: number;
+    sectorIri: string;
+    ready: boolean;
+    error?: string;
+  } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setProofStatus(null);
+    if (!entity || !sectorIri) return;
+    const identity = {
+      entityId: entity.id,
+      baselineRevision: data.baselineRevision,
+      sectorIri,
+    };
+    Promise.all([
+      api<OntologyMetadata>("/v1/ontology"),
+      api<{ runs: InferenceRunSummary[] }>("/v1/inference-runs"),
+    ])
+      .then(async ([metadata, history]) => {
+        const current = await currentInferenceRun(
+          api,
+          data.baselineRevision,
+          metadata,
+          history.runs,
+        );
+        if (active)
+          setProofStatus({
+            ...identity,
+            ready: Boolean(current && idtConclusion(entity, current)),
+          });
+      })
+      .catch(() => {
+        if (active)
+          setProofStatus({
+            ...identity,
+            ready: false,
+            error:
+              "Current inference status unavailable. Open reasoning to refresh or explicitly run inference.",
+          });
+      });
+    return () => {
+      active = false;
+    };
+  }, [entity?.id, data.baselineRevision, sectorIri]);
+  const currentProofStatus =
+    proofStatus?.entityId === entity?.id &&
+    proofStatus?.baselineRevision === data.baselineRevision &&
+    proofStatus?.sectorIri === sectorIri
+      ? proofStatus
+      : null;
   useEffect(() => {
     let active = true;
     api<unknown>("/v1/reference/idt")
@@ -154,7 +218,7 @@ export default function AnalystEntityProfile({
           <h2>Entity Profile</h2>
           <p>
             {entityId
-              ? "This entity is not in the current inventory. Captured case records remain unchanged."
+              ? "No current inventory record."
               : "Select an entity from the investigation map or a case context chain."}
           </p>
         </div>
@@ -181,16 +245,16 @@ export default function AnalystEntityProfile({
           </p>
           <h2>{displayText(entity.label)}</h2>
           <div className="cc-chips">
-            <IdtChip entity={entity} index={idtIndex} allowSeedLookup />
+            <IdtChip entity={entity} index={idtIndex} />
             <span className="cc-chip">
               People served:{" "}
               {model.peopleServed === null
                 ? "unknown"
                 : model.peopleServed.toLocaleString("en-US")}
             </span>
-            <span className="cc-chip">
+            <StatusChip status={status} className="cc-chip">
               Recorded status: {status ? displayText(status) : "unknown"}
-            </span>
+            </StatusChip>
             <span className="cc-chip">
               {model.cases.filter((item) => item.status !== "closed").length}{" "}
               active linked cases
@@ -210,8 +274,6 @@ export default function AnalystEntityProfile({
         {new Set(model.suppliers.map((edge) => edge.source)).size} recorded
         direct suppliers and supplies{" "}
         {new Set(model.supplies.map((edge) => edge.target)).size} entities.
-        These are conditional service dependencies, not current outages. Walk
-        the links below to follow the chain.
       </p>
       <nav className="analyst-section-nav" aria-label="Entity profile sections">
         {[
@@ -273,7 +335,9 @@ export default function AnalystEntityProfile({
           <button
             type="button"
             disabled={locked}
-            onClick={() => onEditDependency(null)}
+            onClick={() =>
+              onEditDependency(null, { entityId: entity.id, role: "dependent" })
+            }
           >
             Propose a new dependency
           </button>
@@ -325,8 +389,7 @@ export default function AnalystEntityProfile({
             Open cyber evidence
           </button>
           <p className="cc-muted">
-            Direct observations and explicit hosting/containment ancestors only;
-            not proof of compromise.
+            Observations linked by recorded hosting and containment.
           </p>
           {model.events.map((event) => (
             <article className="analyst-relationship-row" key={event.id}>
@@ -360,10 +423,7 @@ export default function AnalystEntityProfile({
         id={sectionId("runs")}
       >
         <h2>Impacts across saved case runs</h2>
-        <p className="cc-muted">
-          Case-attached snapshots only; this view does not load the scenario
-          lab's full run history. Impacts remain modeled, not observed.
-        </p>
+        <p className="cc-muted">Modeled · not observed outages</p>
         <button
           type="button"
           disabled={locked}
@@ -406,7 +466,7 @@ export default function AnalystEntityProfile({
         id={sectionId("classification")}
       >
         <h2>Classification</h2>
-        <IdtChip entity={entity} index={idtIndex} allowSeedLookup />
+        <IdtChip entity={entity} index={idtIndex} />
         {idtError && (
           <p className="cc-warning" role="status">
             {idtError}
@@ -421,14 +481,26 @@ export default function AnalystEntityProfile({
         </p>
         <p className="cc-muted">
           IDT names and ancestry are workbook reference lookups, not runtime OWL
-          proof. No IDT classification proof is supplied to this profile.
+          proof.{" "}
+          {sectorIri
+            ? "Inspect the current inference run for the actual classification facts and lineage."
+            : "No coded IDT type assignment is recorded for this entity; no IDT type proof is implied."}
         </p>
+        {currentProofStatus?.error && (
+          <p className="cc-warning" role="status">
+            {currentProofStatus.error}
+          </p>
+        )}
         <button
           type="button"
           disabled={locked}
           onClick={() => onOpenTool("reasoning", entity.id)}
         >
-          Inspect ontology reasoning
+          {!sectorIri
+            ? "Open ontology reasoning"
+            : currentProofStatus?.ready
+              ? "Why is it classified this way? See the proof →"
+              : "Run reasoning to see the proof"}
         </button>
       </section>
       <section

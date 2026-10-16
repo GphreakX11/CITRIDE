@@ -6,7 +6,7 @@
   padding: 20px 22px 0;
 }
 .texas-heading h2 {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
 }
 .texas-heading p {
   margin-bottom: 0;
@@ -15,8 +15,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #aec2d5;
-  font-size: 12px;
+  color: var(--text);
+  font-size: var(--fs-body);
   white-space: nowrap;
 }
 .texas-toolbar {
@@ -38,46 +38,46 @@
   gap: 9px;
   padding: 0 12px;
   min-height: 44px;
-  border: 1px solid #344b62;
-  border-radius: 8px;
-  background: #0c1929;
-  color: #93b4d2;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--link);
 }
 .texas-search input {
   border: 0 !important;
   background: transparent !important;
   outline: none;
-  color: #edf4fb !important;
+  color: var(--text-strong) !important;
   min-width: 0;
   width: 100%;
   margin: 0 !important;
   padding: 10px 0 !important;
 }
 .texas-search:focus-within {
-  border-color: #74c7ff;
-  outline: 2px solid #386887;
+  border-color: var(--accent);
+  outline: 2px solid var(--text-muted);
 }
 .texas-search button {
   border: 0;
   background: transparent;
   padding: 5px;
-  color: #cfdeeb;
+  color: var(--link);
   display: grid;
   place-items: center;
 }
 .texas-filter {
   display: grid;
   gap: 6px;
-  color: #b7c9db;
-  font-size: 12px;
+  color: var(--text);
+  font-size: var(--fs-body);
 }
 .texas-filter select {
-  background: #0c1929 !important;
-  color: #ecf4fc !important;
+  background: var(--bg-header) !important;
+  color: var(--text-strong) !important;
   min-height: 44px;
   width: 100%;
-  border: 1px solid #344b62 !important;
-  border-radius: 8px;
+  border: 1px solid var(--border-strong) !important;
+  border-radius: var(--radius-control);
   margin: 0 !important;
 }
 .texas-direction-controls {
@@ -89,17 +89,17 @@
 .texas-direction-controls button {
   min-height: 44px;
   padding: 9px 13px;
-  border: 1px solid #3e607c;
-  border-radius: 8px;
-  background: #132b40;
-  color: #dbeefa;
-  font-size: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text-strong);
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .texas-direction-controls button[aria-pressed="true"] {
-  border-color: #f5bc64;
-  background: #493821;
-  color: #ffe1b0;
+  border-color: var(--amber);
+  background: var(--amber-bg);
+  color: var(--amber-text);
 }
 .texas-direction-controls button:disabled {
   opacity: 0.45;
@@ -107,13 +107,13 @@
 }
 .texas-direction-controls button:focus-visible,
 .texas-context-details summary:focus-visible {
-  outline: 2px solid #74c7ff;
+  outline: 2px solid var(--text-muted);
   outline-offset: 3px;
 }
 .texas-relationship-story {
-  font-size: 13px;
+  font-size: var(--fs-body);
   line-height: 1.65;
-  color: #dbeaf6;
+  color: var(--text-strong);
   overflow-wrap: anywhere;
   margin: 16px 4px 8px;
 }
@@ -123,11 +123,11 @@
 .texas-context-details {
   margin: 18px 0 8px;
   padding-top: 12px;
-  border-top: 1px solid #2e465e;
+  border-top: 1px solid var(--border);
 }
 .texas-context-details summary {
-  color: #adc7dd;
-  font-size: 12px;
+  color: var(--link);
+  font-size: var(--fs-body);
   line-height: 1.5;
   min-height: 44px;
   cursor: pointer;
@@ -143,12 +143,12 @@
 .texas-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
-  border-top: 1px solid #2a4057;
+  border-top: 1px solid var(--border);
 }
 .texas-map-wrap {
   min-width: 0;
   position: relative;
-  background: #0b1827;
+  background: var(--surface);
 }
 .texas-map {
   display: block;
@@ -158,16 +158,16 @@
   touch-action: none;
 }
 .texas-state-label {
-  fill: #55778e;
-  font-size: 34px;
+  fill: var(--text);
+  font-size: var(--fs-number);
   font-weight: 600;
   letter-spacing: 5px;
   opacity: 0.7;
   pointer-events: none;
 }
 .texas-coast-label {
-  fill: #456176;
-  font-size: 20px;
+  fill: var(--text);
+  font-size: var(--fs-body);
   letter-spacing: 5px;
   pointer-events: none;
 }
@@ -185,11 +185,11 @@
   padding: 0;
   display: grid;
   place-items: center;
-  background: #14283c;
-  color: #dbedf9;
-  border: 1px solid #46617b;
-  border-radius: 7px;
-  box-shadow: 0 4px 12px #0004;
+  background: var(--surface);
+  color: var(--text-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow) 26.7%, transparent);
 }
 .texas-map-actions button:disabled {
   opacity: 0.45;
@@ -199,26 +199,28 @@
   outline: none;
 }
 .texas-node-label {
-  font-size: 18px;
-  fill: #eff7fd;
+  font-size: var(--fs-edge);
+  fill: var(--text-strong);
   font-weight: 600;
   paint-order: stroke;
-  stroke: #0b1827;
+  stroke: var(--border);
   stroke-width: 3px;
   stroke-linejoin: round;
   pointer-events: none;
 }
 .texas-node:focus .texas-node-target,
 .texas-node:hover .texas-node-target {
-  fill: #74c7ff22;
-  stroke: #d2efff;
+  fill: color-mix(in srgb, var(--surface-2) 13.3%, transparent);
+  stroke: var(--text-muted);
   stroke-width: 2px;
 }
 .texas-node.is-selected .texas-node-label {
-  fill: #fff;
+  fill: var(--text-strong);
 }
 .texas-node-halo {
-  filter: drop-shadow(0 0 8px #60bffc88);
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--text-muted) 53.3%, transparent)
+  );
 }
 .texas-edge {
   pointer-events: none;
@@ -236,23 +238,23 @@
   display: block;
 }
 .texas-edge-label rect {
-  fill: #182b3d;
-  stroke: #6e5839;
+  fill: var(--text);
+  stroke: var(--amber);
   stroke-width: 0.8;
 }
 .texas-edge-label text {
-  fill: #ffdc9f;
-  font-size: 12px;
+  fill: var(--amber-text);
+  font-size: var(--fs-edge);
   font-weight: 600;
 }
 .texas-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 16px;
-  color: #b3c7d9;
-  font-size: 11px;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
   padding: 13px 18px;
-  border-top: 1px solid #263b50;
+  border-top: 1px solid var(--border);
 }
 .texas-legend span {
   display: inline-flex;
@@ -262,34 +264,34 @@
 .texas-legend i {
   display: inline-block;
   width: 18px;
-  border-top: 2px solid #f5bc64;
+  border-top: 2px solid var(--amber);
 }
 .texas-legend .structure {
-  border-top: 2px dashed #75aaf2;
+  border-top: 2px dashed var(--accent);
 }
 .texas-legend .facility,
 .texas-legend .utility {
   width: 7px;
   height: 7px;
-  background: #63dfbb;
+  background: var(--green-bg);
   border: 0;
   border-radius: 50%;
 }
 .texas-legend .utility {
-  background: #63caff;
+  background: var(--surface);
 }
 .texas-layer-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 18px;
   padding: 0 18px 15px;
-  color: #b8cddd;
-  font-size: 12px;
+  color: var(--text);
+  font-size: var(--fs-body);
   align-items: center;
 }
 .texas-layer-controls label {
-  color: #b8cddd;
-  font-size: 12px;
+  color: var(--text);
+  font-size: var(--fs-body);
   display: inline-flex;
   gap: 7px;
   align-items: center;
@@ -299,51 +301,51 @@
   width: 15px;
   height: 15px;
   margin: 0;
-  accent-color: #64c8fd;
+  accent-color: var(--text-muted);
 }
 .texas-no-match {
   position: absolute;
   inset: 40% 10% auto;
-  border: 1px solid #486079;
+  border: 1px solid var(--border);
   padding: 16px;
-  background: #11263cee;
-  color: #f0f6ff;
-  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 93.3%, transparent);
+  color: var(--text-strong);
+  border-radius: var(--radius-control);
   text-align: center;
 }
 .texas-inspector {
   display: flex;
   flex-direction: column;
-  background: #102034;
-  border-left: 1px solid #2a4057;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
   min-width: 0;
   max-height: 650px;
 }
 .texas-inspector-title {
   padding: 21px 20px 16px;
-  border-bottom: 1px solid #2a4057;
+  border-bottom: 1px solid var(--border);
 }
 .texas-eyebrow {
-  font-size: 10px;
-  color: #71caff;
+  font-size: var(--fs-body);
+  color: var(--link);
   font-weight: 700;
   letter-spacing: 1.8px;
 }
 .texas-inspector-title h3 {
-  font-size: 21px;
+  font-size: var(--fs-card-title);
   line-height: 1.2;
   margin: 10px 0 7px;
-  color: #edf6ff;
+  color: var(--text-strong);
   overflow-wrap: anywhere;
 }
 .texas-inspector-title p {
   margin: 0 0 7px;
-  color: #b7c8d8;
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
 }
 .texas-inspector-title code {
-  font-size: 11px;
-  color: #839eb7;
+  font-size: var(--fs-mono);
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 .texas-inspector-stats {
@@ -351,17 +353,17 @@
   grid-template-columns: 1fr 1fr;
   padding: 15px 20px;
   gap: 10px;
-  border-bottom: 1px solid #2a4057;
+  border-bottom: 1px solid var(--border);
 }
 .texas-inspector-stats span {
   display: grid;
   gap: 4px;
-  font-size: 11px;
-  color: #9fb8cf;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .texas-inspector-stats strong {
-  font-size: 22px;
-  color: #f3f8fd;
+  font-size: var(--fs-body);
+  color: var(--text-strong);
 }
 .texas-connections-scroll {
   padding: 0 16px 12px;
@@ -370,15 +372,15 @@
   min-height: 0;
 }
 .texas-connections-scroll h4 {
-  color: #d6e6f3;
-  font-size: 12px;
+  color: var(--text-strong);
+  font-size: var(--fs-card-title);
   font-weight: 600;
   display: flex;
   justify-content: space-between;
   margin: 20px 4px 9px;
 }
 .texas-connections-scroll h4 span {
-  color: #88b1cf;
+  color: var(--link);
 }
 .texas-connection-list {
   list-style: none;
@@ -386,21 +388,21 @@
   padding: 0;
 }
 .texas-connection-list > li {
-  border: 1px solid #2e465e;
-  border-radius: 8px;
-  background: #12283d;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   margin: 0 0 9px;
   padding-bottom: 10px;
   overflow: hidden;
 }
 .texas-connection-list > li[data-connection-kind="dependency"] {
-  border-left: 3px solid #f5bc64;
+  border-left: 3px solid var(--amber);
 }
 .texas-neighbor {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  color: #d9ecfc;
+  color: var(--text-strong);
   background: transparent;
   border: 0;
   width: 100%;
@@ -410,12 +412,12 @@
   border-radius: 0;
 }
 .texas-neighbor:hover {
-  background: #1c3b56;
+  background: var(--surface-2);
 }
 .texas-neighbor > svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #74c7ff;
+  color: var(--link);
 }
 .texas-neighbor > span {
   display: grid;
@@ -423,48 +425,48 @@
   gap: 5px;
 }
 .texas-neighbor strong {
-  font-size: 13px;
+  font-size: var(--fs-body);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
 .texas-neighbor small {
-  color: #a6bfd4;
-  font-size: 11px;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
   line-height: 1.3;
 }
 .texas-edge-detail {
   display: grid;
   gap: 4px;
   margin: 0 10px 8px;
-  font-size: 11px;
-  color: #b7cadb;
+  font-size: var(--fs-edge);
+  color: var(--text);
   line-height: 1.5;
 }
 .texas-source {
   display: block;
   margin: 0 10px;
-  font-size: 10px;
-  color: #83a1ba;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 .texas-quiet {
-  font-size: 11px;
-  color: #92acc2;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
   line-height: 1.6;
   margin: 10px 4px;
 }
 .texas-record-button,
 .texas-inspector-empty button {
-  background: #1b3c57;
-  color: #d9edfc;
-  border: 1px solid #3e7298;
-  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
   padding: 10px 14px;
   cursor: pointer;
 }
 .texas-record-button:hover,
 .texas-inspector-empty button:hover {
-  background: #245173;
+  background: var(--surface-2);
 }
 .texas-record-button {
   margin: 10px 16px 16px;
@@ -477,18 +479,18 @@
 .texas-inspector-empty {
   padding: 40px 24px;
   text-align: center;
-  color: #a9c4d9;
+  color: var(--text);
 }
 .texas-inspector-empty > svg {
-  color: #7dccff;
+  color: var(--link);
 }
 .texas-inspector-empty h3 {
-  color: #eaf5fd;
-  font-size: 19px;
+  color: var(--text-strong);
+  font-size: var(--fs-card-title);
   margin: 18px 0 10px;
 }
 .texas-inspector-empty p {
-  font-size: 13px;
+  font-size: var(--fs-body);
   line-height: 1.7;
 }
 .texas-inspector-empty button {
@@ -499,22 +501,104 @@
   display: grid;
   gap: 6px;
   margin-top: 32px;
-  font-size: 12px;
-  color: #87a9c5;
+  font-size: var(--fs-body);
+  color: var(--text);
 }
 .texas-example-chain span:nth-child(2n) {
-  color: #d6ad6c;
+  color: var(--amber-text);
+}
+.texas-status {
+  display: inline-block;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-chip);
+  padding: 3px 8px;
+  font-size: var(--fs-body);
+}
+.texas-status.under-attack {
+  color: var(--red-text);
+  background: var(--red-bg);
+}
+.texas-status.probed {
+  color: var(--amber-text);
+  background: var(--amber-bg);
+}
+.texas-legend i.under-attack {
+  background: var(--red-bg);
+}
+.texas-legend i.probed {
+  background: var(--amber-bg);
+}
+.texas-node-status {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--border);
+  stroke-width: 4px;
+}
+.texas-node-status.under-attack {
+  fill: var(--red-bg);
+}
+.texas-node-status.probed {
+  fill: var(--amber-bg);
+}
+.texas-node[data-utility-status="under-attack"] .texas-node-core {
+  stroke: var(--red);
+  stroke-width: 4px;
+}
+.texas-node[data-utility-status="probed"] .texas-node-core {
+  stroke: var(--amber);
+  stroke-width: 4px;
+}
+.texas-service-areas {
+  padding: 16px 22px;
+  border-top: 1px solid var(--border);
+}
+.texas-area-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 14px;
+}
+.texas-area-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  font-size: var(--fs-body);
+}
+.texas-area-card h4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.texas-area-card > div {
+  margin: 10px 0;
+}
+.texas-area-records {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 6px;
+}
+.texas-area-records button,
+.texas-area-card h4 button {
+  text-align: left;
+  min-height: 32px;
+  white-space: normal;
 }
 .texas-provenance {
   padding: 12px 22px;
-  border-top: 1px solid #2a4057;
-  color: #8da9be;
-  font-size: 11px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--fs-body);
   line-height: 1.6;
   margin: 0;
 }
 .texas-provenance a {
-  color: #83b5d8;
+  color: var(--link);
   margin-left: 7px;
 }
 @media (max-width: 1150px) {
@@ -535,10 +619,10 @@
     gap: 9px;
   }
   .texas-heading h2 {
-    font-size: 18px;
+    font-size: var(--fs-card-title);
   }
   .texas-count {
-    font-size: 10px;
+    font-size: var(--fs-body);
   }
   .texas-toolbar {
     padding: 14px 15px;
@@ -553,7 +637,7 @@
   .texas-inspector {
     max-height: none;
     border-left: 0;
-    border-top: 1px solid #2a4057;
+    border-top: 1px solid var(--border);
   }
   .texas-inspector-empty {
     padding: 22px;
@@ -587,10 +671,10 @@
     left: 9px;
   }
   .texas-node-label {
-    font-size: 22px;
+    font-size: var(--fs-edge);
   }
   .texas-node.is-selected .texas-node-label {
-    font-size: 28px;
+    font-size: var(--fs-edge);
   }
   .texas-legend {
     padding: 12px 15px;
