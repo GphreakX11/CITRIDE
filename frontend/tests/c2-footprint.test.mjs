@@ -103,6 +103,61 @@ function elements(node, predicate) {
       .flatMap((c) => elements(c, predicate)),
   ];
 }
+test("C2 compact map markers retain complete accessible incident names and stable list numbering", () => {
+  const p = props();
+  const model = statewideFootprint(p);
+  const tree = StatewideFootprintView({
+    model,
+    onPick() {},
+    onOpenAnalyst() {},
+  });
+  const pins = elements(tree, (e) => e.props?.["data-incident-pin"]);
+  const nav = elements(
+    tree,
+    (e) => e.props?.["aria-label"] === "Statewide incidents",
+  )[0];
+  const buttons = elements(nav, (e) => e.type === "button");
+  assert.equal(pins.length, model.rows.length);
+  pins.forEach((pin, index) => {
+    const item = model.rows[index];
+    assert.match(pin.props["aria-label"], new RegExp(item.title));
+    assert.ok(pin.props["aria-label"].includes(item.id));
+    for (const target of [pin, buttons[index]]) {
+      const marker = elements(
+        target,
+        (e) => e.props?.className === "sf-pin-number",
+      )[0];
+      assert.equal(marker.props.children, index + 1);
+      assert.equal(marker.props["aria-hidden"], "true");
+    }
+    assert.equal(pin.props.style.left, `${item.location.schematic.x}%`);
+    assert.equal(pin.props.style.top, `${item.location.schematic.y}%`);
+  });
+});
+
+test("C2 phone maps use fixed touch targets instead of clipping long absolute-positioned labels", () => {
+  const css = readFileSync(
+    new URL("../src/statewide-footprint.css", import.meta.url),
+    "utf8",
+  );
+  const mobile = css.slice(css.indexOf("@media (max-width: 560px)"));
+  assert.match(mobile, /\.sf-incident-pin\s*\{[^}]*width:\s*44px/);
+  assert.match(mobile, /\.sf-incident-pin\s*\{[^}]*height:\s*44px/);
+  assert.match(mobile, /\.sf-incident-pin\s*\{[^}]*min-width:\s*44px/);
+  assert.match(
+    mobile,
+    /\.sf-incident-pin\s+\.sf-pin-label\s*\{\s*display:\s*none/,
+  );
+  assert.match(
+    mobile,
+    /\.sf-incident-pin\s+\.sf-pin-number[^}]*display:\s*inline-flex/,
+  );
+  assert.match(
+    mobile,
+    /\.sf-incident-nav\s+\.sf-pin-number[^}]*display:\s*inline-flex/,
+  );
+});
+
 test("C2 real captured run has exactly three windows and excluded fire service", () => {
   const m = statewideFootprint(props());
   assert.equal(m.active.id, "TX-26-0412");

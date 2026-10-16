@@ -173,13 +173,16 @@ export function StatewideFootprintView({
         <p>Statewide incident schematic</p>
       </header>
       <nav className="sf-incident-nav" aria-label="Statewide incidents">
-        {model.rows.map((item) => (
+        {model.rows.map((item, index) => (
           <button
             type="button"
             key={item.id}
             aria-pressed={item.id === row?.id}
             onClick={() => onPick(item.id)}
           >
+            <span className="sf-pin-number" aria-hidden="true">
+              {index + 1}
+            </span>{" "}
             {item.title}{" "}
             <StatusChip status={item.severity}>
               {words(item.severity ?? "unknown")}
@@ -193,7 +196,7 @@ export function StatewideFootprintView({
             <span className="sf-texas" aria-hidden="true">
               TEXAS
             </span>
-            {model.rows.map((item) => {
+            {model.rows.map((item, index) => {
               const position = item.location?.schematic;
               if (
                 !position ||
@@ -209,11 +212,15 @@ export function StatewideFootprintView({
                   className={`sf-incident-pin ${item.id === row?.id ? "sf-selected" : "sf-muted"}`}
                   style={{ left: `${position.x}%`, top: `${position.y}%` }}
                   aria-pressed={item.id === row?.id}
+                  aria-label={`${item.title} · ${item.id} · ${words(item.status ?? "unknown")}`}
                   onClick={() => onPick(item.id)}
                   title={`${item.title} · ${item.id} · ${item.location?.label ?? ""}`}
                 >
                   <i aria-hidden="true" />
-                  <span>
+                  <span className="sf-pin-number" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <span className="sf-pin-label">
                     {item.title}
                     <small>
                       {item.id} · {words(item.status ?? "unknown")}

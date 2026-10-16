@@ -120,6 +120,10 @@
   font-size: var(--fs-small);
   margin-top: 3px;
 }
+.sf-incident-pin .sf-pin-number,
+.sf-incident-nav .sf-pin-number {
+  display: none;
+}
 .sf-incident-pin.sf-selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--shadow) 25.1%, transparent);
@@ -409,12 +413,38 @@
     height: 370px;
   }
   .sf-incident-pin {
-    max-width: 125px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    justify-content: center;
+    border-radius: 50%;
     font-size: var(--fs-body);
     padding: 5px;
+    opacity: 1;
   }
-  .sf-incident-pin small {
-    font-size: var(--fs-small);
+  .sf-incident-pin .sf-pin-label {
+    display: none;
+  }
+  .sf-incident-pin i {
+    display: none;
+  }
+  .sf-incident-pin .sf-pin-number,
+  .sf-incident-nav .sf-pin-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-strong);
+    font-weight: 700;
+  }
+  .sf-incident-nav .sf-pin-number {
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+    background: var(--surface-raised, var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 50%;
   }
   .sf-summary {
     padding: 16px;
