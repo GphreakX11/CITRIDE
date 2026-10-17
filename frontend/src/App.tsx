@@ -36,6 +36,7 @@ import { modeForView, modeLanding, type WorkspaceMode } from "./navigation";
 import "./workspace-modes.css";
 import NetworkEvidence from "./NetworkEvidence";
 import type { CommandView, CommandIncident } from "./commandTypes";
+import type { WorkspaceSnapshot } from "./workspaceTypes";
 import InvestigationBar from "./InvestigationBar";
 import {
   caseFocusEntity,
@@ -178,6 +179,7 @@ function AccessState({ issue, retry }: { issue: ApiError; retry: () => void }) {
 
 export default function App() {
   const [data, setData] = useState<Bootstrap | null>(null);
+  const [workspaceSnapshot, setWorkspaceSnapshot] = useState<WorkspaceSnapshot | null>(null);
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -358,15 +360,15 @@ export default function App() {
     setError("");
     setAccessIssue(null);
     try {
-      const [baseline, feeds, history] = await Promise.all([
-        api<Bootstrap>("/v1/bootstrap"),
+      const [snapshot, feeds] = await Promise.all([
+        api<WorkspaceSnapshot>("/v1/workspace"),
         api<Telemetry>("/v1/telemetry"),
-        api<{ runs: RunSummary[] }>("/v1/cascade-runs"),
       ]);
-      setData(baseline);
+      setWorkspaceSnapshot(snapshot);
+      setData(snapshot.bootstrap);
       setTelemetry(feeds);
-      setRuns(history.runs);
-      setScenarioId((current) => current || baseline.defaultScenarioId);
+      setRuns(snapshot.runs);
+      setScenarioId((current) => current || snapshot.bootstrap.defaultScenarioId);
     } catch (failure) {
       reportFailure(failure);
     } finally {
@@ -929,6 +931,7 @@ export default function App() {
               <div hidden={!commandView}>
                 <CommandWorkspace
                   telemetry={telemetry}
+                  initialSnapshot={workspaceSnapshot}
                   mode={mode}
                   onOpenAnalyst={openAnalyst}
                   onEditDependency={(dependency, prefill) =>

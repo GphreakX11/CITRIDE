@@ -17,7 +17,58 @@ export class ApiError extends Error {
   }
 }
 
+// Deduplicate overlapping reads, not writes. Only deployment-bundled reference
+// material gets a short document-local cache; cases, evidence and workspace
+// snapshots always hit the server once a previous request has finished.
+const referencePaths = new Set([
+  "/v1/reference",
+  "/v1/reference/idt",
+  "/v1/ontology",
+]);
+const referenceTtlMs = 60_000;
+const readCache = new Map<string, { expires: number; data: unknown }>();
+const pendingReads = new Map<string, Promise<unknown>>();
+let readEpoch = 0;
+
+function invalidateReads() {
+  ++readEpoch;
+  readCache.clear();
+  pendingReads.clear();
+}
+
 export async function api<T>(path: string, body?: unknown): Promise<T> {
+  if (body !== undefined) {
+    invalidateReads();
+    try {
+      return (await request(path, body)) as T;
+    } finally {
+      // Failed/uncertain writes need fresh reads too. Late pre-write responses
+      // cannot populate a new epoch's cache or displace its in-flight request.
+      invalidateReads();
+    }
+  }
+  const cached = readCache.get(path);
+  if (cached && cached.expires > Date.now())
+    return structuredClone(cached.data) as T;
+  readCache.delete(path);
+  let pending = pendingReads.get(path);
+  if (!pending) {
+    const epoch = readEpoch;
+    pending = request(path)
+      .then((data) => {
+        if (epoch === readEpoch && referencePaths.has(path))
+          readCache.set(path, { expires: Date.now() + referenceTtlMs, data });
+        return data;
+      })
+      .finally(() => {
+        if (pendingReads.get(path) === pending) pendingReads.delete(path);
+      });
+    pendingReads.set(path, pending);
+  }
+  return structuredClone(await pending) as T;
+}
+
+async function request(path: string, body?: unknown): Promise<unknown> {
   const response = await fetch(
     path,
     body === undefined
@@ -30,6 +81,7 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
   );
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) {
+    if (response.status === 401) invalidateReads();
     const metadata =
       data && typeof data === "object" ? (data as Record<string, unknown>) : {};
     const detail =
@@ -45,7 +97,7 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
       typeof metadata.username === "string" ? metadata.username : undefined,
     );
   }
-  return data as T;
+  return data;
 }
 
 export function humanize(value: string): string {

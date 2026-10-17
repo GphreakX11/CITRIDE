@@ -40,13 +40,30 @@ import {
 } from "./whoActsFirst";
 
 import type { RecordsState, ReferenceData } from "./scriptedTypes";
+import type { WorkspaceSnapshot } from "./workspaceTypes";
 import "./command-shell.css";
 import "./prototype.css";
 import "./command-casework-dark.css";
 
 type SavedRequest = { url: string; body: CommandCreate | CommandActionRequest };
+type WorkspaceRead = Pick<WorkspaceSnapshot, "incidents" | "records" | "reference"> & {
+  health?: WorkspaceSnapshot["health"];
+};
+
+export function workspaceNavigationLocked(
+  loaded: boolean,
+  loading: boolean,
+  busy: boolean,
+  uncertain: boolean,
+) {
+  // Refreshing already-visible records must not freeze read-only navigation.
+  // Save controls keep their own loading guard and uncertain writes stay locked.
+  return busy || uncertain || (!loaded && loading);
+}
+
 export interface CommandWorkspaceProps {
   telemetry?: Telemetry | null;
+  initialSnapshot?: WorkspaceSnapshot | null;
   mode: WorkspaceMode;
   onOpenAnalyst: (
     view: CommandView,
@@ -85,6 +102,7 @@ export interface CommandWorkspaceProps {
 
 export default function CommandWorkspace({
   telemetry = null,
+  initialSnapshot = null,
   mode,
   onOpenAnalyst,
   onEditDependency,
@@ -102,8 +120,10 @@ export default function CommandWorkspace({
   onOpenTool,
   onAccessFailure,
 }: CommandWorkspaceProps) {
-  const [incidents, setIncidents] = useState<CommandIncident[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const initial = initialSnapshot?.bootstrap.baselineRevision === data.baselineRevision
+    ? initialSnapshot : null;
+  const [incidents, setIncidents] = useState<CommandIncident[]>(initial?.incidents ?? []);
+  const [loaded, setLoaded] = useState(Boolean(initial));
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
@@ -113,7 +133,7 @@ export default function CommandWorkspace({
     demoMode: boolean;
     resetEnabled?: boolean;
     storyNow?: string;
-  } | null>(null);
+  } | null>(initial?.health ?? null);
   const [notice, setNotice] = useState("");
   useEffect(() => {
     if (!notice) return;
@@ -121,8 +141,12 @@ export default function CommandWorkspace({
     return () => window.clearTimeout(timer);
   }, [notice]);
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
-  const [records, setRecords] = useState<RecordsState | null>(null);
-  const [reference, setReference] = useState<ReferenceData | null>(null);
+  const [records, setRecords] = useState<RecordsState | null>(initial?.records ?? null);
+  const [reference, setReference] = useState<ReferenceData | null>(initial?.reference ?? null);
+  // Transport capability outlives the hydration snapshot's baseline revision.
+  // Promotion/replacement must not fall back to the old multi-request path.
+  const initialRef = useRef(Boolean(initialSnapshot));
+  initialRef.current ||= Boolean(initialSnapshot);
 
   const pending = useRef<SavedRequest | null>(null);
   const pendingRun = useRef<RunRequest | null>(null);
@@ -160,33 +184,44 @@ export default function CommandWorkspace({
   const estimateContext = useRef({ scope: estimateScope, view, mode });
   estimateContext.current = { scope: estimateScope, view, mode };
   useEffect(() => {
-    handlers.current.onWorkflowLockChange(loading || busy || uncertain);
-  }, [loading, busy, uncertain]);
+    handlers.current.onWorkflowLockChange(workspaceNavigationLocked(loaded, loading, busy, uncertain));
+  }, [loaded, loading, busy, uncertain]);
+
+  function acceptRead(response: WorkspaceRead) {
+    if (!Array.isArray(response.incidents))
+      throw new Error("Incident response is invalid; casework is unavailable.");
+    setIncidents(response.incidents);
+    setRecords(response.records);
+    setReference(response.reference);
+    if (response.health) setHealth(response.health);
+    setLoaded(true);
+    setRefreshedAt(new Date().toISOString());
+    setRefreshFailed(false);
+    handlers.current.onCasesLoaded(response.incidents);
+    setError("");
+    if (!pending.current && !pendingRun.current && !pendingPotential.current)
+      setUncertain(false);
+  }
 
   const loadCases = useCallback(async () => {
     const ticket = ++generation.current;
     setLoading(true);
     try {
-      const [response, recordResponse, referenceResponse] = await Promise.all([
-        api<{ incidents: CommandIncident[] }>("/v1/command/incidents"),
-        api<RecordsState>("/v1/command/records"),
-        api<ReferenceData>("/v1/reference"),
-      ]);
-      if (!Array.isArray(response.incidents))
-        throw new Error(
-          "Incident response is invalid; casework is unavailable.",
-        );
+      // The app supplies a coherent startup snapshot. Legacy standalone
+      // embeddings without it retain their existing read contract.
+      let response: WorkspaceRead;
+      if (initialRef.current) {
+        response = await api<WorkspaceSnapshot>("/v1/workspace");
+      } else {
+        const [incidents, records, reference] = await Promise.all([
+          api<{ incidents: CommandIncident[] }>("/v1/command/incidents"),
+          api<RecordsState>("/v1/command/records"),
+          api<ReferenceData>("/v1/reference"),
+        ]);
+        response = { incidents: incidents.incidents, records, reference };
+      }
       if (!active.current || ticket !== generation.current) return;
-      setIncidents(response.incidents);
-      setRecords(recordResponse);
-      setReference(referenceResponse);
-      setLoaded(true);
-      setRefreshedAt(new Date().toISOString());
-      setRefreshFailed(false);
-      handlers.current.onCasesLoaded(response.incidents);
-      setError("");
-      if (!pending.current && !pendingRun.current && !pendingPotential.current)
-        setUncertain(false);
+      acceptRead(response);
     } catch (failure) {
       if (!active.current || ticket !== generation.current) return;
       if (failure instanceof ApiError && failure.status === 401) {
@@ -208,14 +243,21 @@ export default function CommandWorkspace({
 
   useEffect(() => {
     active.current = true;
-    void loadCases().catch(() => {});
+    if (initial) {
+      ++generation.current;
+      acceptRead(initial);
+      setLoading(false);
+    } else {
+      void loadCases().catch(() => {});
+    }
     return () => {
       active.current = false;
       ++generation.current;
     };
-  }, [loadCases]);
+  }, [loadCases, initial]);
 
   useEffect(() => {
+    if (initialRef.current) return;
     let current = true;
     api<{ demoMode: boolean }>("/health")
       .then((value) => {
@@ -227,7 +269,7 @@ export default function CommandWorkspace({
     return () => {
       current = false;
     };
-  }, [data.baselineRevision]);
+  }, [data.baselineRevision, initial]);
   useEffect(() => {
     const refresh = () => {
       if (

@@ -263,6 +263,14 @@ def create_app(
     def bootstrap(store: RepositoryDependency):
         return store.baseline()
 
+    @app.get("/v1/workspace")
+    def workspace(store: RepositoryDependency):
+        from .workspace import workspace_snapshot
+
+        return handle_operation(
+            lambda: workspace_snapshot(store, reset_enabled=reset_enabled)
+        )
+
     @app.get("/v1/telemetry")
     def telemetry(store: RepositoryDependency):
         streams = []
@@ -390,8 +398,9 @@ def create_app(
 
     @app.get("/v1/cascade-runs")
     def runs(store: RepositoryDependency):
-        keys = ("id", "createdAt", "scenarioId", "baselineRevision")
-        return {"runs": [{key: run[key] for key in keys} for run in store.runs()]}
+        from .workspace import run_summaries
+
+        return {"runs": run_summaries(store.runs())}
 
     @app.get("/v1/cascade-runs/{run_id}/compare")
     def compare(run_id: str, store: RepositoryDependency, otherRunId: QueryIdentifier):
