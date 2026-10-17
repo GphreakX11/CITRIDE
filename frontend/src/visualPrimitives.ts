@@ -1,6 +1,16 @@
 import type { HTMLAttributes } from "react";
 import { jsx } from "react/jsx-runtime";
-import { statusTone } from "./statusTone.ts";
+import { statusTone, windowTone } from "./statusTone.ts";
+
+export interface ToneProps extends HTMLAttributes<HTMLSpanElement> {
+  status?: string | null;
+  window?: readonly [number, number] | null;
+}
+/** Text and chips share semantics; caller copy and attributes remain unchanged. */
+export function Tone({ status, window, children, className = "", ...props }: ToneProps) {
+  const tone = window !== undefined ? windowTone(window) : statusTone(status);
+  return jsx("span", { ...props, className: `tone-${tone} ${className}`.trim(), children });
+}
 
 export interface StatusChipProps extends HTMLAttributes<HTMLSpanElement> {
   status?: string | null;

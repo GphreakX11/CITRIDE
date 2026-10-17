@@ -14,6 +14,7 @@ import {
   type ConsequenceModel,
 } from "./commandCenterModel.ts";
 import { idtSectorName } from "./idt.ts";
+import { windowTone as toneForWindow } from "./statusTone.ts";
 
 export type GraphTone = "red" | "amber" | "grey" | "green" | "source";
 export type GraphNodeKind = "source" | "sector" | "people" | "facility";
@@ -73,9 +74,6 @@ function idtPath(entity: Entity | undefined): string {
 }
 function windowText(w: [number, number] | null | undefined) {
   return w ? `${w[0]}–${w[1]} h` : "window unknown";
-}
-function toneForWindow(w: [number, number] | null | undefined): GraphTone {
-  return w && w[0] >= 4 ? "amber" : "red";
 }
 function earliest(rows: Row[]): [number, number] | null {
   const ws = rows

@@ -246,7 +246,8 @@ print(json.dumps(sorted(values)))`,
     "medium",
   ])
     assert.equal(statusTone(value), "amber", value);
-  for (const value of ["at_risk", "queued", "informational"])
+  assert.equal(statusTone("at_risk"), "red");
+  for (const value of ["queued", "informational"])
     assert.equal(statusTone(value), "blue", value);
   for (const value of ["normal", "done", "reviewed", "no_findings"])
     assert.equal(statusTone(value), "green", value);
