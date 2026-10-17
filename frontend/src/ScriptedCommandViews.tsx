@@ -38,7 +38,10 @@ import { formatDuration, formatTimeCT } from "./displayTime.ts";
 import { statewideFootprint, boilWaterLabel } from "./statewideFootprint.ts";
 import { fittedTexasMarkerLayout, FITTED_TEXAS_VIEWBOX } from "./fittedTexasMap.ts";
 import { TEXAS_PATH } from "./texasOutline.ts";
+import { InfrastructureIcon } from "./InfrastructureIcon.tsx";
+import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons.ts";
 import "./scripted-command.css";
+import "./infrastructure-map.css";
 import "./attack-picture.css";
 import StatewideFootprint from "./StatewideFootprint.tsx";
 import { StatusChip } from "./visualPrimitives.ts";
@@ -144,7 +147,7 @@ export function Schematic({
         <svg className="sc-state-boundary" viewBox={FITTED_TEXAS_VIEWBOX} aria-hidden="true" data-state-boundary="texas">
           <path d={TEXAS_PATH} className="sc-texas-outline" />
         </svg>
-        <svg className="sc-marker-layer" viewBox={`0 0 ${mapSize.width} ${mapSize.height}`} preserveAspectRatio="none" role="group" aria-label={mode === "teams" ? "Texas schematic · team status markers and incident footprint" : "Texas schematic · numbered incident anchors"}>
+        <svg className="sc-marker-layer" viewBox={`0 0 ${mapSize.width} ${mapSize.height}`} preserveAspectRatio="none" role="group" aria-label={mode === "teams" ? "Texas schematic · team status markers and incident footprint" : "Texas schematic · infrastructure incident icons"}>
         {mode === "teams" && incidents.map((incident) => {
           const position = footprintMarkers.find(marker => marker.id === incident.id);
           return position && <g key={incident.id} className="sc-team-incident" data-incident-id={incident.id} aria-label={`${incident.title} · incident footprint`}><title>{`${incident.title} · ${incident.location?.label ?? "Illustrative incident footprint"}`}</title><circle cx={position.x} cy={position.y} r="25" /></g>;
@@ -152,18 +155,23 @@ export function Schematic({
         {markers.map((marker, index) => (
           <g key={marker.id} className={`sc-safe-anchor ${active === marker.id ? "selected" : ""}`}
             data-team-status={mode === "teams" ? ordered[index].status : undefined}
+            data-infrastructure-kind={mode === "incidents" ? infrastructureKind(ordered[index]) : undefined}
             role="button" tabIndex={0} aria-pressed={active === marker.id}
             aria-label={`${index + 1}. ${ordered[index].short ?? ordered[index].name ?? ordered[index].title}`}
             onClick={() => onSelect(marker.id)}
             onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(marker.id); } }}>
             <title>{hover(ordered[index])}</title>
             <circle cx={marker.x} cy={marker.y} r="22" />
-            <text x={marker.x} y={marker.y + 5} textAnchor="middle">{badge(ordered[index], index)}</text>
+            {mode === "teams"
+              ? <text x={marker.x} y={marker.y + 5} textAnchor="middle">{badge(ordered[index], index)}</text>
+              : <g transform={`translate(${marker.x - 12} ${marker.y - 12})`}><InfrastructureIcon kind={infrastructureKind(ordered[index])} size={24} /></g>}
           </g>
         ))}
         </svg>
       </div>
-      <p className="sc-contained-map-note">Illustrative positions · select a marker for details. Not precise locations.</p>
+      {mode === "incidents" && <div className="infrastructure-map-legend" aria-label="Infrastructure types">
+        {[...new Set(ordered.map(infrastructureKind))].map(kind => <span key={kind} data-infrastructure-kind={kind}><InfrastructureIcon kind={kind} size={18} />{infrastructureLabel(kind)}</span>)}
+      </div>}
       {ordered.find(item => item.id === active) && <p className="sc-selected-map-label" aria-live="polite">{hover(ordered.find(item => item.id === active)!)}</p>}
       {capacityExceeded && <p role="status">Too many markers for separate touch targets at this width. Every record is available in the list below.</p>}
       <details className="sc-map-index" open={capacityExceeded || undefined}>
@@ -173,7 +181,7 @@ export function Schematic({
           <button key={item.id} className={`sc-safe-label ${active === item.id ? "selected" : ""}`}
             data-label-anchor={index + 1} aria-pressed={active === item.id} onClick={() => onSelect(item.id)}
             data-team-status={mode === "teams" ? item.status : undefined} title={hover(item)}>
-            <span className="sc-safe-number" aria-hidden="true">{badge(item, index)}</span>
+            <span className="sc-safe-number" aria-hidden="true" data-infrastructure-kind={mode === "incidents" ? infrastructureKind(item) : undefined}>{mode === "teams" ? badge(item, index) : <InfrastructureIcon kind={infrastructureKind(item)} size={20} />}</span>
             <span>{item.short ?? item.name ?? item.title}</span>
           </button>
         ))}
@@ -332,7 +340,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     const notices = [...new Set(activeModels.map((item) => boilWaterLabel(item.run, item.captured.entities, reference)).filter(Boolean))];
     const underInvestigation = active.filter((row) => row.caseId && incidents.some((item) => item.id === row.caseId && item.status === "open")).length;
     const mapItems: RecordItem[] = [...active, ...footprint.probed.map((utility) => ({
-      id: utility.id, title: `${utility.label} · probed`, status: "probed",
+      id: utility.id, title: `${utility.label} · probed`, status: "probed", sectors: ["12"],
     }))];
     const pending = active.flatMap((row) =>
       row.caseId
@@ -387,7 +395,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
         />
         <div className="sc-overview-layout">
           <div className="sc-overview-main">
-            <Panel title="Statewide picture" note="Illustrative schematic · labels match numbered anchors · not geographic locations">
+            <Panel title="Statewide picture">
               <Schematic
                 items={mapItems}
                 active={picked ?? selectedRow?.id ?? null}

@@ -156,6 +156,20 @@ test("Schematic uses a deterministic safe label grid and never mutates authored 
   assert.equal(JSON.stringify(items), before);
   assert.equal(out, html(Schematic, { items, active: "pin-1", label: "Safe labels", onSelect() {} }));
 });
+test("overview map renders sector pictograms, matching icon legends and no illustrative-purpose note", () => {
+  const items = freeze([
+    { id: "water", title: "Water utility", sectors: ["12"], schematic: { x: 52, y: 58 } },
+    { id: "power", title: "Electric power substation", schematic: { x: 50, y: 40 } },
+    { id: "health", title: "Hospital network", sectors: ["10"], schematic: { x: 65, y: 65 } },
+  ]);
+  const out = html(Schematic, { items, active: "water", onSelect() {}, label: "Incident map" });
+  for (const kind of ["water", "power", "health"]) {
+    assert.match(out, new RegExp(`data-infrastructure-icon="${kind}"`));
+    assert.match(out, new RegExp(`data-infrastructure-kind="${kind}"`));
+  }
+  assert.match(out, /aria-label="Infrastructure types"/);
+  assert.doesNotMatch(out, /Illustrative positions|Not precise locations|<text/);
+});
 test("C5 team marker mode retains immutable coordinates, stable initials and separated anchors", () => {
   const r = records();
   const teams = freeze(r.teams.map((team) => ({ ...team, schematic: { x: 52, y: 58 } })));

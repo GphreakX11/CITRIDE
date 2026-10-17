@@ -1,0 +1,70 @@
+/* Shared, self-hosted sector pictograms. Color identifies infrastructure,
+   while incident status remains explicit in the selected record. */
+[data-infrastructure-kind] { --infrastructure-color: var(--text-2); }
+[data-infrastructure-kind="water"] { --infrastructure-color: var(--blue-text); }
+[data-infrastructure-kind="power"],
+[data-infrastructure-kind="gas"] { --infrastructure-color: var(--amber-text); }
+[data-infrastructure-kind="health"] { --infrastructure-color: var(--green-text); }
+[data-infrastructure-kind="communications"] { --infrastructure-color: var(--red-text); }
+[data-infrastructure-kind="government"] { --infrastructure-color: var(--text-2); }
+[data-infrastructure-kind="transport"] { --infrastructure-color: var(--amber); }
+[data-infrastructure-kind="industry"] { --infrastructure-color: var(--text-muted); }
+[data-infrastructure-kind="cyber"] { --infrastructure-color: var(--link); }
+.infrastructure-icon { display: block; flex-shrink: 0; color: var(--infrastructure-color, var(--text-2)); pointer-events: none; }
+[data-mode] .sc-safe-schematic { overflow: visible; }
+/* SVG groups need a circular focus treatment, not the browser's square ring. */
+[data-mode] .sc-safe-anchor:focus { outline: none; }
+/* Legacy map rules style every nested circle/line. Restrict pictograms back to
+   their own vector strokes so radios/hospitals never inherit marker fills. */
+[data-mode] .sc-safe-anchor .infrastructure-icon :is(path, circle, line, polyline, polygon, rect) {
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-dasharray: none;
+}
+[data-mode] :is(.sf-incident-pin, .sc-safe-anchor)[data-infrastructure-kind="water"] .infrastructure-icon path,
+[data-mode] :is(.sf-incident-pin, .sc-safe-anchor)[data-infrastructure-kind="power"] .infrastructure-icon path,
+[data-mode] :is(.sf-incident-pin, .sc-safe-anchor)[data-infrastructure-kind="gas"] .infrastructure-icon path {
+  fill: color-mix(in srgb, currentColor 25%, transparent);
+}
+[data-mode] .sf-state-map .sf-incident-pin {
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--infrastructure-color) 65%, var(--border));
+  background: color-mix(in srgb, var(--infrastructure-color) 12%, var(--bg-header));
+  color: var(--infrastructure-color);
+  padding: 7px;
+  box-shadow: inset 0 0 0 3px var(--bg-header);
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+[data-mode] .sf-state-map .sf-incident-pin:is(:hover, :focus-visible, .sf-selected) {
+  border-color: var(--text-strong);
+  background: color-mix(in srgb, var(--infrastructure-color) 24%, var(--bg-header));
+  box-shadow: inset 0 0 0 3px var(--bg-header);
+}
+[data-mode] .sf-state-map .sf-incident-pin:focus-visible { outline: 2px solid var(--text-strong); outline-offset: -5px; }
+[data-mode] .sc-safe-anchor[data-infrastructure-kind] > circle {
+  fill: color-mix(in srgb, var(--infrastructure-color) 12%, var(--bg-header));
+  stroke: var(--infrastructure-color); stroke-width: 1.5;
+}
+[data-mode] .sc-safe-anchor[data-infrastructure-kind]:is(.selected, :focus-visible, :hover) > circle {
+  fill: color-mix(in srgb, var(--infrastructure-color) 24%, var(--bg-header));
+  stroke: var(--text-strong); stroke-width: 2;
+}
+[data-mode] .sf-heading { align-items: center; padding: 0 2px; }
+.infrastructure-map-count { border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); border-radius: var(--radius-pill); padding: 3px 9px; font-size: var(--fs-chip); }
+[data-mode] .infrastructure-map-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 16px 2px; margin: 0; color: var(--text-2); font-size: var(--fs-small); line-height: 1.35; }
+[data-mode] .infrastructure-map-legend > span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+[data-mode] .sf-state-map,
+[data-mode] .sc-safe-map {
+  background: radial-gradient(ellipse at 55% 45%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%), var(--bg-header);
+  border-radius: var(--radius-card);
+}
+[data-mode] .sf-state-boundary > path,
+[data-mode] .sc-state-boundary > path {
+  fill: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+  stroke: var(--link); stroke-opacity: .65; stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+[data-mode] .sf-incident-nav .sf-nav-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--radius-control); background: var(--surface-2); }
+[data-mode] .sf-incident-nav button { grid-template-columns: 30px minmax(0, 1fr) auto; }
+[data-mode] .sc-safe-label .sc-safe-number[data-infrastructure-kind] { width: 30px; height: 30px; border-radius: var(--radius-control); }
+@media (prefers-reduced-motion: reduce) {
+  [data-mode] .sf-state-map .sf-incident-pin { transition: none; }
+}

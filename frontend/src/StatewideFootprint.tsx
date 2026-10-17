@@ -12,7 +12,10 @@ import {
   type StatewideFootprintModel,
   type StatewideFootprintProps,
 } from "./statewideFootprint.ts";
+import { InfrastructureIcon } from "./InfrastructureIcon.tsx";
+import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons.ts";
 import "./statewide-footprint.css";
+import "./infrastructure-map.css";
 
 export type { StatewideFootprintProps } from "./statewideFootprint.ts";
 const count = (v: number | null) =>
@@ -27,6 +30,11 @@ function RecordedFootprints({ model }: { model: StatewideFootprintModel }) {
       aria-label="Captured service footprints"
     >
       <summary>Recorded service footprints · local geometry and related probes</summary>
+      <div className="sf-legend" aria-label="Service footprint legend">
+        <span><i className="sf-legend-attack" />Attacked utility</span>
+        <span><i className="sf-legend-probe" />Probed utility</span>
+        <span><i className="sf-legend-facility" />Facility at risk (modeled)</span>
+      </div>
       {model.layers
         .filter((layer) => layer.utility)
         .map((layer) => {
@@ -188,7 +196,8 @@ export function StatewideFootprintView({
   return (
     <section className="sf-statewide" aria-label="Statewide incident footprint">
       <header className="sf-heading">
-        <p>Statewide incident schematic</p>
+        <p>Infrastructure &amp; incidents</p>
+        <span className="infrastructure-map-count">{markers.length} mapped</span>
       </header>
 
       <div className="sf-layout">
@@ -205,7 +214,7 @@ export function StatewideFootprintView({
               <path d={TEXAS_PATH} />
             </svg>
 
-            {model.rows.map((item, index) => {
+            {model.rows.map((item) => {
               const position = item.location?.schematic;
               if (
                 !position ||
@@ -215,11 +224,13 @@ export function StatewideFootprintView({
                 return null;
               const marker = markers.find((m) => m.id === item.id);
               if (!marker) return null;
+              const kind = infrastructureKind(item);
               return (
                 <button
                   type="button"
                   key={item.id}
                   data-incident-pin={item.id}
+                  data-infrastructure-kind={kind}
                   className={`sf-incident-pin ${item.id === row?.id ? "sf-selected" : "sf-muted"}`}
                   style={{
                     left: `${marker.x}px`,
@@ -231,10 +242,7 @@ export function StatewideFootprintView({
                   onClick={() => onPick(item.id)}
                   title={`${item.title} · ${item.id} · ${item.location?.label ?? ""}`}
                 >
-                  <i aria-hidden="true" />
-                  <span className="sf-pin-number" aria-hidden="true">
-                    {index + 1}
-                  </span>
+                  <InfrastructureIcon kind={kind} size={26} />
                   <span className="sf-pin-label">
                     {item.title}
                     <small>
@@ -245,32 +253,22 @@ export function StatewideFootprintView({
               );
             })}
           </div>
-          <p className="sf-caption">Illustrative positions · markers stay inside Texas, spaced for selection. Not precise locations.</p>
+
           {capacityExceeded && <p role="status">Too many incidents for separate touch targets at this width. Every incident is available in the list below.</p>}
-          <div className="sf-legend" aria-label="Legend">
-            <span>
-              <i className="sf-legend-attack" />
-              Attacked utility
-            </span>
-            <span>
-              <i className="sf-legend-probe" />
-              Probed utility
-            </span>
-            <span>
-              <i className="sf-legend-facility" />
-              Facility at risk (modeled)
-            </span>
-            <span>
-              <i className="sf-legend-other" />
-              Other incident
-            </span>
+          <div className="sf-legend infrastructure-map-legend" aria-label="Infrastructure types">
+            {[...new Set(model.rows.filter(item => markers.some(marker => marker.id === item.id)).map(infrastructureKind))].map((kind) => (
+              <span key={kind} data-infrastructure-kind={kind}>
+                <InfrastructureIcon kind={kind} size={18} />
+                {infrastructureLabel(kind)}
+              </span>
+            ))}
           </div>
           <details className="sf-incident-index" open={capacityExceeded || undefined}>
             <summary>All incidents · {model.rows.length}</summary>
             <nav className="sf-incident-nav" aria-label="Statewide incidents">
-              {model.rows.map((item, index) => (
+              {model.rows.map((item) => (
                 <button type="button" key={item.id} aria-pressed={item.id === row?.id} onClick={() => onPick(item.id)}>
-                  <span className="sf-pin-number" aria-hidden="true">{index + 1}</span>{" "}
+                  <span className="sf-nav-icon" data-infrastructure-kind={infrastructureKind(item)}><InfrastructureIcon kind={infrastructureKind(item)} size={22} /></span>
                   <span className="sf-nav-title">{item.title}</span>
                   <StatusChip status={item.severity}>{words(item.severity ?? "unknown")}</StatusChip>
                 </button>

@@ -2,6 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
+test('incident maps use representative infrastructure icons with matching sector legends, not number-only pins',()=>{
+ const statewide=read('../src/StatewideFootprint.tsx');
+ const command=read('../src/ScriptedCommandViews.tsx');
+ for (const source of [statewide,command]) {
+  assert.match(source,/InfrastructureIcon/);
+  assert.match(source,/infrastructureKind/);
+  assert.match(source,/data-infrastructure-kind/);
+  assert.doesNotMatch(source,/Illustrative positions|Not precise locations|labels match numbered anchors/);
+ }
+ assert.doesNotMatch(statewide,/className="sf-pin-number"/);
+ assert.match(statewide,/aria-label="Infrastructure types"/);
+ assert.match(command,/aria-label="Infrastructure types"/);
+ const css=read('../src/infrastructure-map.css');
+ assert.match(css,/\.sc-safe-schematic\s*\{\s*overflow:\s*visible/);
+ assert.match(css,/\.sc-safe-anchor:focus\s*\{\s*outline:\s*none/);
+});
 test('command overview and team maps use the same full-size Texas coordinate frame as the state map',()=>{
  const source=read('../src/ScriptedCommandViews.tsx');
  assert.match(source,/fittedTexasMarkerLayout/);

@@ -8,6 +8,7 @@ import { transformWithOxc } from "vite";
 import { statewideFootprint } from "../src/statewideFootprint.ts";
 import { incidentMarkerLayout } from "../src/incidentMarkerLayout.ts";
 import { fittedTexasMarkerLayout } from "../src/fittedTexasMap.ts";
+import { infrastructureKind } from "../src/infrastructureIcons.ts";
 const read = (p) =>
   JSON.parse(readFileSync(new URL(p, import.meta.url), "utf8"));
 const data = read("../../data/scenario.json");
@@ -105,7 +106,7 @@ function elements(node, predicate) {
       .flatMap((c) => elements(c, predicate)),
   ];
 }
-test("C2 compact map markers retain complete accessible incident names and stable list numbering", () => {
+test("C2 infrastructure icons match the list and retain complete accessible incident names", () => {
   const p = props();
   const model = statewideFootprint(p);
   const tree = StatewideFootprintView({
@@ -127,16 +128,22 @@ test("C2 compact map markers retain complete accessible incident names and stabl
     for (const target of [pin, buttons[index]]) {
       const marker = elements(
         target,
-        (e) => e.props?.className === "sf-pin-number",
+        (e) => typeof e.type === "function" && e.props?.kind,
       )[0];
-      assert.equal(marker.props.children, index + 1);
-      assert.equal(marker.props["aria-hidden"], "true");
+      assert.equal(marker.props.kind, infrastructureKind(item));
     }
+    assert.equal(pin.props["data-infrastructure-kind"], infrastructureKind(item));
     const marker = fittedTexasMarkerLayout(model.rows.map(row => ({ id: row.id, ...row.location.schematic })), 640, 448).markers[index];
     assert.equal(pin.props.style.left, `${marker.x}px`);
     assert.equal(pin.props.style.top, `${marker.y}px`);
     assert.equal(pin.props.style.transform, "translate(-50%, -50%)");
   });
+  const rendered = html(p);
+  assert.match(rendered, /data-infrastructure-icon="water"/);
+  assert.match(rendered, /data-infrastructure-icon="health"/);
+  assert.match(rendered, /data-infrastructure-icon="communications"/);
+  assert.match(rendered, /data-infrastructure-icon="government"/);
+  assert.doesNotMatch(rendered, /sf-pin-number|Illustrative positions|Not precise locations/);
 });
 
 test("C2 phone maps use fixed touch targets instead of clipping long absolute-positioned labels", () => {
@@ -334,7 +341,7 @@ test("C2 SSR includes legend, summary, story elapsed, three windows, excluded fi
     /Attacked utility/,
     /Probed utility/,
     /Facility at risk \(modeled\)/,
-    /Other incident/,
+    /aria-label="Infrastructure types"/,
     /18,000/,
     /21,000/,
     /1–4 h/,
