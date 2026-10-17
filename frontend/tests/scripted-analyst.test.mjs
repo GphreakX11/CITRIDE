@@ -137,6 +137,13 @@ test("A6 uses compact team task rows and human due times with unchanged record a
   const html = renderToStaticMarkup(createElement(Component, props("uctf", { records: alternate })));
   assert.match(html, /class="sa-task-groups"/);
   assert.match(html, /class="sa-task-counts"/);
+  assert.match(html, /aria-label="Change status:/);
+  assert.doesNotMatch(html, /Edit status|Update task status/);
+  assert.match(html, /sa-threshold-amber" style="left:50%"/);
+  assert.match(html, /sa-threshold-red" style="left:75%"/);
+  const withClosure = renderToStaticMarkup(createElement(Component, props("uctf", { caseClosure: createElement("p", null, "Existing guarded closure") })));
+  assert.match(withClosure, /class="sa-case-closure"><p>Existing guarded closure/);
+  assert.ok(withClosure.indexOf('class="sa-add-task"') < withClosure.indexOf('class="sa-case-closure"'));
   assert.match(html, /Due [0-9]{2}:[0-9]{2} CT/);
   assert.doesNotMatch(html.replace(/<[^>]*>/g, ""), /2026-10-13T09:00:00Z/);
   assert.doesNotMatch(html, /<details[^>]*\sopen(?:=|>)/);

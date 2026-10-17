@@ -17,6 +17,7 @@ import { formatDuration, formatDueTime, formatTimeCT } from "./displayTime.ts";
 import "./scripted-analyst.css";
 
 export interface ScriptedAnalystProps extends ScriptedViewProps {
+  caseClosure?: ReactNode;
   onMutate: (action: CommandAction) => Promise<unknown>;
   busy: boolean;
   uncertain: boolean;
@@ -610,6 +611,9 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
             · target {formatDuration(clock.targetMinutes)}
           </p>
           <div className={`sa-clock-track sa-${color}`} role="progressbar" aria-label="Response clock against target" aria-valuemin={0} aria-valuemax={clock.targetMinutes} aria-valuenow={Number.isFinite(elapsed) ? Math.min(clock.targetMinutes, Math.max(0, elapsed)) : undefined}><span style={{ width: `${Number.isFinite(elapsed) ? Math.min(100, Math.max(0, elapsed / clock.targetMinutes * 100)) : 0}%` }} /></div>
+          <div className="sa-clock-marks" aria-label="Clock thresholds">
+            <span>0:00</span><span className="sa-threshold sa-threshold-amber" style={{ left: `${clock.amberMinutes / clock.targetMinutes * 100}%` }}>Amber {formatDuration(clock.amberMinutes)}</span><span className="sa-threshold sa-threshold-red" style={{ left: `${clock.redMinutes / clock.targetMinutes * 100}%` }}>Red {formatDuration(clock.redMinutes)}</span><span>{formatDuration(clock.targetMinutes)} target</span>
+          </div>
           <p>{clock.note}</p>
         </section>
         <section className="sa-task-groups">
@@ -644,33 +648,29 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                       />
                       {task.label}
                     </label>
-                    <StatusChip
+                    <details className="sa-task-edit"><summary aria-label={`Change status: ${task.label}`}><StatusChip
                       status={isLate(task, records) ? "late" : task.status}
                       className="sa-chip"
                     >
                       {taskLabels[text(task.status)] ?? task.status}
                       {isLate(task, records) ? " · Late" : ""}
-                    </StatusChip>
-                    <p>
-                      {task.ownerRole} · {formatDueTime(task.dueAt, "unknown")}
-                    </p>
-                    <details className="sa-task-edit"><summary>Edit status</summary>{form(
+                    </StatusChip></summary>{form(
                       task.id,
                       "set_task_status",
-                      "Update task status",
+                      "Task status",
                       select("Task status", "status", task.status, taskLabels),
-                      (el) => ({
-                        action: "set_task_status",
-                        taskId: task.id,
-                        status: value(el, "status"),
-                      }),
+                      (el) => ({ action: "set_task_status", taskId: task.id, status: value(el, "status") }),
                     )}</details>
+                    <p>
+                      {[text(task.detail), text(task.ownerRole), formatDueTime(task.dueAt, "unknown")].filter(Boolean).join(" · ")}
+                    </p>
+
                   </div>
                 ))}
             </section>
           ))}
         </section>
-        <section className="sa-add-task">
+        <div className="sa-response-side"><section className="sa-add-task">
           <h3>Add task</h3>
           {form(
             "add-task",
@@ -694,6 +694,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
             }),
           )}
         </section>
+        {props.caseClosure && <div className="sa-case-closure">{props.caseClosure}</div>}
         <section className="sa-team-tracking">
           <details><summary>Team deployment tracking</summary>
           {teams.map((team) => <details key={team.id}><summary>{text(team.name)} · {humanize(text(team.status))}</summary>{form(
@@ -739,6 +740,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
           )}
           </details>
         </section>
+        </div>
       </>
     );
   }

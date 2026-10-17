@@ -156,7 +156,13 @@
 .sa-view-coordination .sa-contact-roles { color: var(--text-muted); margin-bottom: 0; }
 .sa-notes-panel fieldset { grid-template-columns: 1fr; }
 .sa-notes-panel button { justify-self: start; }
-.sa-view-uctf { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "clock clock" "tasks add" "tasks tracking" "tools tools"; align-items: start; }
+.sa-view-uctf { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "clock clock" "tasks side" "tools tools"; align-items: start; }
+.sa-response-side { grid-area: side; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sa-case-closure { grid-area: closure; min-width: 0; }
+.sa-clock-marks { display: flex; justify-content: space-between; position: relative; margin-top: 8px; font-size: var(--fs-small); color: var(--text-muted); }
+.sa-threshold { position: absolute; transform: translateX(-50%); }
+.sa-threshold::before { content: ""; position: absolute; height: 14px; border-left: 2px solid var(--amber); left: 50%; top: -21px; }
+.sa-threshold-red::before { border-color: var(--red); }
 .sa-response-clock { grid-area: clock; position: relative; }
 .sa-task-counts { display: flex; gap: 8px; flex-wrap: wrap; position: absolute; right: 18px; top: 18px; }
 .sa-clock-track { height: 12px; border-radius: 6px; overflow: hidden; background: var(--bg); }
@@ -175,13 +181,21 @@
 .sa-task > .sa-chip { grid-column: 2; grid-row: 1; }
 .sa-task > p { grid-column: 1; font-size: var(--fs-small); color: var(--text-muted); margin: 0 0 0 28px; }
 .sa-task-edit { grid-column: 2; font-size: var(--fs-small); }
+.sa-task-edit { grid-row: 1 / 3; }
+.sa-task-edit > summary { padding: 0; list-style: none; }
+.sa-task-edit > summary::after { content: " ▾"; }
+.sa-view-uctf .sa-task > label { margin: 0; font-weight: 400; }
+[data-mode] .sa-view-uctf .sa-task input[type="checkbox"] { min-height: 0; height: 18px; width: 18px; margin: 0; }
+.sa-view-uctf .sa-task > p { padding: 0; }
+.sa-view-uctf .sa-task { padding-block: 9px; }
 .sa-task-edit[open] { grid-column: 1 / -1; }
+.sa-task-edit[open] { grid-row: auto; }
 .sa-add-task fieldset { grid-template-columns: 1fr; }
 .sa-add-task form > h4 { display: none; }
 .sa-add-task form { padding-top: 0; border: 0; }
 @media (max-width: 900px) {
   .sa-view-coordination { grid-template-columns: 1fr; grid-template-areas: "rank" "products" "notes" "contacts" "decisions" "tools"; }
-  .sa-view-uctf { grid-template-columns: 1fr; grid-template-areas: "clock" "tasks" "add" "tracking" "tools"; }
+  .sa-view-uctf { grid-template-columns: 1fr; grid-template-areas: "clock" "tasks" "side" "tools"; }
   .scripted-analyst .sa-ranking > li { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .sa-task-counts { position: static; }
 }

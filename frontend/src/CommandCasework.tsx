@@ -32,7 +32,7 @@ export interface CommandCaseworkProps {
   data: Bootstrap;
   incidents: CommandIncident[];
   selected: CommandIncident | null;
-  mode: "full" | "tasks" | "decisions" | "coordination" | "consequence";
+  mode: "full" | "tasks" | "decisions" | "coordination" | "consequence" | "tracking";
   onSelect: (id: string) => void;
   onCreate: (request: CommandCreate) => Promise<CommandIncident>;
   onMutate: (
@@ -226,7 +226,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
   const blocked = busy || uncertain || creating;
   return (
     <section className="command-casework" aria-label="Casework">
-      <header className="cc-panel cc-header">
+      {props.mode !== "tracking" && <header className="cc-panel cc-header">
         <div>
           <h2>{props.mode === "full" ? "Case File" : "Casework"}</h2>
           {selected && (
@@ -258,7 +258,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
         <button type="button" onClick={onOpenEvidence}>
           Open source evidence
         </button>
-      </header>
+      </header>}
       {uncertain && (
         <aside className="cc-warning" role="alert">
           <h3>Save outcome is uncertain</h3>
@@ -285,7 +285,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
           </div>
         </aside>
       )}
-      <details className="cc-panel" open={!selected}>
+      {props.mode !== "tracking" && <details className="cc-panel" open={!selected}>
         <summary>Open case from a source event</summary>
 
         <CaseCreateForm
@@ -296,7 +296,7 @@ export default function CommandCasework(props: CommandCaseworkProps) {
           onCreated={(created) => onSelect(created.id)}
           onBusy={setCreating}
         />
-      </details>
+      </details>}
       {selected ? (
         <CaseDetails
           key={selected.id}
@@ -553,7 +553,8 @@ function CaseDetails({
           ))}
         </nav>
       )}
-      <CaseProgress
+      {mode === "tracking" && <p className="cc-muted">Complete the saved checklist and advisory reviews in <button type="button" onClick={() => onNavigate?.("case-file")}>Case File</button> before closure.</p>}
+      {mode !== "tracking" && <><CaseProgress
         incident={selected}
         locked={locked}
         onNavigate={onNavigate}
@@ -676,7 +677,7 @@ function CaseDetails({
             tracking note to resume app review.
           </p>
         )}
-      </section>
+      </section></>}
       {error && (
         <p className="cc-error" role="alert">
           {error}
@@ -1086,7 +1087,7 @@ function CaseDetails({
         id={sectionId("tracking")}
         data-case-section="tracking"
       >
-        <h2>Case status</h2>
+        <h2>{mode === "tracking" ? "Close the case" : "Case status"}</h2>
 
         <label>
           Required tracking / closure note

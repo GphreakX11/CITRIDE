@@ -622,7 +622,7 @@ export default function CommandWorkspace({
   };
   const caseMode =
     view === "uctf"
-      ? "tasks"
+      ? "tracking"
       : view === "coordination"
         ? "coordination"
         : view === "consequence"
@@ -984,6 +984,7 @@ export default function CommandWorkspace({
             )}
           {records && reference && ["coordination", "uctf"].includes(view) && (
             <ScriptedAnalystViews
+              caseClosure={view === "uctf" ? casework : undefined}
               data={data}
               incidents={incidents}
               selected={selected}
@@ -1004,7 +1005,7 @@ export default function CommandWorkspace({
           )}
           {view === "case-file" && casework}
           {view === "coordination" && <details className="analyst-record-tools"><summary>Case record tools</summary>{casework}</details>}
-          {view === "uctf" && casework}
+
         </>
       )}
       {analysisConfirmation && (
