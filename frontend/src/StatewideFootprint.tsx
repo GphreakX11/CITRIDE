@@ -1,6 +1,6 @@
 import { StatusChip } from "./visualPrimitives.ts";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { incidentMarkerLayout } from "./incidentMarkerLayout.ts";
+import { fittedTexasMarkerLayout, FITTED_TEXAS_VIEWBOX } from "./fittedTexasMap.ts";
 
 import { idtEntry, idtSectorName } from "./idt.ts";
 import { words } from "./commandCenterModel.ts";
@@ -165,7 +165,7 @@ export function StatewideFootprintView({
   onPick,
   onOpenAnalyst,
   mapRef,
-  mapSize = { width: 240, height: 370 },
+  mapSize = { width: 640, height: 448 },
 }: {
   model: StatewideFootprintModel;
   onPick: (id: string) => void;
@@ -174,7 +174,7 @@ export function StatewideFootprintView({
   mapSize?: { width: number; height: number };
 }) {
   const row = model.active;
-  const markers = incidentMarkerLayout(
+  const { markers, capacityExceeded } = fittedTexasMarkerLayout(
     model.rows.flatMap((item) => {
       const p = item.location?.schematic;
       return p && Number.isFinite(p.x) && Number.isFinite(p.y)
@@ -184,36 +184,19 @@ export function StatewideFootprintView({
     mapSize.width,
     mapSize.height,
   );
-  const leaders = markers.filter((m) => m.offsetX || m.offsetY);
+
   return (
     <section className="sf-statewide" aria-label="Statewide incident footprint">
       <header className="sf-heading">
         <p>Statewide incident schematic</p>
       </header>
-      <nav className="sf-incident-nav" aria-label="Statewide incidents">
-        {model.rows.map((item, index) => (
-          <button
-            type="button"
-            key={item.id}
-            aria-pressed={item.id === row?.id}
-            onClick={() => onPick(item.id)}
-          >
-            <span className="sf-pin-number" aria-hidden="true">
-              {index + 1}
-            </span>{" "}
-            {item.title}{" "}
-            <StatusChip status={item.severity}>
-              {words(item.severity ?? "unknown")}
-            </StatusChip>
-          </button>
-        ))}
-      </nav>
+
       <div className="sf-layout">
         <section className="sf-map-panel" aria-label="Statewide map">
           <div className="sf-state-map" ref={mapRef}>
             <svg
               className="sf-state-boundary"
-              viewBox="0 0 1000 700"
+              viewBox={FITTED_TEXAS_VIEWBOX}
               aria-hidden="true"
               focusable="false"
               data-state-boundary="texas"
@@ -221,28 +204,7 @@ export function StatewideFootprintView({
             >
               <path d={TEXAS_PATH} />
             </svg>
-            <svg
-              className="sf-marker-leaders"
-              viewBox={`0 0 ${mapSize.width} ${mapSize.height}`}
-              preserveAspectRatio="none"
-              aria-hidden="true"
-              focusable="false"
-            >
-              {leaders.map((marker) => (
-                <g key={marker.id} data-marker-leader={marker.id}>
-                  <line
-                    x1={marker.sourceX}
-                    y1={marker.sourceY}
-                    x2={marker.x}
-                    y2={marker.y}
-                  />
-                  <circle cx={marker.sourceX} cy={marker.sourceY} r="3" />
-                </g>
-              ))}
-            </svg>
-            <span className="sf-texas" aria-hidden="true">
-              TEXAS
-            </span>
+
             {model.rows.map((item, index) => {
               const position = item.location?.schematic;
               if (
@@ -251,7 +213,8 @@ export function StatewideFootprintView({
                 !Number.isFinite(position.y)
               )
                 return null;
-              const marker = markers.find((m) => m.id === item.id)!;
+              const marker = markers.find((m) => m.id === item.id);
+              if (!marker) return null;
               return (
                 <button
                   type="button"
@@ -259,9 +222,9 @@ export function StatewideFootprintView({
                   data-incident-pin={item.id}
                   className={`sf-incident-pin ${item.id === row?.id ? "sf-selected" : "sf-muted"}`}
                   style={{
-                    left: `${position.x}%`,
-                    top: `${position.y}%`,
-                    transform: `translate(calc(-50% + ${marker.offsetX}px), calc(-50% + ${marker.offsetY}px))`,
+                    left: `${marker.x}px`,
+                    top: `${marker.y}px`,
+                    transform: "translate(-50%, -50%)",
                   }}
                   aria-pressed={item.id === row?.id}
                   aria-label={`${item.title} · ${item.id} · ${words(item.status ?? "unknown")}`}
@@ -282,11 +245,8 @@ export function StatewideFootprintView({
               );
             })}
           </div>
-          {leaders.length > 0 && (
-            <p className="sf-caption">
-              Lines connect spaced markers to recorded locations.
-            </p>
-          )}
+          <p className="sf-caption">Illustrative positions · markers stay inside Texas, spaced for selection. Not precise locations.</p>
+          {capacityExceeded && <p role="status">Too many incidents for separate touch targets at this width. Every incident is available in the list below.</p>}
           <div className="sf-legend" aria-label="Legend">
             <span>
               <i className="sf-legend-attack" />
@@ -305,6 +265,18 @@ export function StatewideFootprintView({
               Other incident
             </span>
           </div>
+          <details className="sf-incident-index" open={capacityExceeded || undefined}>
+            <summary>All incidents · {model.rows.length}</summary>
+            <nav className="sf-incident-nav" aria-label="Statewide incidents">
+              {model.rows.map((item, index) => (
+                <button type="button" key={item.id} aria-pressed={item.id === row?.id} onClick={() => onPick(item.id)}>
+                  <span className="sf-pin-number" aria-hidden="true">{index + 1}</span>{" "}
+                  <span className="sf-nav-title">{item.title}</span>
+                  <StatusChip status={item.severity}>{words(item.severity ?? "unknown")}</StatusChip>
+                </button>
+              ))}
+            </nav>
+          </details>
           <RecordedFootprints model={model} />
           {model.rows.some((item) => !item.location?.schematic) && (
             <p className="sf-caption">Some incident locations are unknown.</p>
@@ -416,7 +388,7 @@ export function StatewideFootprintView({
 
 export default function StatewideFootprint(props: StatewideFootprintProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [mapSize, setMapSize] = useState({ width: 240, height: 370 });
+  const [mapSize, setMapSize] = useState({ width: 640, height: 448 });
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;

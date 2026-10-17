@@ -1,3 +1,12 @@
+export {
+  texasMarkerLayout,
+  projectTexasPoint,
+  containedTexasAnchor,
+  texasContainsMarker,
+  TexasMarkerCapacityError,
+} from "./texasMapLayout.ts";
+export type { TexasIncidentMarker } from "./texasMapLayout.ts";
+
 export interface IncidentAnchor {
   id: string;
   x: number;

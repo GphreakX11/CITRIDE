@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { activityDisplayText } from "./caseFilePresentation.ts";
 import type { CommandView } from "./commandTypes.ts";
 import {
@@ -36,7 +36,7 @@ import { eventSourceChips } from "./networkEvidence.ts";
 import { idtSectorName } from "./idt.ts";
 import { formatDuration, formatTimeCT } from "./displayTime.ts";
 import { statewideFootprint, boilWaterLabel } from "./statewideFootprint.ts";
-import { incidentMarkerLayout } from "./incidentMarkerLayout.ts";
+import { fittedTexasMarkerLayout, FITTED_TEXAS_VIEWBOX } from "./fittedTexasMap.ts";
 import { TEXAS_PATH } from "./texasOutline.ts";
 import "./scripted-command.css";
 import "./attack-picture.css";
@@ -108,27 +108,46 @@ export function Schematic({
   mode?: "incidents" | "teams";
   incidents?: RecordItem[];
 }) {
-  // Space badges with C2's presentation-only layout. Full labels occupy a
-  // separate deterministic grid, so even identical authored anchors cannot
-  // collide with text. No input record or coordinate is written back.
+  // Measure the actual map surface so the complete touch target stays in Texas.
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapSize, setMapSize] = useState({ width: 640, height: 448 });
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const measure = () => {
+      const { width, height } = map.getBoundingClientRect();
+      setMapSize(previous => previous.width === width && previous.height === height ? previous : { width, height });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, []);
   const ordered = [...items].sort((a, b) => a.id.localeCompare(b.id));
   const anchors = ordered.map((item, index) => {
     const position = item.schematic ?? item.location?.schematic;
     return { id: item.id, x: position?.x ?? 20 + (index % 4) * 20,
       y: position?.y ?? 20 + Math.floor(index / 4) * 20 };
   });
-  const markers = incidentMarkerLayout(anchors, 640, 240);
+  const { markers, capacityExceeded } = fittedTexasMarkerLayout(anchors, mapSize.width, mapSize.height);
+  const footprintMarkers = mode === "teams" ? fittedTexasMarkerLayout(incidents.flatMap(incident => {
+    const p = incident.schematic ?? incident.location?.schematic;
+    return p ? [{ id: incident.id, x: p.x, y: p.y }] : [];
+  }), mapSize.width, mapSize.height, 52).markers : [];
   const badge = (item: RecordItem, index: number) => mode === "teams"
     ? item.unit === "CIRU" ? (item.short ?? item.name ?? "").split(/\s+/).map((part) => part[0]).join("") : (item.unit ?? item.short ?? item.name ?? "?").slice(0, 1)
     : index + 1;
   const hover = (item: RecordItem) => [item.name ?? item.title, item.statusText ?? words(item.status ?? ""), item.locationLabel ?? item.location?.label, item.workingOn, item.forensics, item.lead].filter(Boolean).join("\n");
   return (
     <div className="sc-schematic sc-safe-schematic" data-marker-mode={mode} aria-label={label}>
-      <svg className="sc-safe-map" viewBox="0 0 640 240" role="group" aria-label={mode === "teams" ? "Texas schematic · team status markers and incident footprint" : "Texas schematic · numbered incident anchors"}>
-        <path d={TEXAS_PATH} transform="translate(140 -10) scale(.37)" className="sc-texas-outline" />
+      <div className="sc-safe-map" ref={mapRef}>
+        <svg className="sc-state-boundary" viewBox={FITTED_TEXAS_VIEWBOX} aria-hidden="true" data-state-boundary="texas">
+          <path d={TEXAS_PATH} className="sc-texas-outline" />
+        </svg>
+        <svg className="sc-marker-layer" viewBox={`0 0 ${mapSize.width} ${mapSize.height}`} preserveAspectRatio="none" role="group" aria-label={mode === "teams" ? "Texas schematic · team status markers and incident footprint" : "Texas schematic · numbered incident anchors"}>
         {mode === "teams" && incidents.map((incident) => {
-          const position = incident.schematic ?? incident.location?.schematic;
-          return position && <g key={incident.id} className="sc-team-incident" data-incident-id={incident.id} aria-label={`${incident.title} · incident footprint`}><title>{`${incident.title} · ${incident.location?.label ?? "Illustrative incident footprint"}`}</title><circle cx={position.x * 6.4} cy={position.y * 2.4} r="25" /></g>;
+          const position = footprintMarkers.find(marker => marker.id === incident.id);
+          return position && <g key={incident.id} className="sc-team-incident" data-incident-id={incident.id} aria-label={`${incident.title} · incident footprint`}><title>{`${incident.title} · ${incident.location?.label ?? "Illustrative incident footprint"}`}</title><circle cx={position.x} cy={position.y} r="25" /></g>;
         })}
         {markers.map((marker, index) => (
           <g key={marker.id} className={`sc-safe-anchor ${active === marker.id ? "selected" : ""}`}
@@ -138,12 +157,17 @@ export function Schematic({
             onClick={() => onSelect(marker.id)}
             onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(marker.id); } }}>
             <title>{hover(ordered[index])}</title>
-            {(marker.offsetX !== 0 || marker.offsetY !== 0) && <line x1={marker.sourceX} y1={marker.sourceY} x2={marker.x} y2={marker.y} />}
-            <circle cx={marker.x} cy={marker.y} r="14" />
+            <circle cx={marker.x} cy={marker.y} r="22" />
             <text x={marker.x} y={marker.y + 5} textAnchor="middle">{badge(ordered[index], index)}</text>
           </g>
         ))}
-      </svg>
+        </svg>
+      </div>
+      <p className="sc-contained-map-note">Illustrative positions · select a marker for details. Not precise locations.</p>
+      {ordered.find(item => item.id === active) && <p className="sc-selected-map-label" aria-live="polite">{hover(ordered.find(item => item.id === active)!)}</p>}
+      {capacityExceeded && <p role="status">Too many markers for separate touch targets at this width. Every record is available in the list below.</p>}
+      <details className="sc-map-index" open={capacityExceeded || undefined}>
+      <summary>{mode === "teams" ? "All response teams" : "All incidents"} · {ordered.length}</summary>
       <div className="sc-safe-labels">
         {ordered.map((item, index) => (
           <button key={item.id} className={`sc-safe-label ${active === item.id ? "selected" : ""}`}
@@ -154,6 +178,7 @@ export function Schematic({
           </button>
         ))}
       </div>
+      </details>
     </div>
   );
 }
@@ -368,7 +393,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                 active={picked ?? selectedRow?.id ?? null}
                 onSelect={(id) => {
                   if (active.some((row) => row.id === id)) selectRow(id);
-                  else onSelectEntity?.(id);
+                  else { setPicked(id); onSelectEntity?.(id); }
                 }}
                 label="Statewide incident schematic"
               />

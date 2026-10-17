@@ -517,3 +517,15 @@
     font-size: var(--fs-body);
   }
 }
+/* Keep geometry and targets in one proportional frame, like Analyst. */
+.sf-state-map { height: auto; aspect-ratio: 800 / 620; }
+.sf-state-boundary path { fill: var(--surface-raised, var(--blue-bg)); opacity: 1; }
+.sf-incident-index > summary { color: var(--text-muted); font-size: var(--fs-small); cursor: pointer; padding: 10px 0; min-height: 44px; box-sizing: border-box; }
+.sf-incident-index { margin-bottom: 10px; }
+.sf-incident-nav { display: grid; grid-template-columns: minmax(0, 1fr); }
+.sf-incident-nav button { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: var(--fs-small); }
+.sf-incident-nav .sf-nav-title { color: var(--text-strong); font-size: inherit; text-transform: none; word-break: normal; overflow-wrap: break-word; }
+@media (max-width: 600px) {
+  .sf-statewide { margin-inline: -30px; }
+  .sf-map-panel { padding: 0; border: 0; background: transparent; }
+}

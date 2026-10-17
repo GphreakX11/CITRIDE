@@ -12,7 +12,7 @@ const data = JSON.parse(
   readFileSync(new URL("../../data/scenario.json", import.meta.url), "utf8"),
 );
 // In-memory TSX compilation: no build, dependency install or emitted repository files.
-const hookUrl = `data:text/javascript;base64,${Buffer.from(`let values=[],cursor=0;export function reset(){cursor=0}export function clear(){values=[];cursor=0}export function useState(initial){const i=cursor++;if(!(i in values))values[i]=typeof initial==='function'?initial():initial;return [values[i],value=>{values[i]=typeof value==='function'?value(values[i]):value}];}`).toString("base64")}`;
+const hookUrl = `data:text/javascript;base64,${Buffer.from(`let values=[],cursor=0;export function reset(){cursor=0}export function clear(){values=[];cursor=0}export function useEffect(){}export function useRef(current){return {current}}export function useState(initial){const i=cursor++;if(!(i in values))values[i]=typeof initial==='function'?initial():initial;return [values[i],value=>{values[i]=typeof value==='function'?value(values[i]):value}];}`).toString("base64")}`;
 const hooks = await import(hookUrl);
 async function loadComponent(hookHarness = false) {
   async function compile(url) {

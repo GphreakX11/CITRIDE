@@ -279,6 +279,25 @@
 .sc-audience-cards h3 { font-size: var(--fs-body); margin: 0 0 6px; }
 .sc-audience-cards h4 { font-size: var(--fs-small); margin: 12px 0 4px; color: var(--text-muted); }
 .sc-audience-cards ul { padding-left: 18px; margin: 4px 0; line-height: 1.45; overflow-wrap: anywhere; }
+/* Shared full-size state map: no tiny transformed Texas or floating watermark. */
+.sc-safe-schematic { border-style: solid; background: var(--surface); padding: 12px; }
+.sc-safe-schematic::after { content: none; }
+[data-mode] .scripted-command .sc-safe-schematic::before, [data-mode] .scripted-command .sc-safe-schematic::after { content: none; }
+.sc-safe-map,
+[data-mode] .sc-overview-main .sc-safe-map { position: relative; width: 100%; height: auto; aspect-ratio: 800 / 620; }
+[data-mode] .sc-overview-main .sc-safe-schematic { min-height: 0; }
+.sc-state-boundary, .sc-marker-layer { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.sc-state-boundary { pointer-events: none; }
+.sc-texas-outline { fill: var(--surface-raised, var(--blue-bg)); stroke: var(--text-muted); stroke-width: 2; }
+.sc-safe-anchor circle { fill: var(--surface); }
+.sc-safe-anchor text { font-size: var(--fs-small); font-weight: 700; pointer-events: none; }
+.sc-safe-anchor:focus-visible { outline: none; }
+.sc-safe-anchor:focus-visible circle { stroke: var(--text-strong); stroke-width: 3; }
+.sc-contained-map-note { color: var(--text-muted); font-size: var(--fs-small); line-height: 1.4; margin: 8px 0; }
+.sc-selected-map-label { padding: 10px 12px; border-left: 3px solid var(--accent); border-radius: var(--radius-small); background: var(--bg); line-height: 1.5; white-space: pre-line; font-size: var(--fs-small); }
+.sc-map-index summary { color: var(--text-muted); cursor: pointer; padding: 10px 0; min-height: 44px; box-sizing: border-box; font-size: var(--fs-small); }
+.sc-safe-label { min-height: 44px; border-color: var(--border); }
+.sc-safe-label > span:last-child { word-break: normal; overflow-wrap: break-word; }
 @media (max-width: 1100px) {
   .sc-contact-groups { grid-template-columns: minmax(0, 1fr); }
   .sc-audience-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -286,4 +305,11 @@
   .sc-overview-layout, .sc-team-layout { grid-template-columns: minmax(0, 1fr); }
   .sc-overview-sidebar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .sc-brief-options { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .sc-safe-labels, .sc-team-layout .sc-safe-labels { grid-template-columns: minmax(0, 1fr); }
+  .sc-safe-label { min-height: 44px; padding: 10px 12px; }
+  .sc-safe-schematic { padding: 0; border: 0; }
+  .sc-safe-map, [data-mode] .sc-overview-main .sc-safe-map { width: calc(100% + 48px); margin-inline: -24px; }
+  .sc-overview-sidebar { grid-template-columns: minmax(0, 1fr); }
 }

@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { transformWithOxc } from "vite";
 import { statewideFootprint } from "../src/statewideFootprint.ts";
 import { incidentMarkerLayout } from "../src/incidentMarkerLayout.ts";
+import { fittedTexasMarkerLayout } from "../src/fittedTexasMap.ts";
 const read = (p) =>
   JSON.parse(readFileSync(new URL(p, import.meta.url), "utf8"));
 const data = read("../../data/scenario.json");
@@ -131,8 +132,10 @@ test("C2 compact map markers retain complete accessible incident names and stabl
       assert.equal(marker.props.children, index + 1);
       assert.equal(marker.props["aria-hidden"], "true");
     }
-    assert.equal(pin.props.style.left, `${item.location.schematic.x}%`);
-    assert.equal(pin.props.style.top, `${item.location.schematic.y}%`);
+    const marker = fittedTexasMarkerLayout(model.rows.map(row => ({ id: row.id, ...row.location.schematic })), 640, 448).markers[index];
+    assert.equal(pin.props.style.left, `${marker.x}px`);
+    assert.equal(pin.props.style.top, `${marker.y}px`);
+    assert.equal(pin.props.style.transform, "translate(-50%, -50%)");
   });
 });
 
