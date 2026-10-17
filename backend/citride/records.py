@@ -332,56 +332,59 @@ class RecordsService:
 
     def records(self, incident_id=None):
         with self.store._locked():
-            dataset = self.store._load()
-            meta = self._meta(dataset)
-            if meta is None:
-                raise InvalidModelError("Scripted records have not been initialized")
-            current = self._all(dataset)
-            now = self._story_time(meta)
-            cases = {r["id"]: r for r in self.store._records(dataset, CASE_KIND)}
-            visible = []
-            for incident in current["statewideIncidents"]:
-                if incident.get("linkedEventIds") and not incident.get("caseId"):
-                    continue
-                case = cases.get(incident.get("caseId"))
-                if incident.get("linkedEventIds") and case is None:
-                    continue
-                if case is not None:
-                    incident["status"] = case["status"]
-                    incident["reviews"] = deepcopy(case.get("decisions", []))
-                    incident["progress"] = deepcopy(case.get("tasks", []))
-                    incident["runId"] = case.get("runId")
-                visible.append(incident)
-            if incident_id is not None:
-                visible = [i for i in visible if incident_id in (i["id"], i.get("caseId"))]
-            ids = {i["id"] for i in visible}
-            current["statewideIncidents"] = visible
-            for collection in COLLECTIONS[1:]:
-                current[collection] = [r for r in current[collection] if r.get("incidentId") in ids]
-            origin = _parse(meta.get("incidentOrigin", self.scenario["incidentOrigin"]))
-            def enrich(item, opened=None):
-                opened = _parse(item["openedStoryAt"]) if "openedStoryAt" in item else opened
-                for key, value in list(item.items()):
-                    if isinstance(value, list):
-                        for member in value:
-                            if isinstance(member, dict):
-                                enrich(member, opened)
-                    elif isinstance(value, dict):
-                        enrich(value, opened)
-                for key, target in (("relativeTimeHours", "at"), ("startedRelativeHours", "startedAt"), ("closedRelativeHours", "closedAt")):
-                    if key in item:
-                        item[target] = (origin + timedelta(hours=item[key])).isoformat()
-                if opened:
-                    for key, target in (("offsetMinutes", "at"), ("dueOffsetMinutes", "dueAt"), ("doneOffsetMinutes", "doneAt"), ("etaOffsetMinutes", "etaAt")):
-                        if key in item and target not in item:
-                            item[target] = (opened + timedelta(minutes=item[key])).isoformat()
-            for collection, items in current.items():
-                for item in items:
-                    enrich(item)
-                    if collection == "responseTasks":
-                        item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
-            config = meta["config"]
-            result = {**current, "storyNow": now.isoformat(), "timing": config["timing"], "taskGroups": config["taskGroups"]}
-            result.update(STATUS_LABELS)
-            result.update({k: v for k, v in config.items() if k.endswith("Labels")})
-            return deepcopy(result)
+            return self.records_from_dataset(self.store._load(), incident_id)
+
+    def records_from_dataset(self, dataset, incident_id=None):
+        """Build the detached public view; the caller owns the dataset lock/load."""
+        meta = self._meta(dataset)
+        if meta is None:
+            raise InvalidModelError("Scripted records have not been initialized")
+        current = self._all(dataset)
+        now = self._story_time(meta)
+        cases = {r["id"]: r for r in self.store._records(dataset, CASE_KIND)}
+        visible = []
+        for incident in current["statewideIncidents"]:
+            if incident.get("linkedEventIds") and not incident.get("caseId"):
+                continue
+            case = cases.get(incident.get("caseId"))
+            if incident.get("linkedEventIds") and case is None:
+                continue
+            if case is not None:
+                incident["status"] = case["status"]
+                incident["reviews"] = deepcopy(case.get("decisions", []))
+                incident["progress"] = deepcopy(case.get("tasks", []))
+                incident["runId"] = case.get("runId")
+            visible.append(incident)
+        if incident_id is not None:
+            visible = [i for i in visible if incident_id in (i["id"], i.get("caseId"))]
+        ids = {i["id"] for i in visible}
+        current["statewideIncidents"] = visible
+        for collection in COLLECTIONS[1:]:
+            current[collection] = [r for r in current[collection] if r.get("incidentId") in ids]
+        origin = _parse(meta.get("incidentOrigin", self.scenario["incidentOrigin"]))
+        def enrich(item, opened=None):
+            opened = _parse(item["openedStoryAt"]) if "openedStoryAt" in item else opened
+            for key, value in list(item.items()):
+                if isinstance(value, list):
+                    for member in value:
+                        if isinstance(member, dict):
+                            enrich(member, opened)
+                elif isinstance(value, dict):
+                    enrich(value, opened)
+            for key, target in (("relativeTimeHours", "at"), ("startedRelativeHours", "startedAt"), ("closedRelativeHours", "closedAt")):
+                if key in item:
+                    item[target] = (origin + timedelta(hours=item[key])).isoformat()
+            if opened:
+                for key, target in (("offsetMinutes", "at"), ("dueOffsetMinutes", "dueAt"), ("doneOffsetMinutes", "doneAt"), ("etaOffsetMinutes", "etaAt")):
+                    if key in item and target not in item:
+                        item[target] = (opened + timedelta(minutes=item[key])).isoformat()
+        for collection, items in current.items():
+            for item in items:
+                enrich(item)
+                if collection == "responseTasks":
+                    item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
+        config = meta["config"]
+        result = {**current, "storyNow": now.isoformat(), "timing": config["timing"], "taskGroups": config["taskGroups"]}
+        result.update(STATUS_LABELS)
+        result.update({k: v for k, v in config.items() if k.endswith("Labels")})
+        return deepcopy(result)

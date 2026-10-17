@@ -337,8 +337,11 @@ class CommandService:
 
     def list(self) -> list[CommandIncident]:
         with self.store._locked():
-            dataset = self.store._load()
-            return [self._public(dataset, record) for record in self._records(dataset)]
+            return self.list_from_dataset(self.store._load())
+
+    def list_from_dataset(self, dataset) -> list[CommandIncident]:
+        """Validate/filter public incidents without acquiring a lock or loading."""
+        return [self._public(dataset, record) for record in self._records(dataset)]
 
     def get(self, identifier) -> CommandIncident:
         with self.store._locked():
