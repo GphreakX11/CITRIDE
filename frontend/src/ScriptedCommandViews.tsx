@@ -98,11 +98,15 @@ export function Schematic({
   active,
   onSelect,
   label,
+  mode = "incidents",
+  incidents = [],
 }: {
   items: RecordItem[];
   active: string | null;
   onSelect: (id: string) => void;
   label: string;
+  mode?: "incidents" | "teams";
+  incidents?: RecordItem[];
 }) {
   // Space badges with C2's presentation-only layout. Full labels occupy a
   // separate deterministic grid, so even identical authored anchors cannot
@@ -114,19 +118,29 @@ export function Schematic({
       y: position?.y ?? 20 + Math.floor(index / 4) * 20 };
   });
   const markers = incidentMarkerLayout(anchors, 640, 240);
+  const badge = (item: RecordItem, index: number) => mode === "teams"
+    ? item.unit === "CIRU" ? (item.short ?? item.name ?? "").split(/\s+/).map((part) => part[0]).join("") : (item.unit ?? item.short ?? item.name ?? "?").slice(0, 1)
+    : index + 1;
+  const hover = (item: RecordItem) => [item.name ?? item.title, item.statusText ?? words(item.status ?? ""), item.locationLabel ?? item.location?.label, item.workingOn, item.forensics, item.lead].filter(Boolean).join("\n");
   return (
-    <div className="sc-schematic sc-safe-schematic" aria-label={label}>
-      <svg className="sc-safe-map" viewBox="0 0 640 240" role="group" aria-label="Texas schematic · numbered incident anchors">
+    <div className="sc-schematic sc-safe-schematic" data-marker-mode={mode} aria-label={label}>
+      <svg className="sc-safe-map" viewBox="0 0 640 240" role="group" aria-label={mode === "teams" ? "Texas schematic · team status markers and incident footprint" : "Texas schematic · numbered incident anchors"}>
         <path d={TEXAS_PATH} transform="translate(140 -10) scale(.37)" className="sc-texas-outline" />
+        {mode === "teams" && incidents.map((incident) => {
+          const position = incident.schematic ?? incident.location?.schematic;
+          return position && <g key={incident.id} className="sc-team-incident" data-incident-id={incident.id} aria-label={`${incident.title} · incident footprint`}><title>{`${incident.title} · ${incident.location?.label ?? "Illustrative incident footprint"}`}</title><circle cx={position.x * 6.4} cy={position.y * 2.4} r="25" /></g>;
+        })}
         {markers.map((marker, index) => (
           <g key={marker.id} className={`sc-safe-anchor ${active === marker.id ? "selected" : ""}`}
+            data-team-status={mode === "teams" ? ordered[index].status : undefined}
             role="button" tabIndex={0} aria-pressed={active === marker.id}
             aria-label={`${index + 1}. ${ordered[index].short ?? ordered[index].name ?? ordered[index].title}`}
             onClick={() => onSelect(marker.id)}
             onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(marker.id); } }}>
+            <title>{hover(ordered[index])}</title>
             {(marker.offsetX !== 0 || marker.offsetY !== 0) && <line x1={marker.sourceX} y1={marker.sourceY} x2={marker.x} y2={marker.y} />}
             <circle cx={marker.x} cy={marker.y} r="14" />
-            <text x={marker.x} y={marker.y + 5} textAnchor="middle">{index + 1}</text>
+            <text x={marker.x} y={marker.y + 5} textAnchor="middle">{badge(ordered[index], index)}</text>
           </g>
         ))}
       </svg>
@@ -134,8 +148,8 @@ export function Schematic({
         {ordered.map((item, index) => (
           <button key={item.id} className={`sc-safe-label ${active === item.id ? "selected" : ""}`}
             data-label-anchor={index + 1} aria-pressed={active === item.id} onClick={() => onSelect(item.id)}
-            title={[item.name ?? item.title, item.statusText ?? words(item.status ?? ""), item.locationLabel ?? item.location?.label, item.workingOn, item.forensics, item.lead].filter(Boolean).join("\n")}>
-            <span className="sc-safe-number" aria-hidden="true">{index + 1}</span>
+            data-team-status={mode === "teams" ? item.status : undefined} title={hover(item)}>
+            <span className="sc-safe-number" aria-hidden="true">{badge(item, index)}</span>
             <span>{item.short ?? item.name ?? item.title}</span>
           </button>
         ))}
@@ -171,24 +185,27 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     if (row?.caseId) onSelect(row.caseId);
   };
   const pickedRow = rows.find((row) => row.id === (picked ?? selectedRow?.id));
-  const rowSummary = pickedRow ? (
-    <aside className="sc-summary" aria-label="Read-only summary">
-      <h3>{pickedRow.title}</h3>
+  // Keep archived summaries available without replacing the canonical case or
+  // inventing a saved run. Only the locally selected summary is visible.
+  const summaryFor = (row: RecordItem, hidden = false) => (
+    <aside key={row.id} id={`brief-summary-${row.id}`} className="sc-summary" aria-label="Read-only summary" hidden={hidden}>
+      <h3>{row.title}</h3>
       <p>
-        {pickedRow.id} · {words(pickedRow.status ?? "unknown")} · Read-only
+        {row.id} · {words(row.status ?? "unknown")} · Read-only
         summary
       </p>
-      <p>{pickedRow.summary}</p>
-      {pickedRow.caseId && (
+      <p>{row.summary}</p>
+      {row.caseId && (
         <button
           className="command-link"
-          onClick={() => onOpenAnalyst("case-file", pickedRow.caseId)}
+          onClick={() => onOpenAnalyst("case-file", row.caseId)}
         >
           Open full case file
         </button>
       )}
     </aside>
-  ) : null;
+  );
+  const rowSummary = pickedRow ? summaryFor(pickedRow) : null;
   const registerFor = (registerRows: RecordItem[], kind = "all") => (
     <div className="command-table-wrap">
       <table className={`command-table ${view === "command" ? "sc-overview-register" : ""}`} data-register={kind}>
@@ -229,8 +246,11 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
               ) ??
               records.storyNow;
             const elapsed = elapsedMinutes(start, end);
+            const saved = incidents.find((incident) => incident.id === row.caseId);
+            const reviews = saved?.decisions ?? [];
+            const isSelected = row.id === (picked ?? selectedRow?.id);
             return (
-              <tr key={row.id}>
+              <tr key={row.id} className={isSelected ? "selected" : undefined} aria-selected={isSelected}>
                 <td>
                   <button
                     className="command-link"
@@ -238,7 +258,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                   >
                     {row.title}
                   </button>
-                  <small>{row.id}</small>
+                  <small>{row.id}{row.relatedNote ? ` · ${row.relatedNote}` : ""}</small>
                 </td>
                 <td>{row.location?.label}</td>
                 <td>
@@ -253,8 +273,9 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                 </td>
                 <td>
                   <StatusChip status={row.status}>
-                    {words(row.status ?? "unknown")}
+                    {row.status === "open" && saved ? "Under investigation" : words(row.status ?? "unknown").replace(/^./, (letter) => letter.toUpperCase())}
                   </StatusChip>
+                  {!!reviews.length && <small>{reviews.filter((review) => review.reviewed).length} of {reviews.length} reviews recorded</small>}
                 </td>
                 <td>{formatDuration(elapsed, "Unknown")}</td>
               </tr>
@@ -282,6 +303,8 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     });
     const activeCaseIds = new Set(active.map((row) => row.caseId).filter(Boolean));
     const activeModels = incidents.filter((item) => activeCaseIds.has(item.id)).map(consequenceModel);
+    const earliest = activeModels.map((item) => item.earliest).filter((window): window is [number, number] => !!window).sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
+    const notices = [...new Set(activeModels.map((item) => boilWaterLabel(item.run, item.captured.entities, reference)).filter(Boolean))];
     const underInvestigation = active.filter((row) => row.caseId && incidents.some((item) => item.id === row.caseId && item.status === "open")).length;
     const mapItems: RecordItem[] = [...active, ...footprint.probed.map((utility) => ({
       id: utility.id, title: `${utility.label} · probed`, status: "probed",
@@ -324,7 +347,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
         (a, b) => (Date.parse(b.at ?? "") || 0) - (Date.parse(a.at ?? "") || 0),
       );
     content = (
-      <div className="sc-overview-wall">
+      <div className="sc-overview-wall" data-pending-decisions={pending.length}>
         <Metrics
           values={[
             [active.length, "Active incidents", `${underInvestigation} under investigation · ${active.length - underInvestigation} others statewide`],
@@ -334,7 +357,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
               [...new Set(active.flatMap((row) => row.sectors ?? []))].map((code) => idtSectorName(code) ?? `IDT ${code}`).join(" · "),
             ],
             [overview.people ?? footprint.people ?? "Not captured", "People in affected water service", footprint.probed.length ? `${footprint.probed.reduce((sum, utility) => sum + (utility.people ?? 0), 0).toLocaleString("en-US")} more served by probed utilities` : footprint.utility?.label],
-            [pending.length, "Decisions waiting on the Chief", pending.length ? "Open the leadership brief to review" : "No response options awaiting a recorded decision"],
+            [pending.length, "Decisions waiting on the Chief", earliest ? `Earliest window: ${planningWindow(earliest)}` : pending.length ? "Earliest window: not yet modeled" : "No response options awaiting a recorded decision"],
           ]}
         />
         <div className="sc-overview-layout">
@@ -380,32 +403,27 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
             <small>Modeled · not observed outages</small>
             {activeModels.flatMap((item) =>
               item.rows.map((row) => (
-                <p key={`${item.run?.id}:${row.id}`}>
+                <p key={`${item.run?.id}:${row.id}`} className="sc-overview-facility" title={`${row.functionLabel} · Modeled ${words(row.state)}`}>
                   <button
                     className="command-link"
                     onClick={() => onSelectEntity?.(row.entityId)}
                   >
                     {row.label}
-                  </button>{" "}
-                  · {row.functionLabel}
-                  <small>
-                    Modeled {words(row.state)} ·{" "}
-                    {planningWindow(row.windowHours)}
-                  </small>
+                  </button>
+                  <span>{planningWindow(row.windowHours)}</span>
                 </p>
               )),
             )}
+            {notices.map((notice) => <p key={notice} className="sc-overview-notice">{notice}</p>)}
             {!activeModels.some((item) => item.rows.length) && (
               <p>Not yet modeled. Facility risk remains unknown.</p>
             )}
           </Panel>
           <Panel title="From the analysts">
             {updates.slice(0, 4).map((update) => (
-              <p key={update.id}>
-                {activityDisplayText(update.message)}
-                <small>
-                  {update.label} · {timeLabel(update.at)}
-                </small>
+              <p key={update.id} className="sc-overview-update" title={update.label}>
+                <time>{timeLabel(update.at)}</time>
+                <span>{activityDisplayText(update.message)}</span>
               </p>
             ))}
             {updates.length > 4 && <details><summary>Earlier analyst updates ({updates.length - 4})</summary>{updates.slice(4).map((update) => <p key={update.id}>{activityDisplayText(update.message)}<small>{update.label} · {timeLabel(update.at)}</small></p>)}</details>}
@@ -453,19 +471,35 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       (item) =>
         selectedRow?.linkedEventIds?.includes(item.event.id) || item.captured,
     );
+    // A display group, not a synthetic event: every probe keeps its identity,
+    // timestamp, techniques and evidence inside the shared stage card.
+    const probes = timeline.filter((item) => item.event.observation === "probing_only");
+    const stages = timeline.flatMap((item) => item.event.observation !== "probing_only"
+      ? [[item]] : item === probes[0] ? [probes] : []);
+    const stageLabels: Record<string, string> = {
+      vendor_vpn_login_off_hours: "Initial access",
+      unusual_inbound_connection: "IT to plant controls",
+      controller_authentication: "Account misuse",
+      dosing_parameter_change: "Setpoint changed",
+      water_quality_drift: "Water quality drifts",
+    };
     content = (
       <>
         <Panel title="How far the attack got">
           <div className="sc-attack-banner"><StatusChip status={events.some((item) => /prob/i.test(item.label)) ? "high" : "monitoring"}>{events.some((item) => /prob/i.test(item.label)) ? "ATTACK ACTIVE · SPREADING" : "ATTACK ACTIVITY RECORDED"}</StatusChip></div>
           <div className="sc-stage-cards" aria-label="Attack stages">
-            {timeline.map((item) => (
-              <article key={item.event.id} className="sc-stage-card" data-origin={item.origin} data-stage-tone={/prob/i.test(item.label) ? "ongoing" : /drift|quality/i.test(item.label) ? "effect" : item.event.observation === "dosing_parameter_change" ? "confirmed" : "baseline"}>
-                <small>{item.time}</small><h3>{item.label}</h3>
-                {item.techniques.map((technique) => <span className="cc-tag" key={technique} title={technique}>{technique.split(" · ").slice(0, 2).join(" ")}</span>)}
-                <details className="sc-stage-evidence"><summary>Evidence details</summary><p>{item.description}</p></details>
-                <div className="cc-sources">{eventSourceChips(item.event).slice(0, 1).map((label) => <span className="cc-tag" key={label}>{label}</span>)}</div>
-              </article>
-            ))}
+            {stages.map((group) => {
+              const first = group[0];
+              const observation = text(first.event.observation);
+              const tone = observation === "probing_only" ? "ongoing" : observation === "water_quality_drift" ? "effect" : observation === "dosing_parameter_change" ? "confirmed" : "baseline";
+              return <article key={first.event.id} className="sc-stage-card" data-origin={first.origin} data-stage-tone={tone}>
+                <h3>{observation === "probing_only" ? `Probes at ${group.map((item) => item.label.replace(/^Related source probes /, "")).join(" and ")}` : stageLabels[observation] ?? first.label}</h3>
+                {[...new Set(group.flatMap((item) => item.techniques))].map((technique) => <span className="cc-tag" key={technique} title={technique}>{technique.split(" · ").slice(0, 2).join(" ")}</span>)}
+                <small className="sc-stage-state">{tone === "ongoing" ? "Ongoing" : tone === "effect" ? "Observed effect" : tone === "confirmed" ? "Confirmed" : "Recorded"} · {group.map((item) => item.time).join(" / ")}</small>
+                <small className="sc-stage-origin">{first.origin}</small>
+                <details className="sc-stage-evidence"><summary>Evidence details</summary>{group.map((item) => <div key={item.event.id} data-event-id={item.event.id}><strong>{item.label}</strong><p>{item.description}</p><div className="cc-sources">{eventSourceChips(item.event).map((label) => <span className="cc-tag" key={label}>{label}</span>)}</div></div>)}</details>
+              </article>;
+            })}
           </div>
           <div className="sc-attack-durations">
             <span>Time inside before reaching the plant <strong>{durations.beforePlant === null ? "Unknown" : formatDuration(durations.beforePlant)}</strong></span>
@@ -478,30 +512,13 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
           <Panel title="Who is behind it">
             {!assessments.length && <p>CTIC analyst assessment · Unknown</p>}
             {assessments.map((item) => (
-              <article key={item.id}>
-                <h3>CTIC analyst assessment</h3>
-                <small>{item.byUnit}</small>
-                <p>{item.cluster}</p>
-                <strong>{item.actorLabel}</strong>
-                <p>
-                  Confidence: {words(item.confidence ?? "unknown")} ·{" "}
-                  {timeLabel(recordTime(item, data, selected))}
-                </p>
-                <p>{item.note}</p>
-                <p>
-                  {text(object(item.publication).label)} ·{" "}
-                  {text(object(item.publication).format)}
-                </p>
-                <ul>
-                  {item.indicators?.map((indicator) => (
-                    <li key={`${indicator.type}:${indicator.value}`}>
-                      {indicator.label}: <code>{indicator.value}</code> ·{" "}
-                      <StatusChip status={indicator.status}>
-                        {words(indicator.status)}
-                      </StatusChip>
-                    </li>
-                  ))}
-                </ul>
+              <article key={item.id} className="sc-attribution">
+                <div className="sc-attribution-heading"><div><h3>{item.cluster}</h3><p>{item.actorLabel}</p></div><div className="sc-confidence"><strong>{words(item.confidence ?? "unknown")}</strong><small>{item.byUnit} analyst assessment</small></div></div>
+                <p className="sc-publication">{text(object(item.publication).label)} · {timeLabel(recordTime(item, data, selected))}</p>
+                <details><summary>Assessment detail</summary><p>{item.note}</p></details>
+                <div className="sc-indicators"><small>{text(object(item.publication).format)} · {item.indicators?.filter((indicator) => indicator.status === "confirmed").length ?? 0} confirmed indicators</small>
+                  <div className="cc-sources">{item.indicators?.map((indicator) => <details key={`${indicator.type}:${indicator.value}`}><summary>{indicator.label}</summary><code>{indicator.value}</code> · <StatusChip status={indicator.status}>{words(indicator.status)}</StatusChip></details>)}</div>
+                </div>
               </article>
             ))}
             <div className="sc-exposure-check"><h3>Exposure check</h3>
@@ -527,10 +544,8 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
             /></div>
             <p className="sc-normal-count">Normal: {statuses.filter((item) => item.status === "normal").length}</p>
             {statuses.map((item) => (
-              <p key={item.id}>
-                {data.entities.find((entity) => entity.id === item.entityId)
-                  ?.label ?? item.entityId}{" "}
-                ·{" "}
+              <p key={item.id} className="sc-asset-status">
+                <span>{data.entities.find((entity) => entity.id === item.entityId)?.label ?? item.entityId}</span>
                 <StatusChip status={item.status}>
                   {records.assetStatusLabels?.[item.status ?? ""] ??
                     words(item.status ?? "unknown")}
@@ -544,20 +559,9 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
           </Panel>
           <Panel title="Active hunts">
             {hunts.map((item) => (
-              <article key={item.id}>
-                <h3>{item.label}</h3>
-                <p>
-                  <StatusChip status={item.status}>
-                    {records.huntStatusLabels[item.status ?? ""] ??
-                      words(item.status ?? "unknown")}
-                  </StatusChip>{" "}
-                  · {timeLabel(recordTime(item, data, selected))}
-                </p>
-                <p>
-                  {item.query?.kind}: <code>{item.query?.value}</code> ·{" "}
-                  {item.query?.scope}
-                </p>
-                <p>{item.resultNote}</p>
+              <article key={item.id} className="sc-hunt-row">
+                <div className="sc-hunt-heading"><h3>{item.label}</h3><StatusChip status={item.status}>{records.huntStatusLabels[item.status ?? ""] ?? words(item.status ?? "unknown")}</StatusChip></div>
+                <details><summary>Hunt details · {timeLabel(recordTime(item, data, selected))}</summary><p>{item.query?.kind}: <code>{item.query?.value}</code> · {item.query?.scope}</p><p>{item.resultNote}</p></details>
               </article>
             ))}
           </Panel>
@@ -599,7 +603,10 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
             active={team?.id ?? null}
             onSelect={setTeamId}
             label="Team deployment schematic"
+            mode="teams"
+            incidents={rows.filter((row) => row.status !== "closed" && records.teams.some((item) => item.incidentId === row.id))}
           />
+          <p className="sc-team-map-key">Illustrative locations · circles show recorded team status; dashed rings show incident footprints. Select or hover a team for details.</p>
           </Panel><Panel title="Team details">{team && (
             <aside className="sc-summary">
               <h3>{team.name}</h3>
@@ -611,27 +618,26 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                     words(team.status ?? "unknown")}
                 </StatusChip>
               </p>
-              <p>{team.workingOn}</p>
-              <p>{team.forensics}</p>
-              <p>
-                {team.lead} · ETA {formatTimeCT(eta(team))}
-              </p>
-              <p>{number(team.people?.onSite)} on site · {number(team.people?.remote)} remote · {number(team.people?.traveling)} traveling · {number(team.people?.standby)} standby</p>
-              {team.updates?.at(-1) && <p>Latest update: {team.updates.at(-1)?.text} · {formatTimeCT(recordTime(team.updates.at(-1)!, data, selected))}</p>}
-              <details className="sc-clock-details"><summary>Response clock details</summary>
+              <p className="sc-team-incident-label">Incident: {team.incidentId} · {rows.find((row) => row.id === team.incidentId)?.title ?? "No incident summary captured"}</p>
+              <h4>Working on</h4><p>{team.workingOn}</p>
+              <h4>Forensics</h4><p>{team.forensics}</p>
+              <div className="sc-team-facts"><p><small>ETA</small>{formatTimeCT(eta(team))}</p><p><small>Team lead</small>{team.lead}</p></div>
+              <small>{number(team.people?.onSite)} on site · {number(team.people?.remote)} remote · {number(team.people?.traveling)} traveling · {number(team.people?.standby)} standby</small>
+              {team.updates?.at(-1) && <p className="sc-team-latest">Latest update: {team.updates.at(-1)?.text} · {formatTimeCT(recordTime(team.updates.at(-1)!, data, selected))}</p>}
+              <div className="sc-clock-details" data-clock-tone={clock.tone}>
                 <p className={`sc-clock ${clock.tone}`}>
                   {selected?.status === "closed" ? "Closed case · " : ""}
                   {clock.elapsedMinutes === null ? "Unknown start" : `${formatDuration(clock.elapsedMinutes)} elapsed`}
                   {" / "}{formatDuration(clock.targetMinutes)} target · {words(clock.tone)}
                 </p>
-                <div className="sa-clock-track" role="progressbar" aria-label="Response clock" aria-valuemin={0} aria-valuemax={clock.targetMinutes} aria-valuenow={clock.elapsedMinutes ?? 0}><span style={{width: `${Math.min(100, Math.max(0, (clock.elapsedMinutes ?? 0) / clock.targetMinutes * 100))}%`}} /></div>
-              </details>
+                <div className="sc-clock-track" role="progressbar" aria-label="Response clock" aria-valuemin={0} aria-valuemax={clock.targetMinutes} aria-valuenow={Math.min(clock.targetMinutes, Math.max(0, clock.elapsedMinutes ?? 0))} aria-valuetext={clock.elapsedMinutes === null ? "Unknown start" : `${formatDuration(clock.elapsedMinutes)} elapsed; ${formatDuration(clock.targetMinutes)} target`}><span style={{width: `${Math.min(100, Math.max(0, (clock.elapsedMinutes ?? 0) / clock.targetMinutes * 100))}%`}} /></div>
+              </div>
             </aside>
           )}
         </Panel></div>
         <Panel title="All teams" note={`${records.teams.filter((item) => item.status === "en_route").length} en route`}>
           <div className="command-table-wrap">
-            <table className="command-table">
+            <table className="command-table sc-team-register">
               <thead>
                 <tr>
                   {[
@@ -647,7 +653,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
               </thead>
               <tbody>
                 {records.teams.map((item) => (
-                  <tr key={item.id}>
+                  <tr key={item.id} className={item.id === team?.id ? "selected" : undefined} aria-selected={item.id === team?.id}>
                     <td>
                       <button
                         className="command-link"
@@ -655,7 +661,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                       >
                         {item.name}
                       </button>
-                      <small>{item.lead}</small>
+                      <small>{item.incidentId} · {item.lead}</small>
                     </td>
                     <td>
                       <StatusChip status={item.status}>
@@ -679,7 +685,8 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                     </td>
                     <td>
                       {formatTimeCT(eta(item))}
-                      {!!item.updates?.length && <details><summary>Updates ({item.updates.length})</summary>{item.updates.map((update, index) => (
+                      {item.updates?.at(-1) && <small className="sc-team-latest">{item.updates.at(-1)?.text} · {timeLabel(recordTime(item.updates.at(-1)!, data, item.incidentId === selectedRow?.id ? selected : null))}</small>}
+                      {(item.updates?.length ?? 0) > 1 && <details><summary>Earlier updates ({item.updates!.length - 1})</summary>{item.updates!.slice(0, -1).map((update, index) => (
                         <small key={index}>
                           {update.text} ·{" "}
                           {timeLabel(
@@ -714,9 +721,9 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     content = (
       <>
         <Panel title="1 · What happened">
-          <p>{briefRow?.summary ?? selected?.eventSnapshot.description ?? "Select a saved case."}</p>
-          <details className="sc-brief-sequence"><summary>Recorded sequence</summary><p>{briefEvents.map((item) => `${item.time} ${item.label}`).join(" → ")}</p></details>
-          <div className="cc-sources">{[...new Set(briefEvents.flatMap((item) => eventSourceChips(item.event)))].map((label) => <span className="cc-tag" key={label}>{label}</span>)}</div>
+          <p className="sc-brief-story">{briefEvents.length ? briefEvents.map((item, index) => <span key={item.event.id} data-story-event={item.event.id}>{index ? "; " : ""}{item.label}</span>) : briefRow?.summary ?? selected?.eventSnapshot.description ?? "Select a saved case."}</p>
+          <div className="cc-sources">{[...new Set(briefEvents.flatMap((item) => item.event.sourceRefs ?? []))].map((id) => <span className="cc-tag" key={id}>{data.sources.find((source) => source.id === id)?.label ?? id}</span>)}</div>
+          <details className="sc-brief-sequence"><summary>Recorded sequence and evidence</summary>{briefRow?.summary && <p>{briefRow.summary}</p>}{briefEvents.map((item) => <p key={item.event.id}>{item.time} {item.label}<small>{item.description}</small><small>{eventSourceChips(item.event).join(" · ")}</small></p>)}</details>
           {selected?.status === "closed" && (
             <p>Closed case · Read-only summary · {selected.closureNote}</p>
           )}
@@ -746,27 +753,24 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                 .filter((item) => item.optionId === option.id)
                 .at(-1);
               return (
-                <article className="sc-option" key={option.id}>
+                <article className="sc-option" key={option.id} data-option-id={option.id} data-decision={decision?.decision ?? "none"}>
                   <small>{timing}</small>
                   <h3>{option.title}</h3>
-                  <strong>
-                    <StatusChip status={decision?.decision ?? "none"}>
-                      {records.decisionLabels[decision?.decision ?? "none"] ??
-                        words(decision?.decision ?? "unknown")}
-                    </StatusChip>
-                  </strong>
                   <p>{option.detail}</p>
                   <p>
                     {option.actor}
                     {option.unit ? ` · ${option.unit}` : ""}
                   </p>
-                  <details><summary>{option.citation}</summary><p>{option.basisText}</p></details>
+                  <details className="sc-option-basis"><summary>Basis: {option.citation}</summary><p>{option.basisText}</p></details>
                   {decision && (
-                    <p>
+                    <details className="sc-option-record"><summary>Recorded decision</summary><p>
                       {decision.note} · {decision.decidedBy} ·{" "}
                       {timeLabel(recordTime(decision, data, selected))}
-                    </p>
+                    </p></details>
                   )}
+                  <div className="sc-option-decision"><StatusChip status={decision?.decision ?? "none"}>
+                    {records.decisionLabels[decision?.decision ?? "none"] ?? words(decision?.decision ?? "unknown")}
+                  </StatusChip></div>
                 </article>
               );
             })}
@@ -813,9 +817,9 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
         <Panel title="Cases behind this brief">
           <div className="sc-brief-case-layout">
             <nav className="sc-brief-case-list" aria-label="Cases behind this brief">
-              {[...rows].sort((a, b) => Number(b.caseId === selected?.id) - Number(a.caseId === selected?.id) || Number(a.status === "closed") - Number(b.status === "closed")).map((row) => <button key={row.id} className={row.id === pickedRow?.id ? "selected" : ""} onClick={() => setPicked(row.id)}><span>{row.title}<small>{row.id}</small></span><StatusChip status={row.status}>{words(row.status ?? "unknown")}</StatusChip></button>)}
+              {[...rows].sort((a, b) => Number(b.caseId === selected?.id) - Number(a.caseId === selected?.id) || Number(a.status === "closed") - Number(b.status === "closed")).map((row) => <button key={row.id} className={row.id === pickedRow?.id ? "selected" : ""} aria-controls={`brief-summary-${row.id}`} aria-pressed={row.id === pickedRow?.id} onClick={() => setPicked(row.id)}><span>{row.title}<small>{row.id}</small></span><StatusChip status={row.status}>{words(row.status ?? "unknown")}</StatusChip></button>)}
             </nav>
-            {rowSummary}
+            {[...rows].sort((a, b) => Number(b.id === pickedRow?.id) - Number(a.id === pickedRow?.id)).map((row) => summaryFor(row, row.id !== pickedRow?.id))}
           </div>
           <details className="sc-brief-register"><summary>Full incident register</summary>{register}</details>
         </Panel>

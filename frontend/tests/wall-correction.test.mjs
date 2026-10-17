@@ -135,6 +135,18 @@ test("C1 pending count remains computed and source population is shown before mo
   const after = html(Scripted, props("command", r, saved));
   assert.match(after, /<strong>0<\/strong><span>Decisions waiting on the Chief/);
 });
+test("C1 shows captured earliest window, boil-water notice, selected row and review progress", () => {
+  const saved = incident();
+  saved.decisions = [{ id: "review-one", reviewed: true }, { id: "review-two", reviewed: false }];
+  const out = html(Scripted, props("command", freeze(records()), saved));
+  assert.match(out, /Earliest window: 2–5 h/);
+  assert.match(out, /Boil-water notice: possible/);
+  assert.match(out, /<tr class="selected" aria-selected="true"/);
+  assert.match(out, /1 of 2 reviews recorded/);
+  assert.match(out, /Linked probes at 2 utilities/);
+  assert.match(out, /Containment/);
+  assert.match(out, /Recovering/);
+});
 test("Schematic uses a deterministic safe label grid and never mutates authored coordinates", () => {
   const items = freeze(Array.from({ length: 12 }, (_, index) => ({ id: `pin-${index}`, title: `Long authored incident label ${index}`, schematic: { x: 52, y: 58 } })));
   const before = JSON.stringify(items);
@@ -143,4 +155,113 @@ test("Schematic uses a deterministic safe label grid and never mutates authored 
   assert.equal((out.match(/data-label-anchor=/g) ?? []).length, items.length);
   assert.equal(JSON.stringify(items), before);
   assert.equal(out, html(Schematic, { items, active: "pin-1", label: "Safe labels", onSelect() {} }));
+});
+test("C5 team marker mode retains immutable coordinates, stable initials and separated anchors", () => {
+  const r = records();
+  const teams = freeze(r.teams.map((team) => ({ ...team, schematic: { x: 52, y: 58 } })));
+  const before = JSON.stringify(teams);
+  const input = { items: teams, active: teams[0].id, onSelect() {}, label: "Teams", mode: "teams", incidents: freeze(r.statewideIncidents.slice(0, 1)) };
+  const out = html(Schematic, input);
+  assert.equal(out, html(Schematic, input));
+  assert.equal(JSON.stringify(teams), before);
+  assert.match(out, /data-marker-mode="teams"/);
+  assert.match(out, /data-team-status="en_route"/);
+  assert.match(out, /data-team-status="on_site"/);
+  assert.match(out, /data-team-status="standby"/);
+  assert.match(out, />CA<\/text>/);
+  assert.match(out, />CB<\/text>/);
+  assert.match(out, /data-incident-id="TX-26-0412"/);
+  const anchors = [...out.matchAll(/<g[^>]*class="sc-safe-anchor[^>]*>[\s\S]*?<circle cx="([^"]+)" cy="([^"]+)"/g)].map((match) => [Number(match[1]), Number(match[2])]);
+  assert.equal(anchors.length, teams.length);
+  for (let i = 0; i < anchors.length; i++) for (let j = i + 1; j < anchors.length; j++) assert.ok(Math.hypot(anchors[i][0] - anchors[j][0], anchors[i][1] - anchors[j][1]) >= 28);
+});
+test("C5 shows incident, assignment, forensics and latest update outside disclosures", () => {
+  const r = freeze(records());
+  const out = html(Scripted, props("uctf", r));
+  assert.match(out, /Incident: TX-26-0412/);
+  assert.match(out, /<h4>Working on<\/h4>/);
+  assert.match(out, /<h4>Forensics<\/h4>/);
+  const table = out.match(/<table class="command-table sc-team-register">[\s\S]*?<\/table>/)?.[0];
+  for (const team of r.teams) if (team.updates?.length === 1) assert.ok(table.includes(`<small class="sc-team-latest">${team.updates[0].text}`));
+});
+test("C5 visible response bar uses recorded time and supplied amber/red thresholds", () => {
+  for (const [storyNow, tone, elapsed] of [["2026-10-13T08:30:00Z", "normal", 30], ["2026-10-13T09:05:00Z", "amber", 65], ["2026-10-13T09:35:00Z", "red", 95]]) {
+    const r = records(); r.storyNow = storyNow;
+    const out = html(Scripted, props("uctf", freeze(r)));
+    assert.match(out, new RegExp(`<div class="sc-clock-details" data-clock-tone="${tone}">`));
+    assert.match(out, new RegExp(`role="progressbar" aria-label="Response clock" aria-valuemin="0" aria-valuemax="120" aria-valuenow="${elapsed}"`));
+    assert.doesNotMatch(out, /<details class="sc-clock-details"/);
+  }
+  const custom = structuredClone(reference); custom.responseClock.amberMinutes = 10; custom.responseClock.redMinutes = 20;
+  assert.match(html(Scripted, { ...props("uctf"), reference: freeze(custom) }), /<div class="sc-clock-details" data-clock-tone="red">/);
+});
+test("Leadership Brief retains archived summaries while exposing only its selected preview", () => {
+  const source = freeze(records());
+  const before = JSON.stringify(source);
+  const out = html(Scripted, props("leadership", source));
+  assert.match(out, /Credential phishing contained/);
+  assert.match(out, /id="brief-summary-TX-26-0398"[^>]*hidden=""/);
+  assert.match(out, /aria-controls="brief-summary-/);
+  assert.match(out, /aria-pressed="true"/);
+  assert.match(out, /Open full case file/);
+  assert.equal(JSON.stringify(source), before);
+});
+test("C6 default story includes every linked event, including drift and both probes, from bound records", () => {
+  const d = structuredClone(data);
+  d.events.find((event) => event.id === "event-sensor").label = "Authored water drift observation";
+  const saved = incident(); saved.eventSnapshot = d.events[0];
+  const r = freeze(records());
+  const before = JSON.stringify({ d, r, saved });
+  const out = html(Scripted, { ...props("leadership", r, freeze(saved)), data: freeze(d) });
+  const story = out.match(/<p class="sc-brief-story">[\s\S]*?<\/p>/)?.[0];
+  assert.ok(story);
+  for (const event of d.events) {
+    assert.ok(story.includes(`data-story-event="${event.id}"`));
+    assert.ok(story.includes(event.label));
+  }
+  assert.match(story, /Authored water drift observation/);
+  assert.match(story, /Utility B/); assert.match(story, /Utility C/);
+  assert.doesNotMatch(story, /<details/);
+  assert.equal(JSON.stringify({ d, r, saved }), before);
+});
+test("C6 preserves all option records and puts basis before the final decision chip", () => {
+  const r = freeze(records());
+  const out = html(Scripted, props("leadership", r));
+  const cards = [...out.matchAll(/<article class="sc-option"[^>]*>[\s\S]*?<\/article>/g)].map((match) => match[0]);
+  assert.equal(cards.length, reference.responseOptions.length);
+  for (const option of reference.responseOptions) {
+    const card = cards.find((card) => card.includes(`data-option-id="${option.id}"`));
+    assert.ok(card.includes(option.title));
+    assert.ok(card.includes(option.basisText));
+    assert.ok(card.indexOf("Basis:") < card.indexOf('class="sc-option-decision"'));
+    assert.match(card, /class="sc-option-decision"><span class="status-chip[^>]*>[^<]+<\/span><\/div><\/article>$/);
+  }
+  assert.match(out, /data-decision="chosen"/);
+  assert.match(out, /data-decision="standing_by"/);
+  assert.match(out, /data-decision="none"/);
+  const styles = readFileSync(new URL("scripted-command.css", root), "utf8");
+  assert.match(styles, /\[data-decision="chosen"\][^{]*\{[^}]*background: var\(--green-bg\)/);
+  assert.match(styles, /\[data-decision="none"\][^{]*\{[^}]*background: var\(--amber-bg\)/);
+  assert.match(styles, /\[data-decision="standing_by"\][^{]*\{[^}]*background: var\(--blue-bg\)/);
+});
+test("C3 groups only probe presentation while retaining all seven event records and techniques", () => {
+  const r = freeze(records());
+  const before = JSON.stringify(r);
+  const out = html(Scripted, props("cyber", r));
+  assert.equal((out.match(/class="sc-stage-card"/g) ?? []).length, 6);
+  for (const event of data.events) assert.ok(out.includes(`data-event-id="${event.id}"`));
+  for (const technique of ["T0822", "T0859", "T0886", "T0836", "T0831", "T0846"]) assert.ok(out.includes(technique));
+  assert.match(out, /Probes at Utility B and Utility C/);
+  assert.equal(JSON.stringify(r), before);
+});
+test("Attack Picture keeps full evidence behind compact attribution and hunt details", () => {
+  const out = html(Scripted, props("cyber"));
+  assert.match(out, /class="sc-attribution-heading"/);
+  assert.match(out, /class="sc-hunt-heading"/);
+  assert.match(out, /class="sc-stage-evidence"/);
+  assert.match(out, /Assessment detail/);
+  assert.match(out, /Shared attacker source/);
+  assert.match(out, /203\.0\.113\.250/);
+  assert.match(out, /Vendor V account sweep/);
+  assert.match(out, /Hunt details/);
 });

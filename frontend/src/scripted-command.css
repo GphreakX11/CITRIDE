@@ -68,6 +68,9 @@
 .sc-summary {
   margin-top: 1rem;
 }
+.sc-brief-case-layout > .sc-summary[hidden] {
+  display: none;
+}
 .sc-clock {
   padding: 0.8rem;
   border-left: 4px solid var(--border);
@@ -117,6 +120,10 @@
 .sc-safe-map { display: block; width: 100%; height: 240px; }
 [data-mode] .sc-overview-main .sc-safe-schematic { min-height: 340px; }
 [data-mode] .sc-overview-main .sc-safe-map { height: 190px; }
+.sc-overview-wall:not([data-pending-decisions="0"]) > .cc-metrics > .command-metric:last-child { background: var(--amber-bg); border-color: var(--sample-border); }
+.sc-overview-wall:not([data-pending-decisions="0"]) > .cc-metrics > .command-metric:last-child strong { color: var(--amber-text); }
+.sc-overview-sidebar > .sc-panel:first-child > p:has(button) { padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-small); background: var(--bg-header); margin: 12px 0 0; }
+.sc-overview-sidebar > .sc-panel:first-child .command-link { color: var(--text-strong); text-align: left; }
 .sc-overview-sidebar p { font-size: var(--fs-small); line-height: 1.5; }
 .sc-texas-outline { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 2; }
 .sc-safe-anchor { cursor: pointer; color: var(--link); }
@@ -137,6 +144,12 @@
 .sc-team-layout .sc-panel { margin: 0; }
 .scripted-command[data-screen="uctf"] > .cc-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .scripted-command[data-clock-tone="normal"] > .cc-metrics > .command-metric:last-child { background: var(--green-bg); border-color: var(--green); }
+.scripted-command[data-clock-tone="normal"] > .cc-metrics > .command-metric:last-child strong { color: var(--green-text); }
+.scripted-command[data-clock-tone="amber"] > .cc-metrics > .command-metric:last-child { background: var(--amber-bg); border-color: var(--amber); }
+.scripted-command[data-clock-tone="amber"] > .cc-metrics > .command-metric:last-child strong { color: var(--amber-text); }
+.scripted-command[data-clock-tone="red"] > .cc-metrics > .command-metric:last-child { background: var(--red-bg); border-color: var(--red); }
+.scripted-command[data-clock-tone="red"] > .cc-metrics > .command-metric:last-child strong { color: var(--red-text); }
+.scripted-command[data-screen="uctf"] > .sc-panel table { font-size: var(--fs-small); }
 .scripted-command[data-screen="uctf"] > .sc-panel table :is(td, th) { padding: 10px 12px; }
 .scripted-command[data-screen="uctf"] table details { font-size: var(--fs-small); margin-top: 4px; }
 .sc-team-layout .sc-summary { font-size: var(--fs-small); }
@@ -168,7 +181,84 @@
 @media (max-width: 1000px) { .sc-records-asof { position: static; } .sc-brief-lower, .sc-brief-case-layout { grid-template-columns: minmax(0, 1fr); } }
 .sc-brief-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .sc-brief-options .sc-option { border: 0; padding: 0; }
+/* C6 keeps the complete linked story visible and option decisions last. */
+.scripted-command[data-screen="leadership"] { gap: 20px; }
+.scripted-command[data-screen="leadership"] .sc-panel { margin: 0; padding: 16px 20px; }
+.scripted-command[data-screen="leadership"] .command-panel-heading { margin-bottom: 10px; }
+.scripted-command[data-screen="leadership"] .command-panel-heading h2 { font-size: var(--fs-card-title); }
+.scripted-command[data-screen="leadership"] .sc-brief-story { line-height: 1.55; }
+.scripted-command[data-screen="leadership"] .cc-metrics { margin: 8px 0 0; }
+.scripted-command[data-screen="leadership"] .sc-brief-impact .command-metric { gap: 2px; padding: 10px 14px; }
+.scripted-command[data-screen="leadership"] .sc-brief-impact .command-metric strong { font-size: var(--fs-title); line-height: 1.2; }
+.scripted-command[data-screen="leadership"] .sc-brief-impact .command-metric > span { font-size: var(--fs-small); }
+.scripted-command[data-screen="leadership"] .sc-brief-impact[data-earliest-known="true"] .command-metric:nth-child(2) strong { color: var(--red-text); }
+.scripted-command[data-screen="leadership"] .sc-brief-impact[data-notice="possible"] .command-metric:nth-child(4) strong { color: var(--amber-text); }
+.scripted-command[data-screen="leadership"] .sc-option { display: flex; flex-direction: column; padding: 12px 14px; }
+.scripted-command[data-screen="leadership"] .sc-option[data-decision="none"] { background: var(--amber-bg); border-color: var(--amber); }
+.scripted-command[data-screen="leadership"] .sc-option[data-decision="chosen"] { background: var(--green-bg); border-color: var(--green); }
+.scripted-command[data-screen="leadership"] .sc-option[data-decision="standing_by"] { background: var(--blue-bg); border-color: var(--blue); }
+.scripted-command[data-screen="leadership"] .sc-option :is(summary, small) { font-size: var(--fs-chip); line-height: 1.35; }
+.sc-option-basis { margin-top: auto; padding-top: 6px; color: var(--text-muted); }
+.sc-option-record { margin-top: 6px; color: var(--text-muted); }
+.sc-option-decision { margin-top: 10px; }
+.scripted-command[data-screen="leadership"] .sc-option[data-decision="none"] .status-chip { color: var(--amber-text); background: var(--amber-bg); border-color: var(--amber); }
+.scripted-command[data-screen="leadership"] .sc-option[data-decision="standing_by"] .status-chip { color: var(--blue-text); background: var(--blue-bg); border-color: var(--blue); }
+.scripted-command[data-screen="leadership"] .sc-brief-lower .command-metric { gap: 2px; padding: 0; }
+.scripted-command[data-screen="leadership"] .sc-brief-lower .command-metric strong { font-size: var(--fs-number); line-height: 1.2; }
+.scripted-command[data-screen="leadership"] .sc-brief-lower .command-metric > span { font-size: var(--fs-chip); }
+.scripted-command[data-screen="leadership"] .sc-brief-lower .sc-panel > p { margin: 8px 0; line-height: 1.4; }
+/* C5 team-only marker mode leaves C1/C2 numbered incidents unchanged. */
+.sc-safe-schematic[data-marker-mode="teams"] { --team-status: var(--blue); }
+.sc-safe-schematic[data-marker-mode="teams"] [data-team-status="en_route"] { --team-status: var(--amber); }
+.sc-safe-schematic[data-marker-mode="teams"] [data-team-status="on_site"] { --team-status: var(--green); }
+.sc-safe-schematic[data-marker-mode="teams"] [data-team-status="standby"] { --team-status: var(--text-muted); }
+.sc-safe-schematic[data-marker-mode="teams"] .sc-safe-anchor circle { stroke: var(--team-status); stroke-width: 3; fill: var(--surface); }
+.sc-safe-schematic[data-marker-mode="teams"] .sc-safe-anchor text { fill: var(--text-strong); font-size: var(--fs-chip); }
+.sc-safe-schematic[data-marker-mode="teams"] .sc-safe-number { border: 2px solid var(--team-status); color: var(--text-strong); }
+.sc-safe-schematic[data-marker-mode="teams"] .sc-safe-label.selected { border-color: var(--blue); background: var(--blue-bg); }
+.sc-safe-schematic[data-marker-mode="teams"] .sc-safe-anchor:is(:hover, :focus-visible) circle { fill: var(--blue-bg); stroke-width: 4; }
+.sc-team-incident circle { fill: var(--red-bg); stroke: var(--red); stroke-dasharray: 4 3; stroke-width: 1.5; }
+.scripted-command[data-screen="uctf"] .cc-metrics { margin: 0; }
+.scripted-command[data-screen="uctf"] .command-metric { padding: 16px 20px; gap: 3px; }
+.scripted-command[data-screen="uctf"] .command-panel-heading { margin-bottom: 10px; }
+.scripted-command[data-screen="uctf"] .command-panel-heading h2 { font-size: var(--fs-card-title); }
+.scripted-command[data-screen="uctf"] .sc-summary { font-size: var(--fs-small); }
+.scripted-command[data-screen="uctf"] .sc-summary > h3 { margin: 0 0 8px; font-size: var(--fs-card-title); }
+.scripted-command[data-screen="uctf"] .sc-summary > p { margin: 6px 0; line-height: 1.4; }
+.scripted-command[data-screen="uctf"] .sc-summary h4 { margin: 12px 0 4px; color: var(--text-muted); font-size: var(--fs-chip); text-transform: uppercase; letter-spacing: .06em; }
+.sc-team-facts { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 10px; }
+.sc-team-facts p { margin: 0; }
+.sc-team-facts small { display: block; }
+.scripted-command[data-screen="uctf"] .sc-team-latest { color: var(--text-muted); font-size: var(--fs-chip); line-height: 1.35; }
+.sc-team-map-key { margin: 10px 0 0; color: var(--text-muted); font-size: var(--fs-chip); }
+.sc-clock-details { margin-top: 10px; }
+.sc-clock-track { height: 8px; border-radius: 999px; background: var(--bg); overflow: hidden; }
+.sc-clock-track > span { display: block; height: 100%; background: var(--blue); }
+.sc-clock-details[data-clock-tone="amber"] .sc-clock-track > span { background: var(--amber); }
+.sc-clock-details[data-clock-tone="red"] .sc-clock-track > span { background: var(--red); }
+.scripted-command[data-screen="uctf"] .sc-team-register { font-size: var(--fs-small); }
+.scripted-command[data-screen="uctf"] .sc-team-register :is(th, td) { padding: 10px 12px; line-height: 1.4; }
+.scripted-command[data-screen="uctf"] .sc-team-register small { font-size: var(--fs-chip); line-height: 1.35; }
+.scripted-command[data-screen="uctf"] .sc-team-register tr.selected { background: var(--blue-bg); }
+.scripted-command[data-screen="uctf"] .sc-team-register details { font-size: var(--fs-chip); }
+/* Compact C1 defaults; full analyst history remains an explicit disclosure. */
+.scripted-command[data-screen="command"] .cc-metrics { margin: 0; }
+.scripted-command[data-screen="command"] .command-metric { padding: 16px 20px; gap: 3px; }
+.scripted-command[data-screen="command"] .sc-overview-layout { grid-template-columns: minmax(0, 3.6fr) minmax(340px, 1fr); }
+.scripted-command[data-screen="command"] .command-panel-heading { margin-bottom: 12px; }
+.scripted-command[data-screen="command"] .command-panel-heading h2 { font-size: var(--fs-card-title); }
+.scripted-command[data-screen="command"] .sc-overview-register { font-size: var(--fs-small); }
+.scripted-command[data-screen="command"] .sc-overview-register tr.selected { background: var(--blue-bg); }
+.scripted-command[data-screen="command"] .sc-overview-register small { font-size: var(--fs-chip); line-height: 1.35; }
+.scripted-command[data-screen="command"] .sc-overview-sidebar p { margin: 8px 0; line-height: 1.4; }
+.scripted-command[data-screen="command"] .sc-overview-facility { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sc-overview-facility > span { font-family: var(--font-mono); white-space: nowrap; color: var(--red-text); }
+.scripted-command[data-screen="command"] .sc-overview-notice { color: var(--amber-text); }
+.sc-overview-update { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
+.sc-overview-update time { white-space: nowrap; font-family: var(--font-mono); color: var(--text-muted); }
+.scripted-command[data-screen="command"] .sc-overview-sidebar details { font-size: var(--fs-small); }
 @media (max-width: 1100px) {
+  .scripted-command[data-screen="command"] .sc-overview-layout { grid-template-columns: minmax(0, 1fr); }
   .sc-overview-layout, .sc-team-layout { grid-template-columns: minmax(0, 1fr); }
   .sc-overview-sidebar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .sc-brief-options { grid-template-columns: minmax(0, 1fr); }

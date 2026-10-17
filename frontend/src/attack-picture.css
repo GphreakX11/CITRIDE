@@ -11,7 +11,7 @@
 .sc-attack-durations { display: flex; gap: 36px; margin-top: 14px; font-size: var(--fs-small); color: var(--text-muted); }
 .sc-attack-durations strong { margin-left: 8px; color: var(--text-strong); }
 .sc-attack-path { padding: 10px 12px; margin-top: 12px; border-radius: var(--radius-small); background: var(--bg); }
-.sc-grid.sc-cyber-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+.sc-grid.sc-cyber-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
 .sc-cyber-grid .command-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .sc-cyber-grid .command-metric { padding: 10px; }
 .sc-cyber-grid article { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
@@ -40,10 +40,46 @@
 .scripted-command .sc-cyber-grid .sc-asset-counts .cc-metrics .command-metric { min-height: 0; padding: 12px; }
 .scripted-command .sc-cyber-grid .sc-asset-counts .cc-metrics .command-metric strong { font-size: var(--fs-title); }
 .sc-normal-count { color: var(--text-muted); font-size: var(--fs-small); }
-.sc-cyber-grid .cc-panel:last-child > article { padding: 10px 0; }
-.sc-cyber-grid .cc-panel:last-child > article h3 { display: inline; margin-right: 18px; font-size: var(--fs-body); }
-.sc-cyber-grid .cc-panel:last-child > article p { display: inline; font-size: var(--fs-small); }
-.sc-cyber-grid .cc-panel:last-child > article small { display: block; margin-top: 5px; }
+.sc-cyber-grid .sc-asset-status { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 10px 0; margin: 0; border-top: 1px solid var(--border); }
+.sc-asset-status > small { grid-column: 1 / -1; margin: 0; }
+.sc-asset-status > span:first-child { font-weight: 600; }
+.sc-attribution-heading, .sc-hunt-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.sc-cyber-grid .sc-attribution-heading h3 { margin: 0; font-size: var(--fs-number); color: var(--red-text); }
+.sc-attribution-heading p, .sc-cyber-grid details { font-size: var(--fs-small); }
+.sc-confidence { text-align: right; color: var(--link); }
+.sc-confidence strong { font-size: var(--fs-card-title); }
+.sc-cyber-grid .sc-publication { font-size: var(--fs-small); color: var(--green-text); }
+.sc-indicators { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+.sc-indicators .cc-sources { display: flex; gap: 6px; flex-wrap: wrap; }
+.sc-indicators details { background: var(--blue-bg); padding: 4px 8px; border-radius: var(--radius-small); }
+.sc-cyber-grid .cc-panel:last-child > .sc-hunt-row { padding: 10px 0; margin-bottom: 0; }
+.sc-cyber-grid .sc-hunt-heading h3 { margin: 0; font-size: var(--fs-body); }
+.sc-cyber-grid .sc-hunt-row details { margin-top: 6px; }
+.sc-cyber-grid .sc-hunt-row details p { margin: 8px 0; }
+.sc-attack-durations strong { font-family: var(--font-mono); font-size: var(--fs-card-title); color: var(--amber-text); }
+.sc-attack-durations > span:nth-child(2) strong { color: var(--red-text); }
+.sc-asset-counts .command-metric:nth-child(1) strong { color: var(--red-text); }
+.sc-asset-counts .command-metric:nth-child(2) strong { color: var(--amber-text); }
+.sc-asset-counts .command-metric:nth-child(3) strong { color: var(--link); }
+/* Bounded C3 density pass: retain all records, compact the default display. */
+.scripted-command[data-screen="cyber"] { gap: 20px; }
+.scripted-command[data-screen="cyber"] .sc-panel { margin: 0; padding: 16px 20px; }
+.scripted-command[data-screen="cyber"] .command-panel-heading { margin-bottom: 12px; }
+.scripted-command[data-screen="cyber"] .sc-stage-cards { gap: 10px; margin-top: 8px; }
+.scripted-command[data-screen="cyber"] .sc-stage-card { padding: 10px; }
+.scripted-command[data-screen="cyber"] .sc-stage-card h3 { margin: 0 0 6px; font-size: var(--fs-body); }
+.scripted-command[data-screen="cyber"] .sc-stage-card :is(.cc-tag, small, summary) { font-size: var(--fs-chip); line-height: 1.35; }
+.scripted-command[data-screen="cyber"] .sc-stage-state { margin-top: 6px; }
+.scripted-command[data-screen="cyber"] .sc-stage-origin { color: var(--text-muted); }
+.scripted-command[data-screen="cyber"] .sc-attribution-heading h3 { font-size: var(--fs-card-title); }
+.scripted-command[data-screen="cyber"] .sc-asset-counts .command-metric { gap: 2px; padding: 8px 12px; }
+.scripted-command[data-screen="cyber"] .sc-asset-status { padding: 8px 0; font-size: var(--fs-small); }
+.scripted-command[data-screen="cyber"] .sc-asset-status > small { line-height: 1.35; font-size: var(--fs-chip); }
+.scripted-command[data-screen="cyber"] .sc-normal-count { margin: 8px 0; }
+.scripted-command[data-screen="cyber"] .sc-exposure-check { margin-top: 12px; padding: 10px 12px; }
+.scripted-command[data-screen="cyber"] .sc-exposure-check p { margin: 6px 0 0; font-size: var(--fs-small); }
+.scripted-command[data-screen="cyber"] .sc-hunt-row { position: relative; padding: 8px 0; }
+.scripted-command[data-screen="cyber"] .sc-hunt-row details { font-size: var(--fs-chip); }
 @media (max-width: 700px) {
   .sc-stage-cards, .scripted-command .sc-grid.sc-cyber-grid { grid-template-columns: minmax(0, 1fr); }
   .sc-attack-durations { flex-direction: column; gap: 6px; }

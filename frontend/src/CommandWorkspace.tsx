@@ -764,6 +764,9 @@ export default function CommandWorkspace({
           <CommandCenterViews
             records={records ?? undefined}
             reference={reference ?? undefined}
+            lastPlanningRun={
+              lastPlanningCaseId === selectedId ? lastPlanningRun : null
+            }
             data={data}
             incidents={incidents}
             selected={selected}

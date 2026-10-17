@@ -1,0 +1,1718 @@
+diff --git a/frontend/src/AnalystConsequences.tsx b/frontend/src/AnalystConsequences.tsx
+index 8933aaa..269db2d 100644
+--- a/frontend/src/AnalystConsequences.tsx
++++ b/frontend/src/AnalystConsequences.tsx
+@@ -5,6 +5,7 @@ import type { CommandAction, CommandIncident } from "./commandTypes.ts";
+ import type { ReferenceData } from "./scriptedTypes.ts";
+ import type { IdtIndex } from "./idt.ts";
+ import DependencyNetwork from "./components/DependencyNetwork.tsx";
++import { boilWaterLabel } from "./statewideFootprint.ts";
+ import {
+   asRecord,
+   consequenceModel,
+@@ -271,6 +272,11 @@ function CaseConsequences({
+           model={graphModel}
+           mode="explore"
+           idtIndex={idtIndex}
++          boilWaterLabel={boilWaterLabel(
++            graphModel.run,
++            graphModel.captured.entities,
++            reference ?? null,
++          )}
+           onOpenMap={onOpenMap}
+           onOpenEntity={onOpenEntity}
+           onPropose={onPropose}
+@@ -285,12 +291,10 @@ function CaseConsequences({
+                       String(option.dependency.usableBackupMinHours ?? 0),
+                     );
+                     if (typeof document !== "undefined")
+-                      document
+-                        .getElementById("a4-what-if")
+-                        ?.scrollIntoView?.({
+-                          block: "start",
+-                          behavior: "smooth",
+-                        });
++                      document.getElementById("a4-what-if")?.scrollIntoView?.({
++                        block: "start",
++                        behavior: "smooth",
++                      });
+                   }
+                 }
+           }
+diff --git a/frontend/src/CommandCenterViews.tsx b/frontend/src/CommandCenterViews.tsx
+index 5b2d610..918a9c2 100644
+--- a/frontend/src/CommandCenterViews.tsx
++++ b/frontend/src/CommandCenterViews.tsx
+@@ -2,6 +2,7 @@ import { StatusChip } from "./visualPrimitives.ts";
+ import { VisualCard } from "./visualPrimitives.ts";
+ import { SummaryTile } from "./visualPrimitives.ts";
+ import DependencyNetwork from "./components/DependencyNetwork.tsx";
++import { boilWaterLabel } from "./statewideFootprint.ts";
+ import { useState, type ReactNode } from "react";
+ import type { Bootstrap, Source } from "./types.ts";
+ import type { CommandIncident, CommandView } from "./commandTypes.ts";
+@@ -703,7 +704,16 @@ export default function CommandCenterViews({
+             ],
+           ]}
+         />
+-        <DependencyNetwork key={model.run.id} model={model} mode="display" />
++        <DependencyNetwork
++          key={model.run.id}
++          model={model}
++          mode="display"
++          boilWaterLabel={boilWaterLabel(
++            model.run,
++            model.captured.entities,
++            reference ?? null,
++          )}
++        />
+       </>
+     ) : (
+       <Panel title="Captured Consequences">
+diff --git a/frontend/src/components/DependencyNetwork.tsx b/frontend/src/components/DependencyNetwork.tsx
+index b6a46d1..cadc850 100644
+--- a/frontend/src/components/DependencyNetwork.tsx
++++ b/frontend/src/components/DependencyNetwork.tsx
+@@ -1,6 +1,7 @@
+ import { useState, type ReactNode } from "react";
+ import type { Source } from "../types.ts";
+ import {
++  capturedClassification,
+   planningWindow,
+   sourceLabels,
+   timeLabel,
+@@ -11,9 +12,14 @@ import { displayText } from "../presentation.ts";
+ import { IdtChip } from "../IdtChip.tsx";
+ import type { IdtIndex } from "../idt.ts";
+ import { expandUpstream, explorationNetwork } from "../dependencyNetwork.ts";
++import { consequenceGraph, explorationView } from "../sectorNetwork.ts";
++import SectorGraph from "./SectorGraph.tsx";
+ import "../command-center-views.css";
+ import "../analyst-consequences.css";
+ 
++const capturedLineage = (
++  entity: Parameters<typeof capturedClassification>[0],
++) => capturedClassification(entity).lineage;
+ function Panel({
+   title,
+   note,
+@@ -172,6 +178,8 @@ export interface DependencyNetworkProps {
+   onOpenMap?: (entityId: string) => void;
+   onOpenEntity?: (entityId: string) => void;
+   onPropose?: (entityId: string, role?: "provider" | "dependent") => void;
++  /** Reference boil-water rule label when it applies to this run. */
++  boilWaterLabel?: string | null;
+ }
+ export default function DependencyNetwork({
+   model,
+@@ -181,6 +189,7 @@ export default function DependencyNetwork({
+   onOpenMap,
+   onOpenEntity,
+   onPropose,
++  boilWaterLabel = null,
+ }: DependencyNetworkProps) {
+   const [sector, setSector] = useState<string | null>(null);
+   const [asset, setAsset] = useState<string | null>(null);
+@@ -188,6 +197,7 @@ export default function DependencyNetwork({
+   const [showUnaffected, setShowUnaffected] = useState(true);
+   const [ownership, setOwnership] = useState(false);
+   const [cyberLinks, setCyberLinks] = useState(false);
++  const [graphSector, setGraphSector] = useState<string | null>(null);
+   const group = model.groups.find((item) => item.key === sector);
+   const rows = group?.items ?? model.rows;
+   const row =
+@@ -202,35 +212,44 @@ export default function DependencyNetwork({
+     cyberLinks,
+   });
+   const selectedRow = model.rows.find((item) => item.entityId === focusedId);
++  const graph = consequenceGraph(model, { boilWaterLabel });
++  const drill = graph && graphSector ? graph.sectorView(graphSector) : null;
++  const exploreView =
++    mode === "explore" ? explorationView(model, network) : null;
++  const pickedEntity =
++    asset && !rows.some((item) => item.id === asset || item.entityId === asset)
++      ? model.captured.entities.find((item) => item.id === asset)
++      : undefined;
++  const pickedReason = (() => {
++    if (!pickedEntity) return null;
++    const dep = model.captured.dependencies.find(
++      (d) => d.dependent === pickedEntity.id,
++    );
++    const ex = (model.run?.excluded ?? []).find(
++      (value) => (value as { dependencyId?: string }).dependencyId === dep?.id,
++    ) as { reason?: string } | undefined;
++    return ex?.reason ?? null;
++  })();
+   const dependencies = model.captured.dependencies.filter(
+     (d) => d.dependent === focusedId,
+   );
+-  const count = model.groups.length;
+   const chooseSector = (key: string) => {
+     setSector(key);
++    setGraphSector(key);
+     setAsset(null);
+   };
+-  const services = (items: ConsequenceModel["rows"]) => [
+-    ...new Set(
+-      items.flatMap((impact) =>
+-        impact.dependencies.map((dependency) =>
+-          words(dependency.requiredService),
+-        ),
+-      ),
+-    ),
+-  ];
+   return (
+     <>
+-      <SavedInventoryNetwork model={model} />
+       <div className="cc-network-layout">
+         <Panel
+-          title={group ? group.label : "Captured Dependency Network"}
++          title="Sector dependencies"
+           note="Modeled · not observed outages"
+         >
+-          {group && (
++          {drill && (
+             <button
+-              className="command-link"
++              className="command-link sg-back"
+               onClick={() => {
++                setGraphSector(null);
+                 setSector(null);
+                 setAsset(null);
+               }}
+@@ -238,99 +257,46 @@ export default function DependencyNetwork({
+               ← All sectors
+             </button>
+           )}
+-          {!group && (
+-            <>
+-              <div className="cc-network-graphic">
+-                <svg
+-                  viewBox="0 0 640 360"
+-                  role="img"
+-                  aria-label="Captured source linked to modeled impact groups"
+-                >
+-                  {model.groups.map((item, i) => {
+-                    const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+-                    const x = 320 + Math.cos(angle) * 225,
+-                      y = 180 + Math.sin(angle) * 120;
+-                    const radius = 18 + Math.sqrt(item.count) * 6;
+-                    return (
+-                      <g
+-                        key={item.key}
+-                        role="button"
+-                        tabIndex={0}
+-                        aria-label={`Show ${item.label}: ${item.count} facilities`}
+-                        onClick={() => chooseSector(item.key)}
+-                        onKeyDown={(event) => {
+-                          if (event.key === "Enter" || event.key === " ") {
+-                            event.preventDefault();
+-                            chooseSector(item.key);
+-                          }
+-                        }}
+-                      >
+-                        <line x1="320" y1="180" x2={x} y2={y} />
+-                        <circle cx={x} cy={y} r={radius} />
+-                        <text x={x} y={y + 5} textAnchor="middle">
+-                          {item.count}
+-                        </text>
+-                        <title>{`${item.label}: ${item.count} modeled facilities · ${services(item.items).join(", ") || "Dependency labels not captured"}`}</title>
+-                      </g>
+-                    );
+-                  })}
+-                  <circle
+-                    cx="320"
+-                    cy="180"
+-                    r="38"
+-                    className="cc-network-source"
+-                  />
+-                  <text x="320" y="245" textAnchor="middle">
+-                    {displayText(model.sourceLabel)}
+-                  </text>
+-                </svg>
+-              </div>
+-
+-              <div className="cc-sector-buttons">
+-                {model.groups.map((item) => (
+-                  <button
+-                    key={item.key}
+-                    className="cc-sector-button"
+-                    onClick={() => chooseSector(item.key)}
+-                  >
+-                    <strong>{item.label}</strong>
+-                    <span>
+-                      {item.count} facilities · {planningWindow(item.earliest)}
+-                    </span>
+-                    <small>
+-                      {services(item.items).join(" · ") ||
+-                        "Dependency labels not captured"}
+-                    </small>
+-                  </button>
+-                ))}
+-              </div>
+-            </>
+-          )}
+-          {group && (
+-            <ul className="command-record-list">
+-              {rows.map((item) => (
+-                <li key={item.id}>
+-                  <button
+-                    className="command-link"
+-                    onClick={() =>
+-                      setAsset(mode === "explore" ? item.entityId : item.id)
+-                    }
+-                    aria-pressed={row?.id === item.id}
+-                  >
+-                    {displayText(item.label)} ·{" "}
+-                    {displayText(item.functionLabel)}
+-                  </button>
+-                  <small>
+-                    {words(item.state)} · {planningWindow(item.windowHours)} ·
+-                    modeled
+-                  </small>
+-                </li>
+-              ))}
+-            </ul>
++          {graph && (
++            <SectorGraph
++              view={drill ?? graph.overview}
++              layout={drill ? "layered" : "radial"}
++              selectedId={drill ? (asset ?? row?.entityId ?? null) : null}
++              ariaLabel={
++                drill
++                  ? `${drill.title}: facilities and their dependency links`
++                  : "Sectors linked to the incident source by captured dependencies"
++              }
++              onSelect={(node) => {
++                if (!drill && node.sectorKey) {
++                  setGraphSector(node.sectorKey);
++                  setSector(node.sectorKey.replace(/^self:/, ""));
++                  setAsset(null);
++                } else if (node.entityId) {
++                  const match = model.rows.find(
++                    (item) => item.entityId === node.entityId,
++                  );
++                  setAsset(
++                    mode === "explore"
++                      ? node.entityId
++                      : (match?.id ?? node.entityId),
++                  );
++                }
++              }}
++            />
+           )}
+           {!model.rows.length && <Empty>No modeled impacts.</Empty>}
+           {mode === "explore" && (
+             <div className="a4-exploration">
++              {exploreView && (
++                <SectorGraph
++                  view={exploreView}
++                  layout="layered"
++                  selectedId={focusedId ?? null}
++                  ariaLabel="Explore captured dependencies"
++                  onSelect={(node) => node.entityId && setAsset(node.entityId)}
++                />
++              )}
+               <fieldset className="a4-toggles">
+                 <legend>Explore captured dependencies</legend>
+                 <label>
+@@ -362,75 +328,78 @@ export default function DependencyNetwork({
+                 Context links are not propagated consequences. No modeled result
+                 does not establish unaffected operations.
+               </p>
+-              <ul className="a4-network-nodes">
+-                {network.nodes.map((node) => (
+-                  <li key={node.id} data-explore-node={node.id}>
+-                    <button
+-                      className="command-link"
+-                      aria-pressed={focusedId === node.id}
+-                      onClick={() => setAsset(node.id)}
+-                      onDoubleClick={() => onOpenEntity?.(node.id)}
+-                    >
+-                      {displayText(node.label)}
+-                    </button>
+-                    <small>
+-                      {model.rows.some((r) => r.entityId === node.id)
+-                        ? "Captured modeled result"
+-                        : "Captured context; no modeled impact"}
+-                    </small>
+-                    <button
+-                      className="command-link"
+-                      aria-label={`Expand upstream of ${node.label}`}
+-                      onClick={() => {
+-                        setAsset(node.id);
+-                        setExpanded((previous) => [
+-                          ...new Set([
+-                            ...previous,
+-                            ...expandUpstream(model, node.id),
+-                          ]),
+-                        ]);
+-                      }}
+-                    >
+-                      Expand upstream
+-                    </button>
+-                  </li>
+-                ))}
+-              </ul>
+-              <ul className="a4-network-links">
+-                {network.edges.map((edge) => (
+-                  <li key={edge.id} data-explore-edge={edge.id}>
+-                    {displayText(
+-                      model.captured.entities.find(
+-                        (e) => e.id === edge.provider,
+-                      )?.label ?? "Unknown provider",
+-                    )}{" "}
+-                    →{" "}
+-                    {displayText(
+-                      model.captured.entities.find(
+-                        (e) => e.id === edge.dependent,
+-                      )?.label ?? "Unknown dependent",
+-                    )}{" "}
+-                    · {words(edge.requiredService)}
+-                    {edge.excludedReason
+-                      ? ` · Not carried: ${edge.excludedReason}`
+-                      : " · Captured dependency"}
+-                  </li>
+-                ))}
+-                {network.relations.map((link) => (
+-                  <li key={link.id}>
+-                    {displayText(
+-                      model.captured.entities.find((e) => e.id === link.from)
+-                        ?.label ?? "Unknown entity",
+-                    )}{" "}
+-                    →{" "}
+-                    {displayText(
+-                      model.captured.entities.find((e) => e.id === link.to)
+-                        ?.label ?? "Unknown entity",
+-                    )}{" "}
+-                    · {link.kind}
+-                  </li>
+-                ))}
+-              </ul>
++              <details>
++                <summary>List view</summary>
++                <ul className="a4-network-nodes">
++                  {network.nodes.map((node) => (
++                    <li key={node.id} data-explore-node={node.id}>
++                      <button
++                        className="command-link"
++                        aria-pressed={focusedId === node.id}
++                        onClick={() => setAsset(node.id)}
++                        onDoubleClick={() => onOpenEntity?.(node.id)}
++                      >
++                        {displayText(node.label)}
++                      </button>
++                      <small>
++                        {model.rows.some((r) => r.entityId === node.id)
++                          ? "Captured modeled result"
++                          : "Captured context; no modeled impact"}
++                      </small>
++                      <button
++                        className="command-link"
++                        aria-label={`Expand upstream of ${node.label}`}
++                        onClick={() => {
++                          setAsset(node.id);
++                          setExpanded((previous) => [
++                            ...new Set([
++                              ...previous,
++                              ...expandUpstream(model, node.id),
++                            ]),
++                          ]);
++                        }}
++                      >
++                        Expand upstream
++                      </button>
++                    </li>
++                  ))}
++                </ul>
++                <ul className="a4-network-links">
++                  {network.edges.map((edge) => (
++                    <li key={edge.id} data-explore-edge={edge.id}>
++                      {displayText(
++                        model.captured.entities.find(
++                          (e) => e.id === edge.provider,
++                        )?.label ?? "Unknown provider",
++                      )}{" "}
++                      →{" "}
++                      {displayText(
++                        model.captured.entities.find(
++                          (e) => e.id === edge.dependent,
++                        )?.label ?? "Unknown dependent",
++                      )}{" "}
++                      · {words(edge.requiredService)}
++                      {edge.excludedReason
++                        ? ` · Not carried: ${edge.excludedReason}`
++                        : " · Captured dependency"}
++                    </li>
++                  ))}
++                  {network.relations.map((link) => (
++                    <li key={link.id}>
++                      {displayText(
++                        model.captured.entities.find((e) => e.id === link.from)
++                          ?.label ?? "Unknown entity",
++                      )}{" "}
++                      →{" "}
++                      {displayText(
++                        model.captured.entities.find((e) => e.id === link.to)
++                          ?.label ?? "Unknown entity",
++                      )}{" "}
++                      · {link.kind}
++                    </li>
++                  ))}
++                </ul>
++              </details>
+             </div>
+           )}
+         </Panel>
+@@ -500,6 +469,18 @@ export default function DependencyNetwork({
+                 >
+                   Run a what-if on this
+                 </button>
++                <button
++                  onClick={() =>
++                    setExpanded((previous) => [
++                      ...new Set([
++                        ...previous,
++                        ...expandUpstream(model, entity.id),
++                      ]),
++                    ])
++                  }
++                >
++                  Expand upstream
++                </button>
+                 <button onClick={() => onOpenMap?.(entity.id)}>
+                   Open on A2 map
+                 </button>
+@@ -511,6 +492,25 @@ export default function DependencyNetwork({
+                 </button>
+               </div>
+             </aside>
++          ) : pickedEntity ? (
++            <>
++              <h3>{displayText(pickedEntity.label)}</h3>
++              <p>{capturedLineage(pickedEntity)}</p>
++              <dl className="cc-facts">
++                <dt>Modeled state</dt>
++                <dd>
++                  {pickedReason
++                    ? "Not affected"
++                    : "No modeled impact in this run"}
++                </dd>
++                {pickedReason && (
++                  <>
++                    <dt>Why</dt>
++                    <dd>{displayText(pickedReason)}</dd>
++                  </>
++                )}
++              </dl>
++            </>
+           ) : row ? (
+             <>
+               <h3>{displayText(row.label)}</h3>
+@@ -529,7 +529,10 @@ export default function DependencyNetwork({
+                             dependency.usableBackupMinHours === null ||
+                             dependency.usableBackupMaxHours === null
+                               ? "Unknown captured reserve"
+-                              : `${dependency.usableBackupMinHours}–${dependency.usableBackupMaxHours} hours`,
++                              : dependency.usableBackupMinHours ===
++                                  dependency.usableBackupMaxHours
++                                ? `${dependency.usableBackupMinHours} hours`
++                                : `${dependency.usableBackupMinHours}–${dependency.usableBackupMaxHours} hours`,
+                           ),
+                         ),
+                       ].join("; ")
+@@ -604,6 +607,10 @@ export default function DependencyNetwork({
+           {model.run?.excluded.length} excluded path records
+         </p>
+       </Panel>
++      <details className="sg-inventory">
++        <summary>Saved inventory by sector (context, not dependencies)</summary>
++        <SavedInventoryNetwork model={model} />
++      </details>
+     </>
+   );
+ }
+diff --git a/frontend/src/components/SectorGraph.tsx b/frontend/src/components/SectorGraph.tsx
+new file mode 100644
+index 0000000..53d9c92
+--- /dev/null
++++ b/frontend/src/components/SectorGraph.tsx
+@@ -0,0 +1,198 @@
++import type { GraphNode, GraphView } from "../sectorNetwork.ts";
++import { layeredLayout, radialLayout } from "../sectorNetwork.ts";
++import { displayText } from "../presentation.ts";
++import "../sector-graph.css";
++
++const W = 1000;
++
++function wrap(text: string, max: number): string[] {
++  const out: string[] = [];
++  let line = "";
++  for (const word of text.split(/\s+/)) {
++    if (!line) line = word;
++    else if ((line + " " + word).length <= max) line += " " + word;
++    else {
++      out.push(line);
++      line = word;
++    }
++  }
++  if (line) out.push(line);
++  return out.slice(0, 3);
++}
++function radius(n: GraphNode, layout: "radial" | "layered") {
++  if (layout === "layered") return n.kind === "source" ? 76 : 66;
++  if (n.kind === "source") return 74;
++  return Math.min(82, 52 + 9 * Math.sqrt(n.weight));
++}
++
++export interface SectorGraphProps {
++  view: GraphView;
++  layout: "radial" | "layered";
++  selectedId?: string | null;
++  onSelect?: (node: GraphNode) => void;
++  ariaLabel: string;
++}
++
++/** Linked dependency drawing. Labels, tones and links all come from the view. */
++export default function SectorGraph({
++  view,
++  layout,
++  selectedId = null,
++  onSelect,
++  ariaLabel,
++}: SectorGraphProps) {
++  const tallest = Math.max(
++    1,
++    ...[...new Set(view.nodes.map((n) => n.depth))].map(
++      (d) => view.nodes.filter((n) => n.depth === d).length,
++    ),
++  );
++  const H = layout === "radial" ? 460 : Math.max(420, tallest * 172 + 40);
++  const pos =
++    layout === "radial" ? radialLayout(view, W, H) : layeredLayout(view, W, H);
++  const byId = new Map(view.nodes.map((n) => [n.id, n]));
++  return (
++    <div className="sg-wrap">
++      <div className="sg-head">
++        <strong>{view.title}</strong>
++        <span>{view.hint}</span>
++      </div>
++      <svg
++        className="sg-svg"
++        viewBox={`0 0 ${W} ${H}`}
++        role="group"
++        aria-label={ariaLabel}
++      >
++        {view.edges.map((e) => {
++          const a = pos.get(e.from),
++            b = pos.get(e.to);
++          if (!a || !b) return null;
++          return (
++            <g key={e.id} className={`sg-edge sg-${e.tone}`} data-edge={e.id}>
++              <line
++                x1={a.x}
++                y1={a.y}
++                x2={b.x}
++                y2={b.y}
++                strokeDasharray={e.dashed ? "7 6" : undefined}
++              />
++            </g>
++          );
++        })}
++        {view.nodes.map((n) => {
++          const p = pos.get(n.id);
++          if (!p) return null;
++          const r = radius(n, layout);
++          const lines = wrap(
++            displayText(n.label),
++            layout === "layered" ? 18 : r > 62 ? 15 : 13,
++          );
++          const clickable =
++            !!onSelect &&
++            n.kind !== "source" &&
++            (n.kind === "sector" || n.kind === "people" || !!n.entityId);
++          const subLines =
++            n.sub.length > 24 && n.sub.includes(" · ")
++              ? [
++                  n.sub.slice(0, n.sub.indexOf(" · ")),
++                  n.sub.slice(n.sub.indexOf(" · ") + 3),
++                ]
++              : [n.sub];
++          const top =
++            p.y - (lines.length * 17 + 14 + subLines.length * 15) / 2 + 12;
++          return (
++            <g
++              key={n.id}
++              className={`sg-node sg-${n.tone} sg-${n.line}${selectedId && (selectedId === n.id || selectedId === n.entityId) ? " sg-selected" : ""}${clickable ? " sg-click" : ""}`}
++              data-node={n.id}
++              data-kind={n.kind}
++              role={clickable ? "button" : undefined}
++              tabIndex={clickable ? 0 : undefined}
++              aria-label={
++                n.kind === "sector" || n.kind === "people"
++                  ? `Show IDT sector ${n.idt.replace(/^IDT /, "")} · ${n.label}: ${n.sub}`
++                  : `Show ${n.label}: ${n.sub}`
++              }
++              onClick={clickable ? () => onSelect?.(n) : undefined}
++              onKeyDown={
++                clickable
++                  ? (ev) => {
++                      if (ev.key === "Enter" || ev.key === " ") {
++                        ev.preventDefault();
++                        onSelect?.(n);
++                      }
++                    }
++                  : undefined
++              }
++            >
++              <circle cx={p.x} cy={p.y} r={r} />
++              {lines.map((l, i) => (
++                <text
++                  key={i}
++                  className="sg-label"
++                  x={p.x}
++                  y={top + i * 17}
++                  textAnchor="middle"
++                >
++                  {l}
++                </text>
++              ))}
++              {n.idt && (
++                <text
++                  className="sg-idt"
++                  x={p.x}
++                  y={top + lines.length * 17}
++                  textAnchor="middle"
++                >
++                  {n.idt}
++                </text>
++              )}
++              {subLines.map((l, i) => (
++                <text
++                  key={`s${i}`}
++                  className="sg-sub"
++                  x={p.x}
++                  y={top + lines.length * 17 + 16 + i * 15}
++                  textAnchor="middle"
++                >
++                  {l.length > 30 ? l.slice(0, 29) + "…" : l}
++                </text>
++              ))}
++              <title>{`${n.label} · ${n.idt} · ${n.sub}`}</title>
++            </g>
++          );
++        })}
++        {view.edges.map((e) => {
++          const a = pos.get(e.from),
++            b = pos.get(e.to);
++          if (!a || !b) return null;
++          const mx = (a.x + b.x) / 2,
++            my = (a.y + b.y) / 2;
++          const w = Math.min(260, e.label.length * 6.6 + 12);
++          return (
++            <g
++              key={`label-${e.id}`}
++              className={`sg-edge-label sg-${e.tone}`}
++              aria-hidden="true"
++            >
++              <rect x={mx - w / 2} y={my - 12} width={w} height={22} rx={6} />
++              <text x={mx} y={my + 4} textAnchor="middle">
++                {e.label}
++              </text>
++            </g>
++          );
++        })}
++      </svg>
++      <ul className="sg-legend" aria-label="Legend">
++        <li className="sg-red">At risk</li>
++        <li className="sg-amber">Later window</li>
++        <li className="sg-green">Normal · upstream</li>
++        <li className="sg-grey">Connected, not affected (dashed)</li>
++        <li className="sg-grey sg-dot">In area, no dependency (dotted)</li>
++      </ul>
++      {byId.size === 1 && (
++        <p className="sg-empty">No captured dependencies around this source.</p>
++      )}
++    </div>
++  );
++}
+diff --git a/frontend/src/sector-graph.css b/frontend/src/sector-graph.css
+new file mode 100644
+index 0000000..8951c1b
+--- /dev/null
++++ b/frontend/src/sector-graph.css
+@@ -0,0 +1,175 @@
++/* Linked consequence graph (C4 display, A4 explore). Tokens only. */
++.sg-wrap {
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++}
++.sg-head {
++  display: flex;
++  justify-content: space-between;
++  gap: 12px;
++  flex-wrap: wrap;
++  align-items: baseline;
++}
++.sg-head strong {
++  font-size: var(--fs-card-title);
++  color: var(--text-strong);
++}
++.sg-head span {
++  font-size: var(--fs-small);
++  color: var(--text-muted);
++}
++.sg-svg {
++  display: block;
++  width: 100%;
++  height: auto;
++  background: var(--bg);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-card);
++}
++.sg-edge line {
++  stroke-width: 2.5;
++  stroke: var(--grey);
++}
++.sg-edge-label rect {
++  fill: var(--bg);
++  opacity: 0.92;
++}
++.sg-edge-label text {
++  font-family: var(--font-sans);
++  font-size: var(--fs-edge);
++  fill: var(--text-2);
++}
++.sg-edge.sg-red line {
++  stroke: var(--red);
++}
++.sg-edge-label.sg-red text {
++  fill: var(--red-text);
++}
++.sg-edge.sg-amber line {
++  stroke: var(--amber);
++}
++.sg-edge-label.sg-amber text {
++  fill: var(--amber-text);
++}
++.sg-edge.sg-green line {
++  stroke: var(--blue);
++}
++.sg-edge-label.sg-green text {
++  fill: var(--blue-text);
++}
++.sg-node circle {
++  stroke-width: 2.5;
++  fill: var(--surface-2);
++  stroke: var(--border-strong);
++}
++.sg-node.sg-source circle {
++  stroke-width: 3.5;
++  fill: var(--red-bg);
++  stroke: var(--red);
++}
++.sg-node.sg-red circle {
++  fill: var(--red-bg);
++  stroke: var(--red);
++}
++.sg-node.sg-amber circle {
++  fill: var(--amber-bg);
++  stroke: var(--amber);
++}
++.sg-node.sg-green circle {
++  fill: var(--surface-2);
++  stroke: var(--green);
++}
++.sg-node.sg-grey circle {
++  fill: var(--surface);
++  stroke: var(--grey);
++}
++.sg-node.sg-dashed circle {
++  stroke-dasharray: 7 6;
++}
++.sg-node.sg-dotted circle {
++  stroke-dasharray: 2 5;
++}
++.sg-node.sg-selected circle {
++  stroke: var(--text-strong);
++  stroke-width: 3.5;
++}
++.sg-node.sg-click {
++  cursor: pointer;
++}
++.sg-node.sg-click:hover circle,
++.sg-node.sg-click:focus-visible circle {
++  stroke: var(--text-strong);
++}
++.sg-node:focus {
++  outline: none;
++}
++.sg-label {
++  font-family: var(--font-sans);
++  font-size: var(--fs-body);
++  font-weight: 600;
++  fill: var(--text-strong);
++}
++.sg-idt {
++  font-family: var(--font-mono);
++  font-size: var(--fs-chip);
++  fill: var(--link);
++}
++.sg-sub {
++  font-family: var(--font-sans);
++  font-size: var(--fs-chip);
++  fill: var(--text-2);
++}
++.sg-red .sg-sub {
++  fill: var(--red-text);
++}
++.sg-amber .sg-sub {
++  fill: var(--amber-text);
++}
++.sg-green .sg-sub {
++  fill: var(--green-text);
++}
++.sg-legend {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 6px 18px;
++  margin: 0;
++  padding: 0;
++  list-style: none;
++  font-size: var(--fs-small);
++  color: var(--text-muted);
++}
++.sg-legend li::before {
++  content: "";
++  display: inline-block;
++  width: 10px;
++  height: 10px;
++  margin-right: 6px;
++  border-radius: 50%;
++  border: 2px solid var(--grey);
++  vertical-align: -1px;
++}
++.sg-legend .sg-red::before {
++  border-color: var(--red);
++  background: var(--red-bg);
++}
++.sg-legend .sg-amber::before {
++  border-color: var(--amber);
++  background: var(--amber-bg);
++}
++.sg-legend .sg-green::before {
++  border-color: var(--green);
++}
++.sg-legend .sg-grey::before {
++  border-style: dashed;
++}
++.sg-legend .sg-dot::before {
++  border-style: dotted;
++}
++.sg-empty {
++  margin: 0;
++  color: var(--text-muted);
++}
++.sg-back {
++  align-self: flex-start;
++}
+diff --git a/frontend/src/sectorNetwork.ts b/frontend/src/sectorNetwork.ts
+new file mode 100644
+index 0000000..9c2c30c
+--- /dev/null
++++ b/frontend/src/sectorNetwork.ts
+@@ -0,0 +1,601 @@
++/**
++ * Linked consequence graph for C4 (display) and A4 (explore).
++ *
++ * Built from the captured run's dependency records around the scenario source,
++ * not from the impact list, so connected-but-unaffected and upstream sectors
++ * stay visible. Every value comes from the captured run snapshot.
++ */
++import type { Entity } from "./types.ts";
++import {
++  asRecord,
++  capturedClassification,
++  strings,
++  words,
++  type ConsequenceModel,
++} from "./commandCenterModel.ts";
++import { idtSectorName } from "./idt.ts";
++
++export type GraphTone = "red" | "amber" | "grey" | "green" | "source";
++export type GraphNodeKind = "source" | "sector" | "people" | "facility";
++export type Direction = "down" | "up" | "self";
++
++export interface GraphNode {
++  id: string;
++  kind: GraphNodeKind;
++  label: string;
++  idt: string;
++  sub: string;
++  tone: GraphTone;
++  line: "solid" | "dashed" | "dotted";
++  weight: number;
++  direction: Direction;
++  depth: number;
++  sectorKey?: string;
++  entityId?: string;
++}
++export interface GraphEdge {
++  id: string;
++  from: string;
++  to: string;
++  label: string;
++  tone: GraphTone;
++  dashed: boolean;
++}
++export interface GraphView {
++  title: string;
++  hint: string;
++  nodes: GraphNode[];
++  edges: GraphEdge[];
++}
++
++type Dependency = ConsequenceModel["captured"]["dependencies"][number];
++type Row = ConsequenceModel["rows"][number];
++
++const NON_FACILITY = new Set(["PopulationGroup", "ServiceArea", "CyberAsset"]);
++
++function sectorOf(entity: Entity | undefined) {
++  const c = capturedClassification(entity);
++  if (!c.classified) return null;
++  const sector = c.key.slice("idt:".length);
++  return {
++    key: c.key,
++    sector,
++    name: idtSectorName(sector) ?? `Sector ${sector}`,
++  };
++}
++function idtPath(entity: Entity | undefined): string {
++  const idt = asRecord(asRecord(entity).idt);
++  if (idt.status === "coded" && typeof idt.path === "string")
++    return `IDT ${idt.path}`;
++  if (idt.status === "below_idt_level" && typeof idt.parentPath === "string")
++    return `in ${idt.parentPath}`;
++  return "";
++}
++function windowText(w: [number, number] | null | undefined) {
++  return w ? `${w[0]}–${w[1]} h` : "window unknown";
++}
++function toneForWindow(w: [number, number] | null | undefined): GraphTone {
++  return w && w[0] >= 4 ? "amber" : "red";
++}
++function earliest(rows: Row[]): [number, number] | null {
++  const ws = rows
++    .map((r) => r.windowHours)
++    .filter((w): w is [number, number] => Array.isArray(w));
++  ws.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
++  return ws[0] ?? null;
++}
++function say(value: unknown): string {
++  return typeof value === "string" && value ? words(value) : "";
++}
++function lower(text: string) {
++  return text ? text[0]!.toLowerCase() + text.slice(1) : text;
++}
++
++/** Breadth-first walk over captured dependencies from the source. */
++function walk(deps: Dependency[], source: string, direction: "down" | "up") {
++  const depth = new Map<string, number>([[source, 0]]);
++  const via = new Map<string, Dependency>();
++  const queue = [source];
++  while (queue.length) {
++    const id = queue.shift()!;
++    for (const d of deps) {
++      const from = direction === "down" ? d.provider : d.dependent;
++      const to = direction === "down" ? d.dependent : d.provider;
++      if (from !== id || depth.has(to)) continue;
++      depth.set(to, depth.get(id)! + 1);
++      via.set(to, d);
++      queue.push(to);
++    }
++  }
++  depth.delete(source);
++  return { depth, via };
++}
++
++export function consequenceGraph(
++  model: ConsequenceModel,
++  options: { boilWaterLabel?: string | null } = {},
++) {
++  const run = model.run;
++  if (!run) return null;
++  const seed = run.seed;
++  const entities = model.captured.entities;
++  const deps = model.captured.dependencies;
++  const byId = new Map(entities.map((e) => [e.id, e]));
++  const functions = new Map(
++    model.captured.serviceFunctions.map((f) => [f.id, f.label]),
++  );
++  const source = seed.provider;
++  const sourceEntity = byId.get(source);
++  const sourceSector = sectorOf(sourceEntity);
++  const excluded = new Map(
++    (run.excluded ?? []).map((value) => {
++      const r = asRecord(value);
++      return [String(r.dependencyId), String(r.reason ?? "not carried")];
++    }),
++  );
++  const rowsFor = (id: string) => model.rows.filter((r) => r.entityId === id);
++  const down = walk(deps, source, "down");
++  const up = walk(deps, source, "up");
++  const people = model.areaCounts.reduce(
++    (sum, a) => (a.count === null ? sum : sum + a.count),
++    0,
++  );
++  const hasPeople = model.areaCounts.some((a) => a.count !== null);
++
++  function entityState(id: string, direction: "down" | "up") {
++    const rows = rowsFor(id);
++    const w = earliest(rows);
++    if (rows.length)
++      return {
++        affected: true,
++        tone: toneForWindow(w),
++        sub: `At risk ${windowText(w)}`,
++        line: "solid" as const,
++        window: w,
++      };
++    if (direction === "up")
++      return {
++        affected: false,
++        tone: "green" as GraphTone,
++        sub: "Normal · upstream",
++        line: "solid" as const,
++        window: null,
++      };
++    const dep = down.via.get(id);
++    return {
++      affected: false,
++      tone: "grey" as GraphTone,
++      sub: dep && excluded.has(dep.id) ? "Not affected" : "No modeled impact",
++      line: "dashed" as const,
++      window: null,
++    };
++  }
++
++  // Group reached entities by IDT sector. Upstream members of the source's own
++  // sector fold into the source-sector ("self") node with the people served.
++  type Member = { id: string; direction: "down" | "up"; depth: number };
++  const groups = new Map<string, { direction: Direction; members: Member[] }>();
++  const add = (key: string, direction: Direction, m: Member) => {
++    const g = groups.get(key) ?? { direction, members: [] };
++    g.members.push(m);
++    groups.set(key, g);
++  };
++  for (const [id, depth] of down.depth) {
++    const e = byId.get(id);
++    const s = sectorOf(e);
++    if (!s || !e || NON_FACILITY.has(e.type)) continue;
++    add(s.key, "down", { id, direction: "down", depth });
++  }
++  for (const [id, depth] of up.depth) {
++    const e = byId.get(id);
++    const s = sectorOf(e);
++    if (!s || !e || NON_FACILITY.has(e.type)) continue;
++    const self = sourceSector && s.key === sourceSector.key;
++    add(self ? `self:${s.key}` : s.key, self ? "self" : "up", {
++      id,
++      direction: "up",
++      depth: -depth,
++    });
++  }
++  if (sourceSector && hasPeople && !groups.has(`self:${sourceSector.key}`))
++    groups.set(`self:${sourceSector.key}`, { direction: "self", members: [] });
++
++  function enteringServices(memberIds: Set<string>, direction: "down" | "up") {
++    const labels = new Set<string>();
++    for (const id of memberIds) {
++      if (direction === "down") {
++        const d = down.via.get(id);
++        if (d && !memberIds.has(d.provider)) labels.add(say(d.requiredService));
++      } else {
++        // Upstream: the service this sector supplies, then each hop to the source.
++        const chain: string[] = [];
++        let cur = id;
++        let guard = 0;
++        while (cur !== source && guard++ < 20) {
++          const d = up.via.get(cur);
++          if (!d) break;
++          chain.push(say(d.requiredService));
++          cur = d.dependent;
++        }
++        if (chain.length) labels.add(chain.join(" → "));
++      }
++    }
++    return [...labels].join(" · ");
++  }
++
++  const sectorNodes: GraphNode[] = [];
++  const overviewEdges: GraphEdge[] = [];
++  const memberSets = new Map<string, Member[]>();
++  for (const [key, g] of groups) {
++    const sectorKey = key.startsWith("self:") ? key.slice(5) : key;
++    const sector = sectorKey.slice("idt:".length);
++    const name = idtSectorName(sector) ?? `Sector ${sector}`;
++    memberSets.set(key, g.members);
++    const affectedRows = g.members.flatMap((m) => rowsFor(m.id));
++    const affectedCount = new Set(affectedRows.map((r) => r.entityId)).size;
++    const w = earliest(affectedRows);
++    let sub: string;
++    let tone: GraphTone;
++    let line: GraphNode["line"] = "solid";
++    if (g.direction === "self") {
++      const parts = [];
++      if (hasPeople) parts.push(`${people.toLocaleString("en-US")} people`);
++      if (options.boilWaterLabel) parts.push("boil-water possible");
++      if (affectedCount)
++        parts.push(`${affectedCount} at risk · ${windowText(w)}`);
++      sub = parts.join(" · ") || "Source sector";
++      tone = affectedCount ? toneForWindow(w) : "amber";
++    } else if (affectedCount) {
++      sub = `${affectedCount} at risk · ${windowText(w)}`;
++      tone = toneForWindow(w);
++    } else if (g.direction === "up") {
++      sub = "Normal · upstream";
++      tone = "green";
++    } else {
++      sub = "Not affected";
++      tone = "grey";
++      line = "dashed";
++    }
++    const node: GraphNode = {
++      id: `sector:${key}`,
++      kind: g.direction === "self" ? "people" : "sector",
++      label: g.direction === "self" ? `${name} customers` : name,
++      idt: `IDT ${sector}`,
++      sub,
++      tone,
++      line,
++      weight: Math.max(
++        1,
++        affectedCount || g.members.length,
++        hasPeople && g.direction === "self" ? 3 : 0,
++      ),
++      direction: g.direction,
++      depth: g.direction === "up" ? -1 : 1,
++      sectorKey: key,
++    };
++    sectorNodes.push(node);
++    const ids = new Set(g.members.map((m) => m.id));
++    const label =
++      g.direction === "self"
++        ? say(seed.service)
++        : enteringServices(ids, g.direction === "up" ? "up" : "down");
++    overviewEdges.push({
++      id: `edge:${key}`,
++      from: g.direction === "up" ? node.id : "source",
++      to: g.direction === "up" ? "source" : node.id,
++      label: label || "dependency",
++      tone,
++      dashed: line === "dashed",
++    });
++  }
++  // Order: upstream first, then the source sector, then downstream by urgency.
++  const rank = (n: GraphNode) =>
++    n.direction === "up" ? 0 : n.direction === "self" ? 1 : 2;
++  sectorNodes.sort(
++    (a, b) =>
++      rank(a) - rank(b) ||
++      Number(b.tone === "red") - Number(a.tone === "red") ||
++      a.label.localeCompare(b.label),
++  );
++  const sourceNode: GraphNode = {
++    id: "source",
++    kind: "source",
++    label: sourceEntity?.label || "Scenario source",
++    idt: idtPath(sourceEntity),
++    sub: `${lower(say(seed.lossType))} · source`,
++    tone: "source",
++    line: "solid",
++    weight: 4,
++    direction: "self",
++    depth: 0,
++    entityId: source,
++  };
++  const overview: GraphView = {
++    title: `Sector dependencies · ${sourceNode.label}`,
++    hint: "Select a sector to see the facilities behind it",
++    nodes: [sourceNode, ...sectorNodes],
++    edges: overviewEdges,
++  };
++
++  const servedAreas = new Set(strings(asRecord(sourceEntity).serves));
++  const reached = new Set([source, ...down.depth.keys(), ...up.depth.keys()]);
++
++  function sectorView(key: string): GraphView | null {
++    const members = memberSets.get(key);
++    const node = sectorNodes.find((n) => n.sectorKey === key);
++    if (!members || !node) return null;
++    const include = new Map<string, number>([[source, 0]]);
++    for (const m of members) {
++      include.set(m.id, m.depth);
++      // Keep the path back to the source so multi-hop chains read correctly.
++      let cur = m.id;
++      let guard = 0;
++      const via = m.direction === "down" ? down.via : up.via;
++      while (cur !== source && guard++ < 20) {
++        const d = via.get(cur);
++        if (!d) break;
++        cur = m.direction === "down" ? d.provider : d.dependent;
++        if (cur !== source)
++          include.set(
++            cur,
++            m.direction === "down"
++              ? (down.depth.get(cur) ?? 0)
++              : -(up.depth.get(cur) ?? 0),
++          );
++      }
++    }
++    const nodes: GraphNode[] = [];
++    for (const [id, depth] of include) {
++      const e = byId.get(id);
++      if (id === source) {
++        nodes.push({ ...sourceNode, id, entityId: id });
++        continue;
++      }
++      const dir = depth < 0 ? "up" : "down";
++      const st = entityState(id, dir);
++      nodes.push({
++        id,
++        kind: "facility",
++        label: e?.label || id,
++        idt: idtPath(e),
++        sub: st.sub,
++        tone: st.tone,
++        line: st.line,
++        weight: 1,
++        direction: dir,
++        depth,
++        entityId: id,
++      });
++    }
++    // Same-sector facilities in the source's service area with no dependency.
++    if (node.direction === "down")
++      for (const e of entities) {
++        if (reached.has(e.id) || NON_FACILITY.has(e.type)) continue;
++        const s = sectorOf(e);
++        if (!s || s.key !== key) continue;
++        if (!strings(asRecord(e).locatedIn).some((a) => servedAreas.has(a)))
++          continue;
++        nodes.push({
++          id: e.id,
++          kind: "facility",
++          label: e.label || e.id,
++          idt: idtPath(e),
++          sub: "In area · no dependency",
++          tone: "grey",
++          line: "dotted",
++          weight: 1,
++          direction: "down",
++          depth: 1,
++          entityId: e.id,
++        });
++      }
++    if (node.kind === "people" && hasPeople)
++      nodes.push({
++        id: "people",
++        kind: "people",
++        label: `${people.toLocaleString("en-US")} people`,
++        idt: "Service area",
++        sub: options.boilWaterLabel
++          ? "Boil-water notice possible"
++          : "People served",
++        tone: "amber",
++        line: "solid",
++        weight: 1,
++        direction: "down",
++        depth: 1,
++      });
++    const ids = new Set(nodes.map((n) => n.id));
++    const edges: GraphEdge[] = deps
++      .filter((d) => ids.has(d.provider) && ids.has(d.dependent))
++      .map((d) => {
++        const target = nodes.find((n) => n.id === d.dependent)!;
++        const upstream = (include.get(d.dependent) ?? 0) <= 0;
++        const fn = d.dependentFunction
++          ? functions.get(d.dependentFunction)
++          : null;
++        return {
++          id: d.id,
++          from: d.provider,
++          to: d.dependent,
++          label: upstream || !fn ? say(d.requiredService) : lower(fn),
++          tone: upstream ? "green" : target.tone,
++          dashed: excluded.has(d.id) || target.line !== "solid",
++        };
++      });
++    if (ids.has("people"))
++      edges.push({
++        id: "edge:people",
++        from: source,
++        to: "people",
++        label: say(seed.service),
++        tone: "amber",
++        dashed: false,
++      });
++    return {
++      title:
++        node.kind === "people"
++          ? `${node.label.replace(/ customers$/, "")} (${node.idt})`
++          : `${node.label} (${node.idt})`,
++      hint:
++        node.kind === "people"
++          ? (options.boilWaterLabel ??
++            "The utility serves the people in its service area")
++          : "Select a facility to see why",
++      nodes,
++      edges,
++    };
++  }
++
++  return { overview, sectorView, source };
++}
++
++/** Deterministic layout for the overview: source in the middle, sectors around it. */
++export function radialLayout(view: GraphView, width = 1000, height = 460) {
++  const cx = width / 2,
++    cy = height / 2;
++  const others = view.nodes.filter((n) => n.kind !== "source");
++  const up = others.filter((n) => n.direction === "up");
++  const rest = others.filter((n) => n.direction !== "up");
++  const pos = new Map<string, { x: number; y: number }>();
++  pos.set("source", { x: cx, y: cy });
++  const rx = width * 0.36,
++    ry = height * 0.36;
++  const place = (list: GraphNode[], from: number, to: number) =>
++    list.forEach((n, i) => {
++      const t =
++        list.length === 1
++          ? (from + to) / 2
++          : from + ((to - from) * i) / (list.length - 1);
++      pos.set(n.id, { x: cx + rx * Math.cos(t), y: cy + ry * Math.sin(t) });
++    });
++  // Upstream on the left, everything else sweeping around the right.
++  place(
++    up,
++    (-150 * Math.PI) / 180,
++    (-150 * Math.PI) / 180 + (up.length > 1 ? Math.PI / 3 : 0),
++  );
++  place(rest, (-60 * Math.PI) / 180, (150 * Math.PI) / 180);
++  return pos;
++}
++
++/** Columns by depth from the source (upstream left, downstream right). */
++export function layeredLayout(view: GraphView, width = 1000, height = 460) {
++  const depths = [...new Set(view.nodes.map((n) => n.depth))].sort(
++    (a, b) => a - b,
++  );
++  const pos = new Map<string, { x: number; y: number }>();
++  const pad = 110;
++  depths.forEach((d, col) => {
++    const column = view.nodes.filter((n) => n.depth === d);
++    const x =
++      depths.length === 1
++        ? width / 2
++        : pad + ((width - 2 * pad) * col) / (depths.length - 1);
++    column.forEach((n, i) => {
++      const y = (height * (i + 1)) / (column.length + 1);
++      pos.set(n.id, { x, y });
++    });
++  });
++  return pos;
++}
++
++type ExploreNetwork = {
++  nodes: Entity[];
++  edges: (Dependency & { excludedReason?: string })[];
++  relations: { id: string; from: string; to: string; kind: string }[];
++};
++
++/** A4 explore mode: the exploration network drawn as columns by depth. */
++export function explorationView(
++  model: ConsequenceModel,
++  network: ExploreNetwork,
++): GraphView | null {
++  const run = model.run;
++  if (!run) return null;
++  const seed = run.seed;
++  const source = seed.provider;
++  const deps = network.edges;
++  const down = walk(deps, source, "down");
++  const up = walk(deps, source, "up");
++  const depthOf = new Map<string, number>([[source, 0]]);
++  for (const [id, d] of down.depth) depthOf.set(id, d);
++  for (const [id, d] of up.depth) if (!depthOf.has(id)) depthOf.set(id, -d);
++  // Context-only relations sit in their partner's column.
++  for (let pass = 0; pass < 3; pass++)
++    for (const r of network.relations) {
++      if (depthOf.has(r.from) && !depthOf.has(r.to))
++        depthOf.set(r.to, depthOf.get(r.from)!);
++      if (depthOf.has(r.to) && !depthOf.has(r.from))
++        depthOf.set(r.from, depthOf.get(r.to)!);
++    }
++  const nodes: GraphNode[] = network.nodes.map((e) => {
++    const depth = depthOf.get(e.id) ?? 0;
++    const rows = model.rows.filter((r) => r.entityId === e.id);
++    const w = earliest(rows);
++    const isSource = e.id === source;
++    const tone: GraphTone = isSource
++      ? "source"
++      : rows.length
++        ? toneForWindow(w)
++        : depth < 0
++          ? "green"
++          : "grey";
++    return {
++      id: e.id,
++      kind: isSource ? "source" : "facility",
++      label: e.label || e.id,
++      idt: idtPath(e),
++      sub: isSource
++        ? `${lower(say(seed.lossType))} · source`
++        : rows.length
++          ? `At risk ${windowText(w)}`
++          : depth < 0
++            ? "Normal · upstream"
++            : deps.some((d) => d.dependent === e.id && d.excludedReason)
++              ? "Not affected"
++              : "No modeled impact",
++      tone,
++      line: !isSource && !rows.length && depth >= 0 ? "dashed" : "solid",
++      weight: 1,
++      direction: depth < 0 ? "up" : "down",
++      depth,
++      entityId: e.id,
++    };
++  });
++  const functions = new Map(
++    model.captured.serviceFunctions.map((f) => [f.id, f.label]),
++  );
++  const tones = new Map(nodes.map((n) => [n.id, n.tone]));
++  const edges: GraphEdge[] = [
++    ...deps.map((d) => {
++      const upstream = (depthOf.get(d.dependent) ?? 0) <= 0;
++      const fn = d.dependentFunction
++        ? functions.get(d.dependentFunction)
++        : null;
++      return {
++        id: d.id,
++        from: d.provider,
++        to: d.dependent,
++        label: upstream || !fn ? say(d.requiredService) : lower(fn),
++        tone: upstream
++          ? ("green" as GraphTone)
++          : (tones.get(d.dependent) ?? "grey"),
++        dashed: !!d.excludedReason,
++      };
++    }),
++    ...network.relations.map((r) => ({
++      id: r.id,
++      from: r.from,
++      to: r.to,
++      label: r.kind.replace(/ context$/, ""),
++      tone: "grey" as GraphTone,
++      dashed: true,
++    })),
++  ];
++  return {
++    title: "Explore dependencies",
++    hint: "Select a node for details · use Expand upstream to add suppliers",
++    nodes,
++    edges,
++  };
++}
+diff --git a/frontend/src/statewideFootprint.ts b/frontend/src/statewideFootprint.ts
+index 422afce..57ccb73 100644
+--- a/frontend/src/statewideFootprint.ts
++++ b/frontend/src/statewideFootprint.ts
+@@ -214,7 +214,7 @@ function layerFor(incident: CommandIncident, props: StatewideFootprintProps) {
+     serviceAreas,
+   };
+ }
+-function matchingNotice(
++export function matchingNotice(
+   run: Run | null,
+   providerType: string | undefined,
+   reference: ReferenceData | null,
+@@ -240,6 +240,16 @@ function matchingNotice(
+     }) ?? null
+   );
+ }
++/** Boil-water label for a captured run, from the reference rule (C4 and A4 graphs). */
++export function boilWaterLabel(
++  run: Run | null,
++  entities: { id: string; type: string }[],
++  reference: ReferenceData | null,
++): string | null {
++  const type = entities.find((e) => e.id === run?.seed?.provider)?.type;
++  const rule = matchingNotice(run, type, reference);
++  return rule && typeof rule.label === "string" ? rule.label : null;
++}
+ /** Pure projection of visible records + captured case truth. Selection never filters the map. */
+ export function statewideFootprint(
+   props: StatewideFootprintProps,
+diff --git a/frontend/tests/idt-part1.test.mjs b/frontend/tests/idt-part1.test.mjs
+index 0f7913e..dbd7f89 100644
+--- a/frontend/tests/idt-part1.test.mjs
++++ b/frontend/tests/idt-part1.test.mjs
+@@ -306,9 +306,10 @@ test("legacy captures and missing endpoints stay unclassified, even for known se
+   assert.deepEqual(consequenceModel(null).inventorySectors, []);
+ });
+ 
+-test("C4 presents the four-sector context network before the modeled-only detail panel", () => {
++test("C4 leads with the linked sector dependency graph; the inventory chart is collapsed context", () => {
+   const html = render("consequence", fixture());
+-  assert.ok(html.indexOf("Saved inventory sector context") < html.indexOf("Captured Dependency Network"));
++  assert.ok(html.indexOf("Sector dependencies") > -1);
++  assert.ok(html.indexOf("Sector dependencies") < html.indexOf("Saved inventory sector context"));
+ });
+ 
+ test("Case File impact rows render actual chips from captured entities, never today's inventory", () => {
+diff --git a/frontend/tests/sector-network.test.mjs b/frontend/tests/sector-network.test.mjs
+new file mode 100644
+index 0000000..d5211e2
+--- /dev/null
++++ b/frontend/tests/sector-network.test.mjs
+@@ -0,0 +1,139 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import { readFileSync, existsSync } from "node:fs";
++import { createElement, isValidElement } from "react";
++import { renderToStaticMarkup } from "react-dom/server";
++import { transformWithOxc } from "vite";
++
++const root = new URL("../src/", import.meta.url);
++const data = JSON.parse(
++  readFileSync(new URL("../../data/scenario.json", import.meta.url)),
++);
++const reference = JSON.parse(
++  readFileSync(new URL("../../data/reference.json", import.meta.url)),
++);
++const hookUrl = `data:text/javascript;base64,${Buffer.from(`let v=[],i=0;export function reset(){i=0}export function clear(){v=[];i=0}export function useState(x){let n=i++;if(!(n in v))v[n]=typeof x==='function'?x():x;return [v[n],x=>v[n]=typeof x==='function'?x(v[n]):x]}export function useRef(x){return useState({current:x})[0]}`).toString("base64")}`;
++const hooks = await import(hookUrl);
++const cache = new Map();
++async function compile(url) {
++  if (cache.has(url.href)) return cache.get(url.href);
++  let code = (
++    await transformWithOxc(readFileSync(url, "utf8"), url.pathname, {
++      jsx: { runtime: "automatic" },
++    })
++  ).code;
++  code = code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm, "");
++  const imports = new Map();
++  for (const m of code.matchAll(/from\s+["']([^"']+)["']/g)) {
++    const s = m[1];
++    let target;
++    if (s === "react") target = hookUrl;
++    else if (s.startsWith(".")) {
++      let u = new URL(s, url);
++      if (!existsSync(u)) u = new URL(s + ".ts", url);
++      target = await compile(u);
++    } else target = import.meta.resolve(s);
++    imports.set(s, target);
++  }
++  code = code.replace(
++    /from\s+["']([^"']+)["']/g,
++    (_, s) => `from ${JSON.stringify(imports.get(s))}`,
++  );
++  const out = `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
++  cache.set(url.href, out);
++  return out;
++}
++async function module(name) {
++  return import(await compile(new URL(name, root)));
++}
++
++function impact(id, entityId, functionId, windowHours, dep) {
++  return {
++    id, entityId, functionId, lossType: "unsafe_treated_water", state: "at_risk",
++    windowHours, lossOfFunction: 1, evidenceStatus: "modeled", timingStatus: "interval",
++    paths: [[dep]], sourceRefs: ["src-inventory"], assumptions: ["Captured reserve"],
++  };
++}
++function incident(scenario = "unsafe-water") {
++  const s = data.scenarios.find((x) => x.id === scenario);
++  const impacts =
++    scenario === "unsafe-water"
++      ? [
++          impact("i-z", "nursing-z", "nursing-safe-water", [1, 4], "dep-a-z"),
++          impact("i-x", "dialysis-x", "dialysis-treatment", [2, 4], "dep-a-x"),
++          impact("i-y", "hospital-y", "hospital-sterilization", [4, 8], "dep-a-y"),
++        ]
++      : [];
++  const run = {
++    id: "run-1", createdAt: "2026-10-13T08:09:00Z", scenarioId: scenario,
++    request: { scenarioId: scenario, evaluationHour: 1, horizonHours: 12, overrides: [] },
++    baselineRevision: data.baselineRevision, modelVersion: data.modelVersion,
++    baselineSnapshot: structuredClone(data), seed: s.seed, impacts,
++    excluded: scenario === "unsafe-water"
++      ? [{ dependencyId: "dep-a-f", reason: "loss type is not applicable", path: ["dep-a-f"] }]
++      : [],
++    warnings: [],
++  };
++  return { id: "case-a", version: 1, title: "Case", runId: run.id, runSnapshot: run };
++}
++
++test("overview links the source to every connected sector, not just impacted ones", async () => {
++  const { consequenceModel } = await module("commandCenterModel.ts");
++  const { consequenceGraph } = await module("sectorNetwork.ts");
++  const g = consequenceGraph(consequenceModel(incident()), { boilWaterLabel: "Boil-water notice: possible" });
++  const labels = g.overview.nodes.filter((n) => n.kind !== "source").map((n) => n.label);
++  assert.deepEqual(new Set(labels), new Set(["Energy", "Water customers", "Healthcare and Public Health", "Emergency Services"]));
++  const health = g.overview.nodes.find((n) => n.label === "Healthcare and Public Health");
++  assert.equal(health.sub, "3 at risk · 1–4 h");
++  assert.equal(health.tone, "red");
++  const fire = g.overview.nodes.find((n) => n.label === "Emergency Services");
++  assert.equal(fire.sub, "Not affected");
++  assert.equal(fire.line, "dashed");
++  const water = g.overview.nodes.find((n) => n.label === "Water customers");
++  assert.match(water.sub, /18,000 people · boil-water possible/);
++  const energy = g.overview.nodes.find((n) => n.label === "Energy");
++  assert.equal(energy.sub, "Normal · upstream");
++  for (const e of g.overview.edges) assert.ok(e.label && e.label !== "dependency", e.id);
++  assert.equal(g.overview.edges.find((e) => e.from === energy.id).label, "electricity → water treatment");
++  assert.ok(g.overview.edges.find((e) => e.to === fire.id).dashed);
++});
++
++test("drilling into healthcare shows the three facilities with windows and Facility Q dotted", async () => {
++  const { consequenceModel } = await module("commandCenterModel.ts");
++  const { consequenceGraph } = await module("sectorNetwork.ts");
++  const g = consequenceGraph(consequenceModel(incident()));
++  const health = g.overview.nodes.find((n) => n.label === "Healthcare and Public Health");
++  const v = g.sectorView(health.sectorKey);
++  const by = Object.fromEntries(v.nodes.map((n) => [n.id, n]));
++  assert.equal(by["nursing-z"].sub, "At risk 1–4 h");
++  assert.equal(by["dialysis-x"].sub, "At risk 2–4 h");
++  assert.equal(by["hospital-y"].tone, "amber");
++  assert.equal(by["facility-q"].line, "dotted");
++  assert.equal(by["facility-q"].sub, "In area · no dependency");
++  assert.ok(v.edges.every((e) => e.label), "every facility link is labeled");
++  assert.equal(v.edges.find((e) => e.to === "dialysis-x").label, "dialysis treatment");
++});
++
++test("power loss puts energy at the source and water and healthcare downstream", async () => {
++  const { consequenceModel } = await module("commandCenterModel.ts");
++  const { consequenceGraph } = await module("sectorNetwork.ts");
++  const g = consequenceGraph(consequenceModel(incident("power-loss")));
++  assert.equal(g.overview.nodes[0].label, "Electric Supply E");
++  const labels = g.overview.nodes.map((n) => n.label);
++  assert.ok(labels.includes("Water"));
++  assert.ok(labels.includes("Healthcare and Public Health"));
++});
++
++test("the C4 component draws the linked graph and keeps the inventory chart only as collapsed context", async () => {
++  const { consequenceModel } = await module("commandCenterModel.ts");
++  const { default: Network } = await module("components/DependencyNetwork.tsx");
++  hooks.clear();
++  const html = renderToStaticMarkup(
++    createElement(Network, { model: consequenceModel(incident()), mode: "display" }),
++  );
++  assert.match(html, /Sector dependencies/);
++  assert.match(html, /data-node="sector:idt:10"/);
++  assert.match(html, /electricity → water treatment/);
++  assert.ok(html.indexOf("Sector dependencies") < html.indexOf("Saved inventory"));
++  assert.doesNotMatch(html, /<(input|select|form)\b/);
++});
