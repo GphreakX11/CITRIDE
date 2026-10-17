@@ -340,7 +340,7 @@ const workspaceProps = {
   onEditDependency() {},
   onAccessFailure() {},
 };
-async function workspace(mode = "analyst") {
+async function workspace(mode = "analyst", view = "command") {
   hooks.clear();
   const source = caseRecord("watershed");
   source.title = "Saved source case";
@@ -360,7 +360,7 @@ async function workspace(mode = "analyst") {
   });
   const render = () => {
     hooks.reset();
-    return Workspace({ ...workspaceProps, mode });
+    return Workspace({ ...workspaceProps, mode, view });
   };
   render();
   await hooks.callbacks[0]();
@@ -404,7 +404,7 @@ test("casework controls move to header; refresh, download, reset and new-case ca
 
 test("command context shows source display ID/title/provider, not a storage identifier", async () => {
   globalThis.document = { getElementById: (id) => ({ id }) };
-  const { render } = await workspace("command");
+  const { render } = await workspace("command", "cyber");
   const tree = render();
   const context = nodes(tree).find(
     (n) =>

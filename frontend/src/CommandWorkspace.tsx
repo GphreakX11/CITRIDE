@@ -1,3 +1,4 @@
+import { c1OverviewModel } from "./c1OverviewModel.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { RefreshCw, Download, AlertTriangle } from "lucide-react";
@@ -49,8 +50,8 @@ export interface CommandWorkspaceProps {
   mode: WorkspaceMode;
   onOpenAnalyst: (
     view: CommandView,
-    caseId?: string,
-    entityId?: string,
+    caseId?: string | null,
+    entityId?: string | null,
   ) => void;
   onEditDependency: (
     dependency: Dependency | null,
@@ -688,7 +689,12 @@ export default function CommandWorkspace({
           record.linkedEventIds?.includes(selected.eventId),
       )
     : null;
-  const incidentLine = selected
+  const statewideContext = mode === "command" && view === "command" && records && reference
+    ? c1OverviewModel({ data, incidents, selected: null, view, records, reference })
+    : null;
+  const incidentLine = statewideContext
+    ? `Statewide · ${statewideContext.totals.active} open incidents · ${statewideContext.totals.investigating} under investigation · ${statewideContext.rows.filter(row => row.cascading).length} cascading`
+    : selected
     ? [
         caseDisplayId(selected, records),
         selectedSource?.title ?? selected.title,
@@ -779,6 +785,7 @@ export default function CommandWorkspace({
               if (!busy && !loading && !uncertain) onSelect(id);
             }}
             onOpenAnalyst={onOpenAnalyst}
+            onClearSelection={() => onSelect(null)}
             onNavigate={onNavigate}
           />
         )}

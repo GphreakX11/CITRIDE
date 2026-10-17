@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { activityDisplayText } from "./caseFilePresentation.ts";
+import C1Overview from "./C1Overview.tsx";
+import { readIncidentFocus } from "./incidentFocus.ts";
 import type { CommandView } from "./commandTypes.ts";
 import {
   object,
@@ -28,14 +29,13 @@ import {
   overviewModel,
   planningWindow,
   previewAudiences,
-  recordedActivity,
   timeLabel,
   words,
 } from "./commandCenterModel.ts";
 import { eventSourceChips } from "./networkEvidence.ts";
 import { idtSectorName } from "./idt.ts";
 import { formatDuration, formatTimeCT } from "./displayTime.ts";
-import { statewideFootprint, boilWaterLabel } from "./statewideFootprint.ts";
+import { boilWaterLabel } from "./statewideFootprint.ts";
 import { fittedTexasMarkerLayout, FITTED_TEXAS_VIEWBOX } from "./fittedTexasMap.ts";
 import { TEXAS_PATH } from "./texasOutline.ts";
 import { InfrastructureIcon } from "./InfrastructureIcon.tsx";
@@ -50,10 +50,11 @@ import { SummaryTile } from "./visualPrimitives.ts";
 
 export interface ScriptedCommandViewsProps extends ScriptedViewProps {
   onSelect: (id: string) => void;
+  onClearSelection?: () => void;
   onOpenAnalyst: (
     view: CommandView,
-    caseId?: string,
-    entityId?: string,
+    caseId?: string | null,
+    entityId?: string | null,
   ) => void;
   onNavigate: (view: CommandView) => void;
   onSelectEntity?: (id: string | null) => void;
@@ -203,9 +204,8 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     onSelect,
     onOpenAnalyst,
     onNavigate,
-    onSelectEntity,
   } = props;
-  const [picked, setPicked] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string | null>(typeof window === "undefined" ? null : readIncidentFocus(window.location.href));
   const [teamId, setTeamId] = useState<string | null>(null);
   const rows = statewideRows(records, incidents);
   const selectedRow = rows.find((row) => row.caseId === selected?.id);
@@ -320,153 +320,8 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
   );
   const register = registerFor(rows);
   let content: ReactNode;
-  if (view === "command") {
-    const severityRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-    const recordedStart = (row: RecordItem) => Date.parse(row.startedAt ?? recordTime(
-      { relativeTimeHours: row.startedRelativeHours }, data, null,
-    ) ?? "") || Number.POSITIVE_INFINITY;
-    const isWatershed = (row: RecordItem) => incidents.some((incident) => incident.id === row.caseId && incident.eventId === "event-vpn-a");
-    const active = rows.filter((row) => row.status !== "closed").sort((a, b) =>
-      Number(isWatershed(b)) - Number(isWatershed(a)) ||
-      (severityRank[a.severity ?? ""] ?? 4) - (severityRank[b.severity ?? ""] ?? 4) ||
-      recordedStart(a) - recordedStart(b) || a.id.localeCompare(b.id),
-    );
-    const footprint = statewideFootprint({ ...props,
-      selected: selected?.status !== "closed" ? selected : incidents.find((item) => item.status !== "closed") ?? null,
-    });
-    const activeCaseIds = new Set(active.map((row) => row.caseId).filter(Boolean));
-    const activeModels = incidents.filter((item) => activeCaseIds.has(item.id)).map(consequenceModel);
-    const earliest = activeModels.map((item) => item.earliest).filter((window): window is [number, number] => !!window).sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
-    const notices = [...new Set(activeModels.map((item) => boilWaterLabel(item.run, item.captured.entities, reference)).filter(Boolean))];
-    const underInvestigation = active.filter((row) => row.caseId && incidents.some((item) => item.id === row.caseId && item.status === "open")).length;
-
-    const pending = active.flatMap((row) =>
-      row.caseId
-        ? reference.responseOptions
-            .filter(
-              (option) =>
-                !records.decisions.some(
-                  (decision) =>
-                    decision.optionId === option.id &&
-                    (decision.incidentId === row.id ||
-                      decision.incidentId === row.caseId ||
-                      decision.caseId === row.caseId),
-                ),
-            )
-            .map((option) => ({ row, option }))
-        : [],
-    );
-    const overview = overviewModel(incidents.filter((item) => item.status !== "closed"));
-    const updates = rows
-      .flatMap((row) =>
-        (row.updates ?? []).map((update, index) => ({
-          id: `${row.id}:${index}`,
-          message: update.text,
-          at: recordTime(update, data, null),
-          label: row.title,
-        })),
-      )
-      .concat(
-        recordedActivity(incidents).map((item) => ({
-          id: item.id,
-          message: item.message,
-          at: item.createdAt,
-          label: item.caseTitle,
-        })),
-      )
-      .sort(
-        (a, b) => (Date.parse(b.at ?? "") || 0) - (Date.parse(a.at ?? "") || 0),
-      );
-    content = (
-      <div className="sc-overview-wall" data-pending-decisions={pending.length}>
-        <Metrics
-          values={[
-            [active.length, "Active incidents", `${underInvestigation} under investigation · ${active.length - underInvestigation} others statewide`],
-            [
-              new Set(active.flatMap((row) => row.sectors ?? [])).size,
-              "Sectors affected",
-              [...new Set(active.flatMap((row) => row.sectors ?? []))].map((code) => idtSectorName(code) ?? `IDT ${code}`).join(" · "),
-            ],
-            [overview.people ?? footprint.people ?? "Not captured", "People in affected water service", footprint.probed.length ? `${footprint.probed.reduce((sum, utility) => sum + (utility.people ?? 0), 0).toLocaleString("en-US")} more served by probed utilities` : footprint.utility?.label],
-            [pending.length, "Decisions waiting on the Chief", earliest ? `Earliest window: ${planningWindow(earliest)}` : pending.length ? "Earliest window: not yet modeled" : "No response options awaiting a recorded decision"],
-          ]}
-        />
-        <div className="sc-overview-layout">
-          <div className="sc-overview-main">
-            <Panel title="Statewide picture">
-              <StatewideFootprint
-                data={data}
-                incidents={incidents}
-                selected={selected?.status !== "closed" ? selected : incidents.find(item => item.status !== "closed") ?? null}
-                records={records}
-                reference={reference}
-                onSelect={onSelect}
-                onOpenAnalyst={onOpenAnalyst}
-                onPickIncident={selectRow}
-                pickedIncidentId={picked ?? selectedRow?.id ?? null}
-                compact
-                activeOnly
-              />
-            </Panel>
-            <Panel title="Active incidents · statewide" note="Select an incident to see its consequences">
-              {registerFor(active, "active")}
-              {picked && rowSummary}
-            </Panel>
-          </div>
-          <aside className="sc-overview-sidebar" aria-label="Decision support">
-          <Panel title="Decisions waiting on the Chief">
-            {pending.map(({ row, option }) => (
-              <p key={`${row.id}:${option.id}`}>
-                <button
-                  className="command-link"
-                  onClick={() => {
-                    if (row.caseId) onSelect(row.caseId);
-                    onNavigate("leadership");
-                  }}
-                >
-                  {option.title}
-                </button>
-                <small>{row.title}</small>
-              </p>
-            ))}
-            {!pending.length && (
-              <p>No response options awaiting a recorded decision.</p>
-            )}
-          </Panel>
-          <Panel title="Critical facilities at risk">
-            <small>Modeled · not observed outages</small>
-            {activeModels.flatMap((item) =>
-              item.rows.map((row) => (
-                <p key={`${item.run?.id}:${row.id}`} className="sc-overview-facility" title={`${row.functionLabel} · Modeled ${words(row.state)}`}>
-                  <button
-                    className="command-link"
-                    onClick={() => onSelectEntity?.(row.entityId)}
-                  >
-                    {row.label}
-                  </button>
-                  <span>{planningWindow(row.windowHours)}</span>
-                </p>
-              )),
-            )}
-            {notices.map((notice) => <p key={notice} className="sc-overview-notice">{notice}</p>)}
-            {!activeModels.some((item) => item.rows.length) && (
-              <p>Not yet modeled. Facility risk remains unknown.</p>
-            )}
-          </Panel>
-          <Panel title="From the analysts">
-            {updates.slice(0, 4).map((update) => (
-              <p key={update.id} className="sc-overview-update" title={update.label}>
-                <time>{timeLabel(update.at)}</time>
-                <span>{activityDisplayText(update.message)}</span>
-              </p>
-            ))}
-            {updates.length > 4 && <details><summary>Earlier analyst updates ({updates.length - 4})</summary>{updates.slice(4).map((update) => <p key={update.id}>{activityDisplayText(update.message)}<small>{update.label} · {timeLabel(update.at)}</small></p>)}</details>}
-          </Panel>
-          </aside>
-        </div>
-      </div>
-    );
-  } else if (view === "cop") {
+  if (view === "command") return <C1Overview {...props} />;
+  if (view === "cop") {
     content = (
       <Panel title="All Statewide Incidents">
         <StatewideFootprint

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync, existsSync } from "node:fs";
-import { createElement } from "react";
+import { createElement, isValidElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { transformWithOxc } from "vite";
 
@@ -11,8 +11,22 @@ const data = read("../../data/scenario.json");
 const supplied = read("../../data/scripted/watershed_beta.json");
 const reference = read("../../data/reference.json");
 const cache = new Map();
-async function compile(url) {
-  if (cache.has(url.href)) return cache.get(url.href);
+const hookUrl = `data:text/javascript;base64,${Buffer.from(`
+  let values = [], cursor = 0;
+  export function clear() { values = []; cursor = 0; }
+  export function reset() { cursor = 0; }
+  export function useState(initial) {
+    const index = cursor++;
+    if (!(index in values)) values[index] = typeof initial === "function" ? initial() : initial;
+    return [values[index], value => { values[index] = typeof value === "function" ? value(values[index]) : value; }];
+  }
+  export function useRef(initial) { const index = cursor++; return values[index] ??= { current: initial }; }
+  export function useEffect() {}
+`).toString("base64")}`;
+const hooks = await import(hookUrl);
+async function compile(url, mockHooks = false) {
+  const key = `${url.href}:${mockHooks}`;
+  if (cache.has(key)) return cache.get(key);
   let code = (await transformWithOxc(readFileSync(url, "utf8"), url.pathname, { jsx: { runtime: "automatic" } })).code
     .replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm, "");
   const imports = new Map();
@@ -22,12 +36,12 @@ async function compile(url) {
       let next = new URL(m[1], url);
       if (!existsSync(next)) next = new URL(`${m[1]}.ts`, url);
       target = await compile(next);
-    } else target = import.meta.resolve(m[1]);
+    } else target = mockHooks && m[1] === "react" ? hookUrl : import.meta.resolve(m[1]);
     imports.set(m[1], target);
   }
   code = code.replace(/from\s+["']([^"']+)["']/g, (_, s) => `from ${JSON.stringify(imports.get(s))}`);
   const result = `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
-  cache.set(url.href, result);
+  cache.set(key, result);
   return result;
 }
 const module = async (name) => import(await compile(new URL(name, root)));
@@ -35,6 +49,7 @@ const { consequenceModel } = await module("commandCenterModel.ts");
 const { default: Network } = await module("components/DependencyNetwork.tsx");
 const { default: Command } = await module("CommandCenterViews.tsx");
 const { default: Scripted, Schematic } = await module("ScriptedCommandViews.tsx");
+const { default: InteractiveOverview } = await import(await compile(new URL("C1Overview.tsx", root), true));
 const html = (component, props) => renderToStaticMarkup(createElement(component, props));
 const freeze = (value) => {
   if (value && typeof value === "object") { Object.values(value).forEach(freeze); Object.freeze(value); }
@@ -103,77 +118,211 @@ test("C4 table does not declare an unmodeled dependency unaffected without expli
   const table = out.match(/<table[^>]*class="[^"]*cc-sector-rollup[\s\S]*?<\/table>/)?.[0];
   assert.match(table, /unaffected not established/);
 });
-test("C1 stacks map and active register beside decision support; closed records remain available on the brief only", () => {
+// C1 has a separate, selection-free map and collapsible incident cards. C2
+// retains the footprint renderer; equality with its old map is no longer a contract.
+const cardsIn = out => [...out.matchAll(/<details\b[^>]*data-incident-card="([^"]+)"[^>]*>/g)];
+const totalsIn = out => out.match(/<section[^>]*aria-label="Statewide totals"[\s\S]*?<\/section>/)?.[0];
+function nodes(value) {
+  if (Array.isArray(value)) return value.flatMap(nodes);
+  return isValidElement(value) ? [value, ...nodes(value.props.children)] : [];
+}
+function label(value) {
+  if (Array.isArray(value)) return value.map(label).join("");
+  if (isValidElement(value)) return label(value.props.children);
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+function overviewHarness(extra = {}) {
+  hooks.clear();
+  const input = { ...props("command"), ...extra };
+  const render = () => { hooks.reset(); return InteractiveOverview(input); };
+  return { input, render };
+}
+const incidentCard = (tree, id) => nodes(tree).find(node => node.props["data-incident-card"] === id);
+const button = (tree, text) => nodes(tree).find(node => ["button", "a"].includes(node.type) && label(node) === text);
+const clickCard = (tree, id) => nodes(incidentCard(tree, id)).find(node => node.type === "summary").props.onClick({ preventDefault() {} });
+
+test("C1 opens with four statewide tiles and closed cards beside decisions and facilities", () => {
   const out = html(Scripted, props("command"));
-  assert.match(out, /class="sc-overview-layout"/);
-  assert.match(out, /class="sc-overview-main"/);
-  assert.match(out, /class="sc-overview-sidebar"/);
-  assert.match(out, /Decisions waiting on the Chief/);
-  assert.match(out, /Critical facilities at risk/);
-  assert.match(out, /From the analysts/);
-  const active = out.match(/<table[^>]*data-register="active"[\s\S]*?<\/table>/)?.[0];
-  assert.ok(active);
-  assert.doesNotMatch(active, /TX-26-0398/);
-  assert.doesNotMatch(out, /TX-26-0398/);
+  assert.match(out, /class="c1-columns"/);
+  assert.match(out, /class="c1-sidebar"/);
+  assert.match(out, /Statewide picture/);
+  for (const title of ["Decisions waiting on the Chief", "Critical facilities at risk", "From the analysts"]) assert.ok(out.includes(title));
+  const tiles = totalsIn(out);
+  assert.ok(tiles);
+  assert.equal((tiles.match(/<button\b/g) ?? []).length, 4);
+  for (const title of ["Active incidents", "People on unsafe water", "Earliest window", "Decisions waiting"]) assert.ok(tiles.includes(title));
+  const cards = cardsIn(out);
+  assert.equal(cards.length, records().statewideIncidents.filter(row => row.status !== "closed").length);
+  for (const [tag] of cards) assert.doesNotMatch(tag, /\sopen(?:=|\s|>)/);
+  assert.doesNotMatch(out, /TX-26-0398|data-register="active"|No incident selected|Select an incident to see its consequences|Sectors affected/);
+  assert.match(out, /Closed incidents are on C6/);
   assert.match(html(Scripted, props("leadership")), /TX-26-0398/);
-  assert.doesNotMatch(out, /\d+ minutes/);
 });
-test("Overview and Command map share the same statewide renderer, icons and recorded positions", () => {
+test("C1 uses its richer statewide map and complete legend, not the obsolete C2 folds", () => {
   const input = freeze(props("command"));
   const before = JSON.stringify(input);
-  const overview = html(Scripted, input);
-  const statewide = html(Scripted, { ...input, view: "cop" });
-  const map = out => out.match(/<div class="sf-state-map">([\s\S]*?)<\/div>/)?.[1];
-  assert.ok(map(overview), "Overview must use the shared statewide map, not a separate schematic");
-  assert.ok(map(statewide));
-  const pins = out => new Map([...map(out).matchAll(/<button[^>]*data-incident-pin="([^"]+)"[^>]*>[\s\S]*?<\/button>/g)].map(m => [m[1], m[0]]));
-  const a = pins(overview), b = pins(statewide);
-  assert.ok(a.size > 0);
-  for (const [id, markup] of a) assert.equal(markup, b.get(id), `${id}: identical glyph, position and selected state`);
-  assert.doesNotMatch(overview, /class="sc-safe-map"/);
-  assert.match(overview, /Active infrastructure incidents/);
+  const out = html(Scripted, input);
+  assert.match(out, /class="c1-map"/);
+  for (const entry of ["High", "Medium", "Low", "Same attacker probed", "Service area at risk", "Cascading impact (pulsing)", "Approximate positions · click an incident to select it"]) assert.ok(out.includes(entry));
+  assert.doesNotMatch(out, /Active infrastructure incidents|Recorded service footprints|\d+ mapped|class="sc-safe-map"/);
+  assert.match(html(Scripted, { ...input, view: "cop" }), /class="sf-state-map"/);
   assert.equal(JSON.stringify(input), before);
 });
-
-test("Shared maps never fabricate a pin for a record without a source position", () => {
+test("C1 and C2 never fabricate a pin for a record without a source position", () => {
   const r = records();
   r.statewideIncidents.push({ id: "no-location", title: "Unlocated water incident", status: "open", severity: "high" });
   for (const view of ["command", "cop"]) {
     const out = html(Scripted, props(view, freeze(r)));
     assert.doesNotMatch(out, /data-incident-pin="no-location"/);
     assert.match(out, /Unlocated water incident/);
-    assert.match(out, /Some incident locations are unknown/);
+    // SSR has no measured viewport, so C1 can use its safe list fallback.
+    assert.match(out, view === "command" ? /Location not recorded/ : /Some incident locations are unknown/);
   }
 });
-
-test("C1 active register keeps the open Watershed case first, then severity and recorded start", () => {
+test("C1 cards sort by severity then newest start, never by the selected case", () => {
   const r = records();
-  r.statewideIncidents.push({ id: "early-high", title: "Earlier high severity", status: "open", severity: "high", startedAt: "2026-10-13T05:00:00Z", location: { label: "Authored" } });
-  const out = html(Scripted, props("command", freeze(r)));
-  const active = out.match(/<table[^>]*data-register="active"[\s\S]*?<\/table>/)?.[0];
-  assert.ok(active.indexOf("Water utility cyber attack") < active.indexOf("Earlier high severity"));
-  assert.equal((active.match(/<tr/g) ?? []).length, r.statewideIncidents.filter((row) => row.status !== "closed").length + 1);
+  r.statewideIncidents.push(
+    { id: "older-high", title: "Older high severity", status: "open", severity: "high", startedAt: "2026-10-13T05:00:00Z" },
+    { id: "newer-high", title: "Newer high severity", status: "open", severity: "high", startedAt: "2026-10-13T08:20:00Z" },
+  );
+  const ids = cardsIn(html(Scripted, props("command", freeze(r)))).map(match => match[1]);
+  assert.deepEqual(ids.slice(0, 3), ["newer-high", "TX-26-0412", "older-high"]);
+  assert.ok(ids.includes("TX-26-0411"), "monitoring incidents remain listed");
+  assert.ok(ids.includes("TX-26-0404"), "recovering incidents remain listed without pulsing");
 });
-test("C1 pending count remains computed and source population is shown before modeling", () => {
-  const r = records(); const saved = incident(); saved.runId = null; saved.runSnapshot = null;
+test("C1 never reports unmodeled people as zero or a captured population, and pending count stays computed", () => {
+  const r = records(), saved = incident(); saved.runId = null; saved.runSnapshot = null;
   const before = html(Scripted, props("command", r, saved));
-  assert.match(before, /18,000/);
-  assert.match(before, /Not yet modeled/);
-  r.decisions = reference.responseOptions.map((option) => ({ id: option.id, optionId: option.id, caseId: saved.id, decision: "approved" }));
+  const tiles = totalsIn(before);
+  assert.doesNotMatch(tiles, /18,000|Not captured/);
+  assert.match(tiles, /<strong>Not yet modeled<\/strong>[\s\S]*People on unsafe water/);
+  assert.match(tiles, /<strong>Not yet modeled<\/strong>[\s\S]*Earliest window/);
+  r.decisions = reference.responseOptions.map(option => ({ id: option.id, optionId: option.id, caseId: saved.id, decision: "approved" }));
   const after = html(Scripted, props("command", r, saved));
-  assert.match(after, /<strong>0<\/strong><span>Decisions waiting on the Chief/);
+  assert.match(after, /data-pending-decisions="0"/);
+  assert.match(totalsIn(after), /<strong>0<\/strong>[\s\S]*Decisions waiting/);
 });
-test("C1 shows captured earliest window, boil-water notice, selected row and review progress", () => {
-  const saved = incident();
-  saved.decisions = [{ id: "review-one", reviewed: true }, { id: "review-two", reviewed: false }];
-  const out = html(Scripted, props("command", freeze(records()), saved));
-  assert.match(out, /Earliest window: 2–5 h/);
-  assert.match(out, /Boil-water notice: possible/);
-  assert.match(out, /<tr class="selected" aria-selected="true"/);
-  assert.match(out, /1 of 2 reviews recorded/);
-  assert.match(out, /Linked probes at 2 utilities/);
-  assert.match(out, /Containment/);
-  assert.match(out, /Recovering/);
+test("C1 captured population, earliest window and decision/facility panels remain statewide without selection", () => {
+  const input = freeze(props("command"));
+  const selected = html(Scripted, input);
+  const none = html(Scripted, { ...input, selected: null });
+  assert.equal(selected, none, "selection must not change any C1 totals or panels");
+  assert.match(totalsIn(none), /18,000/);
+  assert.match(totalsIn(none), /2–5 h/);
+  assert.match(none, /Boil-water notice: possible/);
+  for (const id of ["c1-decisions-heading", "c1-facilities-heading"]) {
+    const panel = none.match(new RegExp(`<section[^>]*aria-labelledby="${id}"[\\s\\S]*?<\\/section>`))?.[0];
+    assert.ok(panel?.includes("TX-26-0412"), `${id}: every panel identifies its incident`);
+  }
+  assert.doesNotMatch(none, /aria-selected="true"|reviews recorded/);
+});
+test("C1 cards toggle exclusively; map picks only open a card, without selecting a case", t => {
+  const calls = [];
+  const { render } = overviewHarness({ onSelect: id => calls.push(id) });
+  const original = globalThis.requestAnimationFrame;
+  globalThis.requestAnimationFrame = callback => { callback(); return 0; };
+  t.after(() => { if (original) globalThis.requestAnimationFrame = original; else delete globalThis.requestAnimationFrame; });
+  let tree = render();
+  assert.ok(nodes(tree).filter(node => node.props["data-incident-card"]).every(node => !node.props.open));
+  clickCard(tree, "TX-26-0412"); tree = render();
+  assert.equal(incidentCard(tree, "TX-26-0412").props.open, true);
+  assert.match(label(incidentCard(tree, "TX-26-0412")), /18,000/);
+  clickCard(tree, "TX-26-0409"); tree = render();
+  assert.equal(incidentCard(tree, "TX-26-0412").props.open, false);
+  assert.equal(incidentCard(tree, "TX-26-0409").props.open, true);
+  assert.match(label(incidentCard(tree, "TX-26-0409")), /60% of priority servers restored/);
+  clickCard(tree, "TX-26-0409"); tree = render();
+  assert.equal(incidentCard(tree, "TX-26-0409").props.open, false);
+  const map = nodes(tree).find(node => typeof node.props.onPick === "function");
+  assert.ok(map, "the map exposes incident picking");
+  map.props.onPick("TX-26-0411"); tree = render();
+  assert.equal(incidentCard(tree, "TX-26-0411").props.open, true);
+  assert.deepEqual(calls, [], "expansion is not per-incident Command Center selection");
+});
+test("C1 expanded cards keep sector names and IDT codes", () => {
+  const { render } = overviewHarness();
+  let tree = render(); clickCard(tree, "TX-26-0412"); tree = render();
+  const sectors = nodes(incidentCard(tree, "TX-26-0412")).find(node => node.props.className === "c1-detail-facts");
+  assert.match(label(sectors), /Water/);
+  assert.match(label(sectors), /\b12\b/);
+  assert.match(label(sectors), /\b10\b/);
+});
+test("C1 statewide tiles drill into C4 and C6 rather than changing their totals", () => {
+  const calls = [];
+  const { render } = overviewHarness({ onSelect: id => calls.push(["case", id]), onNavigate: view => calls.push(["view", view]) });
+  const tree = render();
+  const totals = nodes(tree).find(node => node.props["aria-label"] === "Statewide totals");
+  const tiles = nodes(totals).filter(node => node.type === "button");
+  for (const [title, view] of [["People on unsafe water", "consequence"], ["Earliest window", "consequence"], ["Decisions waiting", "leadership"]]) {
+    const tile = tiles.find(node => nodes(node).some(child => child.type === "b" && label(child) === title));
+    assert.ok(tile, title);
+    tile.props.onClick();
+    assert.deepEqual(calls.splice(0), [["case", "case-wall"], ["view", view]], title);
+  }
+});
+test("C1 pending decisions include record-only incidents and the analyst strip shows the latest three updates", () => {
+  const r = records();
+  r.decisions = [{ id: "county-review", incidentId: "TX-26-0411", title: "County authorization", status: "pending", windowLabel: "Before alert service degrades" }];
+  r.statewideIncidents[1].updates = [{ at: "2026-10-13T08:01:00Z", text: "Oldest update omitted" }, { at: "2026-10-13T08:28:00Z", text: "Latest restoration update" }];
+  r.statewideIncidents[2].updates = [{ at: "2026-10-13T08:20:00Z", text: "Earlier county update" }, { at: "2026-10-13T08:29:00Z", text: "Newest county update" }];
+  const out = html(Scripted, { ...props("command", freeze(r)), selected: null });
+  const decisions = out.match(/<section[^>]*aria-labelledby="c1-decisions-heading"[\s\S]*?<\/section>/)?.[0];
+  assert.match(decisions, /County authorization/);
+  assert.match(decisions, /TX-26-0411/);
+  assert.match(decisions, /Before alert service degrades/);
+  const strip = out.match(/<section[^>]*aria-labelledby="c1-updates-heading"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(strip);
+  assert.doesNotMatch(strip, /Oldest update omitted/);
+  assert.ok(strip.indexOf("Newest county update") < strip.indexOf("Latest restoration update"));
+  assert.ok(strip.indexOf("Latest restoration update") < strip.indexOf("Earlier county update"));
+  assert.equal((strip.match(/<time\b/g) ?? []).length, 3);
+  assert.match(strip, /All updates in Analyst ↗/);
+});
+test("C1 modeled card links dispatch C2/C3/C4 with its case and one contextual Analyst action", () => {
+  const calls = [];
+  const { render } = overviewHarness({ onSelect: id => calls.push(["case", id]), onNavigate: view => calls.push(["view", view]), onOpenAnalyst: (...args) => calls.push(["analyst", ...args]) });
+  let tree = render(); clickCard(tree, "TX-26-0412"); tree = render();
+  const card = incidentCard(tree, "TX-26-0412");
+  for (const [text, view] of [["C2 Incident →", "cop"], ["C3 Attack →", "cyber"], ["C4 Impact →", "consequence"]]) {
+    const action = button(card, text);
+    assert.ok(action, text);
+    action.props.onClick();
+    assert.deepEqual(calls.splice(0), [["case", "case-wall"], ["view", view]]);
+  }
+  const analyst = button(card, "Case file in Analyst ↗");
+  assert.ok(analyst);
+  assert.doesNotMatch(analyst.props.className ?? "", /(?:^|\s)(?:primary|btn-primary)(?:\s|$)/);
+  analyst.props.onClick();
+  assert.deepEqual(calls.splice(0), [["analyst", "case-file", "case-wall", "utility-a"]]);
+  clickCard(tree, "TX-26-0409"); tree = render();
+  const unmodeled = incidentCard(tree, "TX-26-0409");
+  assert.ok(button(unmodeled, "C2 Incident →"));
+  assert.equal(button(unmodeled, "C3 Attack →"), undefined);
+  assert.equal(button(unmodeled, "C4 Impact →"), undefined);
+  const alert = button(unmodeled, "Alerts in Analyst ↗");
+  assert.ok(alert);
+  assert.doesNotMatch(alert.props.className ?? "", /(?:^|\s)(?:primary|btn-primary)(?:\s|$)/);
+  alert.props.onClick();
+  assert.equal(calls[0]?.[0], "analyst");
+  assert.equal(calls[0]?.[1], "command");
+  assert.equal(calls[0]?.[2], null);
+});
+test("C1 cascades appear only from a latest downstream run, independent of severity", () => {
+  const r = records(), saved = incident();
+  const card = (records, saved) => cardsIn(html(Scripted, props("command", records, saved))).find(match => match[1] === "TX-26-0412")?.[0];
+  assert.match(card(r, saved), /data-cascading="true"/);
+  r.statewideIncidents[0].severity = "medium";
+  assert.match(card(r, saved), /data-cascading="true"/);
+  saved.runSnapshot.impacts = [];
+  assert.doesNotMatch(card(r, saved), /data-cascading/);
+  saved.runSnapshot = null;
+  assert.doesNotMatch(card(r, saved), /data-cascading/);
+  for (const status of ["recovering", "closed"]) {
+    const source = records(); source.statewideIncidents[0].status = status;
+    const saved = incident(); saved.status = status;
+    const out = html(Scripted, props("command", source, saved));
+    assert.doesNotMatch(cardsIn(out).find(match => match[1] === "TX-26-0412")?.[0] ?? "", /data-cascading/);
+  }
 });
 test("Schematic uses a deterministic safe label grid and never mutates authored coordinates", () => {
   const items = freeze(Array.from({ length: 12 }, (_, index) => ({ id: `pin-${index}`, title: `Long authored incident label ${index}`, schematic: { x: 52, y: 58 } })));

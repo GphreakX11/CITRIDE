@@ -451,18 +451,18 @@ export default function App() {
     setMobileMenu(false);
     window.scrollTo({ top: 0 });
   }
-  function openAnalyst(next: CommandView, caseId?: string, entityId?: string) {
+  function openAnalyst(next: CommandView, caseId?: string | null, entityId?: string | null) {
     if (workflowLocked) return;
-    if (caseId) selectCase(caseId);
-    if (entityId) selectEntity(entityId);
+    if (caseId !== undefined) selectCase(caseId);
+    if (entityId !== undefined) selectEntity(entityId);
     window.history.pushState(
       null,
       "",
       prototypeLocation(
         window.location.href,
         next,
-        entityId ?? selectedEntity,
-        caseId ?? selectedCaseId,
+        entityId !== undefined ? entityId : selectedEntity,
+        caseId !== undefined ? caseId : selectedCaseId,
         "analyst",
       ),
     );
@@ -570,6 +570,7 @@ export default function App() {
   return (
     <div
       data-mode={mode}
+      data-view={view}
       data-workspace-mode={mode}
       className={`app-shell ${commandView ? "command-mode" : ""} workspace-${mode}`}
     >

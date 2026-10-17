@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { readIncidentFocus, incidentFocusLocation } from "./incidentFocus.ts";
 import type { Bootstrap, Event } from "./types.ts";
 import type { CommandCreate, CommandIncident } from "./commandTypes.ts";
 import type { RecordsState } from "./scriptedTypes.ts";
@@ -33,7 +34,15 @@ export default function AnalystAlerts({
     [editing, setEditing] = useState<string | null>(null);
   // The shared helper retains its newest-first record contract. Only this
   // queue presents story order, with unknown times after recorded times.
-  const pending = [...alertsWithoutCases(data.events, incidents)].sort(
+  const [focusId, setFocusId] = useState(() => typeof window === "undefined" ? null : readIncidentFocus(window.location.href));
+  useEffect(() => {
+    const restore = () => setFocusId(readIncidentFocus(window.location.href));
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, []);
+  const focusRecord = records?.statewideIncidents.find(record => record.id === focusId);
+  const focusedEvents = focusId ? new Set(focusRecord?.linkedEventIds ?? []) : null;
+  const pending = [...alertsWithoutCases(data.events, incidents)].filter(event => !focusedEvents || focusedEvents.has(event.id)).sort(
     (a, b) => {
       const at = Date.parse(String(a.timestamp ?? "")),
         bt = Date.parse(String(b.timestamp ?? ""));
@@ -50,7 +59,7 @@ export default function AnalystAlerts({
       );
     },
   );
-  const linked = data.events.filter((e) => openCaseForEvent(e.id, incidents));
+  const linked = data.events.filter((e) => openCaseForEvent(e.id, incidents) && (!focusedEvents || focusedEvents.has(e.id)));
   const row = (event: Event) => {
     const existing = openCaseForEvent(event.id, incidents),
       campaign = campaignCaseLink(event, incidents, records),
@@ -116,6 +125,7 @@ export default function AnalystAlerts({
       tabIndex={-1}
       aria-label="Alerts not yet cases"
     >
+      {focusId && <div className="command-panel" role="status"><h3>Alerts for {focusRecord?.title ?? "requested incident"}</h3><p>{focusRecord?.id ?? "Incident record unavailable"}</p>{!focusedEvents?.size && <p>No linked source alerts were supplied for this incident. No case was created.</p>}<button type="button" onClick={() => { window.history.replaceState(null, "", incidentFocusLocation(window.location.href, null)); setFocusId(null); }}>Clear incident filter</button></div>}
       <div className="command-panel-heading">
         <h2>Alerts not yet cases</h2>
         <span>{pending.length} source alerts without an open case</span>

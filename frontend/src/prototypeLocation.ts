@@ -19,7 +19,7 @@ const allowedViews = new Set([
   "case-file",
   "entity-profile",
 ]);
-const identifier = (v: string | null) =>
+export const identifier = (v: string | null) =>
   v && /^[A-Za-z0-9_.:-]{1,128}$/.test(v) ? v : null;
 export function readPrototypeLocation(url: string) {
   const query = new URL(url, "http://local.invalid").searchParams;

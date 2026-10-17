@@ -39,7 +39,7 @@ code = code.replace(/from\s+["']([^"']+)["']/g, (_match, spec) => {
       `export default function ${spec.slice(2)}(){return null};export function LateTasks(){return null};export function ConfirmDialog(){return null}`,
     );
   else if (spec.startsWith(".")) {
-    const p = new URL(spec + ".ts", sourceUrl);
+    const p = new URL(/\.[cm]?[jt]s$/.test(spec) ? spec : spec + ".ts", sourceUrl);
     assert.ok(existsSync(p));
     target = p.href;
   } else target = import.meta.resolve(spec);

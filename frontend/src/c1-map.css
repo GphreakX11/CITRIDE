@@ -1,0 +1,53 @@
+.c1-map { min-width: 0; color: var(--text); --c1-map-tone: var(--muted); }
+.c1-map-canvas { width: 100%; aspect-ratio: 800 / 620; min-height: 240px; background: var(--bg-header); border-radius: var(--radius-control); overflow: hidden; }
+.c1-map-svg { display: block; width: 100%; height: 100%; font-family: var(--font-sans); }
+.c1-map-gradient-start { stop-color: var(--surface-2); }
+.c1-map-gradient-end { stop-color: var(--surface); }
+.c1-map-outline { stroke: var(--border-strong); stroke-width: 2; }
+.c1-map-shadow { fill: var(--bg); opacity: .4; filter: blur(3px); }
+.c1-map-grid-dot { fill: var(--grey); opacity: .22; }
+.c1-map-glow-start { stop-color: var(--red); stop-opacity: .3; }
+.c1-map-glow-end { stop-color: var(--red); stop-opacity: 0; }
+.c1-map-cities { fill: var(--grey); pointer-events: none; }
+.c1-map-cities text { font-size: var(--fs-chip); paint-order: stroke; stroke: var(--bg-header); stroke-width: 2px; }
+.c1-map-tone-red { --c1-map-tone: var(--red-text); }
+.c1-map-tone-amber { --c1-map-tone: var(--amber-text); }
+.c1-map-tone-blue { --c1-map-tone: var(--blue-text); }
+.c1-map-tone-grey { --c1-map-tone: var(--muted); }
+.c1-map-tone-green { --c1-map-tone: var(--green-text); }
+.c1-map-marker { color: var(--c1-map-tone); cursor: pointer; outline: none; }
+.c1-map-marker-disc { fill: var(--bg-header); stroke: currentColor; stroke-width: 2.5px; }
+.c1-map-marker:hover .c1-map-marker-disc, .c1-map-marker:focus-visible .c1-map-marker-disc { fill: var(--surface-2); stroke-width: 4px; }
+.c1-map-marker:focus-visible .c1-map-marker-disc { stroke-dasharray: 5 3; }
+.c1-map-marker .infrastructure-icon { pointer-events: none; }
+.c1-map-label { pointer-events: none; }
+.c1-map-label rect { fill: var(--bg); stroke: var(--c1-map-tone); stroke-opacity: .6; }
+.c1-map-label-title { fill: var(--text); font-size: var(--fs-small); font-weight: 600; }
+.c1-map-label-meta { fill: var(--c1-map-tone); font-size: var(--fs-chip); font-family: var(--font-mono); }
+.c1-map-service { fill: none; stroke: var(--red); stroke-width: 1.5px; stroke-dasharray: 5 5; }
+.c1-map-probe { stroke: var(--amber); stroke-width: 2px; pointer-events: none; }
+.c1-map-probe line { stroke-dasharray: 4 5; opacity: .8; }
+.c1-map-probe circle { fill: var(--bg-header); }
+.c1-map-cascade { pointer-events: none; }
+.c1-map-cascade-ring { fill: none; stroke: currentColor; stroke-width: 2px; transform-box: fill-box; transform-origin: center; animation: c1-map-cascade 1.8s ease-out infinite; animation-delay: var(--c1-pulse-delay, 0s); }
+.c1-map-cascade-ring-second { animation-delay: calc(var(--c1-pulse-delay, 0s) - .9s); }
+@keyframes c1-map-cascade { from { transform: scale(1); opacity: .9; } to { transform: scale(1.9); opacity: 0; } }
+.c1-map-legend, .c1-map-pictograms { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 10px; font-size: var(--fs-chip); color: var(--text2); }
+.c1-map-legend > span, .c1-map-pictograms > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.c1-map-legend i { display: inline-block; flex: none; box-sizing: border-box; }
+.c1-map-key-ring { width: 12px; height: 12px; border: 2px solid var(--c1-map-tone); border-radius: 50%; }
+.c1-map-key-probe { width: 18px; border-top: 2px dashed var(--amber); }
+.c1-map-key-service { width: 14px; height: 14px; border: 1.5px dashed var(--red); border-radius: 50%; }
+.c1-map-key-cascade { width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+.c1-map-pictograms { color: var(--muted); }
+.c1-map-caption, .c1-map-probe-note, .c1-map-fallback p { margin: 8px 0 0; font-size: var(--fs-chip); color: var(--muted); }
+.c1-map-probe-note { color: var(--amber-text); }
+.c1-map-fallback ul { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; }
+.c1-map-list-button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--border-strong); border-left: 3px solid var(--c1-map-tone); border-radius: var(--radius-small); background: var(--bg-header); color: var(--text); text-align: left; cursor: pointer; }
+.c1-map-list-button small { display: block; font: var(--fs-chip) var(--font-mono); color: var(--c1-map-tone); }
+.c1-map-list-button > svg { color: var(--c1-map-tone); flex: none; }
+.c1-map-list-button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .c1-map-cascade-ring { animation: none; opacity: 1; stroke-width: 4px; }
+  .c1-map-cascade-ring-second { display: none; }
+}

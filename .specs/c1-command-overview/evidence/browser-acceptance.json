@@ -1,0 +1,27 @@
+{
+  "checks": [
+    "Fresh C1 is statewide; all cards initially collapsed",
+    "Keyboard marker selection opens exactly its card; accordion toggles; totals and statewide context do not change",
+    "Pulse changes CSS phase; reduced-motion stops ring and dot",
+    "Saved-case C2/C3/C4 and Analyst links carry the same incident and saved-case context",
+    "Summary tiles route to contextual C4/C6; earliest tile includes facility focus",
+    "Record-only link opens incident-filtered A1 with no invented case; browser Back restores statewide totals",
+    "390px phone layout has no horizontal overflow"
+  ],
+  "writes": [],
+  "errors": [],
+  "pulse1": {
+    "opacity": "0.568184",
+    "transform": "matrix(1.33182, 0, 0, 1.33182, 0, 0)"
+  },
+  "pulse2": {
+    "opacity": "0.213478",
+    "transform": "matrix(1.68652, 0, 0, 1.68652, 0, 0)"
+  },
+  "mobile": {
+    "width": 390,
+    "bodyWidth": 390,
+    "summaryHeight": 328.140625
+  },
+  "dataFilesUnchanged": true
+}

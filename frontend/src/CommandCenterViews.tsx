@@ -48,10 +48,11 @@ export interface CommandCenterViewsProps {
   onSelectEntity?: (id: string | null) => void;
   view: CommandView;
   onSelect: (id: string) => void;
+  onClearSelection?: () => void;
   onOpenAnalyst: (
     view: CommandView,
-    caseId?: string,
-    entityId?: string,
+    caseId?: string | null,
+    entityId?: string | null,
   ) => void;
   onNavigate: (view: CommandView) => void;
 }
@@ -324,6 +325,7 @@ export default function CommandCenterViews({
   onSelectEntity,
   view,
   onSelect,
+  onClearSelection,
   onOpenAnalyst,
   onNavigate,
   records,
@@ -370,6 +372,7 @@ export default function CommandCenterViews({
         records={records}
         reference={reference}
         onSelect={onSelect}
+        onClearSelection={onClearSelection}
         onOpenAnalyst={onOpenAnalyst}
         onNavigate={onNavigate}
         onSelectEntity={onSelectEntity}
