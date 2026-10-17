@@ -118,6 +118,34 @@ test("C1 stacks map and active register beside decision support; closed records 
   assert.match(html(Scripted, props("leadership")), /TX-26-0398/);
   assert.doesNotMatch(out, /\d+ minutes/);
 });
+test("Overview and Command map share the same statewide renderer, icons and recorded positions", () => {
+  const input = freeze(props("command"));
+  const before = JSON.stringify(input);
+  const overview = html(Scripted, input);
+  const statewide = html(Scripted, { ...input, view: "cop" });
+  const map = out => out.match(/<div class="sf-state-map">([\s\S]*?)<\/div>/)?.[1];
+  assert.ok(map(overview), "Overview must use the shared statewide map, not a separate schematic");
+  assert.ok(map(statewide));
+  const pins = out => new Map([...map(out).matchAll(/<button[^>]*data-incident-pin="([^"]+)"[^>]*>[\s\S]*?<\/button>/g)].map(m => [m[1], m[0]]));
+  const a = pins(overview), b = pins(statewide);
+  assert.ok(a.size > 0);
+  for (const [id, markup] of a) assert.equal(markup, b.get(id), `${id}: identical glyph, position and selected state`);
+  assert.doesNotMatch(overview, /class="sc-safe-map"/);
+  assert.match(overview, /Active infrastructure incidents/);
+  assert.equal(JSON.stringify(input), before);
+});
+
+test("Shared maps never fabricate a pin for a record without a source position", () => {
+  const r = records();
+  r.statewideIncidents.push({ id: "no-location", title: "Unlocated water incident", status: "open", severity: "high" });
+  for (const view of ["command", "cop"]) {
+    const out = html(Scripted, props(view, freeze(r)));
+    assert.doesNotMatch(out, /data-incident-pin="no-location"/);
+    assert.match(out, /Unlocated water incident/);
+    assert.match(out, /Some incident locations are unknown/);
+  }
+});
+
 test("C1 active register keeps the open Watershed case first, then severity and recorded start", () => {
   const r = records();
   r.statewideIncidents.push({ id: "early-high", title: "Earlier high severity", status: "open", severity: "high", startedAt: "2026-10-13T05:00:00Z", location: { label: "Authored" } });

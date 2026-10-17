@@ -339,9 +339,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     const earliest = activeModels.map((item) => item.earliest).filter((window): window is [number, number] => !!window).sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
     const notices = [...new Set(activeModels.map((item) => boilWaterLabel(item.run, item.captured.entities, reference)).filter(Boolean))];
     const underInvestigation = active.filter((row) => row.caseId && incidents.some((item) => item.id === row.caseId && item.status === "open")).length;
-    const mapItems: RecordItem[] = [...active, ...footprint.probed.map((utility) => ({
-      id: utility.id, title: `${utility.label} · probed`, status: "probed", sectors: ["12"],
-    }))];
+
     const pending = active.flatMap((row) =>
       row.caseId
         ? reference.responseOptions
@@ -396,16 +394,19 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
         <div className="sc-overview-layout">
           <div className="sc-overview-main">
             <Panel title="Statewide picture">
-              <Schematic
-                items={mapItems}
-                active={picked ?? selectedRow?.id ?? null}
-                onSelect={(id) => {
-                  if (active.some((row) => row.id === id)) selectRow(id);
-                  else { setPicked(id); onSelectEntity?.(id); }
-                }}
-                label="Statewide incident schematic"
+              <StatewideFootprint
+                data={data}
+                incidents={incidents}
+                selected={selected?.status !== "closed" ? selected : incidents.find(item => item.status !== "closed") ?? null}
+                records={records}
+                reference={reference}
+                onSelect={onSelect}
+                onOpenAnalyst={onOpenAnalyst}
+                onPickIncident={selectRow}
+                pickedIncidentId={picked ?? selectedRow?.id ?? null}
+                compact
+                activeOnly
               />
-              <div className="sc-map-key"><span>● Active incident</span><span>Linked utilities: recorded probes, not additional incidents</span></div>
             </Panel>
             <Panel title="Active incidents · statewide" note="Select an incident to see its consequences">
               {registerFor(active, "active")}

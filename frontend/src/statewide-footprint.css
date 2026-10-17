@@ -60,6 +60,9 @@
   gap: 18px;
   align-items: start;
 }
+.sf-compact .sf-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
 .sf-map-panel,
 .sf-summary {
   background: var(--surface);

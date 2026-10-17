@@ -27,6 +27,11 @@ export interface StatewideFootprintProps {
     entityId?: string,
   ) => void;
   onSelect?: (id: string) => void;
+  /** Overview shares the map while keeping its existing decision-support sidebar. */
+  compact?: boolean;
+  activeOnly?: boolean;
+  onPickIncident?: (id: string) => void;
+  pickedIncidentId?: string | null;
 }
 export type Coordinate = [number, number];
 const refs = (v: unknown): string[] =>

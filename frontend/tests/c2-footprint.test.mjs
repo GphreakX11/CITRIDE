@@ -146,6 +146,18 @@ test("C2 infrastructure icons match the list and retain complete accessible inci
   assert.doesNotMatch(rendered, /sf-pin-number|Illustrative positions|Not precise locations/);
 });
 
+test("shared overview map honors controlled register selection without adding a duplicate sidebar", () => {
+  const p = props();
+  const picked = p.records.statewideIncidents.find(row => !row.caseId && row.status !== "closed");
+  assert.ok(picked);
+  const out = html({ ...p, compact: true, activeOnly: true, pickedIncidentId: picked.id });
+  assert.equal(out.match(/data-incident-pin="([^"]+)"[^>]*aria-pressed="true"/)?.[1], picked.id);
+  assert.match(out, /sf-statewide sf-compact/);
+  assert.match(out, /Active infrastructure incidents/);
+  assert.doesNotMatch(out, /class="sf-summary"/);
+  assert.match(out, /Recorded service footprints/);
+});
+
 test("C2 phone maps use fixed touch targets instead of clipping long absolute-positioned labels", () => {
   const css = readFileSync(
     new URL("../src/statewide-footprint.css", import.meta.url),

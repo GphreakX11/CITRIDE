@@ -174,14 +174,21 @@ export function StatewideFootprintView({
   onOpenAnalyst,
   mapRef,
   mapSize = { width: 640, height: 448 },
+  compact = false,
+  activeOnly = false,
 }: {
   model: StatewideFootprintModel;
   onPick: (id: string) => void;
   onOpenAnalyst: StatewideFootprintProps["onOpenAnalyst"];
   mapRef?: RefObject<HTMLDivElement | null>;
   mapSize?: { width: number; height: number };
+  compact?: boolean;
+  activeOnly?: boolean;
 }) {
   const row = model.active;
+  const rows = activeOnly ? model.rows.filter(item => item.status !== "closed") : model.rows;
+  // Fit the same source set in both views: hiding a closed incident must not
+  // move another incident or fabricate a pin for an unknown source location.
   const { markers, capacityExceeded } = fittedTexasMarkerLayout(
     model.rows.flatMap((item) => {
       const p = item.location?.schematic;
@@ -194,10 +201,10 @@ export function StatewideFootprintView({
   );
 
   return (
-    <section className="sf-statewide" aria-label="Statewide incident footprint">
+    <section className={`sf-statewide${compact ? " sf-compact" : ""}`} aria-label="Statewide incident footprint">
       <header className="sf-heading">
-        <p>Infrastructure &amp; incidents</p>
-        <span className="infrastructure-map-count">{markers.length} mapped</span>
+        <p>{activeOnly ? "Active infrastructure incidents" : "Infrastructure & incidents"}</p>
+        <span className="infrastructure-map-count">{markers.filter(marker => rows.some(item => item.id === marker.id)).length} mapped</span>
       </header>
 
       <div className="sf-layout">
@@ -214,7 +221,7 @@ export function StatewideFootprintView({
               <path d={TEXAS_PATH} />
             </svg>
 
-            {model.rows.map((item) => {
+            {rows.map((item) => {
               const position = item.location?.schematic;
               if (
                 !position ||
@@ -256,7 +263,7 @@ export function StatewideFootprintView({
 
           {capacityExceeded && <p role="status">Too many incidents for separate touch targets at this width. Every incident is available in the list below.</p>}
           <div className="sf-legend infrastructure-map-legend" aria-label="Infrastructure types">
-            {[...new Set(model.rows.filter(item => markers.some(marker => marker.id === item.id)).map(infrastructureKind))].map((kind) => (
+            {[...new Set(rows.filter(item => markers.some(marker => marker.id === item.id)).map(infrastructureKind))].sort((a, b) => infrastructureLabel(a).localeCompare(infrastructureLabel(b))).map((kind) => (
               <span key={kind} data-infrastructure-kind={kind}>
                 <InfrastructureIcon kind={kind} size={18} />
                 {infrastructureLabel(kind)}
@@ -264,9 +271,9 @@ export function StatewideFootprintView({
             ))}
           </div>
           <details className="sf-incident-index" open={capacityExceeded || undefined}>
-            <summary>All incidents · {model.rows.length}</summary>
+            <summary>{activeOnly ? "Active incidents" : "All incidents"} · {rows.length}</summary>
             <nav className="sf-incident-nav" aria-label="Statewide incidents">
-              {model.rows.map((item) => (
+              {rows.map((item) => (
                 <button type="button" key={item.id} aria-pressed={item.id === row?.id} onClick={() => onPick(item.id)}>
                   <span className="sf-nav-icon" data-infrastructure-kind={infrastructureKind(item)}><InfrastructureIcon kind={infrastructureKind(item)} size={22} /></span>
                   <span className="sf-nav-title">{item.title}</span>
@@ -276,11 +283,11 @@ export function StatewideFootprintView({
             </nav>
           </details>
           <RecordedFootprints model={model} />
-          {model.rows.some((item) => !item.location?.schematic) && (
+          {rows.some((item) => !item.location?.schematic) && (
             <p className="sf-caption">Some incident locations are unknown.</p>
           )}
         </section>
-        <aside
+        {!compact && <aside
           className="sf-summary"
           aria-label="Read-only summary"
           aria-live="polite"
@@ -378,7 +385,7 @@ export function StatewideFootprintView({
           ) : (
             <p>No statewide incident records available.</p>
           )}
-        </aside>
+        </aside>}
       </div>
     </section>
   );
@@ -410,10 +417,14 @@ export default function StatewideFootprint(props: StatewideFootprintProps) {
   const scope = props.selected?.id ?? null;
   const model = statewideFootprint(
     props,
-    selection.scope === scope ? selection.id : null,
+    props.pickedIncidentId ?? (selection.scope === scope ? selection.id : null),
   );
   const pick = (id: string) => {
     setSelection({ scope, id });
+    if (props.onPickIncident) {
+      props.onPickIncident(id);
+      return;
+    }
     const caseId = model.rows.find((row) => row.id === id)?.caseId;
     if (caseId && caseId !== props.selected?.id) props.onSelect?.(caseId);
   };
@@ -424,6 +435,8 @@ export default function StatewideFootprint(props: StatewideFootprintProps) {
       onOpenAnalyst={props.onOpenAnalyst}
       mapRef={mapRef}
       mapSize={mapSize}
+      compact={props.compact}
+      activeOnly={props.activeOnly}
     />
   );
 }

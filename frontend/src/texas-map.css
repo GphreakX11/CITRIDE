@@ -198,6 +198,29 @@
   cursor: pointer;
   outline: none;
 }
+.texas-node-symbol {
+  transform: scale(var(--texas-marker-scale, 1));
+  transform-origin: 0 0;
+}
+.texas-node-core,
+.texas-legend-marker {
+  fill: var(--bg-header);
+  stroke: var(--infrastructure-accent, var(--infrastructure-color));
+  stroke-width: 1.75px;
+}
+.texas-node:is(:hover, :focus-visible, .is-selected) .texas-node-core {
+  stroke-width: 2.5px;
+}
+/* Keep nested Lucide circles/rectangles distinct from the circular marker.
+   In particular hospital windows and radio waves must never inherit a fill. */
+.texas-node
+  .infrastructure-icon
+  :is(path, circle, line, polyline, polygon, rect) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
 .texas-node-label {
   font-size: var(--fs-edge);
   fill: var(--text-strong);
@@ -218,6 +241,7 @@
   fill: var(--text-strong);
 }
 .texas-node-halo {
+  stroke: var(--infrastructure-accent, var(--infrastructure-color));
   filter: drop-shadow(
     0 0 8px color-mix(in srgb, var(--text-muted) 53.3%, transparent)
   );
@@ -269,16 +293,18 @@
 .texas-legend .structure {
   border-top: 2px dashed var(--accent);
 }
-.texas-legend .facility,
-.texas-legend .utility {
-  width: 7px;
-  height: 7px;
-  background: var(--green-bg);
-  border: 0;
-  border-radius: 50%;
+.texas-infrastructure-legend > span {
+  white-space: nowrap;
 }
-.texas-legend .utility {
-  background: var(--surface);
+.texas-legend .texas-legend-marker {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--infrastructure-accent, var(--infrastructure-color));
+  background: var(--bg-header);
 }
 .texas-layer-controls {
   display: flex;

@@ -33,6 +33,9 @@ import {
 import type { MapEdge } from "./texasGraph";
 import { TEXAS_BOUNDARY_SOURCE, TEXAS_PATH } from "./texasOutline";
 import { nodeLabels } from "./texasLabels";
+import { InfrastructureIcon } from "./InfrastructureIcon";
+import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons";
+import "./infrastructure-map.css";
 import "./texas-map.css";
 
 interface Props {
@@ -46,16 +49,6 @@ interface Props {
   mapState: MapViewState;
   onMapStateChange: (state: MapViewState) => void;
 }
-const typeColor = (entity: Entity) =>
-  /Cyber|PhysicalOT|PhysicalIT/.test(entity.type)
-    ? "#c4a5fd"
-    : /WaterServiceProvider|TreatmentPlant/.test(entity.type)
-      ? "#63caff"
-      : /Electric/.test(entity.type)
-        ? "#ffc568"
-        : /ServiceArea|Organization|Population/.test(entity.type)
-          ? "#91a8bd"
-          : "#63dfbb";
 const edgeColor = (edge: MapEdge) =>
   edge.kind === "dependency"
     ? "#f5bc64"
@@ -82,6 +75,28 @@ export default function TexasInfrastructureMap({
   useEffect(() => {
     connectionsRef.current?.scrollTo({ top: 0 });
   }, [selectedId, direction]);
+  const mapRef = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    // Compensate for a narrow SVG viewport without changing graph positions,
+    // labels, pan coordinates or the user's zoom. Bound enlargement in dense
+    // neighborhoods; selecting a mobile node still uses the existing 2× zoom.
+    const resizeMarkers = () => {
+      const box = map.getBoundingClientRect();
+      const scale = Math.min(box.width / 960, box.height / 720) * zoom;
+      if (scale <= 0) return;
+      map.style.setProperty(
+        "--texas-marker-scale",
+        String(Math.max(1, Math.min(1.8, 18 / (26 * scale)))),
+      );
+    };
+    resizeMarkers();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(resizeMarkers);
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, [zoom]);
   const drag = useRef<{
     x: number;
     y: number;
@@ -160,6 +175,15 @@ export default function TexasInfrastructureMap({
       (!(focusOnly || directional) || !selected || neighbors.has(entity.id)),
   );
   const drawnIds = new Set(visible.map((entity) => entity.id));
+  const visibleKinds = [
+    ...new Set(
+      visible
+        .filter((entity) => positions.has(entity.id))
+        .map(infrastructureKind),
+    ),
+  ].sort((a, b) =>
+    infrastructureLabel(a).localeCompare(infrastructureLabel(b)),
+  );
   const labelBounds = {
     minX: center.x - 480 / zoom,
     maxX: center.x + 480 / zoom,
@@ -548,6 +572,7 @@ export default function TexasInfrastructureMap({
             </button>
           </div>
           <svg
+            ref={mapRef}
             className="texas-map"
             viewBox={`${center.x - width / 2} ${center.y - height / 2} ${width} ${height}`}
             aria-label="Texas map with directed infrastructure relationships"
@@ -736,10 +761,12 @@ export default function TexasInfrastructureMap({
               if (!point) return null;
               const isSelected = entity.id === selected?.id,
                 isRelated = !selected || neighbors.has(entity.id);
+              const kind = infrastructureKind(entity);
               return (
                 <g
                   key={entity.id}
                   data-node-id={entity.id}
+                  data-infrastructure-kind={kind}
                   data-utility-status={statuses.get(entity.id)?.status}
                   className={`texas-node ${isSelected ? "is-selected" : ""} ${isRelated ? "" : "is-dim"}`}
                   role="button"
@@ -767,32 +794,22 @@ export default function TexasInfrastructureMap({
                     fill="transparent"
                     className="texas-node-target"
                   />
-                  {isSelected && (
-                    <circle
-                      className="texas-node-halo"
-                      cx={point.x}
-                      cy={point.y}
-                      r="25"
-                      fill="none"
-                      stroke={typeColor(entity)}
-                      strokeWidth="2"
-                    />
-                  )}
-                  <circle
-                    cx={point.x}
-                    cy={point.y}
-                    r={isSelected ? 14 : 11}
-                    className="texas-node-core"
-                    fill={
-                      statuses.get(entity.id)?.status === "under-attack"
-                        ? "#f97066"
-                        : statuses.get(entity.id)?.status === "probed"
-                          ? "#f5a524"
-                          : typeColor(entity)
-                    }
-                    stroke="#e7f4fc"
-                    strokeWidth="2"
-                  />
+                  <g transform={`translate(${point.x} ${point.y})`}>
+                    <g className="texas-node-symbol">
+                      {isSelected && (
+                        <circle
+                          className="texas-node-halo"
+                          r="24"
+                          fill="none"
+                          strokeWidth="2"
+                        />
+                      )}
+                      <circle r="19" className="texas-node-core" />
+                      <g transform="translate(-13 -13)">
+                        <InfrastructureIcon kind={kind} size={26} />
+                      </g>
+                    </g>
+                  </g>
                   <rect
                     x={
                       (labels.get(entity.id)?.x ?? point.x) -
@@ -839,7 +856,28 @@ export default function TexasInfrastructureMap({
               No matching entities. Try another name or clear the filter.
             </div>
           )}
-          <div className="texas-legend">
+          <div
+            className="texas-legend texas-infrastructure-legend"
+            role="group"
+            aria-label="Visible infrastructure types"
+          >
+            {visibleKinds.map((kind) => (
+              <span key={kind} data-infrastructure-kind={kind}>
+                <span className="texas-legend-marker">
+                  <InfrastructureIcon kind={kind} size={20} />
+                </span>
+                {infrastructureLabel(kind)}
+              </span>
+            ))}
+            {!visibleKinds.length && (
+              <span>No infrastructure types visible</span>
+            )}
+          </div>
+          <div
+            className="texas-legend"
+            role="group"
+            aria-label="Relationship and status legend"
+          >
             <span>
               <i className="under-attack" />
               Under attack · open/monitoring case + effect or suspected
@@ -858,14 +896,6 @@ export default function TexasInfrastructureMap({
               {selected
                 ? "Ownership / hosting / location"
                 : "Structure / ownership"}
-            </span>
-            <span>
-              <i className="facility" />
-              Facility
-            </span>
-            <span>
-              <i className="utility" />
-              Water infrastructure
             </span>
           </div>
           <div className="texas-layer-controls">
