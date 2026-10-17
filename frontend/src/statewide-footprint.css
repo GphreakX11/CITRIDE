@@ -438,6 +438,23 @@
   outline: 3px solid var(--text-muted);
   outline-offset: 3px;
 }
+/* C2: compact read-only context without changing the preserved map/model. */
+.workspace-mode-command .sf-statewide .sf-summary { gap: 10px; padding: 18px 20px; }
+.workspace-mode-command .sf-statewide .sf-eyebrow { font-size: var(--fs-chip); }
+.workspace-mode-command .sf-statewide .sf-id { font-size: var(--fs-mono); }
+.workspace-mode-command .sf-statewide .sf-summary dl { grid-template-columns: minmax(100px, 1fr) minmax(0, 1.7fr); align-items: baseline; gap: 6px 10px; font-size: var(--fs-small); line-height: 1.4; }
+.workspace-mode-command .sf-statewide .sf-summary dt { margin: 0; }
+.workspace-mode-command .sf-statewide .sf-summary p { font-size: var(--fs-small); line-height: 1.4; }
+.workspace-mode-command .sf-statewide .sf-facility-summary { padding: 10px 0; }
+.workspace-mode-command .sf-statewide .sf-facility-summary h3 { font-size: var(--fs-body); }
+.workspace-mode-command .sf-statewide .sf-facility-summary ul { gap: 8px; }
+.workspace-mode-command .sf-statewide .sf-facility-summary li { font-size: var(--fs-small); }
+.workspace-mode-command .sf-statewide .sf-open { background: var(--blue-bg); color: var(--text-strong); }
+.workspace-mode-command .sf-recorded-footprints { display: block; margin-top: 12px; font-size: var(--fs-small); }
+.workspace-mode-command .sf-recorded-footprints > summary,
+.workspace-mode-command .sf-incident-detail > summary { cursor: pointer; color: var(--text-muted); font-size: var(--fs-small); min-height: 24px; }
+.workspace-mode-command .sf-recorded-footprints .sf-local-footprint { margin-top: 10px; }
+.workspace-mode-command .sf-incident-detail > p { margin-top: 6px; }
 @media (max-width: 1050px) {
   .sf-layout {
     grid-template-columns: 1fr;

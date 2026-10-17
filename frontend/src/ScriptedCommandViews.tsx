@@ -829,9 +829,16 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     const contacts = scope(records.contacts);
     content = (
       <>
-        <Panel title="Who We Need, and Where We Are">
-          <p>CITRIDE does not send notifications</p>
-          <div className="sc-grid">
+        <Panel title="Who we need, and where we are">
+          <p className="sc-contact-caption">Status as recorded by analysts · CITRIDE does not send notifications</p>
+          <div className="sc-contact-metrics" aria-label="Partner contact totals">
+            {(["act", "know", "helping"] as const).map((group) => {
+              const items = contacts.filter((item) => item.group === group);
+              const reached = items.filter((item) => item.status === (group === "helping" ? "engaged" : "contacted")).length;
+              return <article key={group} data-contact-group={group}><strong>{reached} of {items.length}</strong><span>{{ act: "Need to act · reached", know: "Need to know · reached", helping: "Helping us · engaged" }[group]}</span></article>;
+            })}
+          </div>
+          <div className="sc-grid sc-contact-groups">
             {(["act", "know", "helping"] as const).map((group) => {
               const items = contacts.filter((item) => item.group === group);
               return (
@@ -847,25 +854,25 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                     · {items.length}
                   </h3>
                   {items.map((item) => (
-                    <p key={item.id}>
-                      {item.partnerRole}
-                      <small>
+                    <div className="sc-contact-row" key={item.id}>
+                      <span>{item.partnerRole}</span>
+                      <div className="sc-contact-status">
                         <StatusChip status={item.status}>
                           {records.contactStatusLabels[item.status ?? ""] ??
                             words(item.status ?? "unknown")}
                         </StatusChip>{" "}
-                        · {timeLabel(recordTime(item, data, selected))}
-                      </small>
-                      {item.note}
-                    </p>
+                        <time>{recordTime(item, data, selected) ? timeLabel(recordTime(item, data, selected)) : "—"}</time>
+                      </div>
+                      {item.note && <small className="sc-contact-note">{item.note}</small>}
+                    </div>
                   ))}
                 </article>
               );
             })}
           </div>
         </Panel>
-        <Panel title="What Each Partner and Stakeholder Can See">
-          <div className="sc-grid">
+        <Panel title="What each partner and stakeholder can see">
+          <div className="sc-grid sc-audience-cards">
             {selected ? (
               previewAudiences.map((audience) => {
                 const preview = recordAudiencePreview(
@@ -875,7 +882,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                 );
                 return (
                   <article key={audience} data-audience={audience}>
-                    <h3>{preview.title}</h3>
+                    <h3>{{ internal: "TXCC (CTIC, UCTF)", water: "Water-sector partners", health: "TDEM and healthcare", federal: "Federal partners" }[audience]}</h3>
                     <small>{preview.status}</small>
                     <h4>Shows</h4>
                     <ul>

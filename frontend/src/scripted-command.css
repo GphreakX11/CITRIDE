@@ -257,7 +257,31 @@
 .sc-overview-update { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
 .sc-overview-update time { white-space: nowrap; font-family: var(--font-mono); color: var(--text-muted); }
 .scripted-command[data-screen="command"] .sc-overview-sidebar details { font-size: var(--fs-small); }
+/* C7 contact totals and compact record-bound partner/audience presentation. */
+.scripted-command[data-screen="federation"] .command-panel-heading h2 { font-size: var(--fs-card-title); }
+.sc-contact-caption { color: var(--text-muted); font-size: var(--fs-small); margin: 0 0 14px; }
+.sc-contact-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.sc-contact-metrics > article { display: grid; gap: 4px; padding: 12px 16px; background: var(--blue-bg); border: 1px solid var(--blue); border-radius: var(--radius-control); }
+.sc-contact-metrics > article[data-contact-group="act"] { background: var(--red-bg); border-color: var(--red); }
+.sc-contact-metrics > article[data-contact-group="know"] { background: var(--amber-bg); border-color: var(--amber); }
+.sc-contact-metrics strong { font-size: var(--fs-number); line-height: 1.2; }
+.sc-contact-metrics span { font-size: var(--fs-small); }
+.sc-contact-groups { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.sc-contact-groups h3 { font-size: var(--fs-body); margin: 0 0 6px; }
+.sc-contact-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); font-size: var(--fs-small); line-height: 1.4; }
+.sc-contact-status { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 8px; max-width: 220px; }
+.sc-contact-status .status-chip { white-space: normal; text-align: right; font-size: var(--fs-chip); }
+.sc-contact-status .status-chip--blue { color: var(--green-text); border-color: var(--green); }
+.sc-contact-status time { font-family: var(--font-mono); color: var(--text-muted); font-size: var(--fs-chip); white-space: nowrap; }
+.sc-contact-row .sc-contact-note { grid-column: 1 / -1; margin: 0; }
+.sc-audience-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.sc-audience-cards > article { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); min-width: 0; font-size: var(--fs-small); }
+.sc-audience-cards h3 { font-size: var(--fs-body); margin: 0 0 6px; }
+.sc-audience-cards h4 { font-size: var(--fs-small); margin: 12px 0 4px; color: var(--text-muted); }
+.sc-audience-cards ul { padding-left: 18px; margin: 4px 0; line-height: 1.45; overflow-wrap: anywhere; }
 @media (max-width: 1100px) {
+  .sc-contact-groups { grid-template-columns: minmax(0, 1fr); }
+  .sc-audience-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .scripted-command[data-screen="command"] .sc-overview-layout { grid-template-columns: minmax(0, 1fr); }
   .sc-overview-layout, .sc-team-layout { grid-template-columns: minmax(0, 1fr); }
   .sc-overview-sidebar { grid-template-columns: repeat(3, minmax(0, 1fr)); }

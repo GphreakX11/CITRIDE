@@ -553,7 +553,7 @@ function CaseDetails({
           ))}
         </nav>
       )}
-      {mode === "tracking" && <p className="cc-muted">Complete the saved checklist and advisory reviews in <button type="button" onClick={() => onNavigate?.("case-file")}>Case File</button> before closure.</p>}
+      {mode === "tracking" && <p className="cc-muted">Complete the saved checklist and review items in <button type="button" onClick={() => onNavigate?.("case-file")}>Case File</button> before closure.</p>}
       {mode !== "tracking" && <><CaseProgress
         incident={selected}
         locked={locked}

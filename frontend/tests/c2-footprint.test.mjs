@@ -428,3 +428,15 @@ test("C2 elapsed uses the story clock and waiting decisions honor recorded choic
   p.records.statewideIncidents[0].closedAt = "2026-10-13T08:10:00Z";
   assert.equal(statewideFootprint(p).elapsed, 10);
 });
+test("C2 keeps captured geometry and full incident narrative behind closed disclosures", () => {
+  const p = freeze(props());
+  const before = JSON.stringify(p);
+  const out = html(p);
+  assert.match(out, /<details class="sf-recorded-footprints" aria-label="Captured service footprints"><summary>Recorded service footprints/);
+  assert.match(out, /<details class="sf-incident-detail"><summary>Recorded incident detail<\/summary>/);
+  assert.match(out, /data-state-boundary="texas"/);
+  assert.equal((out.match(/data-incident-pin=/g) ?? []).length, 5);
+  assert.match(out, /data-modeled-facility="nursing-z"/);
+  assert.match(out, /data-service-area="area-a"/);
+  assert.equal(JSON.stringify(p), before);
+});

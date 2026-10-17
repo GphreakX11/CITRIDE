@@ -102,7 +102,10 @@ test("captured case endpoints link; shared area/operator/current relationships d
 
 test("events walk observed hosting/containment only, excluding related probes and shared provenance", () => {
   const ids = entityEvents(data, "utility-a").map((event) => event.id);
+  for (const letter of ["a", "b", "c"])
+    assert.equal(byId(`vpn-${letter}`).partOf, `plant-${letter}`);
   assert.deepEqual(ids, [
+    "event-vpn-a",
     "event-inbound-a",
     "event-auth-a",
     "event-dosing",

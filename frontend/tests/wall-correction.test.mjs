@@ -265,3 +265,28 @@ test("Attack Picture keeps full evidence behind compact attribution and hunt det
   assert.match(out, /Vendor V account sweep/);
   assert.match(out, /Hunt details/);
 });
+test("C7 contact tiles count actual reached records, preserve consent and omit invented times", () => {
+  const r = records();
+  r.contacts.push({ id: "other-case-contact", incidentId: "unrelated", group: "act", status: "contacted", partnerRole: "Other case" });
+  freeze(r);
+  const before = JSON.stringify(r);
+  const out = html(Scripted, props("federation", r));
+  assert.match(out, /data-contact-group="act"><strong>1 of 4<\/strong>/);
+  assert.match(out, /data-contact-group="know"><strong>1 of 5<\/strong>/);
+  assert.match(out, /data-contact-group="helping"><strong>2 of 6<\/strong>/);
+  assert.match(out, /<time>—<\/time>/);
+  assert.doesNotMatch(out, /Other case|Time not recorded/);
+  for (const name of ["TXCC (CTIC, UCTF)", "Water-sector partners", "TDEM and healthcare", "Federal partners", "Draft · not sent", "Not shared · no owner consent"])
+    assert.ok(out.includes(name), name);
+  assert.match(out, /CITRIDE does not send notifications/);
+  assert.equal(JSON.stringify(r), before);
+});
+test("C7 contact metrics follow changed statuses and selected-case local scope", () => {
+  const r = records();
+  r.contacts[0].status = "not_yet";
+  const out = html(Scripted, props("federation", freeze(r)));
+  assert.match(out, /data-contact-group="act"><strong>0 of 4<\/strong>/);
+  const empty = html(Scripted, props("federation", freeze(records()), { ...incident(), id: "case-no-contacts", eventId: "unrelated-event" }));
+  assert.match(empty, /data-contact-group="act"><strong>0 of 0<\/strong>/);
+  assert.doesNotMatch(empty, /class="sc-contact-row"/);
+});

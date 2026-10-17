@@ -22,10 +22,11 @@ const windowLabel = (v: Coordinate | null) =>
 
 function RecordedFootprints({ model }: { model: StatewideFootprintModel }) {
   return (
-    <div
+    <details
       className="sf-recorded-footprints"
       aria-label="Captured service footprints"
     >
+      <summary>Recorded service footprints · local geometry and related probes</summary>
       {model.layers
         .filter((layer) => layer.utility)
         .map((layer) => {
@@ -154,7 +155,7 @@ function RecordedFootprints({ model }: { model: StatewideFootprintModel }) {
             </section>
           );
         })}
-    </div>
+    </details>
   );
 }
 
@@ -332,7 +333,7 @@ export function StatewideFootprintView({
                   {words(row.status ?? "unknown")}
                 </StatusChip>
               </div>
-              <p>{row.summary}</p>
+              <details className="sf-incident-detail"><summary>Recorded incident detail</summary><p>{row.summary}</p></details>
               <dl>
                 <dt>Location</dt>
                 <dd>{row.location?.label ?? "Not recorded"}</dd>
