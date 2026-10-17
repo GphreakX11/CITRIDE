@@ -33,10 +33,47 @@ import {
 import type { MapEdge } from "./texasGraph";
 import { TEXAS_BOUNDARY_SOURCE, TEXAS_PATH } from "./texasOutline";
 import { nodeLabels } from "./texasLabels";
+import { containedTexasAnchor, texasContainsMarker } from "./texasMapLayout";
 import { InfrastructureIcon } from "./InfrastructureIcon";
 import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons";
 import "./infrastructure-map.css";
 import "./texas-map.css";
+
+/** Separate visual glyphs only; edges and captured positions stay anchored. */
+export function infrastructureSymbolPositions(
+  source: ReadonlyMap<string, { x: number; y: number }>,
+) {
+  const points = [...source].sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, p]) => ({ id, x: p.x, y: p.y }));
+  // 19px core radius × maximum 1.8 responsive scale, plus a clear gap.
+  const separation = 76;
+  for (let pass = 0; pass < 64; pass++) {
+    let adjusted = false;
+    for (const p of points) {
+      if (!texasContainsMarker(p, 1000, 700, 72)) {
+        const safe = containedTexasAnchor({ x: p.x / 10, y: p.y / 7 }, 1000, 700, 72);
+        p.x = safe.x; p.y = safe.y;
+        adjusted = true;
+      }
+    }
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const a = points[i], b = points[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance >= separation) continue;
+        const ux = distance ? dx / distance : 1;
+        const uy = distance ? dy / distance : 0;
+        const shift = (separation - distance) / 2 + 0.01;
+        a.x -= ux * shift; a.y -= uy * shift;
+        b.x += ux * shift; b.y += uy * shift;
+        adjusted = true;
+      }
+    }
+    if (!adjusted) break;
+  }
+  return new Map(points.map(({ id, x, y }) => [id, { x, y }]));
+}
 
 interface Props {
   idtIndex?: IdtIndex | null;
@@ -113,6 +150,7 @@ export default function TexasInfrastructureMap({
   );
   const edges = useMemo(() => graphEdges(data), [data]);
   const positions = useMemo(() => mapPositions(data.entities), [data.entities]);
+
   const baseIds = useMemo(() => new Set(infrastructureIds(data)), [data]);
   const areas = data.entities.filter((entity) => entity.type === "ServiceArea");
   const selected = selectedId ? entities.get(selectedId) : undefined;
@@ -175,6 +213,10 @@ export default function TexasInfrastructureMap({
       (!(focusOnly || directional) || !selected || neighbors.has(entity.id)),
   );
   const drawnIds = new Set(visible.map((entity) => entity.id));
+  const symbols = infrastructureSymbolPositions(new Map(visible.flatMap(entity => {
+    const position = positions.get(entity.id);
+    return position ? [[entity.id, position] as const] : [];
+  })));
   const visibleKinds = [
     ...new Set(
       visible
@@ -619,6 +661,7 @@ export default function TexasInfrastructureMap({
             }}
           >
             <defs>
+            <clipPath id={`${uid}-icon-leaders`}><path d={TEXAS_PATH} /></clipPath>
               <pattern
                 id={`${uid}-grid`}
                 width="60"
@@ -762,6 +805,8 @@ export default function TexasInfrastructureMap({
               const isSelected = entity.id === selected?.id,
                 isRelated = !selected || neighbors.has(entity.id);
               const kind = infrastructureKind(entity);
+              const symbol = symbols.get(entity.id) ?? point;
+              const shifted = Math.hypot(symbol.x - point.x, symbol.y - point.y) > 0.5;
               return (
                 <g
                   key={entity.id}
@@ -794,7 +839,11 @@ export default function TexasInfrastructureMap({
                     fill="transparent"
                     className="texas-node-target"
                   />
-                  <g transform={`translate(${point.x} ${point.y})`}>
+                  {shifted && <g clipPath={`url(#${uid}-icon-leaders)`}>
+                    <line x1={point.x} y1={point.y} x2={symbol.x} y2={symbol.y} className="texas-icon-leader" />
+                    <circle cx={point.x} cy={point.y} r="2" className="texas-icon-anchor" />
+                  </g>}
+                  <g transform={`translate(${symbol.x} ${symbol.y})`}>
                     <g className="texas-node-symbol">
                       {isSelected && (
                         <circle

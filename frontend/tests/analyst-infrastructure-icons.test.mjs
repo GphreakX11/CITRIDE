@@ -15,6 +15,7 @@ import {
 } from "../src/texasGraph.ts";
 import { serviceConnections } from "../src/relationshipStory.ts";
 import { utilityMapStatus } from "../src/whoActsFirst.ts";
+import { texasContainsMarker } from "../src/texasMapLayout.ts";
 
 const data = JSON.parse(
   readFileSync(new URL("../../data/scenario.json", import.meta.url), "utf8"),
@@ -60,7 +61,21 @@ async function compile(url, harness = false) {
   return result;
 }
 const source = new URL("../src/TexasInfrastructureMap.tsx", import.meta.url);
-const MapComponent = (await import(await compile(source))).default;
+const { default: MapComponent, infrastructureSymbolPositions } = await import(await compile(source));
+test("Analyst sector glyphs stay separate at the maximum responsive marker scale without moving source anchors", () => {
+  const ids = new Set(infrastructureIds(data));
+  const original = new Map([...mapPositions(data.entities)].filter(([id]) => ids.has(id)));
+  const before = structuredClone([...original]);
+  const symbols = infrastructureSymbolPositions(original);
+  assert.deepEqual([...original], before);
+  assert.deepEqual([...symbols.keys()].sort(), [...original.keys()].sort());
+  const points = [...symbols.values()];
+  for (const point of points) assert.ok(texasContainsMarker(point, 1000, 700, 72), "full responsive glyph footprint stays inside Texas");
+  for (let i = 0; i < points.length; i++) for (let j = i + 1; j < points.length; j++) {
+    assert.ok(Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y) >= 75.9, "responsive glyph circles must not overlap");
+  }
+  assert.deepEqual([...infrastructureSymbolPositions(original)], [...symbols]);
+});
 const CallbackMap = (await import(await compile(source, true))).default;
 const view = {
   areaId: "all",

@@ -202,6 +202,17 @@
   transform: scale(var(--texas-marker-scale, 1));
   transform-origin: 0 0;
 }
+.texas-icon-leader {
+  stroke: var(--infrastructure-color);
+  stroke-opacity: 0.6;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.texas-icon-anchor {
+  fill: var(--infrastructure-color);
+  pointer-events: none;
+}
 .texas-node-core,
 .texas-legend-marker {
   fill: var(--bg-header);
