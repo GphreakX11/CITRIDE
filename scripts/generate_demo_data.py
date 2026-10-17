@@ -114,7 +114,7 @@ def generate() -> dict[str, dict | list[dict]]:
         entities.extend([
             entity(f"workstation-{letter}", "PhysicalITAsset", f"Enterprise Workstation {upper}", operatedBy=f"org-{letter}", terrain="ENTERPRISE_IT", hostsCyberAsset=f"cyber-workstation-{letter}"),
             entity(f"cyber-workstation-{letter}", "CyberAsset", f"Enterprise Workstation {upper} identity", hostedBy=f"workstation-{letter}", terrain="ENTERPRISE_IT", ipAddress=f"192.0.2.{51 + index}", networkIdentityStatus="fictional_documentation_range"),
-            entity(f"vpn-{letter}", "PhysicalITAsset", f"VPN Gateway {upper}", operatedBy=f"org-{letter}", terrain="ENTERPRISE_IT", hostsCyberAsset=f"cyber-vpn-{letter}"),
+            entity(f"vpn-{letter}", "PhysicalITAsset", f"VPN Gateway {upper}", partOf=f"plant-{letter}", operatedBy=f"org-{letter}", terrain="ENTERPRISE_IT", hostsCyberAsset=f"cyber-vpn-{letter}"),
             entity(f"cyber-vpn-{letter}", "CyberAsset", f"VPN Gateway {upper} identity", hostedBy=f"vpn-{letter}", terrain="ENTERPRISE_IT", ipAddress=f"198.51.100.{41 + index}", networkIdentityStatus="fictional_documentation_range"),
         ])
     facilities = [
