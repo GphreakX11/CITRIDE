@@ -122,3 +122,53 @@
     width: 100%;
   }
 }
+
+/* Approved A4 composition: compact run + graph, then reviews and what-if. */
+.analyst-consequences {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+.a4-run, .a4-explore, .analyst-consequences > [role="alert"] {
+  grid-column: 1 / -1;
+}
+.analyst-consequences .command-panel { margin: 0; padding: 18px; }
+.analyst-consequences p { margin: 8px 0; }
+.analyst-consequences h2 { font-size: var(--fs-card-title); margin-bottom: 12px; }
+.a4-run > p { font-size: var(--fs-small); }
+.a4-scenarios { border: 0; margin: 0; padding: 0; min-width: 0; }
+.a4-scenarios legend { color: var(--text-muted); font-size: var(--fs-small); margin-bottom: 4px; }
+.a4-scenarios button { border-radius: 0; border: 1px solid var(--border-strong); }
+.a4-scenarios button:first-of-type { border-radius: var(--radius-control) 0 0 var(--radius-control); }
+.a4-scenarios button:last-of-type { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
+.a4-scenarios button[aria-pressed="true"] { background: var(--blue-bg); color: var(--text-strong); }
+.a4-native-scenario { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); }
+.a4-explore { padding: 18px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); }
+.a4-explore .cc-network-layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; }
+.a4-explore .cc-network-layout > .command-panel { background: var(--bg); padding: 14px; }
+/* The explore drawing and inspector are primary. C4 rollups remain available below in Advanced tools. */
+.a4-explore .cc-network-layout > .command-panel:first-child > .sg-wrap,
+.a4-explore .cc-network-layout > .command-panel:first-child > .sg-toolbar,
+.a4-explore .cc-network-layout > .command-panel:first-child > .sg-legend,
+.a4-explore .cc-network-layout > .command-panel:first-child > .sg-upstream,
+.a4-explore .cc-network-layout > .command-panel > .command-panel-heading { display: none; }
+.a4-explore .a4-exploration { margin: 0; }
+.a4-explore .a4-exploration > .a4-controls { margin-bottom: 8px; }
+.a4-explore .a4-exploration > svg { max-height: 460px; }
+.a4-explore .a4-network-links { max-height: 220px; overflow-y: auto; }
+.a4-explore .cc-network-layout ~ .command-panel,
+.a4-explore .sg-inventory { display: none; }
+.a4-review-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.a4-reviewed-summary { color: var(--text-muted); font-size: var(--fs-small); }
+.a4-review .a4-impact h3 { margin-top: 6px; }
+.a4-review .a4-impact p { font-size: var(--fs-small); }
+.a4-review-editor summary, .a4-model-review summary { cursor: pointer; color: var(--link); margin: 8px 0; }
+.a4-review-editor textarea { width: 100%; min-height: 64px; }
+.a4-what-if .a4-controls { display: grid; grid-template-columns: 1fr; }
+.a4-what-if select, .a4-what-if input { width: 100%; }
+.a4-avoided { padding: 12px; border: 1px solid var(--green); background: var(--green-bg); color: var(--green-text); border-radius: var(--radius-control); }
+@media (max-width: 900px) {
+  .analyst-consequences, .a4-explore .cc-network-layout { grid-template-columns: minmax(0, 1fr); }
+  .a4-scenarios { display: flex; flex-wrap: wrap; }
+  .a4-review-heading { flex-wrap: wrap; }
+}

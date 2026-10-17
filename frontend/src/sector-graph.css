@@ -1,0 +1,175 @@
+/* Linked consequence graph (C4 display, A4 explore). Tokens only. */
+.sg-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sg-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.sg-head strong {
+  font-size: var(--fs-card-title);
+  color: var(--text-strong);
+}
+.sg-head span {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+.sg-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+.sg-edge line {
+  stroke-width: 2.5;
+  stroke: var(--grey);
+}
+.sg-edge-label rect {
+  fill: var(--bg);
+  opacity: 0.92;
+}
+.sg-edge-label text {
+  font-family: var(--font-sans);
+  font-size: var(--fs-edge);
+  fill: var(--text-2);
+}
+.sg-edge.sg-red line {
+  stroke: var(--red);
+}
+.sg-edge-label.sg-red text {
+  fill: var(--red-text);
+}
+.sg-edge.sg-amber line {
+  stroke: var(--amber);
+}
+.sg-edge-label.sg-amber text {
+  fill: var(--amber-text);
+}
+.sg-edge.sg-green line {
+  stroke: var(--blue);
+}
+.sg-edge-label.sg-green text {
+  fill: var(--blue-text);
+}
+.sg-node circle {
+  stroke-width: 2.5;
+  fill: var(--surface-2);
+  stroke: var(--border-strong);
+}
+.sg-node.sg-source circle {
+  stroke-width: 3.5;
+  fill: var(--red-bg);
+  stroke: var(--red);
+}
+.sg-node.sg-red circle {
+  fill: var(--red-bg);
+  stroke: var(--red);
+}
+.sg-node.sg-amber circle {
+  fill: var(--amber-bg);
+  stroke: var(--amber);
+}
+.sg-node.sg-green circle {
+  fill: var(--surface-2);
+  stroke: var(--green);
+}
+.sg-node.sg-grey circle {
+  fill: var(--surface);
+  stroke: var(--grey);
+}
+.sg-node.sg-dashed circle {
+  stroke-dasharray: 7 6;
+}
+.sg-node.sg-dotted circle {
+  stroke-dasharray: 2 5;
+}
+.sg-node.sg-selected circle {
+  stroke: var(--text-strong);
+  stroke-width: 3.5;
+}
+.sg-node.sg-click {
+  cursor: pointer;
+}
+.sg-node.sg-click:hover circle,
+.sg-node.sg-click:focus-visible circle {
+  stroke: var(--text-strong);
+}
+.sg-node:focus {
+  outline: none;
+}
+.sg-label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  fill: var(--text-strong);
+}
+.sg-idt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chip);
+  fill: var(--link);
+}
+.sg-sub {
+  font-family: var(--font-sans);
+  font-size: var(--fs-chip);
+  fill: var(--text-2);
+}
+.sg-red .sg-sub {
+  fill: var(--red-text);
+}
+.sg-amber .sg-sub {
+  fill: var(--amber-text);
+}
+.sg-green .sg-sub {
+  fill: var(--green-text);
+}
+.sg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+.sg-legend li::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 50%;
+  border: 2px solid var(--grey);
+  vertical-align: -1px;
+}
+.sg-legend .sg-red::before {
+  border-color: var(--red);
+  background: var(--red-bg);
+}
+.sg-legend .sg-amber::before {
+  border-color: var(--amber);
+  background: var(--amber-bg);
+}
+.sg-legend .sg-green::before {
+  border-color: var(--green);
+}
+.sg-legend .sg-grey::before {
+  border-style: dashed;
+}
+.sg-legend .sg-dot::before {
+  border-style: dotted;
+}
+.sg-empty {
+  margin: 0;
+  color: var(--text-muted);
+}
+.sg-back {
+  align-self: flex-start;
+}

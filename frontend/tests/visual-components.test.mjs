@@ -121,7 +121,7 @@ test("real command and analyst record screens render shared status spans without
   ]) {
     const html = render(Command, { ...props, view });
     assert.match(html, /status-chip/);
-    assert.equal((html.match(/<header/g) || []).length, 1);
+    assert.equal((html.match(/class="cc-page-heading"/g) || []).length, 0);
   }
   assert.match(
     render(Command, { ...props, view: "federation" }),

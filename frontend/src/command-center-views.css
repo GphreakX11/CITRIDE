@@ -372,3 +372,82 @@
     white-space: normal;
   }
 }
+
+/* C4 board: four totals, linked graph and inspector, timeline, sector rollup. */
+.command-center-views .cc-consequence-wall {
+  display: grid;
+  gap: 20px;
+}
+.command-center-views .cc-consequence-totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.command-center-views .cc-consequence-wall .command-metric {
+  padding: 14px 18px;
+}
+.command-center-views .cc-consequence-wall .command-metric span {
+  margin: 0;
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+.command-center-views .cc-consequence-wall .command-metric strong {
+  font-size: var(--fs-number);
+}
+.command-center-views .cc-metric-red { background: var(--red-bg); border-color: var(--red); }
+.command-center-views .cc-metric-red strong { color: var(--red-text); }
+.command-center-views .cc-metric-amber { background: var(--amber-bg); border-color: var(--amber); }
+.command-center-views .cc-metric-amber strong { color: var(--amber-text); }
+.command-center-views .cc-metric-green { background: var(--green-bg); border-color: var(--green); }
+.command-center-views .cc-metric-green strong { color: var(--green-text); }
+.cc-dependency-display { display: grid; gap: 20px; }
+.command-center-views .cc-dependency-display .cc-panel {
+  padding: 18px 20px;
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+.command-center-views .cc-dependency-display .command-panel-heading { margin-bottom: 12px; }
+.command-center-views .cc-dependency-display .command-panel-heading h2 { font-size: var(--fs-card-title); }
+.command-center-views .cc-dependency-display .command-panel-heading span { font-size: var(--fs-small); }
+.command-center-views .cc-dependency-display .cc-network-layout {
+  grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr);
+  gap: 20px;
+}
+.cc-dependency-display .sg-svg { height: 470px; }
+.cc-dependency-display .sg-head { display: none; }
+.cc-dependency-display .cc-facts { grid-template-columns: 92px minmax(0, 1fr); gap: 8px 12px; }
+.cc-dependency-display .cc-facts + h4 { margin-top: 12px; }
+.cc-dependency-display .cc-facts ~ ul { padding-left: 20px; margin: 8px 0; }
+.command-center-views .cc-dependency-display .cc-sources { margin: 8px 0 0; }
+.command-center-views .cc-dependency-display .cc-sources summary { padding: 2px 0; font-size: var(--fs-small); }
+.command-center-views .cc-dependency-display .cc-sector-rollup { font-size: var(--fs-body); min-width: 640px; }
+.command-center-views .cc-dependency-display .cc-sector-rollup :is(th, td) { padding: 8px 10px; }
+.command-center-views .cc-dependency-display .cc-sector-rollup .command-link { min-height: 0; font-size: var(--fs-body); text-align: left; }
+.cc-planning-timeline { display: grid; gap: 10px; }
+.cc-planning-row { display: grid; grid-template-columns: 180px minmax(0, 1fr) 110px; gap: 14px; align-items: center; }
+.cc-planning-track { position: relative; height: 22px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.cc-planning-bar { position: absolute; top: 0; bottom: 0; border-radius: 4px; min-width: 2px; background: var(--red-text); }
+.cc-planning-bar.later { background: var(--amber-text); }
+.cc-planning-window { font-family: var(--font-mono); font-size: var(--fs-small); }
+.cc-planning-axis { font-family: var(--font-mono); font-size: var(--fs-chip); color: var(--text-muted); }
+.cc-planning-axis > div { display: flex; justify-content: space-between; }
+/* C4 accents win over the neutral shared card treatment. */
+.command-center-views .cc-consequence-wall .command-metric { gap: 2px; min-height: 94px; padding: 16px 18px; }
+.command-center-views .cc-consequence-wall .command-metric strong { font-size: var(--fs-title); line-height: 1.1; }
+.command-center-views .cc-consequence-wall .command-metric.cc-metric-red { background: var(--red-bg); border-color: var(--red); }
+.command-center-views .cc-consequence-wall .command-metric.cc-metric-red strong { color: var(--red-text); }
+.command-center-views .cc-consequence-wall .command-metric.cc-metric-amber { background: var(--amber-bg); border-color: var(--amber); }
+.command-center-views .cc-consequence-wall .command-metric.cc-metric-amber strong { color: var(--amber-text); }
+.command-center-views .cc-consequence-wall .command-metric.cc-metric-green { background: var(--green-bg); border-color: var(--green); }
+.command-center-views .cc-consequence-wall .command-metric.cc-metric-green strong { color: var(--green-text); }
+.cc-dependency-display .cc-network-layout > .cc-panel:last-child :is(p, dt, dd) { font-size: var(--fs-small); }
+.cc-dependency-display .cc-network-layout > .cc-panel:last-child h3 { margin: 14px 0 10px; }
+.cc-dependency-display .cc-facts { margin: 12px 0; gap: 6px 10px; }
+.cc-inspector-evidence { margin-top: 12px; font-size: var(--fs-small); }
+.cc-inspector-evidence summary { cursor: pointer; color: var(--text-muted); }
+@media (max-width: 1050px) {
+  .command-center-views .cc-dependency-display .cc-network-layout { grid-template-columns: minmax(0, 1fr); }
+  .command-center-views .cc-consequence-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cc-planning-row { grid-template-columns: 140px minmax(0, 1fr) 100px; }
+}

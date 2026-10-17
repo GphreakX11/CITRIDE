@@ -1,0 +1,50 @@
+.scripted-command .sc-panel { position: relative; }
+.sc-stage-cards { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 12px; margin-top: 16px; }
+.sc-stage-card { min-width: 0; border: 1px solid var(--red); border-radius: var(--radius-small); background: var(--red-bg); padding: 12px; font-size: var(--fs-small); }
+.sc-stage-card[data-stage-tone="effect"] { background: var(--amber-bg); border-color: var(--amber); }
+.sc-stage-card[data-stage-tone="ongoing"] { background: var(--amber-bg); border: 2px dashed var(--amber); }
+.sc-stage-card h3 { font-size: var(--fs-card-title); margin: 8px 0; }
+.sc-stage-card p { margin: 8px 0; line-height: 1.45; }
+.sc-stage-card .cc-tag { display: inline-block; margin: 3px 3px 0 0; font-size: var(--fs-chip); }
+.sc-stage-card .cc-sources { display: flex; gap: 6px; flex-wrap: wrap; }
+.sc-attack-banner { position: absolute; top: 18px; right: 18px; }
+.sc-attack-durations { display: flex; gap: 36px; margin-top: 14px; font-size: var(--fs-small); color: var(--text-muted); }
+.sc-attack-durations strong { margin-left: 8px; color: var(--text-strong); }
+.sc-attack-path { padding: 10px 12px; margin-top: 12px; border-radius: var(--radius-small); background: var(--bg); }
+.sc-grid.sc-cyber-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+.sc-cyber-grid .command-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sc-cyber-grid .command-metric { padding: 10px; }
+.sc-cyber-grid article { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.sc-cyber-grid h3 { font-size: var(--fs-body); }
+.sc-cyber-grid ul { padding-left: 16px; }
+@media (max-width: 1100px) {
+  .sc-stage-cards { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sc-grid.sc-cyber-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sc-attack-banner { position: static; }
+}
+/* Match the reference hierarchy while preserving every event and evidence row. */
+.scripted-command .sc-grid.sc-cyber-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sc-cyber-grid > .cc-panel:last-child { grid-column: 1 / -1; }
+.sc-stage-card[data-stage-tone="baseline"] { background: var(--surface); border-color: var(--border); }
+.sc-stage-card[data-stage-tone="effect"] { background: var(--red-bg); border-color: var(--red); }
+.scripted-command .sc-stage-cards .sc-stage-card h3 { font-size: var(--fs-small); line-height: 1.35; margin: 7px 0; }
+.sc-stage-card .cc-tag { font-size: var(--fs-chip); line-height: 1.4; }
+.sc-stage-card .cc-sources { display: block; margin-top: 7px; }
+.sc-stage-card .cc-sources .cc-tag { background: transparent; padding: 0; }
+.sc-stage-evidence { margin-top: 7px; font-size: var(--fs-chip); }
+.sc-stage-evidence summary { cursor: pointer; color: var(--text-muted); }
+.sc-stage-evidence p { font-size: var(--fs-small); line-height: 1.5; }
+.sc-exposure-check { margin-top: 18px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-small); }
+.sc-exposure-check h3 { margin: 0 0 8px; }
+.scripted-command .sc-cyber-grid .sc-asset-counts .cc-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.scripted-command .sc-cyber-grid .sc-asset-counts .cc-metrics .command-metric { min-height: 0; padding: 12px; }
+.scripted-command .sc-cyber-grid .sc-asset-counts .cc-metrics .command-metric strong { font-size: var(--fs-title); }
+.sc-normal-count { color: var(--text-muted); font-size: var(--fs-small); }
+.sc-cyber-grid .cc-panel:last-child > article { padding: 10px 0; }
+.sc-cyber-grid .cc-panel:last-child > article h3 { display: inline; margin-right: 18px; font-size: var(--fs-body); }
+.sc-cyber-grid .cc-panel:last-child > article p { display: inline; font-size: var(--fs-small); }
+.sc-cyber-grid .cc-panel:last-child > article small { display: block; margin-top: 5px; }
+@media (max-width: 700px) {
+  .sc-stage-cards, .scripted-command .sc-grid.sc-cyber-grid { grid-template-columns: minmax(0, 1fr); }
+  .sc-attack-durations { flex-direction: column; gap: 6px; }
+}

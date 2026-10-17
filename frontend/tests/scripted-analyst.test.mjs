@@ -116,6 +116,26 @@ function harness(Component, initial) {
     effects: () => effects,
   };
 }
+test("A5 renders compact contact rows with collapsed editors without removing canonical forms", async () => {
+  const { default: Component } = await load();
+  const html = renderToStaticMarkup(createElement(Component, props("coordination")));
+  assert.match(html, /class="sa-contacts-panel"/);
+  assert.match(html, /<th>Partner<\/th><th>Group<\/th><th>Status<\/th><th>Last update<\/th>/);
+  assert.match(html, /<summary>Update contact<\/summary>/);
+  assert.match(html, /id="sa-decision-notes"/);
+  assert.doesNotMatch(html, /<details[^>]*\sopen(?:=|>)/);
+  for (const contact of records.contacts.filter((row) => row.incidentId === "TX-26-0412")) assert.ok(html.includes(contact.partnerRole));
+});
+test("A6 uses compact team task rows and human due times with unchanged record action forms", async () => {
+  const { default: Component } = await load();
+  const alternate = { ...records, responseTasks: records.responseTasks.map((task) => ({ ...task, dueAt: "2026-10-13T09:00:00Z" })) };
+  const html = renderToStaticMarkup(createElement(Component, props("uctf", { records: alternate })));
+  assert.match(html, /class="sa-task-groups"/);
+  assert.match(html, /class="sa-task-counts"/);
+  assert.match(html, /Due [0-9]{2}:[0-9]{2} CT/);
+  assert.doesNotMatch(html.replace(/<[^>]*>/g, ""), /2026-10-13T09:00:00Z/);
+  assert.doesNotMatch(html, /<details[^>]*\sopen(?:=|>)/);
+});
 test("actual SSR renders alternate authored assessment/hunts/contact/product/team records", async () => {
   const { default: Component } = await load();
   const alternate = structuredClone(records);

@@ -13,7 +13,7 @@ test("one shared header sample chip serves both modes, never repeated in casewor
   assert.doesNotMatch(workspace, />Sample data</);
   assert.doesNotMatch(workspace, /className="prototype-status"/);
   assert.match(workspace, /records\?\.storyNow/);
-  assert.match(workspace, /hourCycle: "h23"/);
+  assert.match(workspace, /formatTimeCT\(records.storyNow\)/);
 });
 test("copy cleanup preserves explicit pending-write recovery and raw record export", () => {
   const source = read("CommandWorkspace.tsx");

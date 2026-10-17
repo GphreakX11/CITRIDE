@@ -439,7 +439,7 @@ body,
 }
 @media (min-width: 1100px) {
   [data-mode="command"] .scripted-command[data-screen="command"] {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
   }
   [data-mode="command"]

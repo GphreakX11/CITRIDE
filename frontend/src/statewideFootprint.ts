@@ -214,7 +214,7 @@ function layerFor(incident: CommandIncident, props: StatewideFootprintProps) {
     serviceAreas,
   };
 }
-function matchingNotice(
+export function matchingNotice(
   run: Run | null,
   providerType: string | undefined,
   reference: ReferenceData | null,
@@ -239,6 +239,16 @@ function matchingNotice(
       );
     }) ?? null
   );
+}
+/** Boil-water label for a captured run, from the reference rule (C4 and A4 graphs). */
+export function boilWaterLabel(
+  run: Run | null,
+  entities: { id: string; type: string }[],
+  reference: ReferenceData | null,
+): string | null {
+  const type = entities.find((e) => e.id === run?.seed?.provider)?.type;
+  const rule = matchingNotice(run, type, reference);
+  return rule && typeof rule.label === "string" ? rule.label : null;
 }
 /** Pure projection of visible records + captured case truth. Selection never filters the map. */
 export function statewideFootprint(

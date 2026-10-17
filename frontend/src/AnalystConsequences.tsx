@@ -5,10 +5,12 @@ import type { CommandAction, CommandIncident } from "./commandTypes.ts";
 import type { ReferenceData } from "./scriptedTypes.ts";
 import type { IdtIndex } from "./idt.ts";
 import DependencyNetwork from "./components/DependencyNetwork.tsx";
+import { boilWaterLabel } from "./statewideFootprint.ts";
 import {
   asRecord,
   consequenceModel,
   planningWindow,
+  timeLabel,
   words,
 } from "./commandCenterModel.ts";
 import { displayText } from "./presentation.ts";
@@ -201,10 +203,23 @@ function CaseConsequences({
   }
   return (
     <div className="analyst-consequences command-center-views">
-      <section className="command-panel">
+      <section className="command-panel a4-run">
         <h2>Run analysis</h2>
         <div className="a4-controls">
-          <label>
+          <fieldset className="a4-scenarios" disabled={blocked}>
+            <legend>Scenario</legend>
+            {scenarios.map((scenario) => (
+              <button
+                key={scenario.id}
+                type="button"
+                aria-pressed={scenarioId === scenario.id}
+                onClick={() => setScenarioId(scenario.id)}
+              >
+                {displayText(scenario.label)}
+              </button>
+            ))}
+          </fieldset>
+          <label className="a4-native-scenario">
             Scenario
             <select
               aria-label="Analysis scenario"
@@ -255,7 +270,7 @@ function CaseConsequences({
           </p>
         )}
       </section>
-      <section aria-label="Explore dependency graph">
+      <section className="a4-explore" aria-label="Explore dependency graph">
         <h2>Explore dependencies</h2>
         {exploration && (
           <p role="status">
@@ -271,6 +286,11 @@ function CaseConsequences({
           model={graphModel}
           mode="explore"
           idtIndex={idtIndex}
+          boilWaterLabel={boilWaterLabel(
+            graphModel.run,
+            graphModel.captured.entities,
+            reference ?? null,
+          )}
           onOpenMap={onOpenMap}
           onOpenEntity={onOpenEntity}
           onPropose={onPropose}
@@ -285,20 +305,20 @@ function CaseConsequences({
                       String(option.dependency.usableBackupMinHours ?? 0),
                     );
                     if (typeof document !== "undefined")
-                      document
-                        .getElementById("a4-what-if")
-                        ?.scrollIntoView?.({
-                          block: "start",
-                          behavior: "smooth",
-                        });
+                      document.getElementById("a4-what-if")?.scrollIntoView?.({
+                        block: "start",
+                        behavior: "smooth",
+                      });
                   }
                 }
           }
         />
       </section>
-      <section className="command-panel">
-        <h2>Modeled impacts · Advisory, not approvals</h2>
-        <p>Modeled · not observed outages</p>
+      <section className="command-panel a4-review">
+        <header className="a4-review-heading"><h2>Review each impact</h2>
+          <span className="a4-reviewed-summary">{incident.decisions.filter((decision) => decision.reviewed).length} of {incident.decisions.length} reviewed · Advisory, not approvals</span>
+        </header>
+        <small>Modeled impacts · not observed outages</small>
         {model.rows.map((row) => {
           const decision = incident.decisions.find(
             (d) =>
@@ -316,6 +336,9 @@ function CaseConsequences({
               </p>
               {decision && (
                 <>
+                  {decision.reviewed && <div className="a4-reviewed-summary"><StatusChip status="reviewed">Reviewed {timeLabel(decision.reviewedAt)}</StatusChip>{decision.reviewNote && <p>{displayText(decision.reviewNote)}</p>}</div>}
+                  <details className="a4-review-editor" open={!decision.reviewed}>
+                  <summary>{decision.reviewed ? "Edit review note" : "Review this impact"}</summary>
                   <label>
                     Required review note
                     <textarea
@@ -339,6 +362,7 @@ function CaseConsequences({
                     Record review
                   </button>
                   {decision.reviewed && <small>Impact review recorded.</small>}
+                  </details>
                 </>
               )}
             </article>
@@ -355,6 +379,7 @@ function CaseConsequences({
         ) : (
           <p>No explicit excluded paths captured.</p>
         )}
+        <details className="a4-model-review"><summary>Assumptions and model review</summary>
         <h3>Needs model review</h3>
         <ul>
           {model.rows
@@ -382,8 +407,9 @@ function CaseConsequences({
           !run?.excluded.some((e) =>
             String(asRecord(e).reason).startsWith("requires_model_review"),
           ) && <p>No captured model-review flags.</p>}
+        </details>
       </section>
-      <section className="command-panel" id="a4-what-if">
+      <section className="command-panel a4-what-if" id="a4-what-if">
         <h2>Try a what-if</h2>
         <p>
           Change a facility's clean-water reserve and compare it with the
@@ -496,7 +522,7 @@ function CaseConsequences({
               ("incomparable" in avoided ? (
                 <p>{avoided.incomparable}</p>
               ) : (
-                <p>
+                <p className="a4-avoided">
                   Exposure avoided:{" "}
                   {avoided.serviceHours.map((n) => n.toFixed(1)).join("–")}{" "}
                   service-hours; {exposureDollars(avoided.costUsd)} · rate

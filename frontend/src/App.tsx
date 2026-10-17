@@ -59,6 +59,7 @@ import type {
 } from "./types";
 
 import { prototypeLocation, readPrototypeLocation } from "./prototypeLocation";
+import "./screen-shell.css";
 
 type View =
   | CommandView
@@ -199,7 +200,12 @@ export default function App() {
   );
   const [caseRecords, setCaseRecords] = useState<CommandIncident[]>([]);
   const caseRecordsRef = useRef<CommandIncident[]>([]);
-  const selectionInitialized = useRef(true);
+  const selectionInitialized = useRef(
+    mode !== "command" ||
+      readPrototypeLocation(window.location.href).explicitFocus ||
+      new URL(window.location.href).searchParams.has("case") ||
+      new URL(window.location.href).searchParams.has("entity"),
+  );
   const casesRead = useRef(false);
   const [mapState, setMapState] = useState(initialMapView);
   const [workflowLocked, setWorkflowLocked] = useState(false);
@@ -293,8 +299,24 @@ export default function App() {
     caseRecordsRef.current = records;
     setCaseRecords(records);
     const chooseInitialDefault = !selectionInitialized.current;
+    const preferredProviderId = data?.scenarios.find(
+      (item) => item.id === data.defaultScenarioId,
+    )?.seed.provider;
+    const priority = { critical: 0, high: 1, medium: 2, low: 3 };
+    // Only the initial unqualified command visit gets an open-case default.
+    const initialRecords = records
+      .filter(
+        (record) => record.status === "open" || record.status === "monitoring",
+      )
+      .sort(
+        (a, b) =>
+          Number(a.status !== "open") - Number(b.status !== "open") ||
+          Number(b.contextSnapshot?.provider?.id === preferredProviderId) -
+            Number(a.contextSnapshot?.provider?.id === preferredProviderId) ||
+          priority[a.priority] - priority[b.priority],
+      );
     const nextId = caseSelectionAfterRead(
-      records,
+      chooseInitialDefault ? initialRecords : records,
       selectedEntity,
       selectedCaseId,
       chooseInitialDefault,
@@ -313,7 +335,7 @@ export default function App() {
   }
   function reportFailure(failure: unknown) {
     if (failure instanceof ApiError && failure.status === 401) {
-      selectionInitialized.current = false;
+      selectionInitialized.current = true;
       caseRecordsRef.current = [];
       setCaseRecords([]);
       setSelectedCaseId(null);
@@ -609,10 +631,7 @@ export default function App() {
               Sample data · not connected to live systems
             </span>
           </div>
-          <span className="revision">
-            Baseline r{data?.baselineRevision ?? "—"}
-          </span>
-          {mode === "analyst" && (
+          {mode === "analyst" && !commandView && (
             <button
               type="button"
               className="icon-button"
@@ -635,16 +654,7 @@ export default function App() {
         >
           <X size={20} />
         </button>
-        <div className="workspace-selector">
-          <span className="workspace-icon">
-            <Building2 size={18} />
-          </span>
-          <div>
-            <strong>Watershed 250</strong>
-            <small>Water infrastructure workspace</small>
-          </div>
-          <span className="workspace-dot" />
-        </div>
+
         <p className="shell-nav-heading">
           {mode === "command" ? "COMMAND CENTER" : "ANALYST"}
         </p>
@@ -703,13 +713,6 @@ export default function App() {
             </nav>
           </details>
         )}
-        <div className="sidebar-footer">
-          <span className="badge simulation">DECISION SUPPORT</span>
-          <div className="environment-status">
-            <i />
-            Watershed workspace
-          </div>
-        </div>
       </aside>
       {mobileMenu && (
         <button
@@ -720,19 +723,23 @@ export default function App() {
         />
       )}
       <main>
-        <div className="shell-breadcrumbs">
-          <div className="breadcrumbs">
-            <span>Watershed 250</span>
-            <ChevronRight size={14} />
-            <strong>{title}</strong>
+        {!commandView && (
+          <div className="shell-breadcrumbs">
+            <div className="breadcrumbs">
+              <span>Watershed 250</span>
+              <ChevronRight size={14} />
+              <strong>{title}</strong>
+            </div>
           </div>
-        </div>
+        )}
         <div className="content">
           <div className="page-heading">
             <div>
-              <div className="eyebrow">
-                WATERSHED 250 · INFRASTRUCTURE INTELLIGENCE
-              </div>
+              {!commandView && (
+                <div className="eyebrow">
+                  WATERSHED 250 · INFRASTRUCTURE INTELLIGENCE
+                </div>
+              )}
               <h1>
                 {commandView && "code" in commandView ? (
                   <>
@@ -747,12 +754,14 @@ export default function App() {
                   title
                 )}
               </h1>
-              <p>
-                {commandView
-                  ? mode === "command"
-                    ? "Current incidents, modeled impacts and response activity."
-                    : "Review evidence, track cases and assess modeled consequences."
-                  : view === "overview"
+              <p
+                id="selected-incident-context"
+                className="screen-incident-context"
+                hidden={mode !== "command" || !commandView}
+              />
+              {!commandView ? (
+                <p>
+                  {view === "overview"
                     ? "Trace a water-control incident through infrastructure, dependencies, and essential services."
                     : view === "incident"
                       ? "Follow sourced event context into conditional consequences and human decision review."
@@ -767,7 +776,13 @@ export default function App() {
                               : view === "evidence"
                                 ? "Inspect the incident timeline and supporting telemetry records."
                                 : "Review source provenance, evidence, and the assumptions behind the model."}
-              </p>
+                </p>
+              ) : null}
+              {!commandView && (
+                <span className="revision">
+                  Baseline r{data?.baselineRevision ?? "—"}
+                </span>
+              )}
             </div>
             {view === "overview" && (
               <button
@@ -827,7 +842,7 @@ export default function App() {
           )}
           {data && !accessIssue && (
             <>
-              {mode === "analyst" ? (
+              {mode === "analyst" && !commandView && (
                 <InvestigationBar
                   entity={inspected}
                   selectedCase={contextCase}
@@ -842,23 +857,73 @@ export default function App() {
                     if (!workflowLocked) selectEntity(null);
                   }}
                 />
-              ) : (
-                <label className="command-incident-picker">
-                  Incident
-                  <select
-                    aria-label="Command incident"
-                    value={selectedCaseId ?? ""}
-                    disabled={workflowLocked}
-                    onChange={(event) => selectCase(event.target.value || null)}
+              )}
+              {mode === "analyst" && view === "cop" && (
+                <section
+                  className="screen-investigation-row"
+                  aria-label="Investigation navigation"
+                  data-entity-id={inspected?.id ?? ""}
+                  data-case-id={contextCase?.id ?? ""}
+                >
+                  <label className="screen-case-picker">
+                    <span className="visually-hidden">Saved case</span>
+                    <select
+                      aria-label="Investigation case"
+                      disabled={workflowLocked}
+                      value={selectedCaseId ?? ""}
+                      onChange={(event) => {
+                        if (!workflowLocked)
+                          selectCase(event.target.value || null);
+                      }}
+                    >
+                      <option value="">Choose a saved case</option>
+                      {caseRecords.map((record) => (
+                        <option key={record.id} value={record.id}>
+                          {record.title}
+                          {record.status === "closed" ? " · closed" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <nav
+                    className="screen-investigation-steps"
+                    aria-label="Investigation steps"
                   >
-                    <option value="">All incidents</option>
-                    {caseRecords.map((record) => (
-                      <option key={record.id} value={record.id}>
-                        {record.title}
-                      </option>
+                    {(
+                      [
+                        ["cop", "Map"],
+                        ["cyber", "Evidence"],
+                        ["consequence", "Consequences"],
+                        ["coordination", "Who acts first"],
+                        ["uctf", "Tasks"],
+                      ] as const
+                    ).map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-current={view === id ? "page" : undefined}
+                        disabled={
+                          workflowLocked ||
+                          ((id === "consequence" || id === "uctf") &&
+                            !contextCase)
+                        }
+                        onClick={() => changeView(id)}
+                      >
+                        {label}
+                      </button>
                     ))}
-                  </select>
-                </label>
+                  </nav>
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={workflowLocked}
+                    onClick={() => {
+                      if (!workflowLocked) selectEntity(null);
+                    }}
+                  >
+                    Clear entity focus
+                  </button>
+                </section>
               )}
               <div hidden={!commandView}>
                 <CommandWorkspace
@@ -2102,13 +2167,15 @@ export default function App() {
                   </section>
                 </>
               )}
-              <footer className="content-footer">
-                <span>CITRIDE · Watershed 250</span>
-                <span>
-                  Model {displayText(data.modelVersion)} · Baseline r
-                  {data.baselineRevision}
-                </span>
-              </footer>
+              {!commandView && (
+                <footer className="content-footer">
+                  <span>CITRIDE · Watershed 250</span>
+                  <span>
+                    Model {displayText(data.modelVersion)} · Baseline r
+                    {data.baselineRevision}
+                  </span>
+                </footer>
+              )}
             </>
           )}
         </div>

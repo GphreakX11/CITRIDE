@@ -2,8 +2,10 @@ import { StatusChip } from "./visualPrimitives.ts";
 import { VisualCard } from "./visualPrimitives.ts";
 import { SummaryTile } from "./visualPrimitives.ts";
 import DependencyNetwork from "./components/DependencyNetwork.tsx";
+import { boilWaterLabel } from "./statewideFootprint.ts";
 import { useState, type ReactNode } from "react";
-import type { Bootstrap, Source } from "./types.ts";
+import type { Bootstrap, Run, Source } from "./types.ts";
+import { exposureAvoided, exposureDollars } from "./exposure.ts";
 import type { CommandIncident, CommandView } from "./commandTypes.ts";
 import { orderIncidents } from "./commandMetrics.ts";
 import { displayText } from "./presentation.ts";
@@ -37,6 +39,8 @@ import type { RecordsState, ReferenceData } from "./scriptedTypes.ts";
 export interface CommandCenterViewsProps {
   records?: RecordsState;
   reference?: ReferenceData;
+  /** Session-only what-if result; the owning workspace keeps it scoped to the case. */
+  lastPlanningRun?: Run | null;
   data: Bootstrap;
   incidents: CommandIncident[];
   selected: CommandIncident | null;
@@ -324,6 +328,7 @@ export default function CommandCenterViews({
   onNavigate,
   records,
   reference,
+  lastPlanningRun,
 }: CommandCenterViewsProps) {
   const overview = overviewModel(incidents);
   const model = consequenceModel(selected);
@@ -677,34 +682,60 @@ export default function CommandCenterViews({
       </>
     );
   } else if (view === "consequence") {
+    const notice = boilWaterLabel(model.run, model.captured.entities, reference ?? null);
+    const candidate = model.run && lastPlanningRun && selected &&
+      model.run.baselineSnapshot != null && lastPlanningRun.baselineSnapshot != null &&
+      model.run.baselineRevision === lastPlanningRun.baselineRevision &&
+      model.run.modelVersion === lastPlanningRun.modelVersion &&
+      JSON.stringify(model.run.baselineSnapshot) === JSON.stringify(lastPlanningRun.baselineSnapshot) &&
+      (lastPlanningRun.request.expectedBaselineRevision === undefined ||
+        lastPlanningRun.request.expectedBaselineRevision === model.run.baselineRevision) &&
+      lastPlanningRun.scenarioId === lastPlanningRun.request.scenarioId &&
+      lastPlanningRun.request.overrides.length === 1 &&
+      lastPlanningRun.request.overrides.every((override) =>
+        override.note === `What-if from case ${selected.title}` &&
+        typeof override.backupMinHours === "number" && Number.isFinite(override.backupMinHours) &&
+        override.backupMinHours >= 0 && override.backupMinHours === override.backupMaxHours &&
+        model.rows.some((row) => row.dependencies.some((dependency) =>
+          dependency.id === override.dependencyId && dependency.requiredService === "treated_water")),
+      ) ? lastPlanningRun : null;
+    const avoided = model.run && candidate
+      ? exposureAvoided(model.run, candidate, reference?.planningRates ?? [], reference?.referenceVersion)
+      : null;
     content = model.run ? (
-      <>
-        <Metrics
-          values={[
-            [
-              model.people ?? "Not captured",
-              "People in modeled service areas",
-              "Modeled · not observed outages",
-            ],
-            [
-              model.facilities,
-              "Facilities in modeled results",
-              "Modeled · not observed outages",
-            ],
-            [
-              planningWindow(model.earliest),
-              "Earliest planning window",
-              "Relative to the scenario",
-            ],
-            [
-              model.groups.length,
-              "Captured result groups",
-              "IDT gaps remain explicit",
-            ],
-          ]}
+      <div className="cc-consequence-wall">
+        <section className="cc-consequence-totals" aria-label="Totals">
+          <SummaryTile className="command-metric">
+            <strong>{model.people?.toLocaleString("en-US") ?? "Not captured"}</strong>
+            <span>People in affected water service</span>
+          </SummaryTile>
+          <SummaryTile className="command-metric">
+            <strong>{model.facilities}</strong><span>Critical facilities at risk</span>
+          </SummaryTile>
+          <SummaryTile className="command-metric cc-metric-red">
+            <strong>{planningWindow(model.earliest)}</strong>
+            <span>Earliest window{model.rows.find((row) => row.windowHours)?.label
+              ? ` · ${displayText(model.rows.find((row) => row.windowHours)!.label)}` : ""}</span>
+          </SummaryTile>
+          <SummaryTile className="command-metric cc-metric-amber">
+            <strong>{notice ? "Possible" : "Not indicated"}</strong>
+            <span>Boil-water notice</span><small>{notice ?? "No matching reference rule for this run"}</small>
+          </SummaryTile>
+        </section>
+        {avoided && !("incomparable" in avoided) && (
+          <SummaryTile className="command-metric cc-metric-green">
+            <strong>{avoided.serviceHours[0]}–{avoided.serviceHours[1]} service-hours</strong>
+            <span>Modeled consequence avoided</span>
+            <small>{exposureDollars(avoided.costUsd)} · matching what-if · not observed savings</small>
+          </SummaryTile>
+        )}
+        <DependencyNetwork
+          key={model.run.id}
+          model={model}
+          mode="display"
+          boilWaterLabel={notice}
         />
-        <DependencyNetwork key={model.run.id} model={model} mode="display" />
-      </>
+      </div>
     ) : (
       <Panel title="Captured Consequences">
         <Empty>
@@ -979,7 +1010,7 @@ export default function CommandCenterViews({
       className="command-center-views"
       aria-label={`${heading[0]} ${heading[1]}`}
     >
-      {!scripted && (
+      {!records && !scripted && (
         <header className="cc-page-heading">
           <p>
             {heading[0]} · Read-only display

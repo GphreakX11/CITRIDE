@@ -123,11 +123,60 @@
   border-left: 4px solid var(--amber);
   padding: 0.7rem;
 }
+/* Compact record views retain all forms behind explicit editing controls. */
+.scripted-analyst summary { cursor: pointer; color: var(--link); padding: 7px 0; }
+.scripted-analyst section { background: var(--surface); padding: 18px; }
+.sa-refresh { font-size: var(--fs-small); }
+.sa-view-coordination > .sa-refresh, .sa-view-uctf > .sa-refresh { grid-area: tools; }
+.sa-view-coordination { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "rank rank" "contacts contacts" "products notes" "decisions decisions" "tools tools"; gap: 18px; }
+.sa-rank-panel { grid-area: rank; }
+.sa-products-panel { grid-area: products; }
+.sa-notes-panel { grid-area: notes; }
+.sa-contacts-panel { grid-area: contacts; }
+.sa-decisions-panel { grid-area: decisions; }
+.scripted-analyst .sa-ranking { padding: 0; margin: 10px 0 0; gap: 0; list-style: none; counter-reset: utility; }
+.scripted-analyst .sa-ranking > li { counter-increment: utility; display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr) auto; align-items: start; gap: 20px; padding: 16px 0; }
+.sa-rank-summary h4::before { content: counter(utility) " · "; }
+.sa-rank-summary h4 { font-size: var(--fs-card-title); }
+.sa-rank-summary p, .sa-first-actions { font-size: var(--fs-small); }
+.sa-first-actions ul { padding-left: 18px; margin: 8px 0; }
+.sa-first-actions li { margin: 6px 0; }
+.sa-first-actions strong { color: var(--text-muted); font-weight: 400; }
+.sa-products-panel > ul, .sa-notes-panel > ul { padding: 0; list-style: none; }
+.sa-products-panel > ul > li { padding: 12px 0; border-top: 1px solid var(--border); }
+.sa-products-panel p, .sa-notes-panel li { color: var(--text-muted); font-size: var(--fs-small); }
+.sa-contact-row, .sa-decision-row { border-top: 1px solid var(--border); padding: 5px 0; }
+.sa-contact-row summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.sa-view-uctf { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "clock clock" "tasks add" "tasks tracking" "tools tools"; align-items: start; }
+.sa-response-clock { grid-area: clock; position: relative; }
+.sa-task-counts { display: flex; gap: 8px; flex-wrap: wrap; position: absolute; right: 18px; top: 18px; }
+.sa-clock-track { height: 12px; border-radius: 6px; overflow: hidden; background: var(--bg); }
+.sa-clock-track > span { display: block; height: 100%; background: var(--green); }
+.sa-clock-track.sa-amber > span { background: var(--amber); }
+.sa-clock-track.sa-red > span { background: var(--red); }
+.sa-response-clock > p { font-size: var(--fs-small); margin: 8px 0; }
+.sa-task-groups { grid-area: tasks; }
+.sa-add-task { grid-area: add; }
+.sa-team-tracking { grid-area: tracking; }
+.scripted-analyst .sa-task-groups { padding: 0; border: 0; background: transparent; display: grid; gap: 16px; }
+.sa-task-groups > h3 { font-size: var(--fs-small); color: var(--text-muted); margin: 0; }
+.scripted-analyst .sa-team-group { padding: 14px 18px; }
+.scripted-analyst .sa-task { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border: 0; border-top: 1px solid var(--border); margin: 0; align-items: start; }
+.sa-task > label { grid-column: 1; grid-row: 1; }
+.sa-task > .sa-chip { grid-column: 2; grid-row: 1; }
+.sa-task > p { grid-column: 1; font-size: var(--fs-small); color: var(--text-muted); margin: 0 0 0 28px; }
+.sa-task-edit { grid-column: 2; font-size: var(--fs-small); }
+.sa-task-edit[open] { grid-column: 1 / -1; }
+.sa-add-task fieldset { grid-template-columns: 1fr; }
+.sa-add-task form > h4 { display: none; }
+.sa-add-task form { padding-top: 0; border: 0; }
+@media (max-width: 900px) {
+  .sa-view-coordination { grid-template-columns: 1fr; grid-template-areas: "rank" "products" "notes" "contacts" "decisions" "tools"; }
+  .sa-view-uctf { grid-template-columns: 1fr; grid-template-areas: "clock" "tasks" "add" "tracking" "tools"; }
+  .scripted-analyst .sa-ranking > li { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .sa-task-counts { position: static; }
+}
 @media (max-width: 700px) {
-  .scripted-analyst section {
-    padding: 0.7rem;
-  }
-  .scripted-analyst fieldset {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  .scripted-analyst section { padding: 0.7rem; }
+  .scripted-analyst fieldset { grid-template-columns: minmax(0, 1fr); }
 }

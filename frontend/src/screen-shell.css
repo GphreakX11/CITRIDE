@@ -1,0 +1,126 @@
+/* Shared screen framing only. Advanced tool content keeps its existing layout. */
+.app-shell.command-mode {
+  --fs-button: var(--fs-body);
+  --screen-primary-fill: color-mix(in srgb, var(--accent) 78%, var(--shadow));
+}
+
+.app-shell.command-mode[data-mode] :is(button, .button) {
+  font-size: var(--fs-button);
+  font-weight: 500;
+}
+.app-shell.command-mode[data-mode]
+  :is(.button.primary, button.primary, .cc-primary, .primary-button) {
+  background: var(--screen-primary-fill);
+  border-color: var(--screen-primary-fill);
+  color: var(--text-strong);
+  font-size: var(--fs-button);
+  font-weight: 600;
+}
+.app-shell.command-mode .content {
+  padding-top: 24px;
+}
+.app-shell.command-mode .page-heading {
+  margin-bottom: 20px;
+}
+.app-shell.command-mode .page-heading .screen-incident-context {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+}
+.screen-incident-context:empty {
+  display: none;
+}
+.app-shell .screen-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.app-shell .screen-header-reset > button {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  padding: 6px 8px;
+}
+.app-shell .screen-header-actions > .icon-button {
+  color: var(--text-muted);
+  background: transparent;
+}
+.screen-case-tools {
+  position: relative;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+}
+.screen-case-tools summary {
+  cursor: pointer;
+  padding: 8px;
+}
+.screen-case-tools > div {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: max-content;
+  max-width: 320px;
+  padding: 12px;
+  background: var(--bg-header);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+}
+.screen-investigation-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--accent-bg);
+}
+.screen-case-picker {
+  flex: 1 1 240px;
+  max-width: 360px;
+  min-width: 0;
+}
+.screen-case-picker select {
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 8px;
+}
+.screen-investigation-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.screen-investigation-steps button {
+  border: 0;
+  padding: 6px 10px;
+  background: transparent;
+  cursor: pointer;
+}
+.screen-investigation-steps button[aria-current="page"] {
+  background: var(--mode-active);
+  color: var(--text-strong);
+}
+.app-shell .screen-save-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 80;
+  max-width: min(420px, calc(100vw - 48px));
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--green);
+  border-radius: var(--radius-control);
+  background: var(--green-bg);
+  color: var(--green-text);
+  font-size: var(--fs-small);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--shadow) 35%, transparent);
+}

@@ -232,12 +232,11 @@ test("attack telemetry labels remain exact and authored techniques and calculate
   ];
   const html = render("cyber", records(), null, reference, d);
   assert.match(html, /Authored technique/);
-  assert.match(
-    html,
-    /Network · Corelight format \(simulated\)/,
-  );
-  assert.match(html, /30 minutes/);
-  assert.match(html, /6 minutes/);
+  assert.match(html, /How far the attack got/);
+  assert.match(html, /class="sc-stage-cards"/);
+  assert.doesNotMatch(html, /<h[1-6][^>]*>Network · Corelight/);
+  assert.match(html, /30m/);
+  assert.match(html, /6m/);
 });
 test("optional integration delegates populated screens and retains C2 infrastructure with one header", () => {
   const r = freeze(records());
@@ -263,7 +262,7 @@ test("optional integration delegates populated screens and retains C2 infrastruc
         onNavigate() {},
       }),
     );
-    assert.equal((html.match(/<header/g) || []).length, 1, view);
+    assert.equal((html.match(/class="cc-page-heading"/g) || []).length, 0, view);
     if (view === "cop") {
       assert.match(html, /All Statewide Incidents/);
       assert.match(html, /Infrastructure Schematic/);

@@ -13,6 +13,7 @@ import { object, text } from "./scriptedTypes.ts";
 import { api, humanize, windowLabel } from "./api.ts";
 import { potentialRequests, rankUtilities } from "./whoActsFirst.ts";
 import { responseClock } from "./scriptedCommandModel.ts";
+import { formatDuration, formatDueTime, formatTimeCT } from "./displayTime.ts";
 import "./scripted-analyst.css";
 
 export interface ScriptedAnalystProps extends ScriptedViewProps {
@@ -43,7 +44,7 @@ export function LateTasks({ records }: { records: RecordsState }) {
         {tasks.map((task) => (
           <li key={task.id}>
             <strong>{task.label}</strong> · {task.ownerRole ?? task.teamId} ·
-            Due {task.dueAt}
+            {formatDueTime(task.dueAt)}
           </li>
         ))}
       </ul>
@@ -433,7 +434,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
     );
     return (
       <>
-        <section>
+        <section className="sa-rank-panel">
           <h3>Who acts first</h3>
           <p>
             Evidence first, then earliest healthcare planning window, then
@@ -454,6 +455,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
           <ol className="sa-ranking">
             {ranking.map((row) => (
               <li key={row.utilityId}>
+                <div className="sa-rank-summary">
                 <h4>{row.label}</h4>
                 <p>
                   {humanize(row.evidenceStatus)} ·{" "}
@@ -469,7 +471,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                     ? `${windowLabel(row.windowHours)}${row.potential ? " if compromised" : ""}`
                     : "unknown window"}
                 </p>
-                <p>Suggested -- cyber SME to confirm</p>
+                </div><div className="sa-first-actions"><p>Suggested -- cyber SME to confirm</p>
                 <ul>
                   {row.firstActions.map((a) => (
                     <li key={a.id}>
@@ -478,41 +480,34 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                       <strong>{a.contactRole}</strong>
                     </li>
                   ))}
-                </ul>
+                </ul></div>
+                <button type="button" disabled={blocked} onClick={() => {
+                  const panel = typeof document !== "undefined" ? document.getElementById("sa-decision-notes") : null;
+                  if (panel) { (panel as HTMLDetailsElement).open = true; panel.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+                }}>Record decision note</button>
               </li>
             ))}
           </ol>
         </section>
-        <section>
+        <section className="sa-contacts-panel">
           <h3>Contacts · coordination tracking</h3>
-
-          {scope(records.contacts).map((c) =>
-            form(
+          <div className="command-table-wrap"><table className="command-table"><thead><tr><th>Partner</th><th>Group</th><th>Status</th><th>Last update</th><th>Action</th></tr></thead><tbody>
+          {scope(records.contacts).map((c) => <tr key={c.id}><td>{text(c.partnerRole)}</td><td>{text(c.group ?? c.unit ?? c.partnerGroup, "—")}</td><td><StatusChip status={c.status}>{records.contactStatusLabels[text(c.status)] ?? humanize(text(c.status))}</StatusChip></td><td>{formatTimeCT(text(c.updatedAt ?? c.lastUpdateAt ?? c.createdAt, ""))}<small>{text(c.note)}</small></td><td><details className="sa-contact-row"><summary>Update contact</summary>{form(
               c.id,
               "set_contact_status",
               text(c.partnerRole),
               <>
-                {select(
-                  "Contact status",
-                  "status",
-                  c.status,
-                  records.contactStatusLabels,
-                )}
+                {select("Contact status", "status", c.status, records.contactStatusLabels)}
                 {note("note", c.note)}
               </>,
-              (el) => ({
-                action: "set_contact_status",
-                contactId: c.id,
-                status: value(el, "status"),
-                note: value(el, "note"),
-              }),
-            ),
+              (el) => ({ action: "set_contact_status", contactId: c.id, status: value(el, "status"), note: value(el, "note") }),
+            )}</details></td></tr>,
           )}
+          </tbody></table></div>
         </section>
-        <section>
-          <h3>Record decision note</h3>
-          {reference.responseOptions.map((option) =>
-            form(
+        <section className="sa-decisions-panel">
+          <details id="sa-decision-notes"><summary>Record decision note</summary>
+          {reference.responseOptions.map((option) => <details key={option.id} className="sa-decision-row"><summary>{text(option.title)}</summary>{form(
               option.id,
               "record_decision",
               text(option.title),
@@ -558,10 +553,11 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                 decidedBy: value(el, "decidedBy"),
                 note: value(el, "note"),
               }),
-            ),
+            )}</details>,
           )}
+          </details>
         </section>
-        <section>
+        <section className="sa-products-panel">
           <h3>Partner products · Draft · not sent</h3>
           <ul>
             {scope(records.partnerProducts).map((p) => (
@@ -573,11 +569,11 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
             ))}
           </ul>
         </section>
-        <section>
+        <section className="sa-notes-panel">
           <h3>Coordination notes</h3>
           <ul>
             {selected?.notes?.map((n) => (
-              <li key={n.id}>{n.text}</li>
+              <li key={n.id}><time dateTime={n.createdAt}>{formatTimeCT(n.createdAt)}</time> {n.text}</li>
             ))}
           </ul>
           {form(
@@ -606,23 +602,25 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
           : "normal";
     return (
       <>
-        <section>
+        <section className="sa-response-clock">
           <h3>Response clock</h3>
+          <div className="sa-task-counts"><StatusChip status="done">{tasks.filter((task) => task.status === "done").length} of {tasks.length} done</StatusChip><StatusChip status="late">{tasks.filter((task) => isLate(task, records)).length} late</StatusChip><StatusChip status="waiting">{tasks.filter((task) => task.status === "waiting").length} waiting</StatusChip></div>
           <p className={`sa-clock sa-${color}`}>
             {Number.isFinite(elapsed)
-              ? `${Math.max(0, Math.floor(elapsed))} minutes since case opened`
+              ? `${formatDuration(Math.max(0, elapsed))} since case opened`
               : "Unknown start time"}{" "}
-            · target {clock.targetMinutes} minutes
+            · target {formatDuration(clock.targetMinutes)}
           </p>
+          <div className={`sa-clock-track sa-${color}`} role="progressbar" aria-label="Response clock against target" aria-valuemin={0} aria-valuemax={clock.targetMinutes} aria-valuenow={Number.isFinite(elapsed) ? Math.min(clock.targetMinutes, Math.max(0, elapsed)) : undefined}><span style={{ width: `${Number.isFinite(elapsed) ? Math.min(100, Math.max(0, elapsed / clock.targetMinutes * 100)) : 0}%` }} /></div>
           <p>{clock.note}</p>
         </section>
-        <section>
+        <section className="sa-task-groups">
           <h3>Tasks by team</h3>
-          {Object.entries(teamNames).map(([id, label]) => (
-            <section key={id}>
+          {Object.entries({...teamNames, ...Object.fromEntries(tasks.filter((task) => !teamNames[text(task.teamId)]).map((task) => [text(task.teamId), humanize(text(task.teamId, "Unassigned"))]))}).filter(([id]) => tasks.some((task) => text(task.teamId) === id)).map(([id, label]) => (
+            <section key={id} className="sa-team-group">
               <h4>{text(label)}</h4>
               {tasks
-                .filter((t) => t.teamId === id)
+                .filter((t) => text(t.teamId) === id)
                 .map((task) => (
                   <div key={task.id} className="sa-task">
                     <label>
@@ -656,9 +654,9 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                       {isLate(task, records) ? " · Late" : ""}
                     </StatusChip>
                     <p>
-                      {task.ownerRole} · Due {task.dueAt ?? "unknown"}
+                      {task.ownerRole} · {formatDueTime(task.dueAt, "unknown")}
                     </p>
-                    {form(
+                    <details className="sa-task-edit"><summary>Edit status</summary>{form(
                       task.id,
                       "set_task_status",
                       "Update task status",
@@ -668,13 +666,13 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                         taskId: task.id,
                         status: value(el, "status"),
                       }),
-                    )}
+                    )}</details>
                   </div>
                 ))}
             </section>
           ))}
         </section>
-        <section>
+        <section className="sa-add-task">
           <h3>Add task</h3>
           {form(
             "add-task",
@@ -698,10 +696,9 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
             }),
           )}
         </section>
-        <section>
-          <h3>Team deployment tracking</h3>
-          {teams.map((team) =>
-            form(
+        <section className="sa-team-tracking">
+          <details><summary>Team deployment tracking</summary>
+          {teams.map((team) => <details key={team.id}><summary>{text(team.name)} · {humanize(text(team.status))}</summary>{form(
               team.id,
               "set_team_status",
               text(team.name),
@@ -740,14 +737,15 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                 locationLabel: value(el, "locationLabel"),
                 updateText: value(el, "updateText"),
               }),
-            ),
+            )}</details>,
           )}
+          </details>
         </section>
       </>
     );
   }
   return (
-    <div className="scripted-analyst" aria-label="Analyst record workspace">
+    <div className={`scripted-analyst sa-view-${view}`} aria-label="Analyst record workspace">
       {uncertain && (
         <p role="alert">
           Save outcome uncertain. Use the parent recovery controls before
@@ -757,9 +755,9 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
       {!selected && <p>Select a case to edit records.</p>}
       {selected?.status === "closed" && <p>Closed case · read-only records</p>}
       {error && <p role="alert">{error} Inputs retained.</p>}
-      <button type="button" disabled={busy} onClick={() => onRefresh()}>
+      <details className="sa-refresh"><summary>Record tools</summary><button type="button" disabled={busy} onClick={() => onRefresh()}>
         Refresh records
-      </button>
+      </button></details>
       {view === "cyber"
         ? cyberPanels()
         : view === "coordination"

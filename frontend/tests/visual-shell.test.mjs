@@ -43,12 +43,10 @@ test("existing navigation, Advanced preferences, and mobile callbacks are retain
 
 test("header offers a context mount with static sample status, without inventing a clock or case action", () => {
   assert.match(header, /id="workspace-header-context"/);
-  assert.doesNotMatch(
-    header,
-    /new Date|Date\.now|Open case from alert/,
-  );
+  assert.doesNotMatch(header, /new Date|Date\.now|Open case from alert/);
   assert.match(header, /Sample data · not connected to live systems/);
-  assert.match(header, /Baseline r\{data\?\.baselineRevision/);
+  assert.doesNotMatch(header, /Baseline r/);
+  assert.match(app, /Baseline r\{data\?\.baselineRevision/);
   assert.match(header, /aria-label="Reload model"/);
 });
 

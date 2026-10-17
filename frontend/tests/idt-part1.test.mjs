@@ -306,9 +306,10 @@ test("legacy captures and missing endpoints stay unclassified, even for known se
   assert.deepEqual(consequenceModel(null).inventorySectors, []);
 });
 
-test("C4 presents the four-sector context network before the modeled-only detail panel", () => {
+test("C4 leads with the linked sector dependency graph; the inventory chart is collapsed context", () => {
   const html = render("consequence", fixture());
-  assert.ok(html.indexOf("Saved inventory sector context") < html.indexOf("Captured Dependency Network"));
+  assert.ok(html.indexOf("Sector dependencies") > -1);
+  assert.ok(html.indexOf("Sector dependencies") < html.indexOf("Saved inventory sector context"));
 });
 
 test("Case File impact rows render actual chips from captured entities, never today's inventory", () => {

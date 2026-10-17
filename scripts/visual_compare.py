@@ -12,6 +12,8 @@ import hashlib
 import html
 from html.parser import HTMLParser
 import json
+import ipaddress
+import os
 from pathlib import Path
 import re
 import sys
@@ -21,7 +23,7 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler, ProxyHand
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-VIEWPORTS = ((1920, 1080), (1440, 900))
+VIEWPORTS = ((1920, 1080),)
 
 
 @dataclass(frozen=True)
@@ -56,13 +58,31 @@ def origin(url):
     return (p.scheme.lower(), p.hostname, p.port or (443 if p.scheme == 'https' else 80))
 
 
+def loopback_target(url):
+    """Never resolve an arbitrary hostname or contact a hosted deployment."""
+    host = urlsplit(url).hostname
+    if host == 'localhost':
+        return True
+    try:
+        return ipaddress.ip_address(host or '').is_loopback
+    except ValueError:
+        return False
+
+
+def selected_screens(args):
+    names = getattr(args, 'screens', None)
+    screens = {s.name: s for s in SCREENS}
+    return list(SCREENS) if names is None else [screens[name] for name in names]
+
+
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--app-url', required=True, help='Existing target; never starts a server')
     refs = p.add_mutually_exclusive_group()
-    refs.add_argument('--mockup', type=Path, default=ROOT / 'mockups/CITRIDE_Beta_Mockup.html')
+    refs.add_argument('--mockup', type=Path, default=ROOT / '.specs/billington-beta/mockups/CITRIDE_Beta_Mockup.html')
     refs.add_argument('--mockup-dir', type=Path, help='Explicit original *.dc.html fallback, never auto-selected')
     p.add_argument('--output', type=Path, default=ROOT / 'artifacts/visual-compare')
+    p.add_argument('--screens', help='Comma-separated screen codes, e.g. C4,C1 (A3 includes its three tabs)')
     p.add_argument('--case-id', help='Existing case required for read-only capture')
     p.add_argument('--entity-id', help='Existing entity; otherwise selected from the saved case context')
     p.add_argument('--capture', action='store_true', help='Authorize browser capture of the supplied existing target')
@@ -76,6 +96,12 @@ def parse_args(argv=None):
     u = urlsplit(a.app_url)
     if u.scheme not in ('http', 'https') or not u.hostname or u.username or u.password or u.query or u.fragment:
         p.error('--app-url must be an http(s) target without credentials, query, or fragment')
+    try:
+        origin(a.app_url)
+    except ValueError:
+        p.error('invalid --app-url port')
+    if a.capture and not loopback_target(a.app_url):
+        p.error('--capture is restricted to loopback targets; no production contact')
     if a.capture and a.preflight:
         p.error('--capture and --preflight are mutually exclusive')
     if a.reset_demo and not a.prepare_isolated:
@@ -84,13 +110,23 @@ def parse_args(argv=None):
         p.error('--prepare-isolated requires --capture and --confirm-isolated EXACT_APP_URL')
     if a.prepare_isolated and a.case_id:
         p.error('--prepare-isolated creates a fresh case; do not pass --case-id')
-    if a.capture and not (a.case_id or a.prepare_isolated):
-        p.error('read-only --capture requires --case-id (no implicit create/analyze)')
+    if a.capture and not (a.case_id or a.prepare_isolated or (a.output / 'preparation.json').is_file()):
+        p.error('read-only --capture requires --case-id or a saved preparation journal (no implicit writes)')
+    if a.screens is not None:
+        names = [name.strip() for name in a.screens.split(',')]
+        names = [expanded for name in names for expanded in
+                 (['A3-timeline', 'A3-hunt', 'A3-raw'] if name == 'A3' else [name])]
+        unknown = sorted(set(names) - {s.name for s in SCREENS})
+        if unknown:
+            p.error('unknown --screens: ' + ', '.join(unknown))
+        a.screens = list(dict.fromkeys(names))
     if a.timeout_ms <= 0:
         p.error('--timeout-ms must be positive')
-    if a.case_id and not re.fullmatch(r'[A-Za-z0-9_.:-]{1,128}', a.case_id):
+    if a.case_id and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}', a.case_id):
         p.error('invalid --case-id')
-    if a.request_id and not re.fullmatch(r'[A-Za-z0-9_.:-]{1,100}', a.request_id):
+    if a.entity_id and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}', a.entity_id):
+        p.error('invalid --entity-id')
+    if a.request_id and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}', a.request_id):
         p.error('--request-id must be a 1–100 character identifier')
     return a
 
@@ -140,22 +176,28 @@ def preflight(args):
     if not args.mockup_dir and args.mockup.is_file():
         elements.feed(args.mockup.read_text(encoding='utf-8'))
     rows = []
-    for screen in SCREENS:
+    audit = audit_reference(args.mockup) if not args.mockup_dir and args.mockup.is_file() else None
+    for screen in selected_screens(args):
         ref = None
+        board = 'Advanced' if screen.name.startswith('Advanced-') else screen.board
         path = (args.mockup_dir / (screen.board + '.dc.html')) if args.mockup_dir else args.mockup
-        # The unified format is unknown until inspected. Only exact IDs actually
-        # present in the original document are accepted; no guessed selectors.
-        selector = None
-        if path.is_file() and (args.mockup_dir or screen.board in elements.ids):
-            selector = None if args.mockup_dir else '[id=' + json.dumps(screen.board) + ']'
-            ref = dict(path=str(path.resolve()), url=path.resolve().as_uri(), selector=selector,
-                       audit=audit_reference(path))
+        # tpl-* is inert markup, NOT a screenshot target. Execute the complete
+        # unmodified document's own router and capture its entire rendered page.
+        routed = 'tpl-' + board in elements.ids
+        if path.is_file() and (args.mockup_dir or routed or board in elements.ids):
+            fragment = '#/' + board if routed else ''
+            if routed and screen.name.startswith('Advanced-'):
+                fragment += '/' + screen.view
+            ref = dict(path=str(path.resolve()), url=path.resolve().as_uri() + fragment,
+                       selector=None, board=board, routed=routed,
+                       audit=audit_reference(path) if args.mockup_dir else audit)
         for width, height in VIEWPORTS:
-            rows.append(dict(screen=screen.name, width=width, height=height, reference=ref,
+            rows.append(dict(screen=screen.name, width=width, height=height, full_page=True, reference=ref,
+                             provenance=provenance,
                              status='preflight-only' if ref else 'reference-unavailable',
-                             valid_proof=False, issues=[],
-                             reason=('Capture not requested; template warnings require rendered validation' if ref
-                                     else 'Original board missing or no exact board ID discovered; no substitute supplied')))
+                             valid_proof=False, capture_valid=False, visual_conformance='not-reviewed', issues=[],
+                             reason=('Capture not requested; original runtime must be validated' if ref
+                                     else 'Original board missing or no exact template/board discovered; no substitute supplied')))
     return rows, provenance
 
 
@@ -184,33 +226,81 @@ def render_issues(text, errors, blocked):
 def compose_pair(left, right, output):
     from PIL import Image
     with Image.open(left) as l, Image.open(right) as r:
-        if l.size != r.size:
-            raise ValueError('Viewport sizes differ; refusing resize/crop repair')
-        pair = Image.new('RGB', (l.width + r.width, l.height))
+        if l.width != r.width:
+            raise ValueError('Viewport widths differ; refusing resize/crop repair')
+        pair = Image.new('RGB', (l.width + r.width, max(l.height, r.height)), 'white')
         pair.paste(l.convert('RGB'), (0, 0))
         pair.paste(r.convert('RGB'), (l.width, 0))
         pair.save(output)
+        return dict(reference=list(l.size), app=list(r.size), composed=list(pair.size),
+                    alignment='top', padding='white', rescaled=False, cropped=False)
+
+
+def atomic_json(path, value):
+    """Durably replace a journal/report; an interrupted write never truncates it."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix='.' + path.name, dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as handle:
+            json.dump(value, handle, indent=2)
+            handle.write('\n')
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 def write_report(output, rows, provenance, execution):
     output.mkdir(parents=True, exist_ok=True)
-    report = dict(provenance=provenance, execution=execution, rows=rows,
-                  valid_pairs=sum(bool(r['valid_proof']) for r in rows),
-                  requested_pairs=len(rows),
-                  disclaimer='Valid capture is not a visual-match assertion. Human review required. Invalid pairs are diagnostic only.')
-    (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    old = {}
+    if (output / 'report.json').is_file():
+        # Do not silently discard evidence if an existing report cannot be read.
+        old = json.loads((output / 'report.json').read_text(encoding='utf-8'))
+    key = lambda row: (row['screen'], row['width'], row['height'])
+    merged = {key(row): row for row in old.get('rows', [])}
+    for row in rows:
+        previous = merged.get(key(row))
+        if previous and previous.get('artifact') and not row.get('artifact'):
+            previous = dict(previous, latest_attempt=row)
+            merged[key(row)] = previous
+        else:
+            merged[key(row)] = row
+    all_rows = list(merged.values())
+    history = old.get('executions', [])
+    clean_execution = {k: v for k, v in execution.items() if not k.startswith('_')}
+    if not history or history[-1] != clean_execution:
+        history.append(clean_execution)
+    report = dict(provenance=provenance, execution=clean_execution, executions=history, rows=all_rows,
+                  valid_pairs=sum(bool(r.get('capture_valid', r.get('valid_proof'))) for r in all_rows),
+                  requested_pairs=len(all_rows), latest_requested_pairs=len(rows),
+                  disclaimer='Capture validity is not visual conformance. Human checklist review required. Invalid pairs are diagnostic only.')
+    atomic_json(output / 'report.json', report)
     cards = []
-    for r in rows:
-        label = html.escape(f"{r['screen']} — {r['width']}×{r['height']} — {r['status']}")
-        image = ('<a href="{0}"><img loading="lazy" src="{0}" alt="Original left, app right"></a>'.format(html.escape(r['artifact']))
+    for r in all_rows:
+        extent = 'full page' if r.get('full_page') else 'legacy viewport-only evidence'
+        label = html.escape(f"{r['screen']} — {r['width']}×{r['height']} viewport, {extent} — {r['status']}")
+        image = ('<a href="{0}"><img loading="lazy" src="{0}" alt="Original left, app right; top aligned, padding only"></a>'.format(html.escape(r['artifact'], quote=True))
                  if r.get('artifact') else '')
-        cards.append(f'<section><h2>{label}</h2><p>{html.escape(r.get("reason", ""))}</p>{image}</section>')
+        validity = 'valid' if r.get('capture_valid', r.get('valid_proof')) else 'invalid / not captured'
+        review = html.escape(r.get('visual_conformance', 'not-reviewed'))
+        attempt = ('<p>Latest attempt: ' + html.escape(r['latest_attempt'].get('reason', '')) + '</p>'
+                   if r.get('latest_attempt') else '')
+        case = html.escape(str(r.get('case', {}).get('id', 'not captured')))
+        cards.append(f'<section><h2>{label}</h2><p>Capture: {validity}. Visual conformance: {review}. Case: {case}.</p>'
+                     f'<p>{html.escape(r.get("reason", ""))}</p>{attempt}{image}</section>')
     (output / 'index.html').write_text('<!doctype html><meta charset="utf-8"><title>CITRIDE comparison coverage</title>'
         '<style>body{font:16px system-ui;background:#101827;color:#eee;padding:24px}img{width:100%;height:auto}section{margin:30px 0}a{color:#9cf}</style>'
         '<h1>Original mockup (left) / application (right)</h1>'
-        '<p>Diagnostic captures are NOT valid visual proof. Missing references stay missing. '
-        'No automatic visual-match claims. <a href="report.json">Machine-readable report</a></p>'
-        + ''.join(cards), encoding='utf-8')
+        '<p>1920×1080 viewport; full-page screenshots; top-aligned with white padding, never rescaled or cropped. '
+        'Capture validity does NOT assert visual conformance. Human review required. '
+        '<a href="report.json">Machine-readable report</a></p>' + ''.join(cards), encoding='utf-8')
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -225,11 +315,21 @@ class CaptureFailure(RuntimeError):
 
 
 def api(args, path, payload=None):
+    if payload is not None and not (args.prepare_isolated and args.confirm_isolated == args.app_url):
+        raise RuntimeError('API write denied: isolated preparation not authorized')
+    if not args.capture or not loopback_target(args.app_url):
+        raise RuntimeError('API denied: explicit loopback capture required; no production contact')
+    if not path.startswith('/') or path.startswith('//') or urlsplit(path).query or urlsplit(path).fragment:
+        raise RuntimeError('API path outside target scope')
     url = urljoin(args.app_url.rstrip('/') + '/', path.lstrip('/'))
     if origin(url) != origin(args.app_url):
         raise RuntimeError('API origin outside target scope')
-    if payload is not None and not (args.prepare_isolated and args.confirm_isolated == args.app_url):
-        raise RuntimeError('API write denied: isolated preparation not authorized')
+    if payload is not None:
+        allowed = path in ('/v1/demo/reset', '/v1/command/incidents', '/v1/cascade-runs') or bool(
+            re.fullmatch(r'/v1/command/incidents/[A-Za-z0-9_.:-]+/actions', path)
+            and payload.get('action') == 'analyze')
+        if not allowed or (path == '/v1/demo/reset' and not args.reset_demo):
+            raise RuntimeError('API write denied: operation outside preparation scope')
     request = Request(url, data=None if payload is None else json.dumps(payload).encode(),
                       headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
     with build_opener(ProxyHandler({}), NoRedirect).open(request, timeout=args.timeout_ms / 1000) as response:
@@ -239,7 +339,9 @@ def api(args, path, payload=None):
 def source_contract():
     checks = [('frontend/src/prototypeLocation.ts', ('caseId: identifier(query.get("case"))', '"entity-profile"')),
               ('frontend/src/commandTypes.ts', ('id: "coordination"', 'code: "C7"')),
-              ('frontend/src/NetworkEvidence.tsx', ('Inspect record', 'Run search', 'Selected raw record'))]
+              ('frontend/src/NetworkEvidence.tsx', ('Inspect record', 'Run search', 'Selected raw record')),
+              ('frontend/src/CommandWorkspace.tsx', ('data-casework-loaded={loaded}', 'aria-busy={loading || busy}', '/v1/command/records')),
+              ('frontend/src/dependencyNetwork.ts', ('export function quickWhatIfRequest(', 'backupMinHours: reserveHours', 'What-if from case'))]
     results = []
     for name, tokens in checks:
         path = ROOT / name
@@ -249,53 +351,172 @@ def source_contract():
     return results
 
 
+def load_journal(args):
+    path = args.output / 'preparation.json'
+    if not path.is_file():
+        return None
+    journal = json.loads(path.read_text(encoding='utf-8'))
+    if journal.get('target') != args.app_url:
+        raise RuntimeError('Preparation journal target differs; use a separate --output directory')
+    # Recover IDs from durable accepted responses even if the process stopped
+    # between the response checkpoint and its convenience-ID checkpoint.
+    for entry in journal.get('steps', []):
+        response = entry.get('response') or {}
+        if entry.get('status') != 'accepted':
+            continue
+        if entry.get('step') in ('create', 'analyze') and response.get('id'):
+            journal['case_id'] = response['id']
+            journal['case_version'] = response.get('version')
+        if entry.get('step') == 'analyze':
+            journal['run_id'] = (response.get('runSnapshot') or {}).get('id')
+        if entry.get('step') == 'what-if' and response.get('id'):
+            journal['what_if_run_id'] = response['id']
+    return journal
+
+
+def journal_write(args, journal, step, path, payload):
+    """Persist intent, then accepted response, before issuing another operation.
+
+    Any interrupted/pending step is uncertain, never automatically retried.
+    Responses retain case/run IDs even when later preparation/capture fails.
+    """
+    entry = dict(step=step, path=path, payload=payload, status='pending')
+    journal['steps'].append(entry)
+    atomic_json(args.output / 'preparation.json', journal)
+    try:
+        response = api(args, path, payload)
+    except Exception as error:
+        entry.update(status='uncertain', error=str(error))
+        atomic_json(args.output / 'preparation.json', journal)
+        raise
+    entry.update(status='accepted', response=response)
+    journal['completed'].append(step)
+    # Even an incomplete accepted response is durable before ID extraction.
+    atomic_json(args.output / 'preparation.json', journal)
+    if step in ('create', 'analyze'):
+        journal['case_id'] = response['id']
+        journal['case_version'] = response['version']
+    if step == 'analyze':
+        journal['run_id'] = (response.get('runSnapshot') or {}).get('id')
+    if step == 'what-if':
+        journal['what_if_run_id'] = response['id']
+    atomic_json(args.output / 'preparation.json', journal)
+    return response
+
+
+def what_if_payload(incident, identity):
+    """Same shape as quickWhatIfRequest + CommandWorkspace.runPlanning.
+
+    Resolve the treated-water dependency from the captured run, not a guessed
+    dependency ID or a mutable live model.
+    """
+    run = incident['runSnapshot']
+    baseline = run.get('baselineSnapshot') or {}
+    entities = [e for e in baseline.get('entities', []) if e.get('label') == 'Dialysis Center X']
+    if len(entities) != 1:
+        raise RuntimeError('Captured model must contain exactly one Dialysis Center X')
+    entity_id = entities[0]['id']
+    impacts = [i for i in run.get('impacts', []) if i.get('entityId') == entity_id]
+    dependencies = [d for d in baseline.get('dependencies', [])
+                    if d.get('dependent') == entity_id and d.get('requiredService') == 'treated_water'
+                    and any(d['id'] in path for impact in impacts for path in impact.get('paths', []))]
+    if len(dependencies) != 1:
+        raise RuntimeError('Dialysis Center X must have exactly one captured impacted treated-water dependency')
+    return dict(run['request'], overrides=[dict(dependencyId=dependencies[0]['id'], backupMinHours=6,
+                backupMaxHours=6, note='What-if from case ' + incident['title'])],
+                expectedBaselineRevision=run['baselineRevision'], clientRequestId=identity + '-what-if')
+
+
 def prepare_case(args, execution):
+    journal = load_journal(args)
+    if journal:
+        execution['preparation'] = journal
+        if args.prepare_isolated:
+            raise RuntimeError('Preparation journal already exists; no writes/reset replayed. Resume with --capture only in this --output directory')
+        if not args.case_id:
+            args.case_id = journal.get('case_id')
+        elif journal.get('case_id') and args.case_id != journal['case_id']:
+            raise RuntimeError('Selected case differs from preparation journal; use a separate --output directory')
+    if not args.prepare_isolated and not args.case_id:
+        raise RuntimeError('Journal has no accepted case ID; reconcile its pending request read-only; no reset/retry performed')
     baseline = api(args, '/v1/bootstrap')
     if args.prepare_isolated:
         identity = args.request_id or 'visual-' + uuid.uuid4().hex
-        execution['preparation'] = dict(target=args.app_url, request_id=identity, completed=[])
-        # Persist identity BEFORE any write; never automatically retry an uncertain save.
-        write_report(args.output, execution.pop('_rows'), execution.pop('_provenance'), execution)
+        journal = dict(target=args.app_url, request_id=identity, completed=[], steps=[])
+        execution['preparation'] = journal
+        # Exclusive claim prevents concurrent preparers from resetting each other.
+        args.output.mkdir(parents=True, exist_ok=True)
+        with (args.output / 'preparation.json').open('x', encoding='utf-8') as handle:
+            json.dump(journal, handle, indent=2)
+            handle.flush()
+            os.fsync(handle.fileno())
         if args.reset_demo:
-            api(args, '/v1/demo/reset', dict(confirm='RESET DEMO',
+            journal_write(args, journal, 'reset', '/v1/demo/reset', dict(confirm='RESET DEMO',
                 expectedBaselineRevision=baseline['baselineRevision'], clientRequestId=identity + '-reset'))
-            execution['preparation']['completed'].append('reset')
             baseline = api(args, '/v1/bootstrap')
-        incident = api(args, '/v1/command/incidents', dict(eventId='event-vpn-a',
-            title='Watershed visual comparison', priority='high',
-            expectedBaselineRevision=baseline['baselineRevision'], clientRequestId=identity + '-create'))
-        execution['preparation']['completed'].append('create')
-        incident = api(args, '/v1/command/incidents/' + incident['id'] + '/actions',
+        incident = journal_write(args, journal, 'create', '/v1/command/incidents', dict(eventId='event-vpn-a',
+            title='Watershed', priority='high', expectedBaselineRevision=baseline['baselineRevision'],
+            clientRequestId=identity + '-create'))
+        args.case_id = incident['id']
+        incident = journal_write(args, journal, 'analyze', '/v1/command/incidents/' + incident['id'] + '/actions',
             dict(action='analyze', scenarioId='unsafe-water', evaluationHour=1, horizonHours=12,
                  expectedVersion=incident['version'], clientRequestId=identity + '-analyze'))
-        execution['preparation']['completed'].append('analyze')
-        args.case_id = incident['id']
+        planning = journal_write(args, journal, 'what-if', '/v1/cascade-runs', what_if_payload(incident, identity))
+        if planning.get('id') == incident['runSnapshot'].get('id'):
+            raise RuntimeError('What-if unexpectedly replaced the captured case run')
     else:
         records = api(args, '/v1/command/incidents')
         candidates = records if isinstance(records, list) else records.get('incidents', [])
         incident = next((r for r in candidates if r['id'] == args.case_id), None)
         if incident is None:
             raise RuntimeError('Provided case not found; no read-only state was created')
+        if journal and journal.get('what_if_run_id'):
+            if (incident.get('runSnapshot') or {}).get('id') != journal.get('run_id'):
+                raise RuntimeError('Case captured run changed since preparation; no saved what-if substituted')
+            planning = api(args, '/v1/cascade-runs/' + journal['what_if_run_id'])
+            expected = what_if_payload(incident, journal['request_id'])
+            # The backend adds a provenance sourceRef when accepting an override.
+            # Validate that generated reference before comparing the original intent;
+            # do not mistake persisted provenance for an altered planning request.
+            actual_request = dict(planning.get('request', {}))
+            actual_overrides = []
+            for override in actual_request.get('overrides', []):
+                value = dict(override)
+                source_ref = value.pop('sourceRef', None)
+                if source_ref is not None and source_ref != f"urn:citride:run:{planning['id']}:override:{value.get('dependencyId')}":
+                    raise RuntimeError('Saved what-if override provenance does not match its run/dependency')
+                actual_overrides.append(value)
+            actual_request['overrides'] = actual_overrides
+            if (planning.get('baselineRevision') != incident['runSnapshot']['baselineRevision']
+                    or any(actual_request.get(field) != expected[field]
+                           for field in ('scenarioId', 'evaluationHour', 'horizonHours', 'overrides'))):
+                raise RuntimeError('Saved what-if no longer matches the journal/case')
     if incident.get('eventId') != 'event-vpn-a' or not incident.get('runSnapshot'):
         raise RuntimeError('Case lacks event-vpn-a and captured analysis; use a prepared case or explicit isolated preparation')
     snapshot = incident['runSnapshot']
-    if snapshot.get('request', {}).get('scenarioId') != 'unsafe-water':
+    request = snapshot.get('request', {})
+    if request.get('scenarioId') != 'unsafe-water':
         raise RuntimeError('Case analysis is not the existing unsafe-water scenario')
+    if any(field in request and request[field] != value for field, value in [('evaluationHour', 1), ('horizonHours', 12)]):
+        raise RuntimeError('Case analysis must use evaluationHour=1 and horizonHours=12')
     context = incident.get('contextSnapshot') or incident.get('context') or {}
     entity = args.entity_id
     if not entity:
-        # Resolve from real case/event data, never invent an entity ID.
         event = next((e for e in baseline.get('events', []) if e.get('id') == incident['eventId']), {})
         entity = (context.get('cyberAsset') or {}).get('id') or event.get('targetAssetId')
     if not entity:
         raise RuntimeError('No entity resolved from case context; pass an existing --entity-id')
     execution['case'] = dict(id=incident['id'], version=incident['version'], entity=entity,
-                             run_id=snapshot.get('id'))
+                             title=incident.get('title'), run_id=snapshot.get('id'),
+                             what_if_run_id=journal.get('what_if_run_id') if journal else None)
     return entity
 
 
 def capture_page(browser, url, args, width, height, path, is_reference=False, selector=None, screen=None):
+    if (width, height) != VIEWPORTS[0]:
+        raise RuntimeError('Only the 1920×1080 full-page capture viewport is authorized')
     blocked, errors, failed, http_errors = [], [], [], []
+    loaded_api, readiness = {}, {}
     context = browser.new_context(viewport={'width': width, 'height': height},
                                   device_scale_factor=1, service_workers='block', reduced_motion='reduce')
     def route(request_route):
@@ -316,17 +537,54 @@ def capture_page(browser, url, args, width, height, path, is_reference=False, se
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda msg: errors.append(msg.text) if msg.type == 'error' else None)
     page.on('requestfailed', lambda req: failed.append(dict(url=req.url, failure=req.failure)))
-    page.on('response', lambda resp: http_errors.append(dict(url=resp.url, status=resp.status)) if resp.status >= 400 else None)
+    def response_received(resp):
+        if resp.status >= 400:
+            http_errors.append(dict(url=resp.url, status=resp.status))
+        endpoint = urlsplit(resp.url).path
+        if not is_reference and endpoint.startswith('/v1/') and resp.ok:
+            try:
+                loaded_api[endpoint] = resp.json()
+            except Exception as error:
+                errors.append('Invalid API JSON at ' + endpoint + ': ' + str(error))
+    page.on('response', response_received)
     try:
         page.goto(url, wait_until='networkidle', timeout=args.timeout_ms)
-        if selector:
-            board = page.locator(selector)
-            if board.count() != 1:
-                raise RuntimeError('Original board selector is not unique')
-            board.scroll_into_view_if_needed()
+        if is_reference and urlsplit(url).fragment.startswith('/'):
+            # Only observe the original runtime; never inject renderers or state.
+            page.wait_for_function("document.querySelector('#app')?.innerText.trim().length > 100")
+            if urlsplit(page.url).fragment != urlsplit(url).fragment:
+                raise RuntimeError('Original board router changed the requested hash')
+            board = urlsplit(url).fragment.split('/')[1]
+            if not page.evaluate("board => typeof screenFromHash === 'function' && screenFromHash() === board && document.title === 'CITRIDE Beta Mockup · ' + TITLES[board]", board):
+                raise RuntimeError('Original runtime did not render the requested board title')
         if not is_reference:
             assert screen is not None
             page.locator('main').wait_for(state='visible')
+            # This source-owned marker is set only after incidents, records and
+            # reference Promise.all resolves. A heading/URL alone is not readiness.
+            page.wait_for_function("""() => {
+                const workspace = document.querySelector('[data-casework-loaded]');
+                return workspace?.dataset.caseworkLoaded === 'true'
+                    && workspace.getAttribute('aria-busy') === 'false'
+                    && !/Loading saved|Loading the Watershed model|Loading cases[.…]/i.test(document.body.innerText);
+            }""")
+            required = ('/v1/bootstrap', '/v1/telemetry', '/v1/cascade-runs',
+                        '/v1/command/incidents', '/v1/command/records', '/v1/reference')
+            missing = [endpoint for endpoint in required if endpoint not in loaded_api]
+            if missing:
+                raise RuntimeError('Browser did not load required saved records: ' + ', '.join(missing))
+            incidents = loaded_api['/v1/command/incidents']
+            incidents = incidents if isinstance(incidents, list) else incidents.get('incidents', [])
+            incident = next((item for item in incidents if item.get('id') == args.case_id), None)
+            expected = getattr(args, 'capture_case', {})
+            if not incident or not incident.get('runSnapshot'):
+                raise RuntimeError('Browser case records lack the selected analyzed case')
+            if expected.get('run_id') and incident['runSnapshot'].get('id') != expected['run_id']:
+                raise RuntimeError('Browser loaded a different captured case analysis')
+            if expected.get('version') and incident.get('version') != expected['version']:
+                raise RuntimeError('Browser case version changed since read-only preparation')
+            readiness.update(records_loaded=list(required), case_id=incident['id'],
+                             case_version=incident['version'], run_id=incident['runSnapshot'].get('id'))
             # Actual source-derived controls; both interactions are local/read-only.
             if screen.tab == 'hunt':
                 page.get_by_role('button', name='Run search', exact=True).click()
@@ -369,12 +627,17 @@ def capture_page(browser, url, args, width, height, path, is_reference=False, se
                     issues.append('reference-tab-not-active')
             else:
                 issues.append('reference-tab-unavailable')
-        page.screenshot(path=str(path), full_page=False, animations='disabled')
+        if not is_reference and page.locator('main [role="alert"], .command-error').count():
+            issues.append('app-error-state')
+        page.evaluate('window.scrollTo(0, 0)')
+        page.screenshot(path=str(path), full_page=True, animations='disabled')
         return dict(url=page.url, issues=issues, blocked=blocked, script_errors=errors,
-                    failed_resources=failed, http_errors=http_errors)
+                    failed_resources=failed, http_errors=http_errors, readiness=readiness,
+                    full_page=True, viewport=[width, height])
     except Exception as error:
         raise CaptureFailure(str(error), dict(url=page.url, blocked=blocked, script_errors=errors,
-                            failed_resources=failed, http_errors=http_errors)) from error
+                            failed_resources=failed, http_errors=http_errors,
+                            loaded_api=list(loaded_api), readiness=readiness)) from error
     finally:
         context.close()
 
@@ -391,11 +654,14 @@ def capture(args, rows, execution):
             if not hasattr(browser, 'new_context'):
                 raise RuntimeError('Chromium context support unavailable')
             entity = prepare_case(args, execution)
+            args.capture_case = execution['case']
             with tempfile.TemporaryDirectory(prefix='citride-visual-') as d:
                 for row in rows:
                     if not row['reference']:
                         continue
                     s = next(s for s in SCREENS if s.name == row['screen'])
+                    row['case'] = execution['case']
+                    row['target'] = args.app_url
                     try:
                         ref = row['reference']
                         left, right = Path(d) / 'original.png', Path(d) / 'app.png'
@@ -405,13 +671,14 @@ def capture(args, rows, execution):
                             row['width'], row['height'], right, screen=s)
                         row['issues'] = sorted(set(row['reference_capture']['issues'] + row['app_capture']['issues']))
                         row['valid_proof'] = not row['issues']
+                        row['capture_valid'] = row['valid_proof']
                         row['status'] = 'captured' if row['valid_proof'] else 'diagnostic-invalid'
                         row['reason'] = 'Original left / app right; manual review required' if row['valid_proof'] else ', '.join(row['issues'])
-                        filename = f"{s.name}-{row['width']}.png"
-                        compose_pair(left, right, args.output / filename)
+                        filename = f"{s.name}.png"
+                        row['dimensions'] = compose_pair(left, right, args.output / filename)
                         row['artifact'] = filename
                     except Exception as error:
-                        row.update(status='capture-failed', reason=str(error), valid_proof=False)
+                        row.update(status='capture-failed', reason=str(error), valid_proof=False, capture_valid=False)
                         if isinstance(error, CaptureFailure):
                             row['failure_diagnostics'] = error.diagnostics
         finally:
@@ -431,8 +698,6 @@ def main(argv=None):
                 raise RuntimeError('Source contract changed; inspect routes/selectors before capture')
             if not any(r['reference'] for r in rows):
                 raise RuntimeError('No original references available; explicitly supply --mockup-dir if appropriate')
-            if args.prepare_isolated:
-                execution['_rows'], execution['_provenance'] = rows, provenance
             capture(args, rows, execution)
         except Exception as error:
             execution.pop('_rows', None)

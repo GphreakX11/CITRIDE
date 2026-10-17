@@ -30,6 +30,8 @@ import ScriptedAnalystViews, { LateTasks } from "./ScriptedAnalystViews";
 import ResetDemoControl from "./ResetDemoControl";
 import { defaultAlertPriority } from "./analystAlerts";
 import { caseDisplayId } from "./caseFilePresentation";
+import { displayText } from "./presentation";
+import { formatTimeCT } from "./displayTime";
 import {
   potentialScope,
   potentialRequests,
@@ -112,6 +114,11 @@ export default function CommandWorkspace({
     storyNow?: string;
   } | null>(null);
   const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(""), 4000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
   const [records, setRecords] = useState<RecordsState | null>(null);
   const [reference, setReference] = useState<ReferenceData | null>(null);
@@ -357,9 +364,7 @@ export default function CommandWorkspace({
       if (active.current) {
         setLastPlanningRun(saved);
         setLastPlanningCaseId(pendingRunCase.current);
-        setNotice(
-          `Saved separate planning run ${saved.id}. The case's captured run is unchanged.`,
-        );
+        setNotice("Planning run saved. Captured run unchanged.");
         pendingRun.current = null;
         setUncertain(false);
       }
@@ -672,6 +677,27 @@ export default function CommandWorkspace({
     typeof document === "undefined"
       ? null
       : document.getElementById("workspace-header-context");
+  const incidentContext =
+    typeof document === "undefined"
+      ? null
+      : document.getElementById("selected-incident-context");
+  const selectedSource = selected
+    ? records?.statewideIncidents?.find(
+        (record) =>
+          record.caseId === selected.id ||
+          record.linkedEventIds?.includes(selected.eventId),
+      )
+    : null;
+  const incidentLine = selected
+    ? [
+        caseDisplayId(selected, records),
+        selectedSource?.title ?? selected.title,
+        selected.contextSnapshot?.provider?.label,
+      ]
+        .filter(Boolean)
+        .map((part) => displayText(String(part)))
+        .join(" · ")
+    : "No incident selected";
   const openCaseFromAlert = (
     <button
       className="button primary"
@@ -694,13 +720,7 @@ export default function CommandWorkspace({
           <>
             {records?.storyNow && (
               <time className="story-clock" dateTime={records.storyNow}>
-                {new Date(records.storyNow).toLocaleTimeString("en-US", {
-                  timeZone: "America/Chicago",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hourCycle: "h23",
-                })}{" "}
-                CT
+                {formatTimeCT(records.storyNow)}
               </time>
             )}
           </>,
@@ -717,6 +737,7 @@ export default function CommandWorkspace({
         aria-busy={loading || busy}
       >
         {commandHeaderContext}
+        {incidentContext && createPortal(incidentLine, incidentContext)}
         {error && (
           <div className="command-error" role="alert">
             <strong>Couldn't refresh — saved picture may be stale.</strong>
@@ -767,58 +788,65 @@ export default function CommandWorkspace({
       data-casework-loaded={loaded}
       aria-busy={loading || busy}
     >
-      <div className="command-toolbar">
-        <div>
-          <span className="command-source-tag">CASEWORK</span>
-          <p>Track cases, review evidence and plan responses.</p>
-        </div>
-        <div className="command-toolbar-actions">
-          {headerContext
-            ? createPortal(openCaseFromAlert, headerContext)
-            : openCaseFromAlert}
-          {health?.resetEnabled && (
-            <ResetDemoControl
-              revision={data.baselineRevision}
-              disabled={busy || loading || uncertain}
-              onBusy={(value) => {
-                writing.current = value;
-                setBusy(value);
-              }}
-              onFailure={(message) => {
-                setError(message);
-                setUncertain(true);
-              }}
-            />
-          )}
-          {selected && view !== "case-file" && (
+      {(() => {
+        const controls = (
+          <div className="screen-header-actions">
+            {openCaseFromAlert}
+            {health?.resetEnabled && (
+              <span className="screen-header-reset">
+                <ResetDemoControl
+                  revision={data.baselineRevision}
+                  disabled={busy || loading || uncertain}
+                  onBusy={(value) => {
+                    writing.current = value;
+                    setBusy(value);
+                  }}
+                  onFailure={(message) => {
+                    setError(message);
+                    setUncertain(true);
+                  }}
+                />
+              </span>
+            )}
             <button
-              className="button secondary"
-              disabled={busy || loading || uncertain}
-              onClick={() => onNavigate("case-file")}
+              type="button"
+              className="icon-button"
+              aria-label="Refresh casework"
+              title="Refresh casework"
+              onClick={() => void recheck()}
+              disabled={busy || loading}
             >
-              Open full case file
+              <RefreshCw size={16} className={loading ? "spin" : ""} />
+              <span className="visually-hidden">Refresh casework</span>
             </button>
-          )}
-          {selected && (
-            <button
-              className="button secondary"
-              onClick={downloadBrief}
-              disabled={busy}
-            >
-              <Download size={16} />
-              Download structured brief (JSON)
-            </button>
-          )}
-          <button
-            className="button secondary"
-            onClick={() => void recheck()}
-            disabled={busy || loading}
-          >
-            <RefreshCw size={16} />
-            Refresh casework
-          </button>
-        </div>
-      </div>
+            {selected && (
+              <details className="screen-case-tools">
+                <summary>Case tools</summary>
+                <div>
+                  {view !== "case-file" && (
+                    <button
+                      className="text-button"
+                      disabled={busy || loading || uncertain}
+                      onClick={() => onNavigate("case-file")}
+                    >
+                      Open full case file
+                    </button>
+                  )}
+                  <button
+                    className="text-button"
+                    onClick={downloadBrief}
+                    disabled={busy}
+                  >
+                    <Download size={16} />
+                    Download structured brief (JSON)
+                  </button>
+                </div>
+              </details>
+            )}
+          </div>
+        );
+        return headerContext ? createPortal(controls, headerContext) : controls;
+      })()}
       {uncertain &&
         (pending.current || pendingRun.current || pendingPotential.current) && (
           <section className="command-panel" aria-label="Pending save recovery">
@@ -854,7 +882,7 @@ export default function CommandWorkspace({
         </div>
       )}
       {notice && (
-        <p className="command-notice" role="status">
+        <p className="screen-save-toast" role="status" aria-live="polite">
           {notice}
         </p>
       )}

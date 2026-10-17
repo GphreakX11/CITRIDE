@@ -31,7 +31,25 @@ export default function AnalystAlerts({
 }: Props) {
   const [showAll, setShowAll] = useState(showAllInitially),
     [editing, setEditing] = useState<string | null>(null);
-  const pending = alertsWithoutCases(data.events, incidents);
+  // The shared helper retains its newest-first record contract. Only this
+  // queue presents story order, with unknown times after recorded times.
+  const pending = [...alertsWithoutCases(data.events, incidents)].sort(
+    (a, b) => {
+      const at = Date.parse(String(a.timestamp ?? "")),
+        bt = Date.parse(String(b.timestamp ?? ""));
+      if (Number.isFinite(at) && Number.isFinite(bt)) return at - bt;
+      if (Number.isFinite(at) !== Number.isFinite(bt))
+        return Number.isFinite(at) ? -1 : 1;
+      return (
+        (typeof a.relativeTimeHours === "number"
+          ? a.relativeTimeHours
+          : Infinity) -
+        (typeof b.relativeTimeHours === "number"
+          ? b.relativeTimeHours
+          : Infinity)
+      );
+    },
+  );
   const linked = data.events.filter((e) => openCaseForEvent(e.id, incidents));
   const row = (event: Event) => {
     const existing = openCaseForEvent(event.id, incidents),
@@ -107,10 +125,10 @@ export default function AnalystAlerts({
         aria-label="Alerts without open cases"
         style={{ listStyle: "none", padding: 0 }}
       >
-        {(showAll ? pending : pending.slice(0, 5)).map(row)}
+        {(showAll ? pending : pending.slice(0, 7)).map(row)}
       </ul>
       {!pending.length && <p>No alerts are waiting for a case.</p>}
-      {pending.length > 5 && (
+      {pending.length > 7 && (
         <button
           type="button"
           aria-expanded={showAll}

@@ -211,6 +211,62 @@ function button(tree, label) {
     (node) => node.type === "button" && text(node) === label,
   );
 }
+function recordedProps() {
+  const p = props("leadership");
+  p.records = JSON.parse(readFileSync(new URL("../../data/scripted/watershed_beta.json", import.meta.url), "utf8"));
+  p.records.statewideIncidents = p.records.incidents;
+  p.records.responseTasks = p.records.tasks;
+  p.records.storyNow = "2026-10-13T08:30:00Z";
+  p.reference = JSON.parse(readFileSync(new URL("../../data/reference.json", import.meta.url), "utf8"));
+  return p;
+}
+test("recorded leadership sequence uses the timeline's formatted captured time", () => {
+  const p = recordedProps();
+  p.selected.eventSnapshot = { ...p.selected.eventSnapshot, timestamp: "2026-10-13T08:01:00Z", label: "Captured sequence marker" };
+  const out = renderToStaticMarkup(createElement(CommandCenterViews, p));
+  const sequence = out.match(/<details class="sc-brief-sequence">[\s\S]*?<\/details>/)?.[0];
+  assert.ok(sequence);
+  assert.match(sequence, /03:01 CT Captured sequence marker/);
+});
+test("recorded leadership case preview changes only the local summary and full-case target", () => {
+  hooks.clear();
+  const p = recordedProps();
+  const closed = p.records.statewideIncidents.find((row) => row.status === "closed");
+  assert.ok(closed);
+  const before = JSON.stringify({ data: p.data, records: p.records, incidents: p.incidents });
+  const selected = p.selected;
+  const calls = [];
+  p.onSelect = (...args) => calls.push(["select", ...args]);
+  p.onOpenAnalyst = (...args) => calls.push(["open", ...args]);
+  const previewList = (tree) => elements(tree).find((node) => node.props.className === "sc-brief-case-list");
+  const treeBefore = callbackTree(p);
+  const narrative = elements(treeBefore).find((node) => node.props.className === "sc-brief-sequence");
+  const preview = elements(previewList(treeBefore)).find((node) => node.type === "button" && text(node).includes(closed.id));
+  assert.ok(preview);
+  preview.props.onClick();
+  const treeAfter = callbackTree(p);
+  const summary = elements(treeAfter).find((node) => node.props["aria-label"] === "Read-only summary");
+  assert.match(text(summary), new RegExp(closed.id));
+  const selectedButton = elements(previewList(treeAfter)).find((node) => node.type === "button" && node.props.className === "selected");
+  assert.ok(text(selectedButton).includes(closed.id));
+  assert.equal(p.selected, selected);
+  assert.equal(text(elements(treeAfter).find((node) => node.props.className === "sc-brief-sequence")), text(narrative));
+  assert.deepEqual(calls, []);
+  assert.equal(JSON.stringify({ data: p.data, records: p.records, incidents: p.incidents }), before);
+  const original = elements(previewList(treeBefore)).find((node) => node.type === "button" && node.props.className === "selected");
+  assert.ok(original);
+  original.props.onClick();
+  button(callbackTree(p), "Open full case file").props.onClick();
+  assert.deepEqual(calls, [["open", "case-file", selected.id]]);
+});
+test("recorded leadership renders an absent case status as unknown", () => {
+  const p = recordedProps();
+  p.records.statewideIncidents.push({ id: "status-absent", title: "Case with no recorded status", severity: "low" });
+  const out = renderToStaticMarkup(createElement(CommandCenterViews, p));
+  const list = out.match(/<nav class="sc-brief-case-list"[\s\S]*?<\/nav>/)?.[0];
+  assert.ok(list);
+  assert.match(list, /status-absent[\s\S]*?>unknown<\/span>/);
+});
 test("command summary and full-record target follow picker changes and explicit clear", () => {
   for (const view of ["command", "leadership"]) {
     hooks.clear();

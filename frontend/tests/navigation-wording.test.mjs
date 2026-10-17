@@ -151,10 +151,11 @@ test("one static sample status lives in the existing header context mount withou
   for (const text of [
     "Texas Cyber Command · Statewide Command Center",
     "Analyst workspace · CTIC watch floor",
-    "Baseline r{data?.baselineRevision",
     'aria-label="Reload model"',
   ])
     assert.ok(header.includes(text), text);
+  assert.ok(!header.includes("Baseline r"));
+  assert.ok(app.includes("Baseline r{data?.baselineRevision"));
 });
 
 test("isolated QA verifier uses the current C/A names and Advanced tools, with workflows on analyst routes", () => {
