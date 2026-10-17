@@ -123,6 +123,11 @@ test("A5 renders compact contact rows with collapsed editors without removing ca
   assert.match(html, /<th>Partner<\/th><th>Group<\/th><th>Status<\/th><th>Last update<\/th>/);
   assert.match(html, /<summary>Update contact<\/summary>/);
   assert.match(html, /id="sa-decision-notes"/);
+  assert.match(html, /class="sa-contact-roles">Contacts:/);
+  assert.match(html, /Save note — not sent/);
+  assert.match(html, /status-chip--red">effect observed<\/span>/);
+  const workspace = readFileSync(new URL("../src/CommandWorkspace.tsx", import.meta.url), "utf8");
+  assert.match(workspace, /view === "coordination" && <details[^>]*><summary>Case record tools<\/summary>\{casework\}<\/details>/);
   assert.doesNotMatch(html, /<details[^>]*\sopen(?:=|>)/);
   for (const contact of records.contacts.filter((row) => row.incidentId === "TX-26-0412")) assert.ok(html.includes(contact.partnerRole));
 });

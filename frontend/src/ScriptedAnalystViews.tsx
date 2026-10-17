@@ -316,7 +316,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
       <fieldset disabled={blocked}>
         {fields}
         <button type="submit" disabled={blocked}>
-          Record update
+          {action === "add_note" ? "Save note — not sent" : "Record update"}
         </button>
       </fieldset>
     </form>
@@ -458,7 +458,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                 <div className="sa-rank-summary">
                 <h4>{row.label}</h4>
                 <p>
-                  {humanize(row.evidenceStatus)} ·{" "}
+                  <StatusChip status={row.evidenceStatus === "effect_observed" ? "confirmed" : row.evidenceStatus}>{humanize(row.evidenceStatus)}</StatusChip> ·{" "}
                   {row.peopleServed?.toLocaleString("en-US") ?? "Unknown"}{" "}
                   people served
                 </p>
@@ -476,11 +476,9 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
                   {row.firstActions.map((a) => (
                     <li key={a.id}>
                       {a.text}
-                      <br />
-                      <strong>{a.contactRole}</strong>
                     </li>
                   ))}
-                </ul></div>
+                </ul><p className="sa-contact-roles">Contacts: {[...new Set(row.firstActions.map((a) => a.contactRole).filter(Boolean))].join(" · ")}</p></div>
                 <button type="button" disabled={blocked} onClick={() => {
                   const panel = typeof document !== "undefined" ? document.getElementById("sa-decision-notes") : null;
                   if (panel) { (panel as HTMLDetailsElement).open = true; panel.scrollIntoView({ block: "nearest", behavior: "smooth" }); }

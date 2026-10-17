@@ -1002,8 +1002,9 @@ export default function CommandWorkspace({
               onRefresh={loadCases}
             />
           )}
-          {(view === "case-file" || ["coordination", "uctf"].includes(view)) &&
-            casework}
+          {view === "case-file" && casework}
+          {view === "coordination" && <details className="analyst-record-tools"><summary>Case record tools</summary>{casework}</details>}
+          {view === "uctf" && casework}
         </>
       )}
       {analysisConfirmation && (
