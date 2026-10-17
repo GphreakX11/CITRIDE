@@ -76,6 +76,16 @@ test("Analyst sector glyphs stay separate at the maximum responsive marker scale
   }
   assert.deepEqual([...infrastructureSymbolPositions(original)], [...symbols]);
 });
+test("optional dense ownership/cyber symbols remain separate, inside Texas and source-preserving", () => {
+  const source = mapPositions(data.entities);
+  const before = structuredClone([...source]);
+  const symbols = infrastructureSymbolPositions(source);
+  assert.equal(symbols.size, source.size);
+  assert.deepEqual([...source], before);
+  const points = [...symbols.values()];
+  for (const p of points) assert.ok(texasContainsMarker(p, 1000, 700, 36));
+  for (let i = 0; i < points.length; i++) for (let j = i + 1; j < points.length; j++) assert.ok(Math.hypot(points[i].x-points[j].x, points[i].y-points[j].y) >= 39.9);
+});
 const CallbackMap = (await import(await compile(source, true))).default;
 const view = {
   areaId: "all",

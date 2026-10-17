@@ -33,7 +33,7 @@ import {
 import type { MapEdge } from "./texasGraph";
 import { TEXAS_BOUNDARY_SOURCE, TEXAS_PATH } from "./texasOutline";
 import { nodeLabels } from "./texasLabels";
-import { containedTexasAnchor, texasContainsMarker } from "./texasMapLayout";
+import { containedTexasAnchor, texasContainsMarker, texasMarkerLayout } from "./texasMapLayout";
 import { InfrastructureIcon } from "./InfrastructureIcon";
 import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons";
 import "./infrastructure-map.css";
@@ -43,6 +43,11 @@ import "./texas-map.css";
 export function infrastructureSymbolPositions(
   source: ReadonlyMap<string, { x: number; y: number }>,
 ) {
+  // Optional ownership/cyber context is denser than the infrastructure layer.
+  if (source.size > 24) {
+    const markers = texasMarkerLayout([...source].map(([id, p]) => ({ id, x: p.x / 10, y: p.y / 7 })), 1000, 700, 36);
+    return new Map(markers.map(({ id, x, y }) => [id, { x, y }]));
+  }
   const points = [...source].sort(([a], [b]) => a.localeCompare(b))
     .map(([id, p]) => ({ id, x: p.x, y: p.y }));
   // 19px core radius × maximum 1.8 responsive scale, plus a clear gap.
@@ -616,6 +621,7 @@ export default function TexasInfrastructureMap({
           <svg
             ref={mapRef}
             className="texas-map"
+            data-dense-icons={visible.length > 24}
             viewBox={`${center.x - width / 2} ${center.y - height / 2} ${width} ${height}`}
             aria-label="Texas map with directed infrastructure relationships"
             onPointerDown={(event) => {

@@ -202,6 +202,9 @@
   transform: scale(var(--texas-marker-scale, 1));
   transform-origin: 0 0;
 }
+.texas-map[data-dense-icons="true"] .texas-node-symbol {
+  transform: scale(min(var(--texas-marker-scale, 1), 0.75));
+}
 .texas-icon-leader {
   stroke: var(--infrastructure-color);
   stroke-opacity: 0.6;
