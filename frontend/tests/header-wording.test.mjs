@@ -12,8 +12,11 @@ test("one shared header sample chip serves both modes, never repeated in casewor
   );
   assert.doesNotMatch(workspace, />Sample data</);
   assert.doesNotMatch(workspace, /className="prototype-status"/);
-  assert.match(workspace, /records\?\.storyNow/);
-  assert.match(workspace, /formatTimeCT\(records.storyNow\)/);
+  assert.match(workspace, /<OperationsClock timeZone=/);
+  const clock = read("OperationsClock.ts");
+  assert.match(clock, /useRealClock\(\)/);
+  assert.match(clock, /dateTime: new Date\(now\).toISOString\(\)/);
+  assert.match(clock, /clockLabel\(now, timeZone\)/);
 });
 test("copy cleanup preserves explicit pending-write recovery and raw record export", () => {
   const source = read("CommandWorkspace.tsx");

@@ -413,7 +413,9 @@ test("command context shows source display ID/title/provider, not a storage iden
   );
   assert.equal(text(context), "TX-26-184 · Source incident · utility-a");
   assert.ok(!text(context).includes("watershed"));
-  assert.ok(text(tree).includes("03:12 CT"));
+  const liveClock = nodes(tree).find((n) => n.type?.name === "OperationsClock");
+  assert.ok(liveClock, "Command header mounts a ticking operations clock");
+  assert.equal(liveClock.props.timeZone, "America/Chicago");
   delete globalThis.document;
 });
 

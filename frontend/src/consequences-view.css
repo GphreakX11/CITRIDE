@@ -5,23 +5,23 @@
   color: var(--text);
   padding: 24px 32px;
   background: var(--bg);
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .c4-view h1 {
   margin: 0 0 8px;
-  font-size: 30px;
+  font-size: var(--fs-title);
 }
 .c4-view h2 {
   margin: 0 0 14px;
-  font-size: 18px;
+  font-size: var(--fs-card-title);
 }
 .c4-view h3 {
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .c4-view small,
 .c4-view dt {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-chip);
 }
 .c4-view small {
   display: block;
@@ -32,7 +32,7 @@
   border-radius: 6px;
   padding: 6px 10px;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--fs-button);
 }
 .c4-view button:hover {
   background: var(--nav-active);
@@ -46,7 +46,7 @@
 .c4-heading time {
   display: block;
   text-align: right;
-  font: 13px var(--font-mono);
+  font: var(--fs-mono) var(--font-mono);
   margin-bottom: 10px;
   color: var(--text-2);
 }
@@ -57,7 +57,7 @@
   color: var(--text-2);
   border-radius: 6px;
   padding: 8px 14px;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .c4-picker {
   position: relative;
@@ -110,7 +110,7 @@
   padding: 10px 16px;
 }
 .c4-banner strong {
-  font-size: 12px;
+  font-size: var(--fs-chip);
   letter-spacing: 0.06em;
   color: var(--blue-text);
 }
@@ -147,7 +147,7 @@
   margin-top: 4px;
 }
 .c4-asset span {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-muted);
 }
 .c4-tiles {
@@ -162,12 +162,12 @@
   gap: 6px;
 }
 .c4-tile > strong {
-  font-size: 28px;
+  font-size: var(--fs-number);
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
 .c4-tile > b {
-  font-size: 14px;
+  font-size: var(--fs-button);
   color: var(--text);
 }
 .c4-tile.tone-red {
@@ -196,7 +196,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .c4-graph {
   position: relative;
@@ -220,7 +220,7 @@
 }
 .c4-graph text {
   fill: var(--text-2);
-  font-size: 12px;
+  font-size: var(--fs-graph-label, 12px);
   text-anchor: middle;
   paint-order: stroke;
   stroke: var(--bg-header);
@@ -241,10 +241,10 @@
   text-align: center;
 }
 .c4-node strong {
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .c4-node small {
-  font-size: 13px;
+  font-size: var(--fs-small);
   margin-top: 6px;
   color: inherit;
 }
@@ -268,14 +268,14 @@
   outline-offset: 4px;
 }
 .c4-legend {
-  font-size: 12px;
+  font-size: var(--fs-chip);
   color: var(--text-muted);
 }
 .c4-axis {
   display: flex;
   justify-content: space-between;
   margin: 14px 0 10px 30%;
-  font: 12px var(--font-mono);
+  font: var(--fs-chip) var(--font-mono);
   color: var(--text-muted);
 }
 .c4-timeline {
@@ -304,7 +304,7 @@
   opacity: 0.7;
 }
 .c4-timeline b {
-  font: 13px var(--font-mono);
+  font: var(--fs-mono) var(--font-mono);
 }
 .c4-restoration {
   padding: 10px;
@@ -331,7 +331,7 @@
   text-align: left;
   padding: 10px 6px;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .c4-view th {
   color: var(--text-muted);
@@ -349,7 +349,7 @@
 }
 .c4-workaround > span {
   float: right;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .c4-workaround p {
   margin: 5px 0;
@@ -366,11 +366,11 @@
   margin-top: 5px;
 }
 .c4-owners span {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-2);
 }
 .c4-view footer {
-  font-size: 12px;
+  font-size: var(--fs-chip);
   color: var(--text-muted);
 }
 .c4-panel:has(.c4-graph) {
@@ -385,7 +385,7 @@
   margin-top: 16px;
 }
 .c4-idt {
-  font: 12px var(--font-mono);
+  font: var(--fs-chip) var(--font-mono);
   color: var(--blue-text);
 }
 .c4-evidence dl {
@@ -395,7 +395,7 @@
 }
 .c4-evidence dd {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   overflow-wrap: anywhere;
 }
 @media (max-width: 1200px) {
@@ -432,12 +432,12 @@
     padding: 8px 4px;
   }
   .c4-node strong {
-    font-size: 13px;
+    font-size: var(--fs-small);
   }
   .c4-node small {
-    font-size: 11px;
+    font-size: var(--fs-chip);
   }
   .c4-tile > strong {
-    font-size: 22px;
+    font-size: var(--fs-number);
   }
 }

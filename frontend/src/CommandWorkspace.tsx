@@ -32,7 +32,7 @@ import ResetDemoControl from "./ResetDemoControl";
 import { defaultAlertPriority } from "./analystAlerts";
 import { caseDisplayId } from "./caseFilePresentation";
 import { displayText } from "./presentation";
-import { clockLabel, useRealClock } from "./useRealClock.ts";
+import OperationsClock from "./OperationsClock";
 import {
   potentialScope,
   potentialRequests,
@@ -120,7 +120,6 @@ export default function CommandWorkspace({
   onOpenTool,
   onAccessFailure,
 }: CommandWorkspaceProps) {
-  const realNow = useRealClock();
   const initial = initialSnapshot?.bootstrap.baselineRevision === data.baselineRevision
     ? initialSnapshot : null;
   const [incidents, setIncidents] = useState<CommandIncident[]>(initial?.incidents ?? []);
@@ -142,9 +141,7 @@ export default function CommandWorkspace({
     return () => window.clearTimeout(timer);
   }, [notice]);
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
-  const [storedRecords, setRecords] = useState<RecordsState | null>(initial?.records ?? null);
-  // Compatibility for presentation helpers; all elapsed time uses the real clock.
-  const records: RecordsState | null = storedRecords ? { ...storedRecords, storyNow: new Date(realNow).toISOString() } : null;
+  const [records, setRecords] = useState<RecordsState | null>(initial?.records ?? null);
   const [reference, setReference] = useState<ReferenceData | null>(initial?.reference ?? null);
   // Transport capability outlives the hydration snapshot's baseline revision.
   // Promotion/replacement must not fall back to the old multi-request path.
@@ -771,9 +768,7 @@ export default function CommandWorkspace({
     mode === "command" && headerContext
       ? createPortal(
           <>
-            <time className="story-clock" dateTime={new Date(realNow).toISOString()}>
-              {clockLabel(realNow, typeof records?.operationsTimeZone === "string" ? records.operationsTimeZone : "America/Chicago")}
-            </time>
+            <OperationsClock timeZone={typeof records?.operationsTimeZone === "string" ? records.operationsTimeZone : "America/Chicago"} />
           </>,
           headerContext,
         )

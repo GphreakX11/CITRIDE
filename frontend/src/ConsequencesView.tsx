@@ -556,19 +556,22 @@ function CascadeGraph({
 }
 export default function ConsequencesView({
   selectedId,
+  captured: capturedCase,
   onSelect,
   onOpenAnalyst,
   onNavigate,
 }: {
   selectedId?: string | null;
+  captured?: ReactNode;
   onSelect: (id: string) => void;
   onOpenAnalyst: (view: CommandView, caseId?: string | null) => void;
   onNavigate: (view: CommandView) => void;
 }) {
   const [id, setId] = useState(() =>
-    initialConsequenceIncident(window.location.search, selectedId),
+    initialConsequenceIncident(typeof window === "undefined" ? "" : window.location.search, selectedId),
   );
   const [value, setValue] = useState<ConsequenceProjection | null>(null);
+  const captured = id === selectedId ? capturedCase : null;
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const now = useRealClock();
@@ -604,7 +607,8 @@ export default function ConsequencesView({
     url.searchParams.set("incidentId", next);
     url.searchParams.set("incident", next);
     window.history.replaceState(null, "", url);
-    onSelect(next);
+    const selectedCase = value?.incidents.find((incident) => incident.id === next)?.caseId;
+    if (selectedCase) onSelect(selectedCase);
   };
   const analyst = () =>
     onOpenAnalyst(
@@ -678,8 +682,9 @@ export default function ConsequencesView({
           onPartners={() => onNavigate("federation")}
         />
       ) : (
-        <p role="status">Loading consequence records…</p>
+        captured ?? <p role="status">Loading consequence records…</p>
       )}
+      {captured && (value || error) && <details open={!value}><summary>Captured case analysis · immutable snapshot and matching what-if</summary>{captured}</details>}
     </div>
   );
 }

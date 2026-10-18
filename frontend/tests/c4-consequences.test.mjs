@@ -34,12 +34,21 @@ async function compile(url) {
 const model = await import(
   await compile(new URL("../src/consequencesModel.ts", import.meta.url))
 );
-const { ConsequencesContent } = await import(
+const { ConsequencesContent, default: ConsequencesView } = await import(
   await compile(new URL("../src/ConsequencesView.tsx", import.meta.url))
 );
 const { clockLabel } = await import(
   await compile(new URL("../src/useRealClock.ts", import.meta.url))
 );
+test("C4 SSR preserves captured analysis without window or a new projection", () => {
+  const markup = renderToStaticMarkup(createElement(ConsequencesView, {
+    selectedId: "legacy-case", captured: createElement("section", null, "Saved immutable graph"),
+    onSelect() {}, onOpenAnalyst() {}, onNavigate() {},
+  }));
+  assert.match(markup, /Saved immutable graph/);
+  assert.doesNotMatch(markup, /Loading consequence records/);
+  assert.match(markup, /<time dateTime=/);
+});
 test("node tones are evidence driven and never default green", () => {
   const state = model.consequenceNodeState;
   assert.equal(state({ source: true }).tone, "red");

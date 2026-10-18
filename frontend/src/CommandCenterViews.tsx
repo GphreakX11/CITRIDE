@@ -1,8 +1,11 @@
 import { StatusChip } from "./visualPrimitives.ts";
 import { VisualCard } from "./visualPrimitives.ts";
 import { SummaryTile } from "./visualPrimitives.ts";
+import DependencyNetwork from "./components/DependencyNetwork.tsx";
+import { boilWaterLabel } from "./statewideFootprint.ts";
 import { useState, type ReactNode } from "react";
 import type { Bootstrap, Run, Source } from "./types.ts";
+import { exposureAvoided, exposureDollars } from "./exposure.ts";
 import type { CommandIncident, CommandView } from "./commandTypes.ts";
 import { orderIncidents } from "./commandMetrics.ts";
 import { displayText } from "./presentation.ts";
@@ -329,6 +332,7 @@ export default function CommandCenterViews({
   onNavigate,
   records,
   reference,
+  lastPlanningRun,
 }: CommandCenterViewsProps) {
   const overview = overviewModel(incidents);
   const model = consequenceModel(selected);
@@ -377,7 +381,6 @@ export default function CommandCenterViews({
         onSelectEntity={onSelectEntity}
       />
     ) : null;
-  if (view === "consequence") return <ConsequencesView selectedId={selected?.id} onSelect={onSelect} onOpenAnalyst={onOpenAnalyst} onNavigate={onNavigate} />;
   if (scripted && view !== "cop") return scripted;
   if (view === "command") {
     content = (
@@ -684,6 +687,78 @@ export default function CommandCenterViews({
         </div>
       </>
     );
+  } else if (view === "consequence") {
+    const notice = boilWaterLabel(model.run, model.captured.entities, reference ?? null);
+    const candidate = model.run && lastPlanningRun && selected &&
+      model.run.baselineSnapshot != null && lastPlanningRun.baselineSnapshot != null &&
+      model.run.baselineRevision === lastPlanningRun.baselineRevision &&
+      model.run.modelVersion === lastPlanningRun.modelVersion &&
+      JSON.stringify(model.run.baselineSnapshot) === JSON.stringify(lastPlanningRun.baselineSnapshot) &&
+      (lastPlanningRun.request.expectedBaselineRevision === undefined ||
+        lastPlanningRun.request.expectedBaselineRevision === model.run.baselineRevision) &&
+      lastPlanningRun.scenarioId === lastPlanningRun.request.scenarioId &&
+      lastPlanningRun.request.overrides.length === 1 &&
+      lastPlanningRun.request.overrides.every((override) =>
+        override.note === `What-if from case ${selected.title}` &&
+        typeof override.backupMinHours === "number" && Number.isFinite(override.backupMinHours) &&
+        override.backupMinHours >= 0 && override.backupMinHours === override.backupMaxHours &&
+        model.rows.some((row) => row.dependencies.some((dependency) =>
+          dependency.id === override.dependencyId && dependency.requiredService === "treated_water")),
+      ) ? lastPlanningRun : null;
+    const avoided = model.run && candidate
+      ? exposureAvoided(model.run, candidate, reference?.planningRates ?? [], reference?.referenceVersion)
+      : null;
+    content = model.run ? (
+      <div className="cc-consequence-wall">
+        <section className="cc-consequence-totals" aria-label="Totals">
+          <SummaryTile className="command-metric">
+            <strong>{model.people?.toLocaleString("en-US") ?? "Not captured"}</strong>
+            <span>People in affected water service</span>
+          </SummaryTile>
+          <SummaryTile className="command-metric">
+            <strong>{model.facilities}</strong><span>Critical facilities at risk</span>
+          </SummaryTile>
+          <SummaryTile className="command-metric cc-metric-red">
+            <strong>{planningWindow(model.earliest)}</strong>
+            <span>Earliest window{model.rows.find((row) => row.windowHours)?.label
+              ? ` · ${displayText(model.rows.find((row) => row.windowHours)!.label)}` : ""}</span>
+          </SummaryTile>
+          <SummaryTile className="command-metric cc-metric-amber">
+            <strong>{notice ? "Possible" : "Not indicated"}</strong>
+            <span>Boil-water notice</span><small>{notice ?? "No matching reference rule for this run"}</small>
+          </SummaryTile>
+        </section>
+        {avoided && !("incomparable" in avoided) && (
+          <SummaryTile className="command-metric cc-metric-green">
+            <strong>{avoided.serviceHours[0]}–{avoided.serviceHours[1]} service-hours</strong>
+            <span>Modeled consequence avoided</span>
+            <small>{exposureDollars(avoided.costUsd)} · matching what-if · not observed savings</small>
+          </SummaryTile>
+        )}
+        <DependencyNetwork
+          key={model.run.id}
+          model={model}
+          mode="display"
+          boilWaterLabel={notice}
+        />
+      </div>
+    ) : (
+      <Panel title="Captured Consequences">
+        <Empty>
+          {selected
+            ? "No captured consequence run for this case."
+            : "Select a saved case with a captured consequence run."}
+        </Empty>
+        {selected && (
+          <button
+            className="command-link"
+            onClick={() => onOpenAnalyst("consequence", selected.id)}
+          >
+            Open in Analyst
+          </button>
+        )}
+      </Panel>
+    );
   } else if (view === "uctf") {
     const tasks = recordedTasks(incidents);
     content = (
@@ -935,6 +1010,12 @@ export default function CommandCenterViews({
         </Panel>
       </>
     );
+  }
+  if (view === "consequence" && typeof window !== "undefined") {
+    const linkedIncident = selected ? records?.statewideIncidents.find((incident) => incident.caseId === selected.id)
+      ?? records?.statewideIncidents.find((incident) => !incident.caseId && incident.linkedEventIds?.includes(selected.eventId)) : null;
+    const publicIncidentId = linkedIncident?.id ?? selected?.id;
+    return <ConsequencesView key={publicIncidentId} selectedId={publicIncidentId} onSelect={onSelect} onOpenAnalyst={onOpenAnalyst} onNavigate={onNavigate} captured={content} />;
   }
   return (
     <div
