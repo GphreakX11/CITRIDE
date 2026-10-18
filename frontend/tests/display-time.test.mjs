@@ -1,16 +1,17 @@
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  formatTimeCT,
+  formatTime,
   formatDuration,
   formatDueTime,
   formatElapsed,
 } from "../src/displayTime.ts";
 
 test("timestamps use Central time with midnight and daylight-saving handled", () => {
-  assert.equal(formatTimeCT("2026-11-17T09:10:00Z"), "03:10 CT");
-  assert.equal(formatTimeCT("2026-07-17T08:10:00Z"), "03:10 CT");
-  assert.equal(formatTimeCT("2026-11-17T06:00:00Z"), "00:00 CT");
+  assert.equal(formatTime("2026-11-17T09:10:00Z"), "03:10 CST");
+  assert.equal(formatTime("2026-07-17T08:10:00Z"), "03:10 CDT");
+  assert.equal(formatTime("2026-11-17T06:00:00Z"), "00:00 CST");
   for (const value of [
     null,
     undefined,
@@ -19,7 +20,7 @@ test("timestamps use Central time with midnight and daylight-saving handled", ()
     "03:10",
     "2026-11-17T03:10:00",
   ]) {
-    assert.equal(formatTimeCT(value), "—");
+    assert.equal(formatTime(value), "—");
   }
 });
 
@@ -44,6 +45,6 @@ test("elapsed and due times derive only from supplied source values", () => {
     formatElapsed("2026-11-17T09:12:00Z", "2026-11-17T07:30:00Z"),
     "—",
   );
-  assert.equal(formatDueTime("2026-11-17T10:00:00Z"), "Due 04:00 CT");
+  assert.equal(formatDueTime("2026-11-17T10:00:00Z"), "Due 04:00 CST");
   assert.equal(formatDueTime(null), "Due —");
 });

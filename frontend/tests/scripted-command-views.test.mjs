@@ -61,7 +61,7 @@ function records(open = true) {
     (i) => open || i.status !== "from_case",
   );
   r.responseTasks = r.tasks;
-  r.storyNow = "2026-10-13T08:30:00Z";
+  r.now = "2026-10-13T08:30:00Z";
   if (open) {
     r.statewideIncidents[0].caseId = "saved-a";
     r.statewideIncidents[0].status = "open";
@@ -195,7 +195,7 @@ test("option windows match function IDs, never unrelated earliest impacts; clock
   );
   assert.equal(model.responseClock(records(), reference, s).elapsedMinutes, 30);
   const later = records();
-  later.storyNow = "2026-10-13T09:40:00Z";
+  later.now = "2026-10-13T09:40:00Z";
   assert.equal(model.responseClock(later, reference, s).tone, "red");
 });
 test("closed statewide summaries stay read-only and do not fabricate captured runs", () => {

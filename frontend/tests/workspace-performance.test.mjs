@@ -22,10 +22,10 @@ code=code.replace(/from\s+["']([^"']+)["']/g,(_m,s)=>{
 const component=await import(mod(code)),Workspace=component.default;
 const bootstrap=JSON.parse(readFileSync(new URL('../../data/scenario.json',import.meta.url)));
 const reference=JSON.parse(readFileSync(new URL('../../data/reference.json',import.meta.url)));
-const records={statewideIncidents:[],responseTasks:[],assessments:[],assetStatuses:[],hunts:[],contacts:[],decisions:[],teams:[],storyNow:'2026-10-17T12:00:00Z'};
+const records={statewideIncidents:[],responseTasks:[],assessments:[],assetStatuses:[],hunts:[],contacts:[],decisions:[],teams:[],now:'2026-10-17T12:00:00Z'};
 function setup(){
  hooks.clear();const received=[];
- const snapshot={bootstrap:structuredClone(bootstrap),runs:[],incidents:[],records:structuredClone(records),reference:structuredClone(reference),health:{status:'ok',baselineRevision:bootstrap.baselineRevision,demoMode:true,resetEnabled:false,storyNow:records.storyNow}};
+ const snapshot={bootstrap:structuredClone(bootstrap),runs:[],incidents:[],records:structuredClone(records),reference:structuredClone(reference),health:{status:'ok',baselineRevision:bootstrap.baselineRevision,demoMode:true,resetEnabled:false,now:records.now}};
  const props={data:bootstrap,initialSnapshot:snapshot,mode:'command',view:'command',selectedId:null,onSelect(){},onCasesLoaded:x=>received.push(x),onWorkflowLockChange(){},onOpenAnalyst(){},onEditDependency(){},selectedEntityId:null,onSelectEntity(){},mapState:{areaId:'all',query:'',direction:'all',focusOnly:false,structural:false},onMapStateChange(){},onNavigate(){},onOpenTool(){},onAccessFailure(){}};
  return{props,snapshot,received,render(){hooks.reset();return Workspace(props);}};
 }

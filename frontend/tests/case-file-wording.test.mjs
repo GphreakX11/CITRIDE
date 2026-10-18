@@ -1,3 +1,4 @@
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -50,7 +51,7 @@ test("case header uses explicit public incident ID, actual version/opened time a
   assert.equal(caseDisplayId(incident, records), "TX-26-0412");
   assert.equal(
     caseFileHeader(incident, records),
-    "CASE FILE · TX-26-0412 · version 9 · opened 03:05 CT from the vendor VPN alert",
+    "CASE FILE · TX-26-0412 · version 9 · opened 03:05 CDT from the vendor VPN alert",
   );
   assert.ok(!caseFileHeader(incident, records).includes(incident.id));
   assert.equal(JSON.stringify({ incident, records }), before);

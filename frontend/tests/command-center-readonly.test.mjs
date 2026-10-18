@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { createElement, isValidElement } from "react";
@@ -216,7 +217,7 @@ function recordedProps() {
   p.records = JSON.parse(readFileSync(new URL("../../data/scripted/watershed_beta.json", import.meta.url), "utf8"));
   p.records.statewideIncidents = p.records.incidents;
   p.records.responseTasks = p.records.tasks;
-  p.records.storyNow = "2026-10-13T08:30:00Z";
+  p.records.now = "2026-10-13T08:30:00Z";
   p.reference = JSON.parse(readFileSync(new URL("../../data/reference.json", import.meta.url), "utf8"));
   return p;
 }
@@ -226,7 +227,7 @@ test("recorded leadership sequence uses the timeline's formatted captured time",
   const out = renderToStaticMarkup(createElement(CommandCenterViews, p));
   const sequence = out.match(/<details class="sc-brief-sequence">[\s\S]*?<\/details>/)?.[0];
   assert.ok(sequence);
-  assert.match(sequence, /03:01 CT Captured sequence marker/);
+  assert.match(sequence, /03:01 CDT Captured sequence marker/);
 });
 test("recorded leadership case preview changes only the local summary and full-case target", () => {
   hooks.clear();

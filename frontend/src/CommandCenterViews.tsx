@@ -1015,7 +1015,7 @@ export default function CommandCenterViews({
     const linkedIncident = selected ? records?.statewideIncidents.find((incident) => incident.caseId === selected.id)
       ?? records?.statewideIncidents.find((incident) => !incident.caseId && incident.linkedEventIds?.includes(selected.eventId)) : null;
     const publicIncidentId = linkedIncident?.id ?? selected?.id;
-    return <ConsequencesView key={publicIncidentId} selectedId={publicIncidentId} onSelect={onSelect} onOpenAnalyst={onOpenAnalyst} onNavigate={onNavigate} captured={content} />;
+    return <ConsequencesView key={publicIncidentId} records={records} selectedId={publicIncidentId} onSelect={onSelect} onOpenAnalyst={onOpenAnalyst} onNavigate={onNavigate} captured={content} />;
   }
   return (
     <div

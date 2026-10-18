@@ -1,4 +1,5 @@
 import type { Event, Telemetry } from "./types.ts";
+import { formatTime, displayTimeZone } from "./displayTime.ts";
 type Row = Record<string, unknown>;
 type Stream = Pick<Telemetry["streams"][number], "id"> &
   Partial<Telemetry["streams"][number]>;
@@ -222,11 +223,9 @@ function dateOf(value: unknown): Date | null {
         : null;
   return date && Number.isFinite(date.getTime()) ? date : null;
 }
-export function ctTime(value: unknown): string {
+export function evidenceTime(value: unknown): string {
   const date = dateOf(value);
-  return date
-    ? `${new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(date)} CT`
-    : "Time unknown";
+  return formatTime(date, undefined, "Time unknown");
 }
 export function jsonlExport(stream: Stream) {
   return {
@@ -286,7 +285,7 @@ export function huntEvidence(
     if (!date) return false;
     const hour = Number(
       new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Chicago",
+        timeZone: displayTimeZone(),
         hour: "2-digit",
         hourCycle: "h23",
       }).format(date),

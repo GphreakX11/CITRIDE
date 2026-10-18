@@ -124,14 +124,14 @@ def test_reference_rates_task_groups_and_nested_references(inputs):
 def test_seed_clock_restart_init_reset_and_baseline_preservation(service, inputs):
     core, store, clock = service
     baseline = store.baseline()
-    assert datetime.fromisoformat(core.story_now()) == clock[0]
+    assert datetime.fromisoformat(core.now()) == clock[0]
     initial_bytes = store.path.read_bytes()
     clock[0] += timedelta(minutes=10)
     core.initialize()
     assert store.path.read_bytes() == initial_bytes
     restarted = RecordsService(Repository(store.data_dir, store.scenario_path), *inputs, now=lambda: clock[0])
     restarted.initialize()
-    assert datetime.fromisoformat(restarted.story_now()) == clock[0]
+    assert datetime.fromisoformat(restarted.now()) == clock[0]
     case = opened(core, store, clock)
     apply(core, store, case, action("set_contact_status", contactId="contact-1", status="attempted", note="Operator note"))
     with store._locked():
@@ -139,7 +139,7 @@ def test_seed_clock_restart_init_reset_and_baseline_preservation(service, inputs
         core.seed(ds)
         store._save(ds)
     assert store.baseline() == baseline
-    assert datetime.fromisoformat(core.story_now()) == clock[0]
+    assert datetime.fromisoformat(core.now()) == clock[0]
     assert len(core.records()["statewideIncidents"]) == 5
     assert store._records(store._load(), "command-incident")  # seed doesn't delete cases
 
@@ -183,11 +183,11 @@ def test_link_scope_offsets_late_dynamic_live_case_and_detached_snapshots(servic
     assert live["status"] == "monitoring"
     assert live["reviews"] == case["decisions"]
     assert live["progress"] == case["tasks"]
-    snapshot["timing"]["storyClock"]["now"] = "changed"
+    snapshot["timing"]["note"] = "changed"
     snapshot["contacts"][0]["sourceRefs"].clear()
     assert core.records()["contacts"][0]["sourceRefs"]
-    assert core.records()["timing"]["storyClock"]["now"] == clock[0].isoformat()
-    assert core.records()["timing"]["storyClock"]["deprecated"] is True
+    assert core.records()["now"] == clock[0].isoformat()
+    assert core.records()["timing"]["note"] != "changed"
 
 
 PAYLOADS = [

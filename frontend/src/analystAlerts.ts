@@ -1,7 +1,7 @@
 import type { Event } from "./types.ts";
 import type { CommandIncident, IncidentPriority } from "./commandTypes.ts";
 import type { RecordsState } from "./scriptedTypes.ts";
-import { formatTimeCT } from "./displayTime.ts";
+import { formatTime } from "./displayTime.ts";
 
 export function openCaseForEvent(
   eventId: string,
@@ -58,8 +58,8 @@ export function campaignCaseLink(
   );
   return group?.id ?? null;
 }
-export function alertTimeCT(event: Event): string {
-  return formatTimeCT(String(event.timestamp ?? ""), "Time unavailable");
+export function alertTime(event: Event): string {
+  return formatTime(String(event.timestamp ?? ""), undefined, "Time unavailable");
 }
 export function alertTechniques(event: Event): string[] {
   const raw =

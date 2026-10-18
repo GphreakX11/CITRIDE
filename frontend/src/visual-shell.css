@@ -128,7 +128,7 @@
   display: none;
 }
 
-.shell-header-context :is(time, .story-clock) {
+.shell-header-context :is(time, .operations-clock) {
   color: var(--text-2);
   font-family: var(--font-mono);
   font-size: var(--fs-mono);

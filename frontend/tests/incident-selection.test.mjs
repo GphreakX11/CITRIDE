@@ -16,10 +16,11 @@ test("open choices are severity/newest sorted, deterministic and do not mutate r
   assert.equal(rows[0].id, "low");
   assert.doesNotThrow(() => openIncidentChoices([{ id: "bad", status: "open", startedRelativeHours: NaN }], { ...data, incidentOrigin: "bad" }));
 });
-test("explicit unlinked incident wins; default resolves real scenario-event saved case, not names", () => {
+test("explicit incident or saved-case choice wins; absent configuration defaults by severity, not scenario", () => {
   const cases = [{ id: "saved", title: "Renamed investigation", status: "open", eventId: "attack" }];
   assert.equal(initialIncidentChoice(rows, cases, "saved", "0409", data), "0409");
-  assert.equal(initialIncidentChoice(rows, cases, null, null, data), "low");
+  assert.equal(initialIncidentChoice(rows, cases, null, null, data), "0409");
+  assert.equal(initialIncidentChoice(rows, cases, "saved", null, data), "low");
   assert.equal(initialIncidentChoice(rows, [{ ...cases[0], status: "closed" }], null, "closed", data), "0409");
   assert.equal(initialIncidentChoice(rows, [{ id: "fake", title: "Watershed", status: "open", eventId: "unrelated" }], null, null, data), "0409");
   assert.equal(initialIncidentChoice([], cases, null, null, data), null);

@@ -17,6 +17,7 @@ from .scripted_validation import (
 )
 from .storage import ConflictError, InvalidModelError, NotFoundError
 from .record_time import resolve_record_times
+from .legacy_record_time import SAMPLE_TIMING, project_saved_meta, project_saved_record
 from .consequence_model import consequence_model, load_c4
 from .consequences import automatic_intake
 
@@ -133,25 +134,24 @@ class RecordsService:
 
     def _meta(self, dataset):
         try:
-            return self.store._record(dataset, META_KIND, META_ID)
+            return project_saved_meta(self.store._record(dataset, META_KIND, META_ID))
         except NotFoundError:
             return None
 
     def _current_time(self, meta=None, wall=None):
-        # Legacy anchors remain validated metadata, never a simulated clock.
-        for field in ('storyStartedAt', 'incidentOrigin', 'sampleDataAnchor'):
+        for field in ('incidentOrigin', 'sampleDataAnchor'):
             if meta is not None and field in meta and not aware_time(meta[field]):
                 raise InvalidModelError(f"{field} must be an aware ISO timestamp")
         return wall or self._wall_now()
 
     def _all(self, dataset):
-        return {key: self.store._records(dataset, key) for key in COLLECTIONS}
+        return {key: [project_saved_record(row) for row in self.store._records(dataset, key)] for key in COLLECTIONS}
 
     def seed(self, dataset):
         """Replace only record graphs/config; never baseline, runs or cases."""
         config = {k: deepcopy(v) for k, v in self.scripted.items() if k not in {INPUT_KEYS.get(c, c) for c in COLLECTIONS}}
         wall = self._wall_now()
-        config['timing'] = {'note': 'Sample record times are offsets from the sample-data anchor (one hour before load).'}
+        config['timing'] = deepcopy(SAMPLE_TIMING)
         # Validate first: malformed data must not partially clear even an owned
         # in-memory dataset when this method is used without a lock wrapper.
         records = {c: deepcopy(self.scripted[INPUT_KEYS.get(c, c)]) for c in COLLECTIONS}
@@ -330,7 +330,7 @@ class RecordsService:
                     raise InvalidModelError("optionId must identify a configured option")
                 source_refs = deepcopy(option["sourceRefs"])
                 source = next((r for r in self.reference["sources"] if r["id"] == source_refs[0]), source)
-            item = {"id": "record-" + uuid4().hex, "incidentId": incident["id"], "caseId": case_record["id"], "openedAt": incident.get('openedAt', incident.get('openedStoryAt')),
+            item = {"id": "record-" + uuid4().hex, "incidentId": incident["id"], "caseId": case_record["id"], "openedAt": incident.get('openedAt'),
                     "origin": "analyst", "sourceRefs": source_refs, "classification": source["classification"], "handling": deepcopy(source["handling"]), "history": []}
         item = deepcopy(item)
         fields = {k: deepcopy(request[k]) for k in ACTION_FIELDS[name]}
@@ -359,10 +359,6 @@ class RecordsService:
 
     def now(self):
         return self._wall_now().isoformat()
-
-    def story_now(self):
-        """Deprecated compatibility alias: actual aware UTC time, not story time."""
-        return self.now()
 
     def records(self, incident_id=None):
         with self.store._locked():
@@ -400,9 +396,7 @@ class RecordsService:
                     item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
         config = meta["config"]
         timing = deepcopy(config["timing"])
-        # Retain the old nested shape without claiming a simulated clock.
-        timing['storyClock'] = {'deprecated': True, 'now': now.isoformat(), 'operationsTimeZone': self.c4_reference['operationsTimeZone']}
-        result = {**current, "now": now.isoformat(), "storyNow": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "timing": timing, "taskGroups": config["taskGroups"]}
+        result = {**current, "now": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "featuredIncidentId": self.c4_reference.get('featuredIncidentId'), "timing": timing, "taskGroups": config["taskGroups"]}
         result.update(STATUS_LABELS)
         result.update({k: v for k, v in config.items() if k.endswith("Labels")})
         return deepcopy(result)

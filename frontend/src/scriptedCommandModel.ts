@@ -100,13 +100,13 @@ export function responseClock(
     reference.responseClock.startsAt === "case_opened"
       ? text(
           records.statewideIncidents.find((row) => row.caseId === selected?.id)
-            ?.openedStoryAt,
+            ?.openedAt,
         ) || selected?.createdAt
       : text(object(records.timing)[reference.responseClock.startsAt]) ||
         undefined;
   const elapsed = selected?.closedAt
     ? elapsedMinutes(selected.createdAt, selected.closedAt)
-    : elapsedMinutes(start, records.storyNow);
+    : elapsedMinutes(start, records.now);
   return {
     elapsedMinutes: elapsed,
     targetMinutes: reference.responseClock.targetMinutes,

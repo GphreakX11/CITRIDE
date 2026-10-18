@@ -77,7 +77,7 @@ function records() {
   r.statewideIncidents[0].caseId = "case-wall";
   r.statewideIncidents[0].status = "open";
   r.responseTasks = r.tasks;
-  r.storyNow = "2026-10-13T08:30:00Z";
+  r.now = "2026-10-13T08:30:00Z";
   return r;
 }
 function props(view, r = records(), saved = incident()) {
@@ -382,8 +382,8 @@ test("C5 shows incident, assignment, forensics and latest update outside disclos
   for (const team of r.teams) if (team.updates?.length === 1) assert.ok(table.includes(`<small class="sc-team-latest">${team.updates[0].text}`));
 });
 test("C5 visible response bar uses recorded time and supplied amber/red thresholds", () => {
-  for (const [storyNow, tone, elapsed] of [["2026-10-13T08:30:00Z", "normal", 30], ["2026-10-13T09:05:00Z", "amber", 65], ["2026-10-13T09:35:00Z", "red", 95]]) {
-    const r = records(); r.storyNow = storyNow;
+  for (const [now, tone, elapsed] of [["2026-10-13T08:30:00Z", "normal", 30], ["2026-10-13T09:05:00Z", "amber", 65], ["2026-10-13T09:35:00Z", "red", 95]]) {
+    const r = records(); r.now = now;
     const out = html(Scripted, props("uctf", freeze(r)));
     assert.match(out, new RegExp(`<div class="sc-clock-details" data-clock-tone="${tone}">`));
     assert.match(out, new RegExp(`role="progressbar" aria-label="Response clock" aria-valuemin="0" aria-valuemax="120" aria-valuenow="${elapsed}"`));

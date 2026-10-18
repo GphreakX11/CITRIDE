@@ -238,7 +238,6 @@ def create_app(
             "baselineRevision": store.baseline()["baselineRevision"],
             "demoMode": True,
             "now": now,
-            "storyNow": now,
             "operationsTimeZone": records.c4_reference['operationsTimeZone'],
             "resetEnabled": reset_enabled,
         }

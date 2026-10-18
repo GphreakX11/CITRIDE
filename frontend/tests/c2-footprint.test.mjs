@@ -30,7 +30,7 @@ function props() {
   const records = structuredClone(supplied);
   records.statewideIncidents = records.incidents;
   records.responseTasks = records.tasks;
-  records.storyNow = "2026-10-13T08:42:00Z";
+  records.now = "2026-10-13T08:42:00Z";
   records.statewideIncidents[0].caseId = "case-a";
   records.statewideIncidents[0].status = "open";
   const selected = {

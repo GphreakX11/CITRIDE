@@ -34,17 +34,17 @@ export default function ResetDemoControl({
           dialog.current?.showModal();
         }}
       >
-        Reset demo
+        Reload sample data
       </button>
       <dialog
         ref={dialog}
         className="command-confirm-dialog"
         aria-labelledby="reset-demo-title"
       >
-        <h2 id="reset-demo-title">Reset this demo workspace?</h2>
+        <h2 id="reset-demo-title">Reload sample data in this workspace?</h2>
         <p>
           This replaces this workspace's model, cases, runs and analyst changes
-          with the supplied sample records. The story clock restarts. This
+          with the supplied sample records, anchored to the current time. This
           cannot be undone here.
         </p>
         <p>Nothing is sent to partners or operational systems.</p>
@@ -89,7 +89,7 @@ export default function ResetDemoControl({
               }
             }}
           >
-            Confirm reset demo
+            Confirm reload sample data
           </button>
         </div>
       </dialog>

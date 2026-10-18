@@ -120,7 +120,7 @@ def _refs(record, refs, errors, prefix):
         if key.endswith(("OffsetMinutes", "RelativeHours")) or key in ("offsetMinutes", "relativeTimeHours"):
             if not finite(value):
                 errors.append(prefix + key + " must be finite")
-        if key in ("at", "dueAt", "etaAt", "openedStoryAt") and not aware_time(value):
+        if key in ("at", "dueAt", "etaAt", "openedAt") and not aware_time(value):
             errors.append(prefix + key + " must be an aware timestamp")
 
 
@@ -204,11 +204,8 @@ def validate_scripted(data, scenario):
             if not isinstance(history, list) or any(not isinstance(h, dict) or not isinstance(h.get("who"), str) or not aware_time(h.get("when")) or "what" not in h for h in history):
                 errors.append(prefix + "history must contain who/when/what changes")
     timing = data.get("timing")
-    clock = timing.get("storyClock") if isinstance(timing, dict) else None
-    if not isinstance(timing, dict) or (clock is None and not isinstance(timing.get('note'), str)):
+    if not isinstance(timing, dict) or set(timing) != {'note'} or not isinstance(timing.get('note'), str) or not timing['note'].strip():
         errors.append('timing must describe the sample-data anchor')
-    if clock is not None and (not isinstance(clock, dict) or not finite(clock.get('startRelativeHours')) or type(clock.get('advancesWithWallClock')) is not bool):
-        errors.append('Legacy timing configuration is malformed')
     if not aware_time(scenario.get("incidentOrigin")):
         errors.append("scenario.incidentOrigin must be an aware timestamp")
     return errors

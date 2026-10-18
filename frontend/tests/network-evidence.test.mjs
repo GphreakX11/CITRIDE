@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { createElement } from "react";
@@ -9,7 +10,7 @@ import {
   orderedFields,
   visibleRecords,
   networkSource,
-  ctTime,
+  evidenceTime,
   jsonlExport,
   huntEvidence,
   evidenceRefs,
@@ -94,7 +95,7 @@ test("late linked writes are highlighted/reachable before cap and full JSONL ret
   assert.equal(parsed.length, 221);
   assert.deepEqual(parsed.at(-1), write);
   assert.match(exported.filename, /\.jsonl$/);
-  assert.match(ctTime("2026-10-13T07:00:00Z"), /02:00.*CT/);
+  assert.equal(evidenceTime("2026-10-13T07:00:00Z"), "02:00 CDT");
 });
 test("metadata-free real rows never inherit simulated provenance or asset mapping", () => {
   assert.equal(
@@ -189,7 +190,7 @@ test("generated supplied streams resolve detailed 02:00 write and preserve A-com
     (row) => row.linked && row.record.address === 40011,
   );
   assert.ok(linked);
-  assert.equal(ctTime(linked.record.ts), "02:00 CT");
+  assert.equal(evidenceTime(linked.record.ts), "02:00 CDT");
   assert.deepEqual(linked.record.values, [4]);
   const result = huntEvidence({ streams }, "shared-source");
   assert.ok(
@@ -243,7 +244,7 @@ test("actual component renders supplied timeline, raw write, all selectors and c
       }),
     );
   assert.match(render("timeline"), /Dosing change/);
-  assert.match(render("timeline"), /02:00 CT/);
+  assert.match(render("timeline"), /02:00 CDT/);
   const raw = render("raw");
   assert.match(raw, /aria-label="Event-linked records"/);
   assert.match(raw, /Address 40011/);

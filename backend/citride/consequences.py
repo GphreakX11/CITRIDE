@@ -6,6 +6,7 @@ import json
 
 from .engine import compute_run
 from .scripted_validation import aware_time
+from .legacy_record_time import project_saved_record
 
 
 def preliminaryScenarioFor(incident, model, rules):
@@ -67,7 +68,7 @@ def automatic_intake(store, dataset, incidents, model, reference, now, anchor):
             # Invalidate the selection without erasing immutable past runs.
             continue
         scenario, event = match
-        payload = {'incident': {k: v for k, v in incident.items() if k not in {'caseId', 'runId', 'openedAt', 'openedStoryAt', 'history'}},
+        payload = {'incident': {k: v for k, v in project_saved_record(incident).items() if k not in {'caseId', 'runId', 'openedAt', 'history'}},
                    'model': model, 'anchor': anchor.isoformat(), 'scenarioId': scenario['id']}
         digest = sha256(json.dumps(payload, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
         identifier = 'preliminary-' + digest

@@ -1,6 +1,7 @@
 import type { CommandIncident } from "./commandTypes.ts";
 import type { RecordsState, RecordItem } from "./scriptedTypes.ts";
 import { displayText } from "./presentation.ts";
+import { formatTime } from "./displayTime.ts";
 type CaseIdentity = Pick<
   CommandIncident,
   "id" | "eventId" | "eventSnapshot" | "createdAt" | "version"
@@ -52,21 +53,13 @@ export function caseDisplayId(
     ? id
     : null;
 }
-export function ctClock(value: string | undefined | null): string {
-  const d = value ? new Date(value) : null;
-  return d && Number.isFinite(d.getTime())
-    ? d.toLocaleTimeString("en-US", {
-        timeZone: "America/Chicago",
-        hour: "2-digit",
-        minute: "2-digit",
-        hourCycle: "h23",
-      }) + " CT"
-    : "Time unknown";
+export function recordClock(value: string | undefined | null): string {
+  return formatTime(value, undefined, "Time unknown");
 }
 export function analysisLabel(
   run: { createdAt?: string } | null | undefined,
 ): string {
-  const time = ctClock(run?.createdAt);
+  const time = recordClock(run?.createdAt);
   return time === "Time unknown"
     ? "Analysis time not recorded"
     : `analysis at ${time}`;
@@ -81,7 +74,7 @@ export function caseFileHeader(
     /vpn/i.test(String(event.observation ?? label)) && /vendor/i.test(label)
       ? "the vendor VPN alert"
       : label;
-  return `CASE FILE · ${caseDisplayId(incident, records) ?? "Display ID not assigned"} · version ${incident.version} · opened ${ctClock(incident.createdAt)} from ${origin}`;
+  return `CASE FILE · ${caseDisplayId(incident, records) ?? "Display ID not assigned"} · version ${incident.version} · opened ${recordClock(incident.createdAt)} from ${origin}`;
 }
 export function caseFileTabs(
   incident: Pick<CommandIncident, "decisions" | "tasks">,

@@ -576,19 +576,21 @@ function CascadeGraph({
 }
 export default function ConsequencesView({
   selectedId,
+  records,
   captured: capturedCase,
   onSelect,
   onOpenAnalyst,
   onNavigate,
 }: {
   selectedId?: string | null;
+  records?: import("./incidentSelection.ts").IncidentSelectionRecords;
   captured?: ReactNode;
   onSelect: (id: string) => void;
   onOpenAnalyst: (view: CommandView, caseId?: string | null) => void;
   onNavigate: (view: CommandView) => void;
 }) {
   const [id, setId] = useState(() =>
-    initialConsequenceIncident(typeof window === "undefined" ? "" : window.location.search, selectedId),
+    initialConsequenceIncident(typeof window === "undefined" ? "" : window.location.search, selectedId, records),
   );
   const [value, setValue] = useState<ConsequenceProjection | null>(null);
   const captured = id === selectedId ? capturedCase : null;
@@ -600,7 +602,7 @@ export default function ConsequencesView({
     setValue(null);
     setError("");
     apiGet<ConsequenceProjection>(
-      `/v1/command/consequences?incidentId=${encodeURIComponent(id)}`,
+      `/v1/command/consequences${id ? `?incidentId=${encodeURIComponent(id)}` : ""}`,
     )
       .then((v) => {
         if (live) setValue(v);
@@ -617,10 +619,10 @@ export default function ConsequencesView({
   }, [id]);
   useEffect(() => {
     const changed = () =>
-      setId(initialConsequenceIncident(window.location.search));
+      setId(initialConsequenceIncident(window.location.search, selectedId, records));
     window.addEventListener("popstate", changed);
     return () => window.removeEventListener("popstate", changed);
-  }, []);
+  }, [selectedId, records]);
   const choose = (next: string) => {
     setId(next);
     const url = new URL(window.location.href);
@@ -689,7 +691,18 @@ export default function ConsequencesView({
       {error ? (
         <Panel title="Consequence data unavailable">
           <p role="alert">{error}</p>
-          <button onClick={() => choose("TX-26-0412")}>
+          <button onClick={() => {
+            const next = initialConsequenceIncident("", null, records);
+            if (next) choose(next);
+            else {
+              const url = new URL(window.location.href);
+              url.searchParams.delete("incidentId");
+              url.searchParams.delete("incident");
+              url.searchParams.delete("case");
+              window.history.replaceState(null, "", url);
+              setId(null);
+            }
+          }}>
             Open default incident
           </button>
         </Panel>

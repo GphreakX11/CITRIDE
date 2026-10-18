@@ -92,8 +92,8 @@ def test_workspace_matches_all_legacy_views(workspace):
     assert payload["records"] == workspace.client.get("/v1/command/records").json()
     assert payload["reference"] == workspace.client.get("/v1/reference").json()
     assert payload["health"] == workspace.client.get("/health").json()
-    assert set(payload["health"]) == {"status", "baselineRevision", "demoMode", "storyNow", "now", "operationsTimeZone", "resetEnabled"}
-    assert payload["health"]["now"] == workspace.clock[0].isoformat() == payload["health"]["storyNow"]
+    assert set(payload["health"]) == {"status", "baselineRevision", "demoMode", "now", "operationsTimeZone", "resetEnabled"}
+    assert payload["health"]["now"] == workspace.clock[0].isoformat()
     assert payload["health"]["operationsTimeZone"] == "America/Chicago"
     assert len(payload["runs"]) == 4
     assert sum(run["id"].startswith("preliminary-") for run in payload["runs"]) == 2
@@ -150,7 +150,7 @@ def test_workspace_uses_one_lock_load_and_no_writes_or_nested_readers(workspace,
     monkeypatch.setattr(store, "_load", load)
     for name in ("_save", "_record_graph", "_write_baseline", "baseline", "runs"):
         monkeypatch.setattr(store, name, forbidden)
-    for name in ("initialize", "seed", "records", "story_now"):
+    for name in ("initialize", "seed", "records", "now"):
         monkeypatch.setattr(RecordsService, name, forbidden)
     monkeypatch.setattr(CommandService, "list", forbidden)
     payload = snapshot(workspace)
@@ -189,8 +189,8 @@ def test_workspace_clock_and_late_records_are_fresh_without_writes(workspace):
     workspace.clock[0] += timedelta(hours=2)
     second = snapshot(workspace)
     assert task(second)["late"] is True
-    assert datetime.fromisoformat(second["records"]["storyNow"]) - datetime.fromisoformat(first["records"]["storyNow"]) == timedelta(hours=2)
-    assert second["health"]["storyNow"] == second["records"]["storyNow"]
+    assert datetime.fromisoformat(second["records"]["now"]) - datetime.fromisoformat(first["records"]["now"]) == timedelta(hours=2)
+    assert second["health"]["now"] == second["records"]["now"]
     assert second["records"] == workspace.client.get("/v1/command/records").json()
     assert workspace.store.path.read_bytes() == before
 
@@ -302,7 +302,7 @@ def test_workspace_outputs_are_detached_from_dataset_and_configuration(workspace
     result["runs"][0]["id"] = "changed"
     result["incidents"][0]["runSnapshot"]["baselineSnapshot"]["entities"].clear()
     result["records"]["contacts"][0]["sourceRefs"].clear()
-    result["records"]["timing"]["storyClock"].clear()
+    result["records"]["timing"].clear()
     result["reference"]["responseOptions"].clear()
     result["health"]["status"] = "changed"
     assert workspace_snapshot(workspace.store, reset_enabled=True) == expected

@@ -67,7 +67,9 @@ def generate() -> dict[str, dict | list[dict]]:
     if not authored_path.is_file():
         authored_path = Path(__file__).resolve().parents[1] / "data/scripted/watershed_beta.json"
     authored = authored_path.read_bytes()
-    if sha256(authored).hexdigest() != "80e536d67c35322dfc928656bb3e156f1f374e36b2210825e952f4870cdcee79":
+    # Authorized real-time prerequisite reconciliation changes only timing metadata
+    # and the sample incident's anchor offset; authored operational records stay pinned.
+    if sha256(authored).hexdigest() != "7046a5b5d7d32ede1cbf94975e99fa8499b1ce62c031359c350969417d563095":
         raise ValueError("Stakeholder-authored scripted records changed; reconcile the approved source before generation")
     rng = random.Random(SEED)
     sources = [

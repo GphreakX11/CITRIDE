@@ -151,14 +151,16 @@ class ConsequenceService:
                 if incident is None:
                     raise NotFoundError('Incident was not found')
             else:
-                # README's explicit water default supersedes earlier severity
-                # default; otherwise deterministic highest-severity open case.
-                incident = next((r for r in incidents if r['id'] == 'TX-26-0412' and r['status'] != 'closed'), None)
+                # Default only to persisted open incidents, never a closed
+                # record or a reference-only preview on an older store.
+                open_statuses = {'open', 'monitoring', 'active', 'under_investigation', 'containment', 'recovering'}
+                open_incidents = [r for r in incidents if r['status'] in open_statuses and not r.get('referenceOnly')]
+                incident = next((r for r in open_incidents if r['id'] == envelope['featuredIncidentId']), None)
                 if incident is None:
                     rank = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
-                    incident = next(iter(sorted(incidents, key=lambda r: (r['status'] == 'closed', rank.get(r.get('severity'), 4), r['id']))), None)
+                    incident = min(open_incidents, key=lambda r: (rank.get(r.get('severity'), 4), r['id']), default=None)
             if incident is None:
-                return {'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'incidents': [], 'incident': None, 'analysis': None, 'nodes': [], 'edges': [], 'sectors': []}
+                return {'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'featuredIncidentId': envelope['featuredIncidentId'], 'incidents': incidents, 'incident': None, 'analysis': None, 'analysisState': 'no_analysis', 'nodes': [], 'edges': [], 'sectors': []}
             runs = self.store._records(dataset, 'run')
             cases = self.store._records(dataset, 'command-incident')
             # Reject stale preliminaries when update removed the causal mapping.
@@ -179,7 +181,7 @@ class ConsequenceService:
                 source_id = analysis['seed']['provider']
                 refs['assets'].setdefault(source_id, {}).update({k: deepcopy(self.records.port[k]) for k in ('alternatives', 'thresholds', 'responseOwners')})
             view = project_consequences(incident, analysis, refs, self.records.reference['planningRates'], [r for r in envelope['assetStatuses'] if r['incidentId'] == incident['id']])
-            return {**view, 'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'incidents': incidents,
+            return {**view, 'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'featuredIncidentId': envelope['featuredIncidentId'], 'incidents': incidents,
                     'analysisState': ('reference_preview' if analysis['kind'] == 'reference_preview' else 'ready') if analysis else 'no_analysis',
                     'criticalFunctions': deepcopy(self.records.port.get('criticalFunctions', [])) if incident['id'] == self.records.port['incident']['id'] else [],
                     'atRiskBasis': 'Distinct dependent entities with computed impacts; no unverified aggregation/member count is assumed.'}

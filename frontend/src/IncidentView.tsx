@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import type { CommandView } from "./commandTypes.ts";
 import type { ScriptedViewProps } from "./scriptedTypes.ts";
 import { incidentStack, type IncidentStackNode, type IncidentStackDependencyLink } from "./incidentStack.ts";
-import { initialIncidentChoice } from "./incidentSelection.ts";
+import { defaultIncidentId } from "./incidentSelection.ts";
 import { incidentFocusLocation, readIncidentFocus } from "./incidentFocus.ts";
 import IncidentSelector from "./IncidentSelector.tsx";
 import IncidentRecordedFootprints from "./IncidentRecordedFootprints.tsx";
@@ -44,7 +44,7 @@ export default function IncidentView(props: Props) {
   const [panelHeight, setPanelHeight] = useState<number>();
   const stack = useMemo(() => {
     const initial = incidentStack(props, picked);
-    const chosen = initialIncidentChoice(initial.footPrintModel.rows, props.incidents, props.selected?.id ?? null, picked, props.data);
+    const chosen = picked ?? defaultIncidentId({ ...props.records, statewideIncidents: initial.footPrintModel.rows }, { cases: props.incidents, data: props.data });
     if (!chosen) return { ...initial, incidentRecord: null };
     return chosen === initial.incidentRecord?.id ? initial : incidentStack(props, chosen);
   }, [props.data, props.incidents, props.selected, props.records, props.reference, picked]);
@@ -132,7 +132,7 @@ export default function IncidentView(props: Props) {
     </article>;
   };
   const buckets = [{id:"at-risk",label:"At risk",items:stack.groups.atRisk},{id:"supply-chain",label:"Supply chain",items:stack.groups.supplyChain},{id:"not-affected",label:"Not affected",items:stack.groups.notAffected},{id:"unmodeled",label:stack.run ? "No status recorded" : "Not yet modeled",items:stack.groups.unmodeled}];
-  const selector = <IncidentSelector rows={rows} current={record} data={props.data} now={props.records.storyNow} recordsAsOf={props.records.storyNow} onChoose={pick}/>;
+  const selector = <IncidentSelector rows={rows} current={record} data={props.data} now={props.records.now} recordsAsOf={props.records.now} onChoose={pick}/>;
   const incidentLine = record && <><span className="mono">{record.id}</span> {record.title} <StatusChip status={record.severity}>{words(record.severity ?? "unknown")}</StatusChip> <StatusChip status={record.status}>{record.status === "open" ? "Under investigation" : words(record.status ?? "unknown")}</StatusChip> <span className="mono">{formatDuration(model.elapsed,"Unknown")}</span></>;
   const header = typeof document === "undefined" ? null : document.querySelector(".page-heading");
   const context = typeof document === "undefined" ? null : document.getElementById("selected-incident-context");

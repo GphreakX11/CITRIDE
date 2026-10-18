@@ -169,14 +169,18 @@ test("shared screen CSS keeps theme tokens and normal-size contrast treatment", 
   );
 });
 
-test("default Watershed open case is selected only on initial unqualified command visit", () => {
-  const { render } = setup();
+test("configured featured case is selected on initial C2 visit; explicit clear survives refresh", () => {
+  const { render } = setup("?view=cop");
   let tree = render();
   const records = [
     caseRecord("other", "other", "critical"),
     caseRecord("watershed"),
   ];
-  component(tree, "CommandWorkspace").props.onCasesLoaded(records);
+  const sourceRecords = {
+    featuredIncidentId: "configured-incident",
+    statewideIncidents: records.map(item => ({ id: item.id === "watershed" ? "configured-incident" : "other-incident", caseId: item.id, status: item.status, severity: item.priority })),
+  };
+  component(tree, "CommandWorkspace").props.onCasesLoaded(records, sourceRecords);
   tree = render();
   assert.equal(
     component(tree, "CommandWorkspace").props.selectedId,
@@ -184,7 +188,7 @@ test("default Watershed open case is selected only on initial unqualified comman
   );
   component(tree, "CommandWorkspace").props.onSelect(null);
   tree = render();
-  component(tree, "CommandWorkspace").props.onCasesLoaded(records);
+  component(tree, "CommandWorkspace").props.onCasesLoaded(records, sourceRecords);
   tree = render();
   assert.equal(
     component(tree, "CommandWorkspace").props.selectedId,
@@ -194,15 +198,19 @@ test("default Watershed open case is selected only on initial unqualified comman
 });
 
 test("default selection never falls back to a closed case", () => {
-  const { render } = setup();
+  const { render } = setup("?view=cop");
   let tree = render();
-  component(tree, "CommandWorkspace").props.onCasesLoaded([
+  const records = [
     caseRecord("closed", "utility-a", "critical", "closed"),
     caseRecord("monitor", "other", "medium", "monitoring"),
     caseRecord("open", "other", "low"),
-  ]);
+  ];
+  component(tree, "CommandWorkspace").props.onCasesLoaded(records, {
+    featuredIncidentId: "closed",
+    statewideIncidents: records.map(item => ({ id: item.id, caseId: item.id, status: item.status, severity: item.priority })),
+  });
   tree = render();
-  assert.equal(component(tree, "CommandWorkspace").props.selectedId, "open");
+  assert.equal(component(tree, "CommandWorkspace").props.selectedId, "monitor");
 });
 
 for (const query of [
@@ -348,7 +356,8 @@ async function workspace(mode = "analyst", view = "command") {
     if (url === "/v1/command/incidents") return { incidents: [source] };
     if (url === "/v1/command/records")
       return {
-        storyNow: "2026-11-17T09:12:00Z",
+        now: "2026-11-17T09:12:00Z",
+        operationsTimeZone: "America/Chicago",
         statewideIncidents: [
           { id: "TX-26-184", caseId: source.id, title: "Source incident" },
         ],

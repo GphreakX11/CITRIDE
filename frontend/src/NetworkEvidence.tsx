@@ -14,7 +14,7 @@ import {
   networkSource,
   compactNetworkSource,
   streamSourceLabel,
-  ctTime,
+  evidenceTime,
   jsonlExport,
   evidenceRefs,
   eventSourceChips,
@@ -412,7 +412,7 @@ export default function NetworkEvidence({
                     )
                     .map(({ record, index }) => (
                       <div key={index}>
-                        <strong>{ctTime(record.ts ?? record.timestamp)}</strong>
+                        <strong>{evidenceTime(record.ts ?? record.timestamp)}</strong>
                         <span>{String(record.func ?? "Network record")}</span>
                         <span>{`Address ${String(record.address)}`}</span>
                         {record.quantity !== undefined && (
@@ -429,7 +429,7 @@ export default function NetworkEvidence({
                 <table>
                   <thead>
                     <tr>
-                      <th>Time (CT)</th>
+                      <th>Time (operations zone)</th>
                       <th>Source / mapping</th>
                       {fields.map((field) => (
                         <th key={field}>{field}</th>
@@ -446,7 +446,7 @@ export default function NetworkEvidence({
                           data-selected={isSelected}
                           className={`${linked ? "network-linked" : ""} ${isSelected ? "network-selected" : ""}`}
                         >
-                          <td>{ctTime(record.ts ?? record.timestamp)}</td>
+                          <td>{evidenceTime(record.ts ?? record.timestamp)}</td>
                           <td>
                             {compactNetworkSource(stream, record)}
                             <small>
@@ -523,7 +523,7 @@ export default function NetworkEvidence({
             {hunt === "off-hours" && (
               <>
                 <label>
-                  From (CT)
+                  From (operations zone)
                   <input
                     aria-label="Off-hours start"
                     type="time"
@@ -532,7 +532,7 @@ export default function NetworkEvidence({
                   />
                 </label>
                 <label>
-                  Until (CT)
+                  Until (operations zone)
                   <input
                     aria-label="Off-hours end"
                     type="time"
@@ -590,7 +590,7 @@ export default function NetworkEvidence({
               <ol className="network-hunt-matches">
                 {result.results.map(({ stream: source, record }, index) => (
                   <li key={`${source.id}/${index}`}>
-                    <time>{ctTime(record.ts ?? record.timestamp)}</time> ·{" "}
+                    <time>{evidenceTime(record.ts ?? record.timestamp)}</time> ·{" "}
                     {networkSource(source, record)} ·{" "}
                     {String(record.id ?? record.uid ?? "Unmapped record")}
                     {typeof record.id === "string" && (

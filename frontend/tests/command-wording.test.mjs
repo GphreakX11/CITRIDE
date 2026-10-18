@@ -116,7 +116,7 @@ function render(view, scripted, empty = false) {
   const r = structuredClone(supplied);
   r.statewideIncidents = empty ? [] : r.incidents;
   r.responseTasks = r.tasks;
-  r.storyNow = "2026-10-13T08:30:00Z";
+  r.now = "2026-10-13T08:30:00Z";
   if (!empty) {
     r.statewideIncidents[0].caseId = incident.id;
     r.statewideIncidents[0].status = "open";

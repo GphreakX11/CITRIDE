@@ -179,7 +179,7 @@ for (const view of ["command", "cyber"]) {
             hunts: [],
             decisions: [],
             partnerProducts: [],
-            storyNow: bootstrap.incidentOrigin,
+            now: bootstrap.incidentOrigin,
           };
         if (url === "/v1/reference") return {};
         return { incidents: posts > 0 ? [structuredClone(stored)] : [] };

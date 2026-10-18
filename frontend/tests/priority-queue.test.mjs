@@ -1,4 +1,5 @@
-import test from 'node:test';
+import "./configured-time-fixture.mjs";
+import test from "node:test";
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { priorityQueue } from '../src/priorityQueue.ts';

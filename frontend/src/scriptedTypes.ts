@@ -116,7 +116,9 @@ export interface RecordsState {
   hunts: RecordItem[];
   decisions: RecordItem[];
   partnerProducts: RecordItem[];
-  storyNow: string;
+  now: string;
+  featuredIncidentId?: string | null;
+  operationsTimeZone?: string;
   timing: Record<string, unknown>;
   taskGroups: RecordItem[];
   contactStatusLabels: Record<string, string>;

@@ -92,7 +92,7 @@ def test_clock_and_relative_timestamps_keep_seed_origin_after_restart(service, i
     restarted = RecordsService(store, inputs[0], inputs[1], replacement, now=lambda: clock[0])
     restarted.initialize()
     assert restarted.records()["statewideIncidents"] == before
-    assert restarted.story_now() == core.story_now()
+    assert restarted.now() == core.now()
 
 
 def test_default_files_validate_after_final_generator_handoff():

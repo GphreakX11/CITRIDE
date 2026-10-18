@@ -1,6 +1,6 @@
 import type { Bootstrap, Entity, Event, Telemetry } from "./types.ts";
 import type { CommandIncident } from "./commandTypes.ts";
-import { ctTime, evidenceRefs } from "./networkEvidence.ts";
+import { evidenceTime, evidenceRefs } from "./networkEvidence.ts";
 
 export type TimelineData = Pick<Bootstrap, "events"> &
   Partial<Pick<Bootstrap, "entities" | "incidentOrigin">>;
@@ -129,7 +129,7 @@ export function caseTimeline(
     })
     .map((event) => ({
       event,
-      time: ctTime(eventTimestamp(event, data)),
+      time: evidenceTime(eventTimestamp(event, data)),
       utility: eventUtility(event, data),
       asset: (data.entities ?? []).find((e) => e.id === event.seenOn) ?? null,
       techniques: Array.isArray(event.attackTechniques)

@@ -35,7 +35,8 @@ def test_real_routes_seed_six_then_link_existing_and_reset(tmp_path):
     preliminary = client.get("/v1/cascade-runs").json()["runs"]
     assert len(preliminary) == 2
     assert all(run["id"].startswith("preliminary-") for run in preliminary)
-    assert "storyNow" in client.get("/health").json()
+    assert "now" in client.get("/health").json()
+    assert "storyNow" not in client.get("/health").json()
     ref = client.get("/v1/reference")
     assert ref.status_code == 200
     assert ref.json()["responseOptions"][0]["id"] == "opt-tdem-health-notice"

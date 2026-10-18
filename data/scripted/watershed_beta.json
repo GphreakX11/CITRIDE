@@ -3,14 +3,7 @@
   "origin": "scripted",
   "note": "Sample records for the Billington beta demo. Fictional. Loaded through the same record entry point that real feeds and analyst actions use. Every record can be changed by an analyst through normal actions.",
   "timing": {
-    "storyTimezone": "America/Chicago",
-    "relativeTo": "scenario.json incidentOrigin (02:00 CT = 0.0)",
-    "storyClock": {
-      "startRelativeHours": 1.0,
-      "advancesWithWallClock": true,
-      "note": "After Reset demo the story clock reads 03:00 CT and advances in real time."
-    },
-    "watershedRecordsAppear": "when a case is opened from any event in incidents[TX-26-0412].linkedEventIds; their time = case-open story time + offsetMinutes"
+    "note": "Sample record times are offsets from the sample-data anchor (one hour before load)."
   },
   "sources": [
     {
@@ -43,7 +36,7 @@
       ],
       "severity": "high",
       "status": "from_case",
-      "startedRelativeHours": -0.5,
+      "startedRelativeHours": 0.0,
       "linkedEventIds": [
         "event-vpn-a",
         "event-inbound-a",

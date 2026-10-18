@@ -1,4 +1,5 @@
 import type { Telemetry } from "./types.ts";
+import { displayTimeZone } from "./displayTime.ts";
 
 type Row = Record<string, unknown>;
 export type HuntScope = "watershed-250-utilities" | "all-monitored";
@@ -202,7 +203,7 @@ export function huntOffHours(
     )
       return false;
     const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Chicago",
+      timeZone: displayTimeZone(),
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23",

@@ -1,19 +1,13 @@
 import { useEffect, useState } from "react";
+import { formatTime } from "./displayTime.ts";
 export function useRealClock() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
     return () => window.clearInterval(timer);
   }, []);
   return now;
 }
-export function clockLabel(now: number, timeZone = "America/Chicago") {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-    timeZoneName: "short",
-  }).format(now);
+export function clockLabel(now: number, timeZone?: string) {
+  return formatTime(new Date(now), timeZone);
 }

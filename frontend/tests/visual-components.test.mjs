@@ -59,7 +59,7 @@ test("real command and analyst record screens render shared status spans without
     ...supplied,
     statewideIncidents: supplied.incidents,
     responseTasks: supplied.tasks,
-    storyNow: "2026-10-13T08:30:00Z",
+    now: "2026-10-13T08:30:00Z",
   };
   const selected = {
     id: "visual-case",

@@ -1,11 +1,11 @@
 type Timestamp = string | Date | null | undefined;
 
-const centralTime = new Intl.DateTimeFormat("en-US", {
-  timeZone: "America/Chicago",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
+// Only the active customer's display preference is held here, never records or runs.
+let operationsTimeZone: string | undefined;
+export function configureDisplayTime(timeZone?: string) {
+  operationsTimeZone = timeZone;
+}
+export function displayTimeZone() { return operationsTimeZone; }
 
 function timestampMillis(value: Timestamp): number | null {
   // A timezone-free string depends on the viewer's machine. Do not invent one.
@@ -16,10 +16,12 @@ function timestampMillis(value: Timestamp): number | null {
   return Number.isFinite(time) ? time : null;
 }
 
-/** Story timestamps always use Central time, regardless of the viewer's timezone. */
-export function formatTimeCT(value: Timestamp, unavailable = "—"): string {
+/** UTC source timestamps are displayed in the configured zone (browser if unset). */
+export function formatTime(value: Timestamp, timeZone = operationsTimeZone, unavailable = "—"): string {
   const time = timestampMillis(value);
-  return time === null ? unavailable : `${centralTime.format(time)} CT`;
+  return time === null ? unavailable : new Intl.DateTimeFormat("en-US", {
+    timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZoneName: "short",
+  }).format(time);
 }
 
 /** A duration in source-record minutes, not a wall-clock timestamp. */
@@ -55,7 +57,7 @@ export function formatElapsed(
     : formatDuration((to - from) / 60000, unavailable);
 }
 
-/** Resolve record-relative due offsets with the existing story clock before calling. */
-export function formatDueTime(value: Timestamp, unavailable = "—"): string {
-  return `Due ${formatTimeCT(value, unavailable)}`;
+/** Resolve record-relative due offsets from the persisted anchor before calling. */
+export function formatDueTime(value: Timestamp, unavailable = "—", timeZone = operationsTimeZone): string {
+  return `Due ${formatTime(value, timeZone, unavailable)}`;
 }

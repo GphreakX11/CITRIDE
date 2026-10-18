@@ -5,6 +5,7 @@ import { impactRows, snapshot } from "./prototypeViews.ts";
 import { idtSectorName } from "./idt.ts";
 import { eventSourceChips } from "./networkEvidence.ts";
 import { analysisLabel } from "./caseFilePresentation.ts";
+import { formatTime } from "./displayTime.ts";
 
 export function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -33,14 +34,7 @@ export function originLabel(value: unknown): string {
 export function timeLabel(value: unknown): string {
   if (typeof value !== "string" || !Number.isFinite(Date.parse(value)))
     return "Time not recorded";
-  return (
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Chicago",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).format(new Date(value)) + " CT"
-  );
+  return formatTime(value, undefined, "Time not recorded");
 }
 export function planningWindow(value: [number, number] | null): string {
   return value ? `${value[0]}–${value[1]} h` : "Timing unknown";

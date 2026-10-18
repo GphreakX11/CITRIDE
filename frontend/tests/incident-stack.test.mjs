@@ -1,3 +1,4 @@
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -193,7 +194,7 @@ test("rule 4: probe-only event is amber, not confirmed harm; no run required", (
   assert.deepEqual(s, {
     tone: "amber",
     line: "solid",
-    label: "Probed 02:30 CT",
+    label: "Probed 02:30 CDT",
   });
   assert.equal(
     state("facility", {
@@ -360,7 +361,7 @@ function props() {
   const records = structuredClone(supplied);
   records.statewideIncidents = records.incidents;
   records.responseTasks = records.tasks;
-  records.storyNow = "2026-10-13T08:42:00Z";
+  records.now = "2026-10-13T08:42:00Z";
   records.statewideIncidents[0].caseId = "saved-case";
   records.statewideIncidents[0].status = "open";
   const selected = {
@@ -445,7 +446,7 @@ test("real recorded demo is exactly eight nodes, no related probe or cyber asset
 test("recorded attack label prefers the selected controller event and its actual time over other hosted status rows", () => {
   const m = incidentStack(props());
   const plant = m.nodes.find((n) => n.entity.id === "plant-a");
-  assert.match(plant.state.label, /IDT 12\.4 · .*changed.*02:00 CT/);
+  assert.match(plant.state.label, /IDT 12\.4 · .*changed.*02:00 CDT/);
 });
 test("a facility retains links to other explicitly associated saved cases without adding their schematic nodes", () => {
   const p = props();

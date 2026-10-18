@@ -13,7 +13,7 @@ import { object, text } from "./scriptedTypes.ts";
 import { api, humanize, windowLabel } from "./api.ts";
 import { potentialRequests, rankUtilities } from "./whoActsFirst.ts";
 import { responseClock } from "./scriptedCommandModel.ts";
-import { formatDuration, formatDueTime, formatTimeCT } from "./displayTime.ts";
+import { formatDuration, formatDueTime, formatTime } from "./displayTime.ts";
 import "./scripted-analyst.css";
 
 export interface ScriptedAnalystProps extends ScriptedViewProps {
@@ -29,8 +29,8 @@ export function isLate(task: RecordItem, records: RecordsState): boolean {
   return (
     task.status !== "done" &&
     !!task.dueAt &&
-    Number.isFinite(Date.parse(records.storyNow)) &&
-    Date.parse(task.dueAt) < Date.parse(records.storyNow)
+    Number.isFinite(Date.parse(records.now)) &&
+    Date.parse(task.dueAt) < Date.parse(records.now)
   );
 }
 export function LateTasks({ records }: { records: RecordsState }) {
@@ -491,7 +491,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
         <section className="sa-contacts-panel">
           <h3>Contacts · coordination tracking</h3>
           <div className="command-table-wrap"><table className="command-table"><thead><tr><th>Partner</th><th>Group</th><th>Status</th><th>Last update</th><th>Action</th></tr></thead><tbody>
-          {scope(records.contacts).map((c) => <tr key={c.id}><td>{text(c.partnerRole)}</td><td>{text(c.group ?? c.unit ?? c.partnerGroup, "—")}</td><td><StatusChip status={c.status}>{records.contactStatusLabels[text(c.status)] ?? humanize(text(c.status))}</StatusChip></td><td>{formatTimeCT(text(c.updatedAt ?? c.lastUpdateAt ?? c.createdAt, ""))}<small>{text(c.note)}</small></td><td><details className="sa-contact-row"><summary>Update contact</summary>{form(
+          {scope(records.contacts).map((c) => <tr key={c.id}><td>{text(c.partnerRole)}</td><td>{text(c.group ?? c.unit ?? c.partnerGroup, "—")}</td><td><StatusChip status={c.status}>{records.contactStatusLabels[text(c.status)] ?? humanize(text(c.status))}</StatusChip></td><td>{formatTime(text(c.updatedAt ?? c.lastUpdateAt ?? c.createdAt, ""))}<small>{text(c.note)}</small></td><td><details className="sa-contact-row"><summary>Update contact</summary>{form(
               c.id,
               "set_contact_status",
               text(c.partnerRole),
@@ -572,7 +572,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
           <h3>Coordination notes</h3>
           <ul>
             {selected?.notes?.map((n) => (
-              <li key={n.id}><time dateTime={n.createdAt}>{formatTimeCT(n.createdAt)}</time> {n.text}</li>
+              <li key={n.id}><time dateTime={n.createdAt}>{formatTime(n.createdAt)}</time> {n.text}</li>
             ))}
           </ul>
           {form(

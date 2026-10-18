@@ -1,3 +1,4 @@
+import { defaultIncidentId, type IncidentSelectionRecords } from "./incidentSelection.ts";
 export type Hours = [number, number] | null;
 export interface ConsequenceNode {
   id: string;
@@ -30,6 +31,7 @@ export interface ConsequenceIncident {
 }
 export interface ConsequenceProjection {
   now: string;
+  featuredIncidentId?: string | null;
   operationsTimeZone?: string;
   incidents: ConsequenceIncident[];
   incident: ConsequenceIncident | null;
@@ -107,11 +109,10 @@ export function consequenceNodeState(node: Partial<ConsequenceNode>) {
 export function initialConsequenceIncident(
   search: string,
   selected?: string | null,
+  records?: IncidentSelectionRecords,
 ) {
-  const query = new URLSearchParams(search);
-  return (
-    query.get("incidentId") || query.get("incident") || selected || "TX-26-0412"
-  );
+  const id = defaultIncidentId(records ?? { statewideIncidents: [] }, { url: `/${search}` });
+  return id ?? (records ? null : selected ?? null);
 }
 export function elapsedLabel(timestamp: string, now: number) {
   const minutes = Math.max(

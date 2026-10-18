@@ -34,7 +34,7 @@ import {
 } from "./commandCenterModel.ts";
 import { eventSourceChips } from "./networkEvidence.ts";
 import { idtSectorName } from "./idt.ts";
-import { formatDuration, formatTimeCT } from "./displayTime.ts";
+import { formatDuration, formatTime } from "./displayTime.ts";
 import { boilWaterLabel } from "./statewideFootprint.ts";
 import { fittedTexasMarkerLayout, FITTED_TEXAS_VIEWBOX } from "./fittedTexasMap.ts";
 import { TEXAS_PATH } from "./texasOutline.ts";
@@ -277,7 +277,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                 data,
                 null,
               ) ??
-              records.storyNow;
+              records.now;
             const elapsed = elapsedMinutes(start, end);
             const saved = incidents.find((incident) => incident.id === row.caseId);
             const reviews = saved?.decisions ?? [];
@@ -459,7 +459,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
           values={[
             [records.teams.length, "Teams"],
             [people.onSite + people.remote + people.traveling, "Analysts deployed", `${people.onSite} on site · ${people.remote} remote · ${people.traveling} traveling · ${people.standby} on standby`],
-            [records.teams.filter((item) => item.status === "en_route").length, "En route", records.teams.filter((item) => item.status === "en_route").map((item) => `${item.shortLabel ?? item.name} · ETA ${formatTimeCT(eta(item))}`).join(" · ")],
+            [records.teams.filter((item) => item.status === "en_route").length, "En route", records.teams.filter((item) => item.status === "en_route").map((item) => `${item.shortLabel ?? item.name} · ETA ${formatTime(eta(item))}`).join(" · ")],
             [
               clock.elapsedMinutes === null ? "—" : formatDuration(clock.elapsedMinutes),
               "Response clock",
@@ -493,9 +493,9 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
               <p className="sc-team-incident-label">Incident: {team.incidentId} · {rows.find((row) => row.id === team.incidentId)?.title ?? "No incident summary captured"}</p>
               <h4>Working on</h4><p>{team.workingOn}</p>
               <h4>Forensics</h4><p>{team.forensics}</p>
-              <div className="sc-team-facts"><p><small>ETA</small>{formatTimeCT(eta(team))}</p><p><small>Team lead</small>{team.lead}</p></div>
+              <div className="sc-team-facts"><p><small>ETA</small>{formatTime(eta(team))}</p><p><small>Team lead</small>{team.lead}</p></div>
               <small>{number(team.people?.onSite)} on site · {number(team.people?.remote)} remote · {number(team.people?.traveling)} traveling · {number(team.people?.standby)} standby</small>
-              {team.updates?.at(-1) && <p className="sc-team-latest">Latest update: {team.updates.at(-1)?.text} · {formatTimeCT(recordTime(team.updates.at(-1)!, data, selected))}</p>}
+              {team.updates?.at(-1) && <p className="sc-team-latest">Latest update: {team.updates.at(-1)?.text} · {formatTime(recordTime(team.updates.at(-1)!, data, selected))}</p>}
               <div className="sc-clock-details" data-clock-tone={clock.tone}>
                 <p className={`sc-clock ${clock.tone}`}>
                   {selected?.status === "closed" ? "Closed case · " : ""}
@@ -556,7 +556,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                       <details><summary>Forensics</summary><p>{item.forensics}</p></details>
                     </td>
                     <td>
-                      {formatTimeCT(eta(item))}
+                      {formatTime(eta(item))}
                       {item.updates?.at(-1) && <small className="sc-team-latest">{item.updates.at(-1)?.text} · {timeLabel(recordTime(item.updates.at(-1)!, data, item.incidentId === selectedRow?.id ? selected : null))}</small>}
                       {(item.updates?.length ?? 0) > 1 && <details><summary>Earlier updates ({item.updates!.length - 1})</summary>{item.updates!.slice(0, -1).map((update, index) => (
                         <small key={index}>
@@ -787,7 +787,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       data-clock-tone={view === "uctf" ? responseClock(records, reference, selected).tone : undefined}
       aria-label={titles[view]}
     >
-      <p className="sc-records-asof">Read-only display · Records as of {timeLabel(records.storyNow)}</p>
+      <p className="sc-records-asof">Read-only display · Records as of {timeLabel(records.now)}</p>
       {content}
     </div>
   );

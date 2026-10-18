@@ -1,3 +1,4 @@
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -14,7 +15,7 @@ const records = {
   ...raw,
   statewideIncidents: raw.incidents,
   responseTasks: raw.tasks,
-  storyNow: "2026-10-13T08:00:00Z",
+  now: "2026-10-13T08:00:00Z",
   taskStatusLabels: {
     not_started: "Not started",
     in_progress: "In progress",
@@ -144,7 +145,7 @@ test("A6 uses compact team task rows and human due times with unchanged record a
   const withClosure = renderToStaticMarkup(createElement(Component, props("uctf", { caseClosure: createElement("p", null, "Existing guarded closure") })));
   assert.match(withClosure, /class="sa-case-closure"><p>Existing guarded closure/);
   assert.ok(withClosure.indexOf('class="sa-add-task"') < withClosure.indexOf('class="sa-case-closure"'));
-  assert.match(html, /Due [0-9]{2}:[0-9]{2} CT/);
+  assert.match(html, /Due 04:00 CDT/);
   assert.doesNotMatch(html.replace(/<[^>]*>/g, ""), /2026-10-13T09:00:00Z/);
   assert.doesNotMatch(html, /<details[^>]*\sopen(?:=|>)/);
 });
@@ -210,7 +211,7 @@ test("all actual forms disabled for uncertain/busy/missing/closed case; LateTask
     renderToStaticMarkup(createElement(LateTasks, { records: r })),
     /Clock task/,
   );
-  r.storyNow = "2026-10-13T07:58:00Z";
+  r.now = "2026-10-13T07:58:00Z";
   assert.doesNotMatch(
     renderToStaticMarkup(createElement(LateTasks, { records: r })),
     /Clock task/,

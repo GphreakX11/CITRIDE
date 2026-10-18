@@ -127,10 +127,9 @@ def test_legacy_clock_metadata_never_simulates_now(store):
     before = store.path.read_bytes()
     envelope = core.records()
     expected = actual.astimezone(timezone.utc).isoformat()
-    assert envelope['now'] == envelope['storyNow'] == core.story_now() == expected
-    assert envelope['timing']['storyClock'] == {
-        'deprecated': True, 'now': expected, 'operationsTimeZone': 'America/Chicago',
-    }
+    assert envelope['now'] == core.now() == expected
+    assert 'storyNow' not in envelope
+    assert 'storyClock' not in envelope['timing']
     assert store.path.read_bytes() == before
 
 

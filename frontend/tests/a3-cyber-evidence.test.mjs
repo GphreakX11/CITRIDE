@@ -1,3 +1,4 @@
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -38,8 +39,8 @@ test("case timeline uses hosting utility plus actual sharedSourceIdentity links,
     rows.map((r) => r.event.id),
     data.events.map((e) => e.id),
   );
-  assert.equal(rows[0].time, "01:30 CT");
-  assert.equal(rows.at(-1).time, "02:45 CT");
+  assert.equal(rows[0].time, "01:30 CDT");
+  assert.equal(rows.at(-1).time, "02:45 CDT");
   assert.equal(rows.find((r) => r.event.id === event.id).isCaseEvent, true);
   assert.equal(
     rows.find((r) => r.event.id === "event-sensor").observedEffect,
@@ -385,7 +386,7 @@ test("search is explicit and scope controls filter actual telemetry, with bounde
   assert.equal(field(tree, "Off-hours end").props.value, "05:00");
   button(tree, "Run search").props.onClick();
   tree = s.render();
-  assert.ok(text(tree).includes("01:30 CT"));
+  assert.ok(text(tree).includes("01:30 CDT"));
   field(tree, "Hunt for").props.onChange({
     target: { value: "shared-source" },
   });

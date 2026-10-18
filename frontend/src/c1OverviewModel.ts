@@ -120,7 +120,7 @@ export function c1OverviewModel(props: ScriptedViewProps): C1OverviewModel {
     const incident = props.incidents.find(i => i.id === record.caseId) ?? null;
     const footprint = footprintModel.layers.find(l => l.caseId === incident?.id) ?? null;
     const sectorCodes = entitiesOf(incident?.runSnapshot ?? null).filter(e => e.id === incident?.runSnapshot?.seed.provider || atRiskFacilities(incident!).some(f => f.id === e.id)).flatMap(e => { const idt = object(object(e).idt); const path = text(idt.status === 'below_idt_level' ? idt.parentPath : idt.path); return /^\d+(?:\.\d+)*$/.test(path) ? [path.split('.')[0]!] : []; });
-    return { record, incident, footprint, cascading: hasCascadingImpact(incident, { status: record.status }), elapsed: elapsedMinutes(start(record), props.records.storyNow), sectors: [...new Set([...(record.sectors ?? []), ...sectorCodes])], latestUpdate: null };
+    return { record, incident, footprint, cascading: hasCascadingImpact(incident, { status: record.status }), elapsed: elapsedMinutes(start(record), props.records.now), sectors: [...new Set([...(record.sectors ?? []), ...sectorCodes])], latestUpdate: null };
   });
   const allUpdates: C1Update[] = [];
   for (const row of rows) {
@@ -171,5 +171,5 @@ export function c1OverviewModel(props: ScriptedViewProps): C1OverviewModel {
   }
   // A service area already affected is not counted again as "more on probed".
   for (const id of affected.keys()) probed.delete(id);
-  return { rows, totals: { active: rows.length, investigating: rows.filter(r => ['open', 'under_investigation'].includes(r.record.status ?? '')).length, people: modeled ? sumPopulation(affected) : null, probedPeople: modeled ? sumPopulation(probed) : null, earliest, decisions: decisions.length }, decisions, facilities, updates: allUpdates.slice(0, 3), mostPeople, recordsAsOf: props.records.storyNow, footprintModel };
+  return { rows, totals: { active: rows.length, investigating: rows.filter(r => ['open', 'under_investigation'].includes(r.record.status ?? '')).length, people: modeled ? sumPopulation(affected) : null, probedPeople: modeled ? sumPopulation(probed) : null, earliest, decisions: decisions.length }, decisions, facilities, updates: allUpdates.slice(0, 3), mostPeople, recordsAsOf: props.records.now, footprintModel };
 }

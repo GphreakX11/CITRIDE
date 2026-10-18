@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { fixtureTimeZone } from "./configured-time-fixture.mjs";
 import test from "node:test";
 import { readFileSync, existsSync } from "node:fs";
 import { createElement } from "react";
@@ -52,6 +53,9 @@ const { default: CommandCasework } = await import(
 const { default: AnalystEntityProfile } = await import(
   await moduleUrl(new URL("../src/AnalystEntityProfile.tsx", import.meta.url))
 );
+// The SSR loader has its own transformed module instance; configure that instance too.
+const loadedDisplayTime = await import(await moduleUrl(new URL("../src/displayTime.ts", import.meta.url)));
+loadedDisplayTime.configureDisplayTime(fixtureTimeZone);
 const data = JSON.parse(
   readFileSync(new URL("../../data/scenario.json", import.meta.url)),
 );
@@ -141,7 +145,7 @@ const render = (overrides = {}) =>
 test("public Case File header and renamed counted sections preserve all content and tracking anchors", () => {
  const records={statewideIncidents:[{id:"TX-26-0412",caseId:selected.id,linkedEventIds:[selected.eventId]}]};
  const before=JSON.stringify(selected),html=render({records});
- assert.match(html,/CASE FILE · TX-26-0412 · version 7 · opened [0-9]{2}:[0-9]{2} CT from/);
+ assert.match(html,/CASE FILE · TX-26-0412 · version 7 · opened 19:00 CDT from/);
  assert.match(html,/class="[^"]*mono/);
  const nav=html.match(/<nav[^>]+aria-label="Case file sections"[\s\S]*?<\/nav>/)[0];
  for(const name of ['Context','Cyber Evidence','Consequences',`Reviews ${selected.decisions.filter(d=>d.reviewed).length}/${selected.decisions.length}`,`Tasks ${selected.tasks.filter(t=>t.completed).length}/${selected.tasks.length}`,'Notes','Activity','Case status','Advanced'])assert.ok(nav.includes('>'+name+'</a>'),name);

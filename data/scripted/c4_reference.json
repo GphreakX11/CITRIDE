@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "featuredIncidentId": "TX-26-0412",
   "operationsTimeZone": "America/Chicago",
   "source": {"id": "src-c4-planning", "label": "C4 Complete illustrative planning records", "evidenceCategory": "simulated", "classification": "U", "handling": ["SIMULATED"]},
   "eventLossRules": [

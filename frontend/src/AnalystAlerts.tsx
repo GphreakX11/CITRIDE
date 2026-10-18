@@ -8,7 +8,7 @@ import {
   alertsWithoutCases,
   openCaseForEvent,
   campaignCaseLink,
-  alertTimeCT,
+  alertTime,
   alertTechniques,
 } from "./analystAlerts.ts";
 import { utilityForEvent } from "./whoActsFirst.ts";
@@ -75,7 +75,7 @@ export default function AnalystAlerts({
         </span>
         <p>
           <time dateTime={String(event.timestamp ?? "")}>
-            {alertTimeCT(event)}
+            {alertTime(event)}
           </time>
           {" · "}
           {data.entities.find((e) => e.id === utility)?.label ??

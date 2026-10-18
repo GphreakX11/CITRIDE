@@ -68,7 +68,7 @@ const records = {
   ...raw,
   statewideIncidents: raw.incidents,
   responseTasks: raw.tasks,
-  storyNow: "2026-10-13T08:00:00Z",
+  now: "2026-10-13T08:00:00Z",
 };
 const incident = {
   id: "case-a",

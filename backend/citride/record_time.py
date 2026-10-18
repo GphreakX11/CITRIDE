@@ -1,6 +1,6 @@
 """Per-field timestamp resolution. Absolute feed/operator timestamps always win."""
-from copy import deepcopy
 from datetime import datetime, timedelta
+from .legacy_record_time import project_saved_record
 
 
 def parse_time(value):
@@ -8,9 +8,9 @@ def parse_time(value):
 
 
 def resolve_record_times(record, sample_anchor, opened=None):
-    record = deepcopy(record)
+    record = project_saved_record(record)
     anchor = record.get('sampleDataAnchor', sample_anchor)
-    opened = record.get('openedAt', record.get('openedStoryAt', opened))
+    opened = record.get('openedAt', opened)
     for key, value in list(record.items()):
         if isinstance(value, list):
             record[key] = [resolve_record_times(v, anchor, opened) if isinstance(v, dict) else v for v in value]

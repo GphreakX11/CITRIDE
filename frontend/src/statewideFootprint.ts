@@ -293,7 +293,7 @@ export function statewideFootprint(
             props.data,
             null,
           ) ??
-          props.records?.storyNow ??
+          props.records?.now ??
           "",
       )
     : null;

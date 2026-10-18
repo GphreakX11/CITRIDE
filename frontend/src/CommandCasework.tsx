@@ -18,7 +18,7 @@ import {
   activityDisplayText,
   caseFileHeader,
   caseFileTabs,
-  ctClock,
+  recordClock,
 } from "./caseFilePresentation";
 import { reviewDisplayText, reviewWarning } from "./incidentDecisions";
 import "./command-casework.css";
@@ -653,11 +653,11 @@ function CaseDetails({
             <dt>Created / updated</dt>
             <dd>
               <time dateTime={selected.createdAt}>
-                {ctClock(selected.createdAt)}
+                {recordClock(selected.createdAt)}
               </time>{" "}
               /{" "}
               <time dateTime={selected.updatedAt}>
-                {ctClock(selected.updatedAt)}
+                {recordClock(selected.updatedAt)}
               </time>
             </dd>
           </dl>
@@ -1053,7 +1053,7 @@ function CaseDetails({
           <ol className="cc-timeline">
             {selected.notes.map((item) => (
               <li key={item.id}>
-                <time dateTime={item.createdAt}>{ctClock(item.createdAt)}</time>
+                <time dateTime={item.createdAt}>{recordClock(item.createdAt)}</time>
                 <p className="cc-user-text">{item.text}</p>
               </li>
             ))}
@@ -1071,7 +1071,7 @@ function CaseDetails({
           <ol className="cc-timeline">
             {selected.activity.map((item) => (
               <li key={item.id}>
-                <time dateTime={item.createdAt}>{ctClock(item.createdAt)}</time>
+                <time dateTime={item.createdAt}>{recordClock(item.createdAt)}</time>
                 <span className="cc-chip">{item.kind}</span>
                 <p className="cc-user-text">
                   {activityDisplayText(item.message)}

@@ -37,6 +37,10 @@ import "./workspace-modes.css";
 import NetworkEvidence from "./NetworkEvidence";
 import type { CommandView, CommandIncident } from "./commandTypes";
 import type { WorkspaceSnapshot } from "./workspaceTypes";
+import { defaultIncidentId } from "./incidentSelection.ts";
+import { readIncidentFocus } from "./incidentFocus.ts";
+import type { RecordsState } from "./scriptedTypes.ts";
+import { configureDisplayTime } from "./displayTime.ts";
 import InvestigationBar from "./InvestigationBar";
 import {
   caseFocusEntity,
@@ -296,32 +300,24 @@ export default function App() {
     return () => window.removeEventListener("popstate", restore);
   }, [data, workflowLocked]);
 
-  function receiveCases(records: CommandIncident[]) {
+  function receiveCases(records: CommandIncident[], sourceRecords?: RecordsState) {
     casesRead.current = true;
     caseRecordsRef.current = records;
     setCaseRecords(records);
     const chooseInitialDefault = !selectionInitialized.current;
-    const preferredProviderId = data?.scenarios.find(
-      (item) => item.id === data.defaultScenarioId,
-    )?.seed.provider;
-    const priority = { critical: 0, high: 1, medium: 2, low: 3 };
-    // Only the initial unqualified command visit gets an open-case default.
-    const initialRecords = records
-      .filter(
-        (record) => record.status === "open" || record.status === "monitoring",
-      )
-      .sort(
-        (a, b) =>
-          Number(a.status !== "open") - Number(b.status !== "open") ||
-          Number(b.contextSnapshot?.provider?.id === preferredProviderId) -
-            Number(a.contextSnapshot?.provider?.id === preferredProviderId) ||
-          priority[a.priority] - priority[b.priority],
-      );
-    const nextId = caseSelectionAfterRead(
-      chooseInitialDefault ? initialRecords : records,
+    const perIncident = mode === "command" && view !== "command";
+    const explicitIncident = readIncidentFocus(window.location.href);
+    const incidentId = sourceRecords && (explicitIncident || (chooseInitialDefault && perIncident))
+      ? defaultIncidentId(sourceRecords, { cases: records, data: data ?? undefined }) : null;
+    const source = sourceRecords?.statewideIncidents.find(row => row.id === incidentId);
+    const requestedCase = source?.caseId ?? (source && records.find(item => source.linkedEventIds?.includes(item.eventId))?.id) ?? incidentId;
+    const nextId = incidentId
+      ? records.find(item => item.id === requestedCase)?.id ?? null
+      : caseSelectionAfterRead(
+      records,
       selectedEntity,
       selectedCaseId,
-      chooseInitialDefault,
+      false,
     );
     selectionInitialized.current = true;
     setSelectedCaseId(nextId);
@@ -364,6 +360,7 @@ export default function App() {
         api<WorkspaceSnapshot>("/v1/workspace"),
         api<Telemetry>("/v1/telemetry"),
       ]);
+      configureDisplayTime(snapshot.records.operationsTimeZone);
       setWorkspaceSnapshot(snapshot);
       setData(snapshot.bootstrap);
       setTelemetry(feeds);

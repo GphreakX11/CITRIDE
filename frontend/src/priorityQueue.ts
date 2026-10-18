@@ -1,6 +1,7 @@
 import type { C1Incident, C1OverviewModel } from './c1OverviewModel.ts';
 import type { CommandView } from './commandTypes.ts';
 import type { RecordItem, RecordsState } from './scriptedTypes.ts';
+import { displayTimeZone } from './displayTime.ts';
 
 export interface PriorityItem {
   row: C1Incident;
@@ -24,7 +25,7 @@ const owner = (record: RecordItem | undefined, records: RecordsState) => {
   const team = records.teams?.find(t => t.id === teamId);
   return clean(record.ownerRole) || clean(record.lead) || (teamId ? clean(team?.name) || clean(team?.label) || teamId : '');
 };
-const timingLabel = (value: unknown) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date(clean(value)));
+const timingLabel = (value: unknown) => new Intl.DateTimeFormat('en-US', { timeZone: displayTimeZone(), month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date(clean(value)));
 const recordedTiming = (record: RecordItem | undefined) => {
   if (!record) return '';
   if (Number.isFinite(stamp(record.dueAt))) return `Recorded due: ${timingLabel(record.dueAt)}`;

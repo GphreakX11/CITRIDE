@@ -49,6 +49,12 @@ test("C4 SSR preserves captured analysis without window or a new projection", ()
   assert.doesNotMatch(markup, /Loading consequence records/);
   assert.match(markup, /<time dateTime=/);
 });
+test("C4 actually starts on the configured third incident without a URL", () => {
+  const records = {featuredIncidentId:'THIRD-GRID',statewideIncidents:[{id:'OTHER-CRITICAL',status:'open',severity:'critical'},{id:'THIRD-GRID',status:'open',severity:'low'}]};
+  const markup = renderToStaticMarkup(createElement(ConsequencesView, {records, selectedId:'OTHER-CRITICAL',onSelect(){},onOpenAnalyst(){},onNavigate(){}}));
+  assert.match(markup,/THIRD-GRID/);
+  assert.doesNotMatch(markup,/OTHER-CRITICAL/);
+});
 test("node tones are evidence driven and never default green", () => {
   const state = model.consequenceNodeState;
   assert.equal(state({ source: true }).tone, "red");
@@ -60,8 +66,8 @@ test("node tones are evidence driven and never default green", () => {
   assert.equal(state({ upstream: true, status: "degraded" }).tone, "grey");
   assert.equal(state({}).tone, "grey");
 });
-test("incident URL is authoritative and water is explicit default", () => {
-  assert.equal(model.initialConsequenceIncident(""), "TX-26-0412");
+test("incident URL is authoritative and an unconfigured C4 delegates defaults to the backend", () => {
+  assert.equal(model.initialConsequenceIncident(""), null);
   assert.equal(
     model.initialConsequenceIncident("?incidentId=port", "case"),
     "port",
@@ -69,7 +75,7 @@ test("incident URL is authoritative and water is explicit default", () => {
   assert.equal(model.initialConsequenceIncident("?incident=other"), "other");
 });
 test("operations clock follows Chicago daylight savings", () => {
-  assert.match(clockLabel(Date.parse("2026-10-18T12:00:00Z")), /07:00:00.*CDT/);
+  assert.match(clockLabel(Date.parse("2026-10-18T12:00:00Z"), "America/Chicago"), /07:00.*CDT/);
   assert.equal(
     model.elapsedLabel(
       "2026-10-18T11:30:00Z",

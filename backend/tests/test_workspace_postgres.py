@@ -48,7 +48,7 @@ def test_snapshot_uses_one_real_transaction_and_parse_without_writes(store, monk
         result = workspace_snapshot(store, reset_enabled=False)
         assert counts == {"connections": 1, "parses": 1, "loads": 1}
         assert result["health"]["baselineRevision"] == result["bootstrap"]["baselineRevision"]
-        assert result["records"]["storyNow"] == result["health"]["storyNow"]
+        assert result["records"]["now"] == result["health"]["now"]
     assert raw_state(store) == before
 
 def test_snapshot_observes_another_repositorys_committed_write(store):

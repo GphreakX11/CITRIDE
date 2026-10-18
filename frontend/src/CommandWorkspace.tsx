@@ -33,6 +33,8 @@ import { defaultAlertPriority } from "./analystAlerts";
 import { caseDisplayId } from "./caseFilePresentation";
 import { displayText } from "./presentation";
 import OperationsClock from "./OperationsClock";
+import { configureDisplayTime } from "./displayTime.ts";
+import { defaultIncidentId } from "./incidentSelection.ts";
 import IncidentContextBar from "./IncidentContextBar";
 import {
   potentialScope,
@@ -79,7 +81,7 @@ export interface CommandWorkspaceProps {
   view: CommandView;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  onCasesLoaded: (records: CommandIncident[]) => void;
+  onCasesLoaded: (records: CommandIncident[], sourceRecords?: RecordsState) => void;
   onWorkflowLockChange: (locked: boolean) => void;
   selectedEntityId: string | null;
   onSelectEntity: (id: string | null) => void;
@@ -133,7 +135,7 @@ export default function CommandWorkspace({
   const [health, setHealth] = useState<{
     demoMode: boolean;
     resetEnabled?: boolean;
-    storyNow?: string;
+    now?: string;
   } | null>(initial?.health ?? null);
   const [notice, setNotice] = useState("");
   useEffect(() => {
@@ -181,6 +183,14 @@ export default function CommandWorkspace({
   };
   selectedRef.current = selectedId;
   const selected = incidents.find((item) => item.id === selectedId) ?? null;
+  useEffect(() => {
+    if (mode !== "command" || view === "command" || !records || selectedId) return;
+    const id = defaultIncidentId(records, { cases: incidents, data });
+    const row = records.statewideIncidents.find(item => item.id === id);
+    const saved = incidents.find(item => item.id === (row?.caseId ?? id))
+      ?? (row && !row.caseId ? incidents.find(item => row.linkedEventIds?.includes(item.eventId)) : null);
+    if (saved) handlers.current.onSelect(saved.id);
+  }, [mode, view, records, incidents, data, selectedId]);
   const estimateScope = potentialScope(data, selected, reference);
   const estimateContext = useRef({ scope: estimateScope, view, mode });
   estimateContext.current = { scope: estimateScope, view, mode };
@@ -192,13 +202,14 @@ export default function CommandWorkspace({
     if (!Array.isArray(response.incidents))
       throw new Error("Incident response is invalid; casework is unavailable.");
     setIncidents(response.incidents);
+    configureDisplayTime(response.records.operationsTimeZone);
     setRecords(response.records);
     setReference(response.reference);
     if (response.health) setHealth(response.health);
     setLoaded(true);
     setRefreshedAt(new Date().toISOString());
     setRefreshFailed(false);
-    handlers.current.onCasesLoaded(response.incidents);
+    handlers.current.onCasesLoaded(response.incidents, response.records);
     setError("");
     if (!pending.current && !pendingRun.current && !pendingPotential.current)
       setUncertain(false);
@@ -792,7 +803,7 @@ export default function CommandWorkspace({
     mode === "command" && headerContext
       ? createPortal(
           <>
-            <OperationsClock timeZone={typeof records?.operationsTimeZone === "string" ? records.operationsTimeZone : "America/Chicago"} />
+            <OperationsClock timeZone={records?.operationsTimeZone} />
           </>,
           headerContext,
         )

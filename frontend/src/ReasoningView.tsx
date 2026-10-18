@@ -23,7 +23,7 @@ import type {
   InferenceRunSummary,
   OntologyMetadata,
 } from "./types";
-import { ctClock } from "./caseFilePresentation";
+import { recordClock } from "./caseFilePresentation";
 import "./reasoning.css";
 
 function failureMessage(failure: unknown): string {
@@ -37,7 +37,7 @@ function factText(fact: InferenceFact): string {
 function createdLabel(timestamp?: string): string {
   if (!timestamp) return "Time not recorded";
   const date = new Date(timestamp);
-  return Number.isNaN(date.getTime()) ? timestamp : ctClock(timestamp);
+  return Number.isNaN(date.getTime()) ? timestamp : recordClock(timestamp);
 }
 
 function diagnosticLabel(value: unknown): string {

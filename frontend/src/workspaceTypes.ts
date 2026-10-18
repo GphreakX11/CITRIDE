@@ -14,6 +14,6 @@ export interface WorkspaceSnapshot {
     baselineRevision: number;
     demoMode: boolean;
     resetEnabled?: boolean;
-    storyNow?: string;
+    now?: string;
   };
 }

@@ -63,7 +63,8 @@ def test_bootstrap_telemetry_and_rdf_export(client):
         "baselineRevision": 1,
         "demoMode": True,
     }
-    assert health["storyNow"] and health["resetEnabled"] is True
+    assert health["now"] and health["resetEnabled"] is True
+    assert "storyNow" not in health
     model = client.get("/v1/bootstrap").json()
     assert model["dependencies"] and model["sources"]
     streams = client.get("/v1/telemetry").json()["streams"]

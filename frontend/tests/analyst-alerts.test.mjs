@@ -1,3 +1,4 @@
+import "./configured-time-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -9,7 +10,7 @@ import {
   openCaseForEvent,
   defaultAlertPriority,
   campaignCaseLink,
-  alertTimeCT,
+  alertTime,
   alertTechniques,
 } from "../src/analystAlerts.ts";
 const data = {
@@ -101,12 +102,12 @@ test("anomalous priority defaults high and ordinary or explicitly normal alerts 
   assert.equal(defaultAlertPriority({ id: "new", anomalous: true }), "high");
 });
 test("CT time and ATT&CK chips use source values, including legacy string techniques", () => {
-  assert.match(alertTimeCT(data.events[0]), /01:30.*CT/);
+  assert.equal(alertTime(data.events[0]), "01:30 CDT");
   assert.ok(alertTechniques(data.events[0]).some((t) => t.includes("T0822")));
   assert.deepEqual(alertTechniques({ id: "legacy", techniques: ["T1234"] }), [
     "T1234",
   ]);
-  assert.equal(alertTimeCT({ id: "undated" }), "Time unavailable");
+  assert.equal(alertTime({ id: "undated" }), "Time unavailable");
 });
 const moduleUrl = (s) =>
   "data:text/javascript;base64," + Buffer.from(s).toString("base64");
