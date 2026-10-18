@@ -84,7 +84,7 @@ export function ConsequencesContent({
           ? missing
           : value.people.toLocaleString("en-US"),
       value.serviceAffected ? "Service affected" : "People affected",
-      "People in the modeled service area",
+      value.serviceAffected ? "As reported in the supplied reference scenario" : "People in the modeled service area",
       "grey",
     ],
     [
@@ -152,7 +152,7 @@ export function ConsequencesContent({
           <small>WHAT IT DOES</small>
           <strong>
             {source?.throughput
-              ? `${source.throughput.value} ${source.throughput.unit}`
+              ? typeof source.throughput.value === "string" ? source.throughput.value : `${source.throughput.value} ${source.throughput.unit}`
               : missing}
           </strong>
           <span>{source?.throughput?.basis}</span>
@@ -161,7 +161,7 @@ export function ConsequencesContent({
           <small>WHO DEPENDS ON IT</small>
           <strong>
             {value.people == null
-              ? "People not recorded"
+              ? value.sectors.filter(s => s.atRisk > 0).map(s => s.label).join(" · ") || "Dependents not recorded"
               : `${value.people.toLocaleString("en-US")} people`}
           </strong>
           <span>
@@ -630,7 +630,7 @@ export default function ConsequencesView({
                   placeholder="ID, name or place"
                 />
               </label>
-              <small>OPEN INCIDENTS · {value?.incidents.length ?? 0}</small>
+              <small>INCIDENTS &amp; REFERENCE SCENARIOS · {value?.incidents.length ?? 0}</small>
               {value?.incidents
                 .filter((i) =>
                   `${i.id} ${i.title}`
@@ -648,6 +648,7 @@ export default function ConsequencesView({
                     }}
                   >
                     <b>{i.id}</b> {i.title} · {i.severity}
+                    {i.referenceOnly ? " · reference scenario" : ""}
                     {i.id === id ? " · showing" : ""}
                   </button>
                 ))}

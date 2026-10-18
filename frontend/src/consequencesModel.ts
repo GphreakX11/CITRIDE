@@ -23,6 +23,7 @@ export interface ConsequenceNode {
 }
 export interface ConsequenceIncident {
   id: string;
+  referenceOnly?: boolean;
   title: string;
   caseId?: string;
   severity?: string;
