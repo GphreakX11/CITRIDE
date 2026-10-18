@@ -36,6 +36,8 @@ def workspace_snapshot(store: Repository, *, reset_enabled: bool) -> dict:
                 "demoMode": True,
                 # One clock sample keeps the two workspace views consistent.
                 "storyNow": records["storyNow"],
+                "now": records["now"],
+                "operationsTimeZone": records["operationsTimeZone"],
                 "resetEnabled": reset_enabled,
             },
         })

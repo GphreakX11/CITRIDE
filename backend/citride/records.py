@@ -357,6 +357,10 @@ class RecordsService:
     def now(self):
         return self._wall_now().isoformat()
 
+    def records_from_dataset(self, dataset, incident_id=None):
+        """The workspace caller owns this dataset's existing lock/transaction."""
+        return self.records(incident_id, _dataset=dataset)
+
     def records(self, incident_id=None, *, _dataset=None):
         with self.store._locked() if _dataset is None else nullcontext():
             dataset = self.store._load() if _dataset is None else _dataset
@@ -389,7 +393,7 @@ class RecordsService:
                     if collection == "responseTasks":
                         item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
             config = meta["config"]
-            result = {**current, "now": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "timing": config["timing"], "taskGroups": config["taskGroups"]}
+            result = {**current, "now": now.isoformat(), "storyNow": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "timing": config["timing"], "taskGroups": config["taskGroups"]}
             result.update(STATUS_LABELS)
             result.update({k: v for k, v in config.items() if k.endswith("Labels")})
             return deepcopy(result)

@@ -231,12 +231,15 @@ def create_app(
 
     @app.get("/health")
     def health(store: RepositoryDependency):
+        records = RecordsService(store)
+        now = records.now()
         return {
             "status": "ok",
             "baselineRevision": store.baseline()["baselineRevision"],
             "demoMode": True,
-            "now": RecordsService(store).now(),
-            "operationsTimeZone": RecordsService(store).c4_reference['operationsTimeZone'],
+            "now": now,
+            "storyNow": now,
+            "operationsTimeZone": records.c4_reference['operationsTimeZone'],
             "resetEnabled": reset_enabled,
         }
 

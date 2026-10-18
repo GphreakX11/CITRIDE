@@ -1,0 +1,434 @@
+.c4-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: var(--text);
+  padding: 24px 32px;
+  background: var(--bg);
+  font-size: 15px;
+}
+.c4-view h1 {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+.c4-view h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+.c4-view h3 {
+  font-size: 15px;
+}
+.c4-view small,
+.c4-view dt {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.c4-view small {
+  display: block;
+}
+.c4-view button {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 14px;
+}
+.c4-view button:hover {
+  background: var(--nav-active);
+}
+.c4-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+.c4-heading time {
+  display: block;
+  text-align: right;
+  font: 13px var(--font-mono);
+  margin-bottom: 10px;
+  color: var(--text-2);
+}
+.c4-badge {
+  display: block;
+  background: var(--blue-bg);
+  border: 1px solid var(--border-strong);
+  color: var(--text-2);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+.c4-picker {
+  position: relative;
+}
+.c4-picker summary {
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--text-2);
+}
+.c4-picker > div {
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  top: 100%;
+  width: min(650px, 85vw);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  background: var(--bg-header);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px var(--shadow);
+}
+.c4-picker input {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.c4-picker button {
+  text-align: left;
+}
+.c4-picker button b {
+  font-family: var(--font-mono);
+  color: var(--blue-text);
+}
+.c4-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--blue-bg);
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+.c4-banner strong {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--blue-text);
+}
+.c4-banner em {
+  font-style: normal;
+  color: var(--amber-text);
+}
+.c4-banner button {
+  margin-left: auto;
+}
+.c4-banner.reviewed {
+  border: 1px solid var(--green);
+  background: var(--green-bg);
+}
+.c4-banner.reviewed strong {
+  color: var(--green-text);
+}
+.c4-asset {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr);
+  gap: 18px;
+  padding: 14px 18px;
+}
+.c4-asset,
+.c4-panel,
+.c4-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.c4-asset strong,
+.c4-asset span {
+  display: block;
+  margin-top: 4px;
+}
+.c4-asset span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.c4-tiles {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+}
+.c4-tile {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.c4-tile > strong {
+  font-size: 28px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.c4-tile > b {
+  font-size: 14px;
+  color: var(--text);
+}
+.c4-tile.tone-red {
+  background: var(--red-bg);
+  border-color: var(--red);
+}
+.c4-tile.tone-amber {
+  background: var(--amber-bg);
+  border-color: var(--amber);
+}
+.c4-tile.tone-grey > strong {
+  color: var(--text-strong);
+}
+.c4-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.c4-panel {
+  padding: 18px 20px;
+  min-width: 0;
+}
+.c4-panel-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.c4-graph {
+  position: relative;
+  height: 420px;
+  margin-top: 12px;
+  background: var(--bg-header);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.c4-graph svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+}
+.c4-graph path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.35;
+}
+.c4-graph text {
+  fill: var(--text-2);
+  font-size: 2px;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--bg-header);
+  stroke-width: 0.8px;
+  stroke-linejoin: round;
+}
+.c4-graph .c4-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 24%;
+  max-width: 200px;
+  min-width: 110px;
+  padding: 13px 9px;
+  border: 2px solid currentColor;
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: center;
+}
+.c4-node strong {
+  font-size: 15px;
+}
+.c4-node small {
+  font-size: 13px;
+  margin-top: 6px;
+  color: inherit;
+}
+.c4-node.tone-red {
+  color: var(--red-text);
+  background: var(--red-bg);
+}
+.c4-node.tone-amber {
+  color: var(--amber-text);
+  background: var(--amber-bg);
+}
+.c4-node.tone-green {
+  color: var(--green-text);
+  background: var(--green-bg);
+}
+.c4-node.tone-grey {
+  color: var(--text-muted);
+}
+.c4-node.selected {
+  outline: 3px solid var(--text-strong);
+  outline-offset: 4px;
+}
+.c4-legend {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.c4-axis {
+  display: flex;
+  justify-content: space-between;
+  margin: 14px 0 10px 30%;
+  font: 12px var(--font-mono);
+  color: var(--text-muted);
+}
+.c4-timeline {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+}
+.c4-timeline button {
+  border: 0;
+  padding: 0;
+  text-align: left;
+  background: none;
+}
+.c4-track {
+  height: 15px;
+  background: var(--bg-header);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.c4-track i {
+  display: block;
+  height: 100%;
+  background: currentColor;
+  opacity: 0.7;
+}
+.c4-timeline b {
+  font: 13px var(--font-mono);
+}
+.c4-restoration {
+  padding: 10px;
+  border: 1px dashed var(--amber);
+  color: var(--amber-text);
+  background: var(--amber-bg);
+}
+.c4-row {
+  display: flex;
+  gap: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.c4-row > b {
+  min-width: 36px;
+  font-family: var(--font-mono);
+}
+.c4-view table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.c4-view th,
+.c4-view td {
+  text-align: left;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.c4-view th {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.c4-view td button {
+  border: 0;
+  padding: 0;
+  background: none;
+  font-weight: 600;
+}
+.c4-workaround {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.c4-workaround > span {
+  float: right;
+  font-size: 13px;
+}
+.c4-workaround p {
+  margin: 5px 0;
+}
+.c4-owners {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 15px;
+}
+.c4-owners strong,
+.c4-owners span {
+  display: block;
+  margin-top: 5px;
+}
+.c4-owners span {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.c4-view footer {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.c4-evidence {
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+.c4-idt {
+  font: 12px var(--font-mono);
+  color: var(--blue-text);
+}
+.c4-evidence dl {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 9px;
+}
+.c4-evidence dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1200px) {
+  .c4-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .c4-asset {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .c4-columns {
+    grid-template-columns: 1fr;
+  }
+  .c4-owners {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .c4-view {
+    padding: 16px;
+  }
+  .c4-heading {
+    flex-direction: column;
+  }
+  .c4-tiles,
+  .c4-asset,
+  .c4-owners {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .c4-graph {
+    height: 450px;
+  }
+  .c4-graph .c4-node {
+    min-width: 80px;
+    padding: 8px 4px;
+  }
+  .c4-node strong {
+    font-size: 13px;
+  }
+  .c4-node small {
+    font-size: 11px;
+  }
+  .c4-tile > strong {
+    font-size: 22px;
+  }
+}
