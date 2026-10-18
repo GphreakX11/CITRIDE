@@ -19,7 +19,7 @@ import time
 import psycopg
 from rdflib import Dataset
 
-from .storage import Repository, StorageUnavailableError
+from .storage import Repository, StorageUnavailableError, InvalidModelError
 
 
 def _lock_id(value: str) -> int:
@@ -27,7 +27,7 @@ def _lock_id(value: str) -> int:
 
 
 class PostgresRepository(Repository):
-    def __init__(self, database_url: str, scenario_path: Path, state_key: str = "default"):
+    def __init__(self, database_url: str, scenario_path: Path, state_key: str = "default", *, existing_only=False):
         if not database_url:
             raise ValueError("A database connection is required for Postgres storage")
         if not state_key or len(state_key) > 128:
@@ -37,6 +37,15 @@ class PostgresRepository(Repository):
         self._state_key = state_key
         self._state = threading.local()
         self._state_lock_id = _lock_id("citride:state:" + state_key)
+        if existing_only:
+            # No DDL, seed, or index repair: explicit intake owns its transaction.
+            with self._locked():
+                row = self._state.connection.execute(
+                    'SELECT state_key FROM citride_state WHERE state_key = %s', (state_key,)
+                ).fetchone()
+                if row is None:
+                    raise InvalidModelError('Explicit intake requires an existing store')
+            return
         # Serialize table creation as well as first seed creation. Different
         # state keys can otherwise race on CREATE TABLE's catalog entries.
         with self._locked(initialize=True):
@@ -107,6 +116,9 @@ class PostgresRepository(Repository):
             raise StorageUnavailableError("Durable storage is unavailable; retry later") from None
 
     def _load(self) -> Dataset:
+        # PROTOTYPE: Whole graph stored as one N-Quads blob per environment.
+        # Real version needs per-record tables/graph storage partitioned by customer,
+        # live-feed intake, and the infrastructure model in the database, not scenario.json.
         connection = getattr(self._state, "connection", None)
         if connection is None:
             raise RuntimeError("Postgres access requires a repository transaction")
@@ -124,6 +136,7 @@ class PostgresRepository(Repository):
         return dataset
 
     def _save(self, dataset: Dataset) -> None:
+        # PROTOTYPE: Whole-graph rewrite; see _load for required per-customer storage replacement.
         connection = getattr(self._state, "connection", None)
         if connection is None:
             raise RuntimeError("Postgres access requires a repository transaction")

@@ -21,19 +21,19 @@ def store(tmp_path):
     return Repository(tmp_path / 'state', ROOT / 'data/scenario.json')
 
 
-def test_port_all_seven_original_windows_and_nonaffected(store):
+def test_port_updated_windows_and_nonaffected(store):
     service = ConsequenceService(store)
     view = service.view('INC-2026-1002-POH')
     expected = json.loads((ROOT / 'data/scripted/port_houston.json').read_text())['expectedWindows']
     nodes = {n['id']: n for n in view['nodes']}
     numeric = {k: v for k, v in expected.items() if isinstance(v, list)}
-    assert len(numeric) == 7
+    assert len(numeric) == 11
     for identifier, window in numeric.items():
         assert nodes[identifier]['windowHours'] == window
-    assert nodes['harris-ems']['notAffected']
+    assert nodes['galveston-refinery']['notAffected']
     assert nodes['grid-houston']['upstream']
     assert nodes['grid-houston']['windowHours'] is None
-    assert view['atRisk'] == 8  # modeled entities, never the unsupported target 14
+    assert view['atRisk'] == 11  # modeled entities, not narrative aggregates
     assert store.baseline()['defaultScenarioId'] == 'unsafe-water'
     assert service.view()['incident']['id'] == 'TX-26-0412'
     assert service.view()['atRisk'] == 3

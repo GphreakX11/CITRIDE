@@ -2,7 +2,9 @@
 export type StatusTone = "red" | "amber" | "green" | "blue" | "grey";
 export const STATUS_TONES: Readonly<Record<string, StatusTone>> = Object.freeze({
   under_attack: "red", compromised: "red", confirmed: "red", critical: "red",
-  high: "red", late: "red", findings: "red", failed: "red", disrupted: "red", unavailable: "red",
+  high: "red", late: "red", findings: "red", failed: "red", unavailable: "red",
+  offline: "red", halted: "red", affected: "red",
+  disrupted: "amber", delayed: "amber", diverted: "amber", reviewing: "amber", on_watch: "amber", watch: "amber", pending: "amber",
   suspected: "amber", probed: "amber", probing_only: "amber", medium: "amber",
   waiting: "amber", needs_review: "amber", containment: "amber", recovering: "amber",
   degraded: "amber", deferred: "amber", attempted: "amber", waiting_on_chief: "amber",

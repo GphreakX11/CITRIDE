@@ -1,7 +1,8 @@
 """Versioned, non-destructive C4 model/config overlay. Never edits saved snapshots.
 
-The original supplied port JSON is preserved byte-for-byte. Corrections below
-are schema normalization and explicitly documented interval parameters, not
+The original supplied package is retained outside the working tree. Working
+source records may contain documented, author-authorized synthetic corrections.
+The overlay applies schema normalization and explicit interval parameters, not
 changes to the interval engine. Overlay is used by automatic analysis only.
 """
 from copy import deepcopy
@@ -12,16 +13,18 @@ from .storage import InvalidModelError
 
 
 def load_c4(scenario_path):
-    for root in (Path(scenario_path).parent, Path(__file__).resolve().parents[2] / 'data', Path(__file__).parent / 'demo_data'):
-        reference = root / 'scripted/c4_reference.json'
-        port = root / 'scripted/port_houston.json'
-        if reference.is_file() and port.is_file():
-            return json.loads(reference.read_text()), json.loads(port.read_text())
-    raise InvalidModelError('C4 reference/model configuration is missing')
+    from .scripted_sources import load_sources
+    _, models, reference = load_sources(scenario_path)
+    return reference, models[0]
 
 
 def consequence_model(baseline, reference, port):
     """Detached additive overlay, with collision rejection, never baseline writes."""
+    if isinstance(port, list):
+        model = deepcopy(baseline)
+        for bundle in port:
+            model = consequence_model(model, reference, bundle)
+        return model
     model = deepcopy(baseline)
     additions = {k: [] for k in ('sources', 'entities', 'events', 'serviceFunctions', 'dependencies', 'scenarios')}
     source = {**port['sources'][0], 'evidenceCategory': 'simulated'}
@@ -50,29 +53,29 @@ def consequence_model(baseline, reference, port):
             entity_ids.add(cyber_id)
         event['seenOn'] = cyber_id
         for technique in event.get('attackTechniques', []):
-            technique.setdefault('tactic', 'Not supplied by exercise')
+            technique.setdefault('tactic', 'Not supplied by source')
         additions['events'].append(event)
     # Initial onset [0,1] is already added by the engine. These explicit values
     # therefore produce 3–6, 6–12, 12–18, and chained 18–24 exactly.
-    correction = {'poh-dep-sabine': (0, 0, 3, 5), 'poh-dep-colonial': (0, 0, 3, 5),
-                  'poh-dep-tankers': (0, 0, 6, 11), 'poh-dep-scp': (1, 1, 11, 16),
-                  'poh-dep-freeport': (1, 1, 11, 16), 'poh-dep-cl2': (0, 0, 0, 0)}
+    correction = reference.get('intervalNormalizations', {})
     functions = {}
     def function(facility, service, identifier=None):
         identifier = identifier or f'c4-{facility}-{service}'
         functions.setdefault(identifier, {'id': identifier, 'facility': facility, 'service': service,
                                           'label': service.replace('_', ' '), **provenance})
         return identifier
-    function('poh-port', 'terminal_operations', 'terminal-operations')
+    seed = port['scenario']['seed']
+    function(seed['provider'], seed['service'])
     for raw in port['dependencies']:
         dep = deepcopy(raw)
-        if dep['provider'] == 'poh-port' and dep['requiredService'] in ('petroleum_products', 'chemical_feedstock'):
-            dep['assumptionNote'] += ' Required input normalized to terminal_operations: the terminal handles these cargoes; cargo production is not a separate port output-loss seed.'
-            dep['requiredService'] = 'terminal_operations'
-            dep['backupService'] = 'terminal_operations'
+        alias = reference.get('serviceNormalizations', {}).get(seed['service'], {}).get(dep['requiredService'])
+        if dep['provider'] == seed['provider'] and alias:
+            dep['assumptionNote'] += ' Required input normalized through the configured source-service mapping.'
+            dep['requiredService'] = alias
+            dep['backupService'] = alias
         function(dep['provider'], dep['requiredService'])
         # Package reused function IDs across facilities; ownership is explicit.
-        service = 'chlorine_supply' if dep['outputLossType'] == 'chlorine_unavailable' else dep['requiredService']
+        service = reference.get('outputServices', {}).get(dep['outputLossType'], dep['requiredService'])
         dep['dependentFunction'] = function(dep['dependent'], service, f"{dep['dependentFunction']}--{dep['dependent']}")
         dep['recovery'].setdefault('note', 'Restoration not verified; planning estimates only.')
         if dep['id'] in correction:

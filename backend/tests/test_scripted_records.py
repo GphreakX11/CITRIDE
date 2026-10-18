@@ -86,6 +86,14 @@ def test_authoritative_inputs_are_valid_and_never_rewritten(inputs, service):
 @pytest.mark.parametrize("defect", ["reference", "id", "duplicate", "metadata", "status"])
 def test_each_collection_rejects_bad_records(inputs, collection, defect):
     scripted, _, scenario = inputs
+    if collection not in scripted and collection in ('watchAssets', 'sectorViews', 'criticalFunctions', 'consequenceScores', 'pendingDecisions'):
+        from citride.scripted_sources import load_sources, merge_sources, merge_response_options
+        from citride.consequence_model import consequence_model
+        sources, models, reference = load_sources(ROOT / 'data/scenario.json')
+        scripted = merge_sources(sources, models)
+        scenario = consequence_model(scenario, reference, models)
+        scenario['responseOptions'] = merge_response_options(inputs[1], models, scenario)['responseOptions']
+        assert validate_scripted(scripted, scenario) == []
     key = {"statewideIncidents": "incidents", "responseTasks": "tasks"}.get(collection, collection)
     item = scripted[key][0]
     if defect == "reference":

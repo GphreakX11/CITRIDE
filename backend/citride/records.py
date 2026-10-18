@@ -18,7 +18,8 @@ from .scripted_validation import (
 from .storage import ConflictError, InvalidModelError, NotFoundError
 from .record_time import resolve_record_times
 from .legacy_record_time import SAMPLE_TIMING, project_saved_meta, project_saved_record
-from .consequence_model import consequence_model, load_c4
+from .consequence_model import consequence_model
+from .scripted_sources import load_sources, merge_sources, merge_response_options, EXTRA_COLLECTIONS
 from .consequences import automatic_intake
 
 ACTION_FIELDS = {
@@ -93,13 +94,14 @@ def load_inputs(scenario_path):
             if path.is_file():
                 return json.loads(path.read_text(encoding="utf-8"))
         raise InvalidModelError("Required scripted/reference configuration is missing")
-    return load("scripted/watershed_beta.json"), load("reference.json"), scenario
+    records, models, _ = load_sources(scenario_path)
+    return merge_sources(records, models), load("reference.json"), scenario
 
 
 class RecordsService:
     def __init__(self, store, scripted=None, reference=None, scenario=None, now=None):
         self.store = store
-        supplied_scripted = scripted is not None
+
         if scripted is None or reference is None or scenario is None:
             loaded = load_inputs(store.scenario_path)
             scripted = loaded[0] if scripted is None else scripted
@@ -107,22 +109,21 @@ class RecordsService:
             scenario = loaded[2] if scenario is None else scenario
         self.scripted, self.reference, self.scenario = deepcopy((scripted, reference, scenario))
         self._now = now or (lambda: datetime.now(timezone.utc))
-        self.c4_reference, self.port = load_c4(store.scenario_path)
-        self.analysis_model = consequence_model(self.scenario, self.c4_reference, self.port)
-        if not supplied_scripted:
-            self.scripted['sources'].extend([{**s, 'evidenceCategory': 'simulated'} for s in self.port['sources']])
-            incident = deepcopy(self.port['incident'])
-            incident['status'] = 'open'
-            self.scripted['incidents'].append(incident)
-            for raw in self.port['assetStatuses']:
-                item = deepcopy(raw)
-                if item['status'] == 'watch':
-                    item['status'] = 'at_risk'
-                self.scripted['assetStatuses'].append(item)
+        _, self.model_sources, self.c4_reference = load_sources(store.scenario_path)
+        for kind in EXTRA_COLLECTIONS:
+            self.scripted.setdefault(kind, [])
+        self.analysis_model = consequence_model(self.scenario, self.c4_reference, self.model_sources)
+        self.scripted.setdefault('pendingDecisions', [])
+        self.reference = merge_response_options(self.reference, self.model_sources, self.analysis_model)
+        # Public display vocabulary follows the configured source set, not a
+        # frontend incident-specific fallback. This detached merge never writes state.
+        for field in ('entityIcons', 'serviceLabels'):
+            self.reference[field] = {**self.reference.get(field, {}),
+                                     **deepcopy(self.scripted.get(field, {}))}
         self._validation_scenario = deepcopy(self.analysis_model)
         self._validation_scenario["responseOptions"] = deepcopy(self.reference.get("responseOptions", []))
         self._validation_scenario["sources"] = deepcopy(self.analysis_model.get("sources", [])) + deepcopy(self.reference.get("sources", []))
-        errors = validate_reference(self.reference, self.scenario) + validate_scripted(self.scripted, self._validation_scenario)
+        errors = validate_reference(self.reference, self.analysis_model) + validate_scripted(self.scripted, self._validation_scenario)
         if errors:
             raise InvalidModelError("Invalid scripted/reference inputs: " + "; ".join(errors))
 
@@ -177,7 +178,7 @@ class RecordsService:
 
     def _automatic_analysis(self, dataset, incident_ids=None):
         meta = self._meta(dataset)
-        model = consequence_model(self.store._baseline(dataset), self.c4_reference, self.port)
+        model = consequence_model(self.store._baseline(dataset), self.c4_reference, self.model_sources)
         changed = False
         for incident in self.store._records(dataset, 'statewideIncidents'):
             if incident_ids is not None and incident['id'] not in incident_ids:
@@ -214,7 +215,7 @@ class RecordsService:
                 seen.add(item["id"])
                 prior = existing.get(item["id"])
                 # Derived view state is never durable record truth.
-                for field in ("late", "caseStatus", "reviews", "progress"):
+                for field in ("late", "caseStatus", "reviews", "progress", "consequenceSummary"):
                     item.pop(field, None)
                 if prior:
                     item["origin"] = prior["origin"]
@@ -371,7 +372,11 @@ class RecordsService:
             raise InvalidModelError("Scripted records have not been initialized")
         current = self._all(dataset)
         now = self._current_time(meta)
+        recorded = {(r['incidentId'], r['optionId']) for r in current['decisions']}
+        current['pendingDecisions'] = [r for r in current['pendingDecisions'] if (r['incidentId'], r['optionId']) not in recorded]
         cases = {r["id"]: r for r in self.store._records(dataset, CASE_KIND)}
+        from .consequences import bestAnalysisFor
+        runs = self.store._records(dataset, 'run')
         visible = []
         for incident in current["statewideIncidents"]:
             case = cases.get(incident.get("caseId"))
@@ -382,6 +387,14 @@ class RecordsService:
                 incident["reviews"] = deepcopy(case.get("decisions", []))
                 incident["progress"] = deepcopy(case.get("tasks", []))
                 incident["runId"] = case.get("runId")
+            analysis = bestAnalysisFor(incident, runs, list(cases.values()))
+            source_id = analysis['seed']['provider'] if analysis else None
+            affected = {r['entityId'] for r in analysis['impacts']} - {source_id} if analysis else set()
+            watched = {r['entityId'] for r in current['watchAssets'] if r['incidentId'] == incident['id']} - {source_id}
+            incident['consequenceSummary'] = {'analysisId': analysis.get('id') if analysis else None,
+                'kind': analysis.get('kind') if analysis else None, 'cascadeCount': len(affected),
+                'watchCount': len(watched), 'watchOnlyCount': len(watched - affected),
+                'infrastructureCount': len(affected | watched), 'hasCascadingImpact': bool(affected)}
             visible.append(incident)
         if incident_id is not None:
             visible = [i for i in visible if incident_id in (i["id"], i.get("caseId"))]
@@ -398,5 +411,6 @@ class RecordsService:
         timing = deepcopy(config["timing"])
         result = {**current, "now": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "featuredIncidentId": self.c4_reference.get('featuredIncidentId'), "timing": timing, "taskGroups": config["taskGroups"]}
         result.update(STATUS_LABELS)
+        result.update({key: deepcopy(config.get(key, {})) for key in ('entityIcons', 'serviceLabels')})
         result.update({k: v for k, v in config.items() if k.endswith("Labels")})
         return deepcopy(result)

@@ -56,6 +56,17 @@ const { InfrastructureIcon } = iconModule;
 const render = (props) =>
   renderToStaticMarkup(createElement(InfrastructureIcon, props));
 
+test("critical icon has solid red circle, white glyph and light-red ring without pulse", () => {
+  const critical = render({ kind: "transport", icon: "Anchor", severity: "critical" });
+  assert.match(critical, /infrastructure-icon--critical/);
+  assert.match(critical, /<circle[^>]*fill="#e5484d"[^>]*stroke="#ffb3aa"/);
+  assert.match(critical, /stroke="#fff"/);
+  assert.match(critical, /data-infrastructure-icon="Anchor"/);
+  assert.doesNotMatch(critical, /pulse/);
+  assert.doesNotMatch(render({ kind: "water", severity: "high" }), /<circle|infrastructure-icon--critical/);
+  assert.match(render({ icon: "FlaskConical" }), /data-infrastructure-icon="FlaskConical"/);
+});
+
 const supplied = JSON.parse(
   readFileSync(
     new URL("../../data/scripted/watershed_beta.json", import.meta.url),

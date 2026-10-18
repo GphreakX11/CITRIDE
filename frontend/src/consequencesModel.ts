@@ -1,11 +1,23 @@
 import { defaultIncidentId, type IncidentSelectionRecords } from "./incidentSelection.ts";
 export type Hours = [number, number] | null;
+export interface C4Watch {
+  entityId: string; reason: string; status?: string; inCascade?: boolean;
+  entity?: { name?: string; label?: string; icon?: string; type?: string } | null;
+}
+export interface C4SectorView {
+  sector: string; idt?: string; score?: number | null;
+  items: { label: string; idt?: string; score?: number | null; status?: string; entityId?: string; tag?: string }[];
+  vessels?: { name: string; role?: string; status?: string }[];
+}
 export interface ConsequenceNode {
   id: string;
   name: string;
   label?: string;
   type: string;
   sector: string;
+  icon?: string;
+  score?: number | null;
+  watch?: C4Watch[];
   source?: boolean;
   upstream?: boolean;
   connected?: boolean;
@@ -55,6 +67,14 @@ export interface ConsequenceProjection {
   people?: number | null;
   serviceAffected?: { value: number; unit: string; note?: string } | null;
   atRisk?: number;
+  infrastructureCount?: number;
+  cascadeCount?: number;
+  watchOnlyCount?: number;
+  watchAssets?: C4Watch[];
+  entityIcons?: Record<string, string>;
+  criticalFunctions?: { function: string; level: string; idt?: string; windowHours?: Hours; note?: string }[];
+  sectorViews?: { sectors: C4SectorView[]; note?: string }[];
+  consequenceScores?: { basis?: string; sectors: { sector: string; score?: number | null }[]; energySubsectors?: { label: string; idt?: string; score?: number | null }[] }[];
   earliestWindow?: Hours;
   restoration?: { hours: Hours; basis?: string; note?: string } | null;
   economic?: { dailyUsd: [number, number]; basis: string } | null;
@@ -64,6 +84,7 @@ export interface ConsequenceProjection {
   sectors: {
     label: string;
     source: boolean;
+    score?: number | null;
     atRisk: number;
     windowHours: Hours;
     order: number | null;
@@ -79,7 +100,7 @@ export interface ConsequenceProjection {
   }[];
   thresholds?: { hours: number; text: string; basis?: string }[];
   responseOwners?: { role: string; who: string; does: string }[];
-  confidence?: { level: string; note: string };
+  confidence?: { level: string; note: string; value?: number };
 }
 export const missing = "Not recorded for this asset";
 export function hours(value?: Hours): string {
@@ -98,6 +119,8 @@ export function consequenceNodeState(node: Partial<ConsequenceNode>) {
       line: "solid",
       label: hours(node.windowHours),
     };
+  if (node.watch?.length || node.status === "on_watch")
+    return { tone: "amber", line: "dashed", label: "On watch · no modeled service loss" };
   if (node.notAffected)
     return { tone: "grey", line: "dashed", label: "Not affected" };
   if (node.inArea && !node.connected)

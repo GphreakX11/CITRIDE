@@ -1,5 +1,9 @@
 {
   "version": 1,
+  "intervalNormalizations": {"poh-dep-sabine": [0, 0, 3, 5], "poh-dep-colonial": [0, 0, 3, 5], "poh-dep-tankers": [0, 0, 6, 11], "poh-dep-scp": [1, 1, 11, 16], "poh-dep-freeport": [1, 1, 11, 16], "poh-dep-cl2": [0, 0, 0, 0]},
+  "normalizationNote": "Existing interval assumptions relocated unchanged from code. New supplied dependencies are not retuned to expectedWindows; discrepancies require source-owner reconciliation.",
+  "serviceNormalizations": {"terminal_operations": {"petroleum_products": "terminal_operations", "chemical_feedstock": "terminal_operations"}},
+  "outputServices": {"chlorine_unavailable": "chlorine_supply"},
   "featuredIncidentId": "TX-26-0412",
   "operationsTimeZone": "America/Chicago",
   "source": {"id": "src-c4-planning", "label": "C4 Complete illustrative planning records", "evidenceCategory": "simulated", "classification": "U", "handling": ["SIMULATED"]},

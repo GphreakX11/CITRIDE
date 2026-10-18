@@ -44,6 +44,20 @@
   color: var(--status-grey-text);
   background: var(--status-grey-bg);
 }
+.status-chip.status-chip--critical {
+  background: var(--critical-solid);
+  color: var(--text-strong);
+  border-color: var(--critical-solid);
+  font-weight: var(--weight-label);
+}
+.infrastructure-icon--critical {
+  color: var(--text-strong);
+}
+.infrastructure-icon--critical > circle {
+  fill: var(--critical-solid);
+  stroke: var(--red-text);
+  stroke-width: 2;
+}
 .chip-mono,
 .idt-chip.chip-mono > summary {
   font-family: var(--font-mono);

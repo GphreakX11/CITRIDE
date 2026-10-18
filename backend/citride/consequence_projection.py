@@ -26,6 +26,8 @@ def project_consequences(incident, analysis, reference, planning_rates, statuses
     affected = {i['entityId'] for i in impacts}
     sector_rules = reference['sectors']
     def sector(entity):
+        if entity.get('sector'):
+            return {'label': entity['sector']}
         path = entity.get('idt', {}).get('path', '').split('.')[0]
         # Supplied package has inconsistent sector codes. Explicit typed
         # reference mappings take precedence, not names or UI heuristics.
@@ -141,10 +143,9 @@ class ConsequenceService:
             incidents = deepcopy(envelope['statewideIncidents'])
             # New package scenarios remain explicitly reference-only on older
             # stores. Do not invent a persisted incident or mutate its register.
-            port_id = self.records.port['incident']['id']
-            if not any(row['id'] == port_id for row in incidents):
-                prototype = next(row for row in self.records.scripted['incidents'] if row['id'] == port_id)
-                incidents.append({**deepcopy(prototype), 'referenceOnly': True})
+            for prototype in self.records.scripted['incidents']:
+                if prototype.get('preliminaryScenario') and not any(row['id'] == prototype['id'] for row in incidents):
+                    incidents.append({**deepcopy(prototype), 'referenceOnly': True})
 
             if incident_id:
                 incident = next((r for r in incidents if incident_id in (r['id'], r.get('caseId'))), None)
@@ -164,7 +165,7 @@ class ConsequenceService:
             runs = self.store._records(dataset, 'run')
             cases = self.store._records(dataset, 'command-incident')
             # Reject stale preliminaries when update removed the causal mapping.
-            model = consequence_model(self.store._baseline(dataset), self.records.c4_reference, self.records.port)
+            model = consequence_model(self.store._baseline(dataset), self.records.c4_reference, self.records.model_sources)
             if preliminaryScenarioFor(incident, model, self.records.c4_reference['eventLossRules']) is None:
                 runs = [r for r in runs if r.get('kind') != 'preliminary']
             analysis = bestAnalysisFor(incident, runs, cases)
@@ -177,11 +178,48 @@ class ConsequenceService:
                 analysis = CommandService(self.store)._public(dataset, case)['runSnapshot']
                 analysis = {**analysis, 'kind': 'reviewed'}
             refs = deepcopy(self.records.c4_reference)
-            if analysis and analysis['seed']['provider'] == self.records.port['incident']['sourceProvider']:
-                source_id = analysis['seed']['provider']
-                refs['assets'].setdefault(source_id, {}).update({k: deepcopy(self.records.port[k]) for k in ('alternatives', 'thresholds', 'responseOwners')})
+            refs['serviceLabels'].update(envelope.get('serviceLabels', {}))
+            for bundle in self.records.model_sources:
+                if analysis and analysis['seed']['provider'] == bundle['incident']['sourceProvider']:
+                    source_id = analysis['seed']['provider']
+                    refs['assets'].setdefault(source_id, {}).update({k: deepcopy(bundle.get(k, [])) for k in ('alternatives', 'thresholds', 'responseOwners')})
             view = project_consequences(incident, analysis, refs, self.records.reference['planningRates'], [r for r in envelope['assetStatuses'] if r['incidentId'] == incident['id']])
+            view = enrich_consequences(view, envelope, analysis)
             return {**view, 'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'featuredIncidentId': envelope['featuredIncidentId'], 'incidents': incidents,
                     'analysisState': ('reference_preview' if analysis['kind'] == 'reference_preview' else 'ready') if analysis else 'no_analysis',
-                    'criticalFunctions': deepcopy(self.records.port.get('criticalFunctions', [])) if incident['id'] == self.records.port['incident']['id'] else [],
                     'atRiskBasis': 'Distinct dependent entities with computed impacts; no unverified aggregation/member count is assumed.'}
+
+
+def enrich_consequences(view, envelope, analysis):
+    """Join only durable incident-owned metadata; preserve immutable run truth."""
+    from .scripted_sources import EXTRA_COLLECTIONS
+    incident_id = view['incident']['id']
+    view.update({key: deepcopy(envelope.get(key, {})) for key in ('entityIcons', 'serviceLabels')})
+    for kind in EXTRA_COLLECTIONS:
+        view[kind] = deepcopy([r for r in envelope.get(kind, []) if r['incidentId'] == incident_id])
+    source_id = analysis['seed']['provider'] if analysis else None
+    affected = {i['entityId'] for i in analysis['impacts']} - {source_id} if analysis else set()
+    watched = {r['entityId'] for r in view['watchAssets']} - {source_id}
+    entities = {e['id']: e for e in analysis['baselineSnapshot']['entities']} if analysis else {}
+    scores = {s['sector']: s['score'] for r in view['consequenceScores'] for s in r['sectors'] if 'score' in s}
+    item_scores = {s['entityId']: s['score'] for r in view['sectorViews'] for sector in r['sectors'] for s in sector['items'] if 'entityId' in s and 'score' in s}
+    for row in view['watchAssets']:
+        row['inCascade'] = row['entityId'] in affected
+        row['entity'] = deepcopy(entities.get(row['entityId']))
+    present = {n['id'] for n in view['nodes']}
+    for identifier in sorted(watched - present):
+        if identifier in entities:
+            entity = deepcopy(entities[identifier])
+            view['nodes'].append({**entity, 'name': entity.get('name') or entity.get('label') or identifier,
+                'sector': entity.get('sector', 'Unclassified'), 'source': False, 'upstream': False,
+                'connected': False, 'inArea': False, 'notAffected': False, 'windowHours': None,
+                'impactCount': 0, 'order': None, 'paths': [], 'reserves': [], 'status': 'on_watch'})
+    for node in view['nodes']:
+        node['watch'] = [deepcopy(r) for r in view['watchAssets'] if r['entityId'] == node['id']]
+        if node['id'] in item_scores:
+            node['score'] = item_scores[node['id']]
+    for sector in view['sectors']:
+        if sector['label'] in scores:
+            sector['score'] = scores[sector['label']]
+    view.update(cascadeCount=len(affected), watchCount=len(watched), watchOnlyCount=len(watched - affected), infrastructureCount=len(affected | watched))
+    return view

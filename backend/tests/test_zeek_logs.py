@@ -130,6 +130,11 @@ def test_source_packaging_copies_all_logs_and_manifest_with_safe_counts(tmp_path
         path = source / filename
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{}")
+    # Exercise manifest-driven source packaging with valid, independent fixtures.
+    manifest = {"records": ["records.json"], "models": ["model.json"], "reference": "c4.json"}
+    (source / "scripted/sources.json").write_text(json.dumps(manifest))
+    for name in manifest["records"] + manifest["models"] + [manifest["reference"]]:
+        (source / "scripted" / name).write_text(json.dumps({"fixture": name}))
     corelight = source / "telemetry/corelight"
     corelight.mkdir(parents=True, exist_ok=True)
     for name in LOGS:
@@ -142,6 +147,8 @@ def test_source_packaging_copies_all_logs_and_manifest_with_safe_counts(tmp_path
     stale.parent.mkdir(parents=True)
     stale.write_text('{"_path":"conn","sentinel":"stale"}')
     module.main()
+    for name in manifest["records"] + manifest["models"] + [manifest["reference"]]:
+        assert (target / "scripted" / name).read_bytes() == (source / "scripted" / name).read_bytes()
     assert sorted(p.name for p in (target / "telemetry/corelight").iterdir()) == sorted(p.name for p in corelight.iterdir())
     assert reader(target / "telemetry/corelight") == reader(corelight)
     output = capsys.readouterr().out

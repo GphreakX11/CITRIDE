@@ -14,13 +14,15 @@ import re
 COLLECTIONS = (
     "statewideIncidents", "teams", "responseTasks", "contacts", "assessments",
     "assetStatuses", "hunts", "decisions", "partnerProducts",
+    "watchAssets", "sectorViews", "criticalFunctions", "consequenceScores",
+    "pendingDecisions",
 )
 INPUT_KEYS = {"statewideIncidents": "incidents", "responseTasks": "tasks"}
 STATUS_LABELS = {
-    "incidentStatusLabels": {"from_case": "From case", "open": "Open", "containment": "Containment", "monitoring": "Monitoring", "recovering": "Recovering", "closed": "Closed"},
+    "incidentStatusLabels": {"from_case": "From case", "open": "Open", "active": "Active", "containment": "Containment", "monitoring": "Monitoring", "recovering": "Recovering", "closed": "Closed"},
     "taskStatusLabels": {"not_started": "Not started", "in_progress": "In progress", "waiting": "Waiting", "done": "Done"},
     "teamStatusLabels": {"en_route": "En route", "standby": "Standby", "remote": "Remote", "on_site": "On site"},
-    "assetStatusLabels": {"confirmed": "Confirmed", "suspected": "Suspected", "at_risk": "At risk", "normal": "Normal"},
+    "assetStatusLabels": {"confirmed": "Confirmed", "suspected": "Suspected", "at_risk": "At risk", "normal": "Normal", "watch": "On watch"},
     "productStatusLabels": {"draft": "Draft"},
     "confidenceLabels": {"low": "Low", "medium": "Medium", "high": "High"},
 }
@@ -144,7 +146,8 @@ def validate_scripted(data, scenario):
     for group in groups:
         if not isinstance(group.get("label"), str) or not group["label"].strip():
             errors.append("taskGroup label must be nonempty text")
-    values = {name: _collection(data, INPUT_KEYS.get(name, name), errors, seen) for name in COLLECTIONS}
+    from .scripted_sources import EXTRA_COLLECTIONS
+    values = {name: _collection(data, INPUT_KEYS.get(name, name), errors, seen, required=name not in (*EXTRA_COLLECTIONS, 'pendingDecisions')) for name in COLLECTIONS}
     incident_ids = {r["id"] for r in values["statewideIncidents"] if valid_id(r.get("id"))}
     team_ids = {r["id"] for r in values["teams"] if valid_id(r.get("id"))}
     entities = _ids(scenario, "entities")
@@ -175,7 +178,9 @@ def validate_scripted(data, scenario):
             _refs(record, refs, errors, prefix)
             if name != "statewideIncidents" and "incidentId" not in record:
                 errors.append(prefix + "incidentId is required")
-            required_refs = {"responseTasks": "teamId", "assetStatuses": "entityId", "hunts": "ownerTeamId", "decisions": "optionId"}
+            if name in EXTRA_COLLECTIONS:
+                _validate_supplement(record, name, errors, prefix)
+            required_refs = {"responseTasks": "teamId", "assetStatuses": "entityId", "hunts": "ownerTeamId", "decisions": "optionId", "pendingDecisions": "optionId"}
             required = required_refs.get(name)
             if required is not None and required not in record:
                 errors.append(prefix + required + " is required")
@@ -188,6 +193,9 @@ def validate_scripted(data, scenario):
                 status = record.get("status")
                 if not isinstance(status, str) or status not in labels[STATUS_MAPS[name]]:
                     errors.append(prefix + "status is not in its label map")
+            elif name == 'pendingDecisions':
+                if record.get('status') != 'pending' or any(k in record for k in ('decision', 'decidedBy', 'recordedBy')):
+                    errors.append(prefix + 'pending is not a recorded decision')
             elif name == "decisions":
                 if not isinstance(record.get("decision"), str) or record["decision"] not in labels["decisionLabels"] or record["decision"] == "none":
                     errors.append(prefix + "decision is not a recorded decision label")
@@ -209,6 +217,44 @@ def validate_scripted(data, scenario):
     if not aware_time(scenario.get("incidentOrigin")):
         errors.append("scenario.incidentOrigin must be an aware timestamp")
     return errors
+
+
+def _validate_supplement(record, kind, errors, prefix):
+    if kind != 'watchAssets' and 'status' in record:
+        errors.append(prefix + 'status belongs to sector items, not this record')
+    def walk(value):
+        if isinstance(value, dict):
+            if 'score' in value and (not finite(value['score']) or not 0 <= value['score'] <= 100):
+                errors.append(prefix + 'score must be finite and between 0 and 100')
+            for member in value.values():
+                walk(member)
+        elif isinstance(value, list):
+            for member in value:
+                walk(member)
+    walk(record)
+    if kind == 'watchAssets':
+        if not valid_id(record.get('entityId')):
+            errors.append(prefix + 'entityId is required')
+        if record.get('status') not in ('monitoring', 'reviewing', 'on_watch', 'watch'):
+            errors.append(prefix + 'invalid watch status')
+        if not isinstance(record.get('reason'), str) or not record['reason'].strip():
+            errors.append(prefix + 'watch reason is required')
+    if kind in ('sectorViews', 'consequenceScores'):
+        sectors = record.get('sectors')
+        if not isinstance(sectors, list) or not sectors or any(not isinstance(s, dict) or not isinstance(s.get('sector'), str) or not s['sector'].strip() for s in sectors):
+            errors.append(prefix + 'sectors must contain named sector objects')
+        elif len({s['sector'] for s in sectors}) != len(sectors):
+            errors.append(prefix + 'sector names must be unique')
+        if kind == 'sectorViews' and isinstance(sectors, list):
+            for sector in sectors:
+                if not isinstance(sector, dict) or not isinstance(sector.get('items'), list):
+                    errors.append(prefix + 'sector items must be a list')
+    if kind == 'criticalFunctions':
+        if record.get('level') not in ('critical', 'high', 'medium', 'low') or not isinstance(record.get('function'), str) or not record['function'].strip():
+            errors.append(prefix + 'function and valid level are required')
+        window = record.get('windowHours')
+        if not isinstance(window, list) or len(window) != 2 or not all(finite(v) for v in window) or not 0 <= window[0] <= window[1]:
+            errors.append(prefix + 'windowHours must be an ordered nonnegative interval')
 
 
 def _people(value, errors, prefix=""):

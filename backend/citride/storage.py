@@ -59,7 +59,7 @@ def _resource(identifier: str) -> URIRef:
 
 
 class Repository:
-    def __init__(self, data_dir: Path, scenario_path: Path):
+    def __init__(self, data_dir: Path, scenario_path: Path, *, existing_only=False):
         self.data_dir = Path(data_dir)
         self.scenario_path = Path(scenario_path)
         self.path = self.data_dir / "citride.nq"
@@ -67,6 +67,10 @@ class Repository:
         self._thread_lock = threading.RLock()
         self._cached_dataset: Dataset | None = None
         self._cached_signature: tuple[int, int, int] | None = None
+        if existing_only:
+            if not self.path.is_file():
+                raise InvalidModelError('Explicit intake requires an existing store')
+            return  # Operator intake must never seed or repair at construction.
         self.data_dir.mkdir(parents=True, exist_ok=True)
         with self._locked():
             if not self.path.exists():
@@ -158,6 +162,9 @@ class Repository:
                     fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
     def _load(self) -> Dataset:
+        # PROTOTYPE: Whole graph stored as one N-Quads blob per environment.
+        # Real version needs per-record tables/graph storage partitioned by customer,
+        # live-feed intake, and the infrastructure model in the database, not scenario.json.
         signature = self._signature()
         if self._cached_dataset is not None and signature == self._cached_signature:
             return self._cached_dataset
@@ -172,6 +179,7 @@ class Repository:
         return stat.st_ino, stat.st_mtime_ns, stat.st_size
 
     def _save(self, dataset: Dataset) -> None:
+        # PROTOTYPE: Whole-graph rewrite; see _load for required per-customer storage replacement.
         serialized = dataset.serialize(format="nquads", encoding="utf-8")
         temporary_path: str | None = None
         try:

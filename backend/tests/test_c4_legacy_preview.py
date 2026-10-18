@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def legacy(tmp_path):
     store = Repository(tmp_path / 'state', ROOT / 'data/scenario.json')
     records = RecordsService(store)
-    port_id = records.port['incident']['id']
+    port_id = records.model_sources[0]['incident']['id']
     with store._locked():
         dataset = store._load()
         for run in store._records(dataset, 'run'):
@@ -49,9 +49,9 @@ def test_port_reference_catalog_is_visible_without_new_saved_incident(legacy):
     view = ConsequenceService(store, records).view(port_id)
     assert view['incident']['referenceOnly'] is True
     assert view['analysisState'] == 'reference_preview'
-    assert view['atRisk'] == 8
+    assert view['atRisk'] == 11
     nodes = {n['id']: n for n in view['nodes']}
-    assert nodes['harris-ems']['notAffected'] is True
+    assert nodes['galveston-refinery']['notAffected'] is True
     assert nodes['grid-houston']['upstream'] is True
     assert nodes['grid-houston']['impactCount'] == 0
     assert port_id not in {r['id'] for r in records.records()['statewideIncidents']}

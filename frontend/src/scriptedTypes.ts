@@ -108,6 +108,11 @@ export interface RecordItem {
 }
 export interface RecordsState {
   statewideIncidents: RecordItem[];
+  /** Incident-scoped, intake-validated central API records. */
+  watchAssets?: RecordItem[];
+  sectorViews?: (Omit<RecordItem, "sectors"> & { sectors?: unknown[] })[];
+  criticalFunctions?: RecordItem[];
+  consequenceScores?: (Omit<RecordItem, "sectors"> & { sectors?: unknown })[];
   teams: RecordItem[];
   responseTasks: RecordItem[];
   contacts: RecordItem[];
@@ -115,6 +120,8 @@ export interface RecordsState {
   assetStatuses: RecordItem[];
   hunts: RecordItem[];
   decisions: RecordItem[];
+  /** Source proposals remain separate from recorded operator decisions. */
+  pendingDecisions?: RecordItem[];
   partnerProducts: RecordItem[];
   now: string;
   featuredIncidentId?: string | null;
@@ -131,6 +138,8 @@ export interface RecordsState {
 }
 export interface ReferenceData {
   referenceVersion: string;
+  entityIcons?: Record<string, string>;
+  serviceLabels?: Record<string, string>;
   sources: RecordItem[];
   responseOptions: RecordItem[];
   planningRates: RecordItem[];

@@ -27,7 +27,7 @@ export function StatusChip({
   return jsx("span", {
     ...props,
     className:
-      `status-chip status-chip--${statusTone(status)} ${descriptive ? "status-chip--description " : ""}${className}`.trim(),
+      `status-chip status-chip--${statusTone(status)} ${status?.trim().toLowerCase() === "critical" ? "status-chip--critical " : ""}${descriptive ? "status-chip--description " : ""}${className}`.trim(),
     children: children ?? status ?? "unknown",
   });
 }

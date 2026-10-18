@@ -18,9 +18,7 @@ CORELIGHT_FILES = tuple(
     for name in ("conn", "ssl", "http", "dns", "modbus", "modbus_detailed", "notice", "vpn", "manifest")
 )
 FILES = (
-    "scripted/watershed_beta.json",
-    "scripted/c4_reference.json",
-    "scripted/port_houston.json",
+    "scripted/sources.json",
     "reference.json",
     "scenario.json",
     "telemetry/controller.json",
@@ -42,7 +40,9 @@ def main() -> None:
         for path in sorted((DATA_ROOT / "telemetry/corelight").glob("*"))
         if path.is_file() and path.suffix.lower() in {".json", ".jsonl"}
     )
-    files = tuple(dict.fromkeys(FILES + CORELIGHT_FILES + extras))
+    manifest = json.loads((DATA_ROOT / 'scripted/sources.json').read_text())
+    scripted = tuple('scripted/' + name for name in manifest['records'] + manifest['models'] + [manifest['reference']])
+    files = tuple(dict.fromkeys(FILES + scripted + CORELIGHT_FILES + extras))
     for filename in files:
         source = DATA_ROOT / filename
         if not source.is_file():
