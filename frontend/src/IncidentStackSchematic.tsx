@@ -53,7 +53,8 @@ export default function IncidentStackSchematic({ model, selectedEntityId, onSele
   const layout = useMemo(() => schematicLayout(items, width), [items, width]);
   // A list selection must be visible even when its sector was collapsed/off-screen.
   useEffect(() => {
-    const p = selectedEntityId && layout.positions.get(selectedEntityId);
+    const focus = selectedEntityId ?? (width < 600 ? model.sourceId : null);
+    const p = focus && layout.positions.get(focus);
     if (p && host.current) host.current.scrollTo({ top: Math.max(0, p.y - 220), left: Math.max(0, p.x - width / 2), behavior: "auto" });
     setView(initialView);
   }, [selectedEntityId, layout, width]);

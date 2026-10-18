@@ -74,7 +74,9 @@ export default function IncidentView(props: Props) {
   useEffect(() => {
     if (priorEntity.current !== props.selectedEntityId) {
       priorEntity.current = props.selectedEntityId;
-      setLocalEntity(props.selectedEntityId ?? null);
+      // Workspace startup may publish its default cursor after C2 mounts.
+      // That hydration is not a request to open a facility disclosure.
+      setLocalEntity(current => current === null ? null : props.selectedEntityId ?? null);
     }
   }, [props.selectedEntityId]);
   useEffect(() => {
