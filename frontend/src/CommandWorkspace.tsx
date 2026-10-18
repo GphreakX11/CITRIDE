@@ -822,11 +822,11 @@ export default function CommandWorkspace({
             selected={selected}
             selectedEntityId={selectedEntityId}
             onSelectEntity={(id) => {
-              if (!busy && !loading && !uncertain) onSelectEntity(id);
+              if (!busy && !uncertain) onSelectEntity(id);
             }}
             view={view}
             onSelect={(id) => {
-              if (!busy && !loading && !uncertain) onSelect(id);
+              if (!busy && !uncertain) onSelect(id);
             }}
             onOpenAnalyst={onOpenAnalyst}
             onClearSelection={() => onSelect(null)}

@@ -15,7 +15,7 @@ code=code.replace(/from\s+["']([^"']+)["']/g,(_m,s)=>{
  if(s==='react')target=hooksUrl;
  else if(s==='./api')target=apiUrl;
  else if(['./CommandCasework','./CommandReadouts','./CommandCenterViews','./AnalystEntityProfile','./ScriptedAnalystViews','./NetworkEvidence','./ResetDemoControl'].includes(s))target=mod(`export default function ${s.slice(2)}(){return null};export function LateTasks(){return null};export function ConfirmDialog(){return null}`);
- else if(s.startsWith('.')){const u=new URL(s+'.ts',source);assert.ok(existsSync(u));target=u.href;}
+ else if(s.startsWith('.')){const u=new URL(/\.[cm]?[jt]s$/.test(s)?s:s+'.ts',source);assert.ok(existsSync(u));target=u.href;}
  else target=import.meta.resolve(s);
  return `from ${JSON.stringify(target)}`;
 });
@@ -54,6 +54,17 @@ test('background reads do not freeze navigation; initial loading, writes and unc
   const loaded=!!(mask&1),loading=!!(mask&2),busy=!!(mask&4),uncertain=!!(mask&8);
   assert.equal(component.workspaceNavigationLocked(loaded,loading,busy,uncertain),busy||uncertain||(!loaded&&loading));
  }
+});
+test('background refresh preserves the requested case and facility when navigating',async()=>{
+ const s=setup(),selected=[],entities=[],navigated=[],locks=[];
+ s.props.onSelect=id=>selected.push(id);s.props.onSelectEntity=id=>entities.push(id);s.props.onNavigate=v=>navigated.push(v);s.props.onWorkflowLockChange=x=>locks.push(x);
+ let resolve;const gate=new Promise(r=>resolve=r);transport.plan(()=>gate);s.render();
+ const pending=hooks.callbacks.at(-1)();const tree=s.render();
+ const child=nodes(tree).find(n=>typeof n.props.onClearSelection==='function');assert.ok(child);
+ hooks.effects.find(e=>e.deps?.length===4).fn();
+ child.props.onSelect('target-case');child.props.onSelectEntity('target-facility');child.props.onNavigate('consequence');
+ assert.deepEqual(selected,['target-case']);assert.deepEqual(entities,['target-facility']);assert.deepEqual(navigated,['consequence']);assert.equal(locks.at(-1),false);
+ resolve(s.snapshot);await pending;
 });
 test('App startup requests the combined snapshot instead of serial bootstrap/case waves',()=>{
  const app=readFileSync(new URL('../src/App.tsx',import.meta.url),'utf8');
