@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "operationsTimeZone": "America/Chicago",
+  "source": {"id": "src-c4-planning", "label": "C4 Complete illustrative planning records", "evidenceCategory": "simulated", "classification": "U", "handling": ["SIMULATED"]},
+  "eventLossRules": [
+    {"providerTypes": ["WaterServiceProvider", "TreatmentPlant"], "observations": ["dosing_parameter_change", "water_quality_drift", "chemical_change"], "lossType": "unsafe_water"},
+    {"providerTypes": ["WaterServiceProvider", "TreatmentPlant"], "observations": ["pump_shutdown", "pressure_loss", "scada_shutdown"], "lossType": "low_pressure"},
+    {"providerTypes": ["ElectricSupplyFacility"], "observations": ["outage", "breaker_open"], "lossType": "electricity_lost"},
+    {"providerTypes": ["PortFacility"], "observations": ["service_offline", "degraded"], "lossType": "terminal_operations_unavailable"}
+  ],
+  "publicActionRules": [
+    {"assetTypes": ["WaterServiceProvider", "TreatmentPlant"], "lossTypes": ["unsafe_water"], "action": "Boil-water notice", "decidedBy": "Utility and state drinking-water regulator"},
+    {"assetTypes": ["WaterServiceProvider", "TreatmentPlant"], "lossTypes": ["low_pressure", "no_water"], "action": "Do-not-use or conserve-water notice", "decidedBy": "Utility and state drinking-water regulator"},
+    {"assetTypes": ["ElectricSupplyFacility"], "lossTypes": ["electricity_lost"], "action": "Conservation appeal or rolling-outage notice", "decidedBy": "Grid operator and utility commission"},
+    {"assetTypes": ["PortFacility"], "lossTypes": ["terminal_operations_unavailable"], "action": "Marine safety and shipping advisory", "decidedBy": "Coast Guard Captain of the Port"},
+    {"assetTypes": ["Pipeline"], "lossTypes": ["fuel_unavailable"], "action": "Fuel-supply advisory", "decidedBy": "Pipeline operator and fuel-supply regulator"}
+  ],
+  "sectors": [
+    {"prefix": "1", "label": "Transportation", "types": ["PortFacility", "VesselGroup"], "regulator": "Coast Guard Captain of the Port", "sectorLead": "TxDOT"},
+    {"prefix": "5", "label": "Energy", "types": ["ElectricSupplyFacility", "LNGFacility", "Pipeline"], "regulator": "Utility commission", "sectorLead": "Grid operator and Railroad Commission"},
+    {"prefix": "6", "label": "Emergency Services", "types": ["EmergencyServices", "FireService"], "sectorLead": "Emergency management"},
+    {"prefix": "10", "label": "Healthcare", "types": ["Hospital", "DialysisCenter", "NursingHome", "HealthcareFacility"], "sectorLead": "Regional healthcare coalition"},
+    {"prefix": "12", "label": "Water", "types": ["WaterServiceProvider", "TreatmentPlant"], "regulator": "State drinking-water regulator", "sectorLead": "Water sector lead"},
+    {"prefix": "2", "label": "Chemical", "types": ["ChemicalPlant", "ChemicalSupply"], "sectorLead": "Chemical sector lead"}
+  ],
+  "serviceLabels": {"electricity": "power → treatment", "treated_water": "drinking water", "water_treatment": "water treatment", "fire_flow": "fire-flow pressure", "dialysis_treatment": "dialysis water", "sterilization_support": "sterilization", "safe_water_support": "drinking water", "terminal_operations": "terminal operations", "petroleum_products": "petroleum products", "chemical_feedstock": "chemical feedstock", "chlorine_supply": "chlorine supply", "fuel_supply": "fuel supply"},
+  "assets": {
+    "utility-a": {
+      "throughput": {"value": 2.4, "unit": "million gallons a day", "basis": "planning value"},
+      "restoration": {"unsafe_water": {"hours": [12, 24], "basis": "planning estimate", "note": "Flush, resample and clear the water"}},
+      "spread": {"level": "local", "note": "Service Area A"},
+      "alternatives": [
+        {"label": "Interconnect from Utility C", "providerId": "utility-c", "capacityFraction": 0.4, "covers": "40% of demand", "status": "check_first", "note": "Utility C was probed by the same source"},
+        {"label": "Bottled-water distribution", "covers": "Drinking water", "status": "not_requested", "note": "TDEM coordination required"}
+      ],
+      "responseOwners": [
+        {"role": "Asset owner", "who": "Utility A", "does": "Restore and verify safe drinking water"},
+        {"role": "Emergency management", "who": "TDEM", "does": "Coordinate bottled-water distribution"},
+        {"role": "Cyber response", "who": "TXCC CIRU", "does": "Contain, investigate and protect peer utilities"},
+        {"role": "Federal partner", "who": "CISA and EPA", "does": "Approved coordination and sector assistance"}
+      ]
+    },
+    "nursing-z": {"thresholds": [{"hours": 1, "text": "Check clean-water reserve and arrange deliveries", "basis": "planning threshold"}]},
+    "dialysis-x": {"thresholds": [{"hours": 2, "text": "Confirm portable treatment units or reschedule dialysis", "basis": "planning threshold"}], "alternatives": [{"label": "Portable treatment units", "covers": "Dialysis water", "status": "not_requested"}]},
+    "hospital-y": {"thresholds": [{"hours": 4, "text": "Review sterile-water reserve and sterilization capacity", "basis": "planning threshold"}], "alternatives": [{"label": "Sterile-water reserve", "covers": "Hospital sterilization", "status": "check_first"}]},
+    "utility-a-threshold": {"thresholds": [{"hours": 12, "text": "Reassess restoration and public-health measures if water is not cleared", "basis": "planning threshold"}]}
+  },
+  "economicRules": [{"assetType": "PortFacility", "lossType": "terminal_operations_unavailable", "dailyUsd": [100000000, 300000000], "basis": "illustrative planning range; not measured cargo loss"}]
+}

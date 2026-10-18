@@ -32,18 +32,26 @@ def validate_reference(data: dict, scenario: dict) -> list[str]:
 NS = Namespace("urn:citride:")
 SAFE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9._:-]{0,255}$")
 FACILITY_TYPES = frozenset({
+    "PortFacility", "LNGFacility", "Pipeline", "ChemicalPlant", "ChemicalSupply", "VesselGroup", "EmergencyServices",
     "WaterServiceProvider", "TreatmentPlant", "DialysisCenter", "Hospital",
     "NursingHome", "FireService", "ElectricSupplyFacility", "HealthcareFacility",
 })
 SERVICES = frozenset({
+    "terminal_operations", "petroleum_products", "chemical_feedstock", "chlorine_supply", "fuel_supply",
     "treated_water", "water_treatment", "electricity", "dialysis_treatment",
     "sterilization_support", "safe_water_support", "fire_flow",
 })
 LOSS_TYPES = frozenset({
+    "terminal_operations_unavailable", "chlorine_unavailable", "fuel_unavailable",
     "unsafe_water", "no_water", "low_pressure", "electricity_lost",
     "water_treatment_unavailable",
 })
 SERVICE_LOSSES = {
+    "terminal_operations": {"terminal_operations_unavailable"},
+    "petroleum_products": {"terminal_operations_unavailable"},
+    "chemical_feedstock": {"terminal_operations_unavailable"},
+    "chlorine_supply": {"chlorine_unavailable"},
+    "fuel_supply": {"fuel_unavailable"},
     "treated_water": {"unsafe_water", "no_water", "low_pressure"},
     "water_treatment": {"water_treatment_unavailable"},
     "electricity": {"electricity_lost"},
@@ -84,7 +92,9 @@ c:DependencyShape a sh:NodeShape ; sh:targetClass c:Dependency ;
                 sh:datatype xsd:string ;
                 sh:in ("treated_water"^^xsd:string "water_treatment"^^xsd:string "electricity"^^xsd:string
                        "dialysis_treatment"^^xsd:string "sterilization_support"^^xsd:string
-                       "safe_water_support"^^xsd:string "fire_flow"^^xsd:string) ] ;
+                       "safe_water_support"^^xsd:string "fire_flow"^^xsd:string
+                       "terminal_operations"^^xsd:string "petroleum_products"^^xsd:string
+                       "chemical_feedstock"^^xsd:string "chlorine_supply"^^xsd:string "fuel_supply"^^xsd:string) ] ;
   sh:property [ sh:path c:sourceRefs ; sh:minCount 1 ; sh:nodeKind sh:IRI ;
                 sh:class c:Source ] ;
   sh:property [ sh:path c:assumptionNote ; sh:minCount 1 ; sh:maxCount 1 ;

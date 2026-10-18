@@ -1,0 +1,1235 @@
+{
+  "version": 1,
+  "origin": "scripted",
+  "note": "Port of Houston incident from the CISA exercise (INC-2026-1002-POH), rebuilt as scripted records. Real place names are used as in the exercise; every value is illustrative and labeled SIMULATED. Times are offsets in hours from the sample-data anchor, which is set to one hour before the sample data is loaded (see real-time-clock.md). The port authority report (0.27 h) therefore shows as about 44 minutes ago when the data loads.",
+  "sources": [
+    {
+      "id": "src-scripted-poh",
+      "label": "Scripted Port of Houston exercise records (CISA exercise, adapted)",
+      "origin": "scripted",
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "vocabularyAdditions": {
+    "facilityTypes": [
+      "PortFacility",
+      "LNGFacility",
+      "Pipeline",
+      "ChemicalPlant",
+      "ChemicalSupply",
+      "VesselGroup",
+      "EmergencyServices"
+    ],
+    "services": [
+      "terminal_operations",
+      "petroleum_products",
+      "chemical_feedstock",
+      "chlorine_supply",
+      "fuel_supply"
+    ],
+    "lossTypes": [
+      "terminal_operations_unavailable",
+      "chlorine_unavailable",
+      "fuel_unavailable"
+    ],
+    "serviceLosses": {
+      "terminal_operations": [
+        "terminal_operations_unavailable"
+      ],
+      "chlorine_supply": [
+        "chlorine_unavailable"
+      ],
+      "fuel_supply": [
+        "fuel_unavailable"
+      ],
+      "chemical_feedstock": [
+        "terminal_operations_unavailable"
+      ],
+      "petroleum_products": [
+        "terminal_operations_unavailable"
+      ]
+    }
+  },
+  "incident": {
+    "id": "INC-2026-1002-POH",
+    "title": "Port of Houston cyber attack",
+    "incidentType": "Cyber attack on port terminal operations",
+    "location": {
+      "label": "Port of Houston, Barbours Cut Terminal \u00b7 Houston Ship Channel",
+      "region": "Gulf Coast",
+      "schematic": {
+        "x": 74,
+        "y": 70
+      }
+    },
+    "sectors": [
+      "1.4.3.2.1",
+      "5.3.3.1",
+      "5.2.6.1"
+    ],
+    "sectorNames": [
+      "Transportation",
+      "Energy",
+      "Chemical",
+      "Water"
+    ],
+    "severity": "critical",
+    "status": "active",
+    "startedRelativeHours": 0.07,
+    "reportedRelativeHours": 0.27,
+    "sourceProvider": "poh-port",
+    "preliminaryScenario": "port-terminal-down",
+    "linkedEventIds": [
+      "poh-ev-cred",
+      "poh-ev-lateral",
+      "poh-ev-ot-pivot",
+      "poh-ev-tos-offline",
+      "poh-ev-ais",
+      "poh-ev-sabine"
+    ],
+    "relatedNote": "Same login pattern at Sabine Pass LNG",
+    "summary": "Port authority account credentials were used to move from the office network into terminal systems; berth scheduling (terminal operating system) went offline and vessel tracking is degraded. Sabine Pass LNG shows the same login pattern.",
+    "attribution": {
+      "label": "Maritime-focused campaign cluster",
+      "confidence": "moderate",
+      "note": "CTIC analyst assessment \u00b7 scripted"
+    },
+    "origin": "scripted",
+    "sourceRefs": [
+      "src-scripted-poh"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ],
+    "modeled": true,
+    "updates": [
+      {
+        "relativeTimeHours": 0.27,
+        "text": "Port authority reports berth scheduling offline; TXCC notified"
+      },
+      {
+        "relativeTimeHours": 0.67,
+        "text": "Same login pattern flagged at Sabine Pass LNG"
+      },
+      {
+        "relativeTimeHours": 0.9,
+        "text": "CIRU Team Alpha assigned; Coast Guard Captain of the Port informed"
+      }
+    ],
+    "economicImpactPerDay": {
+      "usd": [
+        100000000,
+        300000000
+      ],
+      "basis": "planning rates \u00b7 illustrative range"
+    },
+    "serviceAffected": {
+      "value": 47,
+      "unit": "product tankers",
+      "note": "in the Ship Channel \u00b7 AIS"
+    },
+    "confidence": {
+      "level": "low",
+      "note": "Vessel and cargo data are not yet shared with TXCC (needs a data-sharing agreement with the port and the Coast Guard); restoration time and economic range are planning values."
+    }
+  },
+  "entities": [
+    {
+      "id": "poh-org",
+      "type": "Organization",
+      "label": "Port Houston (port authority)",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "1.4.3.2"
+      }
+    },
+    {
+      "id": "poh-port",
+      "type": "PortFacility",
+      "label": "Port of Houston \u00b7 Barbours Cut Container Terminal",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "1.4.3.2.1"
+      },
+      "operatedBy": "poh-org",
+      "throughput": {
+        "value": "thousands of container moves a day",
+        "unit": "container moves",
+        "basis": "planning value"
+      },
+      "restoration": {
+        "terminal_operations_unavailable": {
+          "hours": [
+            48,
+            120
+          ],
+          "note": "Restore the terminal operating system from backup and revalidate",
+          "basis": "planning estimate"
+        }
+      },
+      "publicAction": {
+        "terminal_operations_unavailable": {
+          "action": "Marine safety and shipping advisory",
+          "decidedBy": "Coast Guard Captain of the Port"
+        }
+      },
+      "spread": {
+        "level": "national",
+        "note": "Gulf Coast supply chains, fuel and chemical exports"
+      }
+    },
+    {
+      "id": "poh-tos",
+      "type": "PhysicalITAsset",
+      "label": "MAINSAIL-PROD-01 \u00b7 terminal operating system",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "partOf": "poh-port"
+    },
+    {
+      "id": "poh-tos-sched",
+      "type": "PhysicalITAsset",
+      "label": "POH-TOS-SCHED \u00b7 berth scheduling",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "1.4.3.2.1"
+      },
+      "partOf": "poh-port"
+    },
+    {
+      "id": "poh-ais",
+      "type": "PhysicalITAsset",
+      "label": "POH-AIS-FEED-01 \u00b7 vessel tracking feed",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "1.4.3.2"
+      },
+      "partOf": "poh-port"
+    },
+    {
+      "id": "poh-auth01",
+      "type": "PhysicalITAsset",
+      "label": "POHAUTH01 \u00b7 identity server",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "partOf": "poh-port"
+    },
+    {
+      "id": "grid-houston",
+      "type": "ElectricSupplyFacility",
+      "label": "Grid supply (Houston)",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "5.1.3"
+      }
+    },
+    {
+      "id": "sabine-lng",
+      "type": "LNGFacility",
+      "label": "Sabine Pass LNG",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "5.3.3.1"
+      }
+    },
+    {
+      "id": "colonial",
+      "type": "Pipeline",
+      "label": "Colonial Pipeline (refined products)",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "5.2.6.1"
+      }
+    },
+    {
+      "id": "tankers-47",
+      "type": "VesselGroup",
+      "label": "Product tankers \u00d747",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "5.2.6.2.1"
+      }
+    },
+    {
+      "id": "beaumont",
+      "type": "PortFacility",
+      "label": "Beaumont / Port Arthur",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "5.2.6.2.2"
+      }
+    },
+    {
+      "id": "texas-city",
+      "type": "PortFacility",
+      "label": "Texas City terminal",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "1.4.3.2.1"
+      }
+    },
+    {
+      "id": "ship-channel-plants",
+      "type": "ChemicalPlant",
+      "label": "Ship Channel plants",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "freeport",
+      "type": "ChemicalPlant",
+      "label": "Freeport complex",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "chlorine-loadout",
+      "type": "ChemicalSupply",
+      "label": "SCP-CL2 chlorine barge loadout",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "houston-water-plants",
+      "type": "TreatmentPlant",
+      "label": "Houston water plants",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.4"
+      }
+    },
+    {
+      "id": "w250-utilities",
+      "type": "WaterServiceProvider",
+      "label": "Watershed 250 utilities (first cohort)",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "12.6"
+      }
+    },
+    {
+      "id": "harris-ems",
+      "type": "EmergencyServices",
+      "label": "Emergency services (Harris County)",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ],
+      "idt": {
+        "status": "coded",
+        "path": "6"
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "id": "poh-dep-grid",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "grid-houston",
+      "dependent": "poh-port",
+      "requiredService": "electricity",
+      "dependentFunction": "terminal-operations",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "electricity_lost"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 0,
+      "usableBackupMinHours": 0,
+      "usableBackupMaxHours": 0,
+      "backupService": "electricity",
+      "validForLossTypes": [
+        "electricity_lost"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Upstream; not affected in this scenario.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-sabine",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "poh-port",
+      "dependent": "sabine-lng",
+      "requiredService": "petroleum_products",
+      "dependentFunction": "lng-export",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 3,
+      "usableBackupMaxHours": 5,
+      "backupService": "petroleum_products",
+      "validForLossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Target window 3\u20136 h.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-colonial",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "poh-port",
+      "dependent": "colonial",
+      "requiredService": "petroleum_products",
+      "dependentFunction": "refined-product-flow",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 3,
+      "usableBackupMaxHours": 5,
+      "backupService": "petroleum_products",
+      "validForLossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Target window 3\u20136 h.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-tankers",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "poh-port",
+      "dependent": "tankers-47",
+      "requiredService": "terminal_operations",
+      "dependentFunction": "cargo-by-sea",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 6,
+      "usableBackupMaxHours": 11,
+      "backupService": "terminal_operations",
+      "validForLossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Target window 6\u201312 h.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-scp",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "poh-port",
+      "dependent": "ship-channel-plants",
+      "requiredService": "chemical_feedstock",
+      "dependentFunction": "chemical-production",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "propagationDelayMinHours": 1,
+      "propagationDelayMaxHours": 2,
+      "usableBackupMinHours": 11,
+      "usableBackupMaxHours": 16,
+      "backupService": "chemical_feedstock",
+      "validForLossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": "chlorine_unavailable",
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Target window 12\u201318 h; output loss is chlorine.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-freeport",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "poh-port",
+      "dependent": "freeport",
+      "requiredService": "chemical_feedstock",
+      "dependentFunction": "chemical-production",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "propagationDelayMinHours": 1,
+      "propagationDelayMaxHours": 2,
+      "usableBackupMinHours": 11,
+      "usableBackupMaxHours": 16,
+      "backupService": "chemical_feedstock",
+      "validForLossTypes": [
+        "terminal_operations_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Target window 12\u201318 h.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-cl2",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "ship-channel-plants",
+      "dependent": "chlorine-loadout",
+      "requiredService": "chlorine_supply",
+      "dependentFunction": "chlorine-shipping",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "chlorine_unavailable"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 1,
+      "usableBackupMinHours": 0,
+      "usableBackupMaxHours": 0,
+      "backupService": "chlorine_supply",
+      "validForLossTypes": [
+        "chlorine_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": "chlorine_unavailable",
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Loadout stops when the plants cut rates.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-water",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "chlorine-loadout",
+      "dependent": "houston-water-plants",
+      "requiredService": "chlorine_supply",
+      "dependentFunction": "water-disinfection",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "chlorine_unavailable"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 0,
+      "usableBackupMinHours": 6,
+      "usableBackupMaxHours": 6,
+      "backupService": "chlorine_supply",
+      "validForLossTypes": [
+        "chlorine_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Target window 18\u201324 h (about 24 h of chlorine on hand from the start of the incident). Tune if the engine adds windows differently.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-w250",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "chlorine-loadout",
+      "dependent": "w250-utilities",
+      "requiredService": "chlorine_supply",
+      "dependentFunction": "water-disinfection",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "chlorine_unavailable"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 0,
+      "usableBackupMinHours": 6,
+      "usableBackupMaxHours": 6,
+      "backupService": "chlorine_supply",
+      "validForLossTypes": [
+        "chlorine_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Target window 18\u201324 h.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-dep-ems",
+      "revision": 1,
+      "status": "promoted_seed",
+      "provider": "poh-port",
+      "dependent": "harris-ems",
+      "requiredService": "fuel_supply",
+      "dependentFunction": "emergency-response",
+      "dependencyType": "physical",
+      "coupling": "tight",
+      "lossTypes": [
+        "fuel_unavailable"
+      ],
+      "propagationDelayMinHours": 0,
+      "propagationDelayMaxHours": 0,
+      "usableBackupMinHours": 0,
+      "usableBackupMaxHours": 0,
+      "backupService": "fuel_supply",
+      "validForLossTypes": [
+        "fuel_unavailable"
+      ],
+      "lossOfFunction": 1.0,
+      "outputLossType": null,
+      "assumptionNote": "Illustrative scenario link and parameters from the CISA Port of Houston exercise. Not a statement about the real facility; no real-world verification implied. Connected, not affected: a terminal outage does not cut fuel to emergency services in this scenario.",
+      "recovery": {
+        "status": "unknown"
+      },
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "expectedWindows": {
+    "sabine-lng": [
+      3,
+      6
+    ],
+    "colonial": [
+      3,
+      6
+    ],
+    "tankers-47": [
+      6,
+      12
+    ],
+    "ship-channel-plants": [
+      12,
+      18
+    ],
+    "freeport": [
+      12,
+      18
+    ],
+    "houston-water-plants": [
+      18,
+      24
+    ],
+    "w250-utilities": [
+      18,
+      24
+    ],
+    "harris-ems": "not affected",
+    "grid-houston": "normal \u00b7 upstream"
+  },
+  "scenario": {
+    "id": "port-terminal-down",
+    "label": "Port terminal operations unavailable",
+    "description": "Illustrative loss of terminal operations at the Port of Houston after a cyber attack on the terminal operating system.",
+    "evidenceCategory": "simulated",
+    "seed": {
+      "provider": "poh-port",
+      "service": "terminal_operations",
+      "lossType": "terminal_operations_unavailable",
+      "windowHours": [
+        0,
+        1
+      ],
+      "persistsThroughHour": 48,
+      "eventRefs": [
+        "poh-ev-tos-offline",
+        "poh-ev-ais"
+      ],
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    "horizonHours": 48,
+    "sourceRefs": [
+      "src-scripted-poh"
+    ],
+    "classification": "U",
+    "handling": [
+      "SIMULATED"
+    ]
+  },
+  "events": [
+    {
+      "id": "poh-ev-cred",
+      "type": "CyberEvent",
+      "label": "Port authority account sign-in from an unusual source",
+      "relativeTimeHours": -0.67,
+      "seenOn": "poh-auth01",
+      "observation": "credential_misuse",
+      "attackTechniques": [
+        {
+          "id": "T1078",
+          "name": "Valid Accounts"
+        }
+      ],
+      "evidenceCategory": "simulated",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-ev-lateral",
+      "type": "CyberEvent",
+      "label": "Session token reuse and remote desktop to terminal servers",
+      "relativeTimeHours": -0.2,
+      "seenOn": "poh-auth01",
+      "observation": "lateral_movement",
+      "attackTechniques": [
+        {
+          "id": "T1550.001",
+          "name": "Application Access Token"
+        },
+        {
+          "id": "T1021.001",
+          "name": "Remote Desktop Protocol"
+        }
+      ],
+      "evidenceCategory": "simulated",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-ev-ot-pivot",
+      "type": "CyberEvent",
+      "label": "Access reaches the terminal operating system",
+      "relativeTimeHours": 0.07,
+      "seenOn": "poh-tos",
+      "observation": "ot_pivot",
+      "note": "44 minutes in the office network, 6 minutes to terminal systems offline",
+      "evidenceCategory": "simulated",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-ev-tos-offline",
+      "type": "CyberEvent",
+      "label": "Terminal operating system encrypted; berth scheduling offline",
+      "relativeTimeHours": 0.17,
+      "seenOn": "poh-tos-sched",
+      "observation": "service_offline",
+      "attackTechniques": [
+        {
+          "id": "T1486",
+          "name": "Data Encrypted for Impact"
+        }
+      ],
+      "evidenceCategory": "simulated",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-ev-ais",
+      "type": "CyberEvent",
+      "label": "Vessel tracking feed degraded",
+      "relativeTimeHours": 0.2,
+      "seenOn": "poh-ais",
+      "observation": "degraded",
+      "evidenceCategory": "simulated",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "poh-ev-sabine",
+      "type": "CyberEvent",
+      "label": "Same login pattern seen at Sabine Pass LNG",
+      "relativeTimeHours": 0.67,
+      "seenOn": "sabine-lng",
+      "observation": "pattern_match",
+      "note": "Correlation, not a confirmed compromise; on-site check not yet started",
+      "evidenceCategory": "simulated",
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "assetStatuses": [
+    {
+      "id": "astat-poh-auth01",
+      "incidentId": "INC-2026-1002-POH",
+      "entityId": "poh-auth01",
+      "status": "confirmed",
+      "label": "Compromised",
+      "detail": "Port authority account misused \u00b7 IT",
+      "offsetMinutes": 0,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-poh-tos",
+      "incidentId": "INC-2026-1002-POH",
+      "entityId": "poh-tos",
+      "status": "confirmed",
+      "label": "Encrypted",
+      "detail": "Terminal operating system encrypted \u00b7 OT",
+      "offsetMinutes": 0,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-poh-tos-sched",
+      "incidentId": "INC-2026-1002-POH",
+      "entityId": "poh-tos-sched",
+      "status": "confirmed",
+      "label": "Offline",
+      "detail": "Berth scheduling unavailable",
+      "offsetMinutes": 0,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-poh-ais",
+      "incidentId": "INC-2026-1002-POH",
+      "entityId": "poh-ais",
+      "status": "suspected",
+      "label": "Degraded",
+      "detail": "Vessel tracking feed intermittent",
+      "offsetMinutes": 0,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-texas-city",
+      "incidentId": "INC-2026-1002-POH",
+      "entityId": "texas-city",
+      "status": "watch",
+      "label": "Monitoring",
+      "detail": "Possible alternative \u00b7 check first",
+      "offsetMinutes": 0,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "astat-beaumont",
+      "incidentId": "INC-2026-1002-POH",
+      "entityId": "beaumont",
+      "status": "watch",
+      "label": "Monitoring",
+      "detail": "Possible alternative \u00b7 check first",
+      "offsetMinutes": 0,
+      "origin": "scripted",
+      "sourceRefs": [
+        "src-scripted-poh"
+      ],
+      "classification": "U",
+      "handling": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "thresholds": [
+    {
+      "hours": 2,
+      "text": "Decision window: release the TX-ISAO advisory to the energy cohort",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "hours": 3,
+      "text": "Berth scheduling stops; tankers go to anchor; LNG carrier MV Lone Star diverted",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "hours": 6,
+      "text": "Petroleum product deliveries slip; Sabine Pass LNG at risk if the same access is used",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "hours": 12,
+      "text": "Cascade spreads if the advisory isn't out; vessel operations degraded port-wide",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "hours": 18,
+      "text": "Ship Channel and Freeport plants cut rates; chemical barge loadings stop",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "hours": 24,
+      "text": "Houston-area water plants and Watershed 250 utilities reach the end of chlorine on hand",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "hours": 48,
+      "text": "Shippers divert to other Gulf ports; national supply-chain delays",
+      "incidentId": "INC-2026-1002-POH"
+    }
+  ],
+  "alternatives": [
+    {
+      "label": "Beaumont / Port Arthur",
+      "covers": "product tankers, bulk cargo",
+      "status": "check_first",
+      "note": "secondary port, high risk",
+      "providerId": "beaumont",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "label": "Manual gate and yard operations",
+      "covers": "a fraction of normal throughput",
+      "status": "in_place",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "label": "Divert to Freeport, Galveston, Corpus Christi",
+      "covers": "partial, takes days to arrange",
+      "status": "not_requested",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "label": "Texas City terminal",
+      "covers": "some product tankers",
+      "status": "check_first",
+      "note": "correlated indicators, watch posture",
+      "providerId": "texas-city",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "label": "Chlorine by truck (backup route)",
+      "covers": "Houston water plants, Watershed 250 utilities",
+      "status": "not_requested",
+      "incidentId": "INC-2026-1002-POH"
+    }
+  ],
+  "responseOwners": [
+    {
+      "role": "Asset owner",
+      "who": "Port Houston security and IT",
+      "does": "Isolate and restore the terminal system",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "role": "Regulator",
+      "who": "Coast Guard Captain of the Port",
+      "does": "Port status, vessel movement, marine safety",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "role": "Sector leads",
+      "who": "Railroad Commission \u00b7 TxDOT",
+      "does": "Sabine Pass and pipeline monitoring \u00b7 freight routing",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "role": "Emergency management",
+      "who": "TDEM \u00b7 Harris and Galveston County OEM",
+      "does": "State and local coordination",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "role": "Cyber response",
+      "who": "TXCC CIRU \u00b7 Team Alpha",
+      "does": "Contain, investigate, protect peer ports",
+      "incidentId": "INC-2026-1002-POH"
+    },
+    {
+      "role": "Federal and law enforcement",
+      "who": "CISA Region 6 \u00b7 DPS",
+      "does": "Approved release only \u00b7 evidence handoff",
+      "incidentId": "INC-2026-1002-POH"
+    }
+  ],
+  "criticalFunctions": [
+    {
+      "incidentId": "INC-2026-1002-POH",
+      "level": "critical",
+      "function": "Provide petroleum products",
+      "windowHours": [
+        0,
+        6
+      ],
+      "windowLabel": "within 6 h",
+      "note": "Port of Houston and Sabine Pass"
+    },
+    {
+      "incidentId": "INC-2026-1002-POH",
+      "level": "high",
+      "function": "Transport cargo by sea",
+      "windowHours": [
+        6,
+        12
+      ],
+      "note": "vessel operations degraded"
+    },
+    {
+      "incidentId": "INC-2026-1002-POH",
+      "level": "watch",
+      "function": "Provide drinking water",
+      "windowHours": [
+        18,
+        24
+      ],
+      "note": "chlorine supply"
+    }
+  ]
+}

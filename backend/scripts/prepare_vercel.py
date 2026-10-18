@@ -19,6 +19,8 @@ CORELIGHT_FILES = tuple(
 )
 FILES = (
     "scripted/watershed_beta.json",
+    "scripted/c4_reference.json",
+    "scripted/port_houston.json",
     "reference.json",
     "scenario.json",
     "telemetry/controller.json",

@@ -463,6 +463,7 @@ class CommandService:
                 try:
                     run = compute_run(deepcopy(baseline), run_request, "run-" + uuid4().hex)
                     run["createdAt"] = now
+                    run["kind"] = "reviewed"
                     record["decisions"] = _decisions(run)
                 except (ValueError, KeyError, TypeError, AttributeError) as exc:
                     raise InvalidModelError("Invalid consequence analysis model") from exc

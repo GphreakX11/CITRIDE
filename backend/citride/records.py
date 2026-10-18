@@ -6,6 +6,7 @@ case/version receipts, rollback and the single final save.
 from __future__ import annotations
 
 from copy import deepcopy
+from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
@@ -16,6 +17,9 @@ from .scripted_validation import (
     validate_reference, validate_scripted, valid_id,
 )
 from .storage import ConflictError, InvalidModelError, NotFoundError
+from .record_time import resolve_record_times
+from .consequence_model import consequence_model, load_c4
+from .consequences import automatic_intake
 
 ACTION_FIELDS = {
     "record_assessment": {"subject", "cluster", "actorLabel", "confidence", "note"},
@@ -95,6 +99,7 @@ def load_inputs(scenario_path):
 class RecordsService:
     def __init__(self, store, scripted=None, reference=None, scenario=None, now=None):
         self.store = store
+        supplied_scripted = scripted is not None
         if scripted is None or reference is None or scenario is None:
             loaded = load_inputs(store.scenario_path)
             scripted = loaded[0] if scripted is None else scripted
@@ -102,9 +107,21 @@ class RecordsService:
             scenario = loaded[2] if scenario is None else scenario
         self.scripted, self.reference, self.scenario = deepcopy((scripted, reference, scenario))
         self._now = now or (lambda: datetime.now(timezone.utc))
-        self._validation_scenario = deepcopy(self.scenario)
+        self.c4_reference, self.port = load_c4(store.scenario_path)
+        self.analysis_model = consequence_model(self.scenario, self.c4_reference, self.port)
+        if not supplied_scripted:
+            self.scripted['sources'].extend([{**s, 'evidenceCategory': 'simulated'} for s in self.port['sources']])
+            incident = deepcopy(self.port['incident'])
+            incident['status'] = 'open'
+            self.scripted['incidents'].append(incident)
+            for raw in self.port['assetStatuses']:
+                item = deepcopy(raw)
+                if item['status'] == 'watch':
+                    item['status'] = 'at_risk'
+                self.scripted['assetStatuses'].append(item)
+        self._validation_scenario = deepcopy(self.analysis_model)
         self._validation_scenario["responseOptions"] = deepcopy(self.reference.get("responseOptions", []))
-        self._validation_scenario["sources"] = deepcopy(self.scenario.get("sources", [])) + deepcopy(self.reference.get("sources", []))
+        self._validation_scenario["sources"] = deepcopy(self.analysis_model.get("sources", [])) + deepcopy(self.reference.get("sources", []))
         errors = validate_reference(self.reference, self.scenario) + validate_scripted(self.scripted, self._validation_scenario)
         if errors:
             raise InvalidModelError("Invalid scripted/reference inputs: " + "; ".join(errors))
@@ -121,13 +138,8 @@ class RecordsService:
         except NotFoundError:
             return None
 
-    def _story_time(self, meta, wall=None):
-        if meta is None:
-            raise InvalidModelError("Scripted records have not been initialized")
-        start = _parse(meta["storyStartedAt"])
-        if meta["config"]["timing"]["storyClock"]["advancesWithWallClock"]:
-            start += (wall or self._wall_now()) - _parse(meta["wallStartedAt"])
-        return start
+    def _current_time(self, meta=None, wall=None):
+        return wall or self._wall_now()
 
     def _all(self, dataset):
         return {key: self.store._records(dataset, key) for key in COLLECTIONS}
@@ -136,7 +148,7 @@ class RecordsService:
         """Replace only record graphs/config; never baseline, runs or cases."""
         config = {k: deepcopy(v) for k, v in self.scripted.items() if k not in {INPUT_KEYS.get(c, c) for c in COLLECTIONS}}
         wall = self._wall_now()
-        story = _parse(self.scenario["incidentOrigin"]) + timedelta(hours=config["timing"]["storyClock"]["startRelativeHours"])
+        config['timing'] = {'note': 'Sample record times are offsets from the sample-data anchor (one hour before load).'}
         # Validate first: malformed data must not partially clear even an owned
         # in-memory dataset when this method is used without a lock wrapper.
         records = {c: deepcopy(self.scripted[INPUT_KEYS.get(c, c)]) for c in COLLECTIONS}
@@ -144,21 +156,31 @@ class RecordsService:
         for graph in list(dataset.graphs()):
             if any(str(graph.identifier).startswith(f"urn:citride:graph:{kind}:") for kind in (*COLLECTIONS, META_KIND)):
                 dataset.remove_graph(graph.identifier)
-        meta = {"id": META_ID, "config": config, "incidentOrigin": self.scenario["incidentOrigin"], "wallStartedAt": wall.isoformat(), "storyStartedAt": story.astimezone(timezone.utc).isoformat()}
+        meta = {"id": META_ID, "config": config, "sampleDataAnchor": (wall - timedelta(hours=1)).isoformat()}
         self.store._record_graph(dataset, META_KIND, meta)
         self._ingest_records(dataset, records, "scripted")
 
     def initialize(self):
-        with self.store._locked():
-            dataset = self.store._load()
-            changed = self._meta(dataset) is None
-            if changed:
-                self.seed(dataset)
-                # Upgrade an existing durable store without manufacturing cases.
-                for case in self.store._records(dataset, CASE_KIND):
-                    self.on_case_opened(dataset, case)
-            if changed:
-                self.store._save(dataset)
+        """Read-only startup: existing operational state is never migrated here.
+
+        Repository creation and explicit reset call seed(). Existing stores gain
+        new incidents/analyses only through an explicit ingest, never a GET or
+        deployment. Legacy records keep their original timestamp anchors.
+        """
+        return None
+
+    def _anchor(self, meta):
+        return meta.get('sampleDataAnchor', meta.get('incidentOrigin', self.scenario['incidentOrigin']))
+
+    def _automatic_analysis(self, dataset, incident_ids=None):
+        meta = self._meta(dataset)
+        model = consequence_model(self.store._baseline(dataset), self.c4_reference, self.port)
+        changed = False
+        for incident in self.store._records(dataset, 'statewideIncidents'):
+            if incident_ids is not None and incident['id'] not in incident_ids:
+                continue
+            changed = automatic_intake(self.store, dataset, [incident], model, self.c4_reference, self._wall_now(), _parse(incident.get('sampleDataAnchor', self._anchor(meta)))) or changed
+        return changed
 
     def _validate_records(self, records, config):
         data = deepcopy(config)
@@ -206,6 +228,9 @@ class RecordsService:
                 else:
                     item.setdefault("origin", origin)
                     item.setdefault("history", [])
+                item.setdefault('sampleDataAnchor', prior.get('sampleDataAnchor', self._anchor(meta)) if prior else self._anchor(meta))
+                # Freeze relative fields once at ingest, before case binding.
+                item = resolve_record_times(item, self._anchor(meta))
                 existing[item["id"]] = item
                 changes.append((collection, item))
             current[collection] = list(existing.values())
@@ -213,6 +238,8 @@ class RecordsService:
         # Nothing is mutated until all references and collections validate.
         for collection, item in changes:
             self.store._record_graph(dataset, collection, item)
+        if 'statewideIncidents' in records and origin != 'case-link':
+            self._automatic_analysis(dataset, {r['id'] for r in records['statewideIncidents']})
         return deepcopy([item for _, item in changes])
 
     def ingest_records(self, records, origin):
@@ -239,13 +266,14 @@ class RecordsService:
             opened = case_record.get("createdAt")
             if not aware_time(opened):
                 raise InvalidModelError("Case opening requires an aware createdAt")
-            story = self._story_time(meta, _parse(opened)).isoformat()
-            incident.update(caseId=case_record["id"], openedStoryAt=story)
+            incident = resolve_record_times(incident, self._anchor(meta))
+            incident.update(caseId=case_record["id"], openedAt=opened)
             changes.setdefault("statewideIncidents", []).append(incident)
             for collection in COLLECTIONS[1:]:
                 for item in self.store._records(dataset, collection):
                     if item.get("incidentId") == incident["id"]:
-                        item.update(caseId=case_record["id"], openedStoryAt=story)
+                        item = resolve_record_times(item, self._anchor(meta))
+                        item.update(caseId=case_record["id"], openedAt=opened)
                         changes.setdefault(collection, []).append(item)
         if changes:
             self._ingest_records(dataset, changes, "case-link")
@@ -299,7 +327,7 @@ class RecordsService:
                     raise InvalidModelError("optionId must identify a configured option")
                 source_refs = deepcopy(option["sourceRefs"])
                 source = next((r for r in self.reference["sources"] if r["id"] == source_refs[0]), source)
-            item = {"id": "record-" + uuid4().hex, "incidentId": incident["id"], "caseId": case_record["id"], "openedStoryAt": incident["openedStoryAt"],
+            item = {"id": "record-" + uuid4().hex, "incidentId": incident["id"], "caseId": case_record["id"], "openedAt": incident.get('openedAt', incident.get('openedStoryAt')),
                     "origin": "analyst", "sourceRefs": source_refs, "classification": source["classification"], "handling": deepcopy(source["handling"]), "history": []}
         item = deepcopy(item)
         fields = {k: deepcopy(request[k]) for k in ACTION_FIELDS[name]}
@@ -308,14 +336,14 @@ class RecordsService:
             item["label"] = STATUS_LABELS["assetStatusLabels"][request["status"]]
         if name == "set_team_status":
             fields["statusText"] = STATUS_LABELS["teamStatusLabels"][request["status"]]
-            item.setdefault("updates", []).append({"at": self._story_time(meta).isoformat(), "text": fields.pop("updateText")})
+            item.setdefault("updates", []).append({"at": self._wall_now().isoformat(), "text": fields.pop("updateText")})
         if name == "add_task":
             fields["status"] = "not_started"
         if name == "record_decision":
             fields["recordedBy"] = who
         if name == "set_task_status":
             if request["status"] == "done":
-                item["doneAt"] = self._story_time(meta).isoformat()
+                item["doneAt"] = self._wall_now().isoformat()
             else:
                 item.pop("doneAt", None)
                 item.pop("doneOffsetMinutes", None)
@@ -326,65 +354,42 @@ class RecordsService:
         self._ingest_records(dataset, {collection: [item]}, "analyst")
         return f"{name.replace('_', ' ').capitalize()} recorded locally; no dispatch, notification or recovery is asserted."
 
-    def story_now(self):
-        with self.store._locked():
-            return self._story_time(self._meta(self.store._load())).isoformat()
+    def now(self):
+        return self._wall_now().isoformat()
 
-    def records(self, incident_id=None):
-        with self.store._locked():
-            return self.records_from_dataset(self.store._load(), incident_id)
-
-    def records_from_dataset(self, dataset, incident_id=None):
-        """Build the detached public view; the caller owns the dataset lock/load."""
-        meta = self._meta(dataset)
-        if meta is None:
-            raise InvalidModelError("Scripted records have not been initialized")
-        current = self._all(dataset)
-        now = self._story_time(meta)
-        cases = {r["id"]: r for r in self.store._records(dataset, CASE_KIND)}
-        visible = []
-        for incident in current["statewideIncidents"]:
-            if incident.get("linkedEventIds") and not incident.get("caseId"):
-                continue
-            case = cases.get(incident.get("caseId"))
-            if incident.get("linkedEventIds") and case is None:
-                continue
-            if case is not None:
-                incident["status"] = case["status"]
-                incident["reviews"] = deepcopy(case.get("decisions", []))
-                incident["progress"] = deepcopy(case.get("tasks", []))
-                incident["runId"] = case.get("runId")
-            visible.append(incident)
-        if incident_id is not None:
-            visible = [i for i in visible if incident_id in (i["id"], i.get("caseId"))]
-        ids = {i["id"] for i in visible}
-        current["statewideIncidents"] = visible
-        for collection in COLLECTIONS[1:]:
-            current[collection] = [r for r in current[collection] if r.get("incidentId") in ids]
-        origin = _parse(meta.get("incidentOrigin", self.scenario["incidentOrigin"]))
-        def enrich(item, opened=None):
-            opened = _parse(item["openedStoryAt"]) if "openedStoryAt" in item else opened
-            for key, value in list(item.items()):
-                if isinstance(value, list):
-                    for member in value:
-                        if isinstance(member, dict):
-                            enrich(member, opened)
-                elif isinstance(value, dict):
-                    enrich(value, opened)
-            for key, target in (("relativeTimeHours", "at"), ("startedRelativeHours", "startedAt"), ("closedRelativeHours", "closedAt")):
-                if key in item:
-                    item[target] = (origin + timedelta(hours=item[key])).isoformat()
-            if opened:
-                for key, target in (("offsetMinutes", "at"), ("dueOffsetMinutes", "dueAt"), ("doneOffsetMinutes", "doneAt"), ("etaOffsetMinutes", "etaAt")):
-                    if key in item and target not in item:
-                        item[target] = (opened + timedelta(minutes=item[key])).isoformat()
-        for collection, items in current.items():
-            for item in items:
-                enrich(item)
-                if collection == "responseTasks":
-                    item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
-        config = meta["config"]
-        result = {**current, "storyNow": now.isoformat(), "timing": config["timing"], "taskGroups": config["taskGroups"]}
-        result.update(STATUS_LABELS)
-        result.update({k: v for k, v in config.items() if k.endswith("Labels")})
-        return deepcopy(result)
+    def records(self, incident_id=None, *, _dataset=None):
+        with self.store._locked() if _dataset is None else nullcontext():
+            dataset = self.store._load() if _dataset is None else _dataset
+            meta = self._meta(dataset)
+            if meta is None:
+                raise InvalidModelError("Scripted records have not been initialized")
+            current = self._all(dataset)
+            now = self._wall_now()
+            cases = {r["id"]: r for r in self.store._records(dataset, CASE_KIND)}
+            visible = []
+            for incident in current["statewideIncidents"]:
+                case = cases.get(incident.get("caseId"))
+                if incident.get('status') == 'from_case' and case is None:
+                    incident['status'] = 'open'
+                if case is not None:
+                    incident["status"] = case["status"]
+                    incident["reviews"] = deepcopy(case.get("decisions", []))
+                    incident["progress"] = deepcopy(case.get("tasks", []))
+                    incident["runId"] = case.get("runId")
+                visible.append(incident)
+            if incident_id is not None:
+                visible = [i for i in visible if incident_id in (i["id"], i.get("caseId"))]
+            ids = {i["id"] for i in visible}
+            current["statewideIncidents"] = visible
+            for collection in COLLECTIONS[1:]:
+                current[collection] = [r for r in current[collection] if r.get("incidentId") in ids]
+            for collection, items in current.items():
+                current[collection] = [resolve_record_times(item, self._anchor(meta)) for item in items]
+                for item in current[collection]:
+                    if collection == "responseTasks":
+                        item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
+            config = meta["config"]
+            result = {**current, "now": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "timing": config["timing"], "taskGroups": config["taskGroups"]}
+            result.update(STATUS_LABELS)
+            result.update({k: v for k, v in config.items() if k.endswith("Labels")})
+            return deepcopy(result)

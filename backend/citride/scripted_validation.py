@@ -97,6 +97,9 @@ def _sources(data, scenario, errors, seen):
 def _refs(record, refs, errors, prefix):
     """Check known reference paths at any depth, including option triggers."""
     for key, value in record.items():
+        if key == 'timeOrigins':
+            # Timestamp provenance describes fields; its keys are not instants.
+            continue
         target = refs.get(key)
         if target is not None:
             if key not in ("sourceRefs", "linkedEventIds", "impactFunctions") and not valid_id(value):
@@ -202,8 +205,10 @@ def validate_scripted(data, scenario):
                 errors.append(prefix + "history must contain who/when/what changes")
     timing = data.get("timing")
     clock = timing.get("storyClock") if isinstance(timing, dict) else None
-    if not isinstance(clock, dict) or not finite(clock.get("startRelativeHours")) or type(clock.get("advancesWithWallClock")) is not bool:
-        errors.append("timing.storyClock must define finite startRelativeHours and boolean advancesWithWallClock")
+    if not isinstance(timing, dict) or (clock is None and not isinstance(timing.get('note'), str)):
+        errors.append('timing must describe the sample-data anchor')
+    if clock is not None and (not isinstance(clock, dict) or not finite(clock.get('startRelativeHours')) or type(clock.get('advancesWithWallClock')) is not bool):
+        errors.append('Legacy timing configuration is malformed')
     if not aware_time(scenario.get("incidentOrigin")):
         errors.append("scenario.incidentOrigin must be an aware timestamp")
     return errors

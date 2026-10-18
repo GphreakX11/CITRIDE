@@ -235,7 +235,8 @@ def create_app(
             "status": "ok",
             "baselineRevision": store.baseline()["baselineRevision"],
             "demoMode": True,
-            "storyNow": RecordsService(store).story_now(),
+            "now": RecordsService(store).now(),
+            "operationsTimeZone": RecordsService(store).c4_reference['operationsTimeZone'],
             "resetEnabled": reset_enabled,
         }
 
@@ -252,6 +253,11 @@ def create_app(
     @app.get("/v1/command/records")
     def command_records(store: RepositoryDependency, incidentId: QueryIdentifier | None = None):
         return handle_operation(lambda: RecordsService(store).records(incidentId))
+
+    @app.get('/v1/command/consequences')
+    def command_consequences(store: RepositoryDependency, incidentId: QueryIdentifier | None = None):
+        from .consequence_projection import ConsequenceService
+        return handle_operation(lambda: ConsequenceService(store).view(incidentId))
 
     @app.post("/v1/demo/reset")
     def reset_demo(request: DemoResetRequest, store: RepositoryDependency):
