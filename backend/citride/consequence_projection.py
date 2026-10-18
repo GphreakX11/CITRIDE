@@ -119,7 +119,7 @@ def project_consequences(incident, analysis, reference, planning_rates, statuses
         group = [n for n in nodes if n['sector'] == name]
         windows = [n['windowHours'] for n in group if n['windowHours'] is not None]
         sectors.append({'label': name, 'source': any(n['source'] for n in group), 'atRisk': len({n['id'] for n in group if n['impactCount']}), 'windowHours': [min(w[0] for w in windows), max(w[1] for w in windows)] if windows else None, 'order': min((n['order'] for n in group if n['order'] is not None), default=None), 'spread': source.get('spread'), 'nodes': [n['id'] for n in group]})
-    return {'incident': deepcopy(incident), 'analysis': {k: deepcopy(analysis.get(k)) for k in ('kind', 'createdAt', 'computedAt', 'effectiveAt', 'triggerEventAt', 'createdAtBasis', 'modelVersion', 'request', 'seed')},
+    return {'incident': deepcopy(incident), 'analysis': {k: deepcopy(analysis.get(k)) for k in ('kind', 'persisted', 'referenceOnly', 'createdAt', 'computedAt', 'effectiveAt', 'triggerEventAt', 'createdAtBasis', 'modelVersion', 'request', 'seed')},
             'source': source, 'people': population, 'serviceAffected': incident.get('serviceAffected'),
             'atRisk': len(affected - {source_id}), 'earliestWindow': min(known, key=lambda w: (w[0], w[1])) if known else None,
             'restoration': restoration, 'economic': economic, 'publicAction': public_action,
@@ -137,7 +137,13 @@ class ConsequenceService:
         with self.store._locked():
             dataset = self.store._load()
             envelope = self.records.records(_dataset=dataset)
-            incidents = envelope['statewideIncidents']
+            incidents = deepcopy(envelope['statewideIncidents'])
+            # New package scenarios remain explicitly reference-only on older
+            # stores. Do not invent a persisted incident or mutate its register.
+            port_id = self.records.port['incident']['id']
+            if not any(row['id'] == port_id for row in incidents):
+                prototype = next(row for row in self.records.scripted['incidents'] if row['id'] == port_id)
+                incidents.append({**deepcopy(prototype), 'referenceOnly': True})
             if incident_id:
                 incident = next((r for r in incidents if incident_id in (r['id'], r.get('caseId'))), None)
                 if incident is None:
@@ -158,6 +164,9 @@ class ConsequenceService:
             if preliminaryScenarioFor(incident, model, self.records.c4_reference['eventLossRules']) is None:
                 runs = [r for r in runs if r.get('kind') != 'preliminary']
             analysis = bestAnalysisFor(incident, runs, cases)
+            if analysis is None:
+                from .consequence_preview import reference_preview
+                analysis = reference_preview(incident, model, self.records.c4_reference, envelope['now'])
             if analysis and analysis['kind'] == 'reviewed':
                 from .command import CommandService
                 case = next(c for c in cases if c.get('runId') == analysis['id'])
@@ -169,6 +178,6 @@ class ConsequenceService:
                 refs['assets'].setdefault(source_id, {}).update({k: deepcopy(self.records.port[k]) for k in ('alternatives', 'thresholds', 'responseOwners')})
             view = project_consequences(incident, analysis, refs, self.records.reference['planningRates'], [r for r in envelope['assetStatuses'] if r['incidentId'] == incident['id']])
             return {**view, 'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'incidents': incidents,
-                    'analysisState': 'ready' if analysis else 'no_analysis',
+                    'analysisState': ('reference_preview' if analysis['kind'] == 'reference_preview' else 'ready') if analysis else 'no_analysis',
                     'criticalFunctions': deepcopy(self.records.port.get('criticalFunctions', [])) if incident['id'] == self.records.port['incident']['id'] else [],
                     'atRiskBasis': 'Distinct dependent entities with computed impacts; no unverified aggregation/member count is assumed.'}

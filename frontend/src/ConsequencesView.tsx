@@ -127,10 +127,10 @@ export function ConsequencesContent({
     <>
       <div className={`c4-banner ${reviewed ? "reviewed" : ""}`}>
         <strong>
-          {reviewed ? "ANALYSIS REVIEWED" : "PRELIMINARY ESTIMATE"}
+          {reviewed ? "ANALYSIS REVIEWED" : analysis.kind === "reference_preview" ? "READ-ONLY REFERENCE PROJECTION" : "PRELIMINARY ESTIMATE"}
         </strong>
         <span>
-          {reviewed ? "Captured" : "Run automatically by CITRIDE"}{" "}
+          {reviewed ? "Captured" : analysis.kind === "reference_preview" ? "Computed now · not saved case analysis" : "Run automatically by CITRIDE"}{" "}
           {elapsedLabel(time, now)} ·{" "}
           {clockLabel(Date.parse(time), value.operationsTimeZone)}
           {!reviewed && <em> · not yet reviewed by an analyst</em>}
