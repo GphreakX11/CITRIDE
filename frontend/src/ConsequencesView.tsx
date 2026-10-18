@@ -456,13 +456,10 @@ function CascadeGraph({
           .filter((n) => n.source || n.upstream)
           .map((n) => ({ id: n.id, name: n.name, node: n, ids: [n.id] })),
         ...value.sectors
-          .filter(
-            (s) =>
-              !s.source &&
-              s.nodes.some((id) =>
-                nodes.some((n) => n.id === id && !n.upstream),
-              ),
-          )
+          .map((s) => ({ ...s, nodes: s.nodes.filter((id) =>
+            nodes.some((n) => n.id === id && !n.source && !n.upstream),
+          ) }))
+          .filter((s) => s.nodes.length > 0)
           .map((s) => ({
             id: s.label,
             name: s.label,
@@ -501,23 +498,29 @@ function CascadeGraph({
     seen.add(key);
     return [{ e, a, b }];
   });
+  const graphHeight = Math.max(720, groups.filter(g => g.node.upstream).length * 190, groups.filter(g => !g.node.source && !g.node.upstream).length * 190);
   return (
-    <div className="c4-graph" style={{ height: Math.max(460, groups.filter(g => g.node.upstream).length * 160, groups.filter(g => !g.node.source && !g.node.upstream).length * 110 + 40) }}>
+    <div className="c4-graph" style={{ height: graphHeight }}>
       <svg
-        viewBox="0 0 1000 500"
+        viewBox={`0 0 1000 ${graphHeight}`}
         preserveAspectRatio="none"
         aria-label="Recorded dependency links"
       >
         {links.map(({ e, a, b }) => {
           const state = consequenceNodeState(b.node);
+          const ay = a.y * graphHeight / 100;
+          const by = b.y * graphHeight / 100;
+          const sameColumn = a.x === b.x;
           return (
             <g key={e.id}>
               <path
                 className={`tone-${a.node.upstream ? "green" : state.tone}`}
-                d={`M${a.x * 10} ${a.y * 5} L${b.x * 10} ${b.y * 5}`}
+                d={sameColumn
+                  ? `M${a.x * 10} ${ay} L930 ${ay} L930 ${by} L${b.x * 10} ${by}`
+                  : `M${a.x * 10} ${ay} L${b.x * 10} ${by}`}
                 strokeDasharray={state.line === "solid" ? undefined : "6 6"}
               />
-              <text x={(a.x + b.x) * 5} y={(a.y + b.y) * 2.5 - 10}>
+              <text x={sameColumn ? 925 : (a.x + b.x) * 5} y={(ay + by) / 2 - 10}>
                 {e.label}
               </text>
             </g>
@@ -529,7 +532,7 @@ function CascadeGraph({
         return (
           <button
             key={g.id}
-            className={`c4-node tone-${state.tone} ${selected === g.id ? "selected" : ""}`}
+            className={`c4-node tone-${state.tone} ${g.node.source ? "c4-source" : ""} ${selected === g.id ? "selected" : ""}`}
             style={{
               left: `${g.x}%`,
               top: `${g.y}%`,

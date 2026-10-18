@@ -157,6 +157,28 @@ test("unmodeled incident retains explicit development state", () => {
   );
   assert.match(html, /Alerts in Analyst/);
 });
+test("C4 graph reserves vertical room and a larger source node for long labels", () => {
+  const source = { ...fixture.nodes[0], id: "source", source: true, upstream: false,
+    name: "Port of Houston · Barbours Cut Container Terminal" };
+  const sectors = ["Chemical", "Emergency Services", "Energy", "Water"];
+  const nodes = sectors.map((sector, i) => ({ ...fixture.nodes[0], id: `node-${i}`, sector }));
+  const html = render({ ...fixture, nodes: [source, ...nodes],
+    sectors: sectors.map((label, i) => ({ label, nodes: [`node-${i}`], atRisk: 1 })) });
+  assert.match(html, /class="c4-graph" style="height:760px"/);
+  assert.match(html, /c4-node tone-red c4-source/);
+  assert.ok(html.includes(source.name));
+  const css = readFileSync(new URL("../src/consequences-view.css", import.meta.url), "utf8");
+  assert.match(css, /\.command-workspace \.c4-graph \.c4-node\s*\{[^}]*border-radius: 50%/);
+  assert.match(css, /\.c4-node\.c4-source\s*\{[^}]*width: 220px/);
+});
+test("source-sector grouping retains impacted dependents instead of hiding them", () => {
+  const source = { ...fixture.nodes[0], id: "source", name: "Source terminal", source: true, sector: "Transportation" };
+  const dependent = { ...fixture.nodes[0], id: "ships", name: "Vessels", sector: "Transportation" };
+  const html = render({ ...fixture, nodes: [source, dependent], sectors: [
+    { label: "Transportation", source: true, nodes: ["source", "ships"], atRisk: 1 },
+  ] });
+  assert.match(html, /<strong>Transportation<\/strong>/);
+});
 if (process.env.C4_PROJECTIONS) {
   const projections = JSON.parse(
     readFileSync(process.env.C4_PROJECTIONS, "utf8"),

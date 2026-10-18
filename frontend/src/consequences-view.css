@@ -227,7 +227,7 @@
   stroke-width: 3px;
   stroke-linejoin: round;
 }
-.c4-graph .c4-node {
+.command-workspace .c4-graph .c4-node {
   position: absolute;
   transform: translate(-50%, -50%);
   width: 18%;
@@ -240,8 +240,14 @@
   background: var(--surface);
   text-align: center;
 }
+.command-workspace .c4-graph .c4-node.c4-source {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  padding: 26px 20px;
+}
 .c4-node strong {
-  font-size: var(--fs-body);
+  font-size: var(--fs-small);
 }
 .c4-node small {
   font-size: var(--fs-small);
