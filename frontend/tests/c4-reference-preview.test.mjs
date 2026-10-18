@@ -25,7 +25,8 @@ test('unsaved reference projection never masquerades as captured automatic histo
 test('timeline uses actual request horizon, including non-water 48-hour scenarios',()=>{
  const html=render(fixture);assert.match(html,/<span>48 h<\/span>/);assert.match(html,/<span>16 h<\/span>/);assert.doesNotMatch(html,/<span>12 h<\/span>/);
  const water=render({...fixture,analysis:{...fixture.analysis,request:{horizonHours:12}}});assert.match(water,/<span>12 h<\/span>/);assert.doesNotMatch(water,/<span>48 h<\/span>/);
- assert.match(html,/viewBox="0 0 1000 500"/);
+ const height=html.match(/class="c4-graph" style="height:(\d+)px"/)[1];
+ assert.ok(Number(height)>=720);assert.ok(html.includes(`viewBox="0 0 1000 ${height}"`));
 });
 test('multi-day restoration and old records have readable elapsed units without altering timestamps',()=>{
  assert.equal(model.hours([48,120]),'2–5 days');assert.equal(model.hours([12,24]),'12–24 h');
