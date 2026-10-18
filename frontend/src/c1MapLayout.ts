@@ -38,6 +38,16 @@ export function c1PlaceLabels(items: readonly { id: string; x: number; y: number
   }
   return { labels, missing };
 }
+/** Stored geographic coordinates win; only explicitly authored schematic anchors are fallback. */
+export function c1GeographicAnchor(row: { id: string; location?: { longitude?: number; latitude?: number; schematic?: {x:number;y:number} } }): IncidentAnchor | null {
+  const location = row.location;
+  if (typeof location?.longitude === 'number' && typeof location.latitude === 'number' && Number.isFinite(location.longitude) && Number.isFinite(location.latitude)) {
+    const point = c1TexasLonLat(location.longitude, location.latitude);
+    return {id:row.id,x:point.x/10,y:point.y/7};
+  }
+  const p=location?.schematic;
+  return p && Number.isFinite(p.x) && Number.isFinite(p.y) ? {id:row.id,...p} : null;
+}
 export function c1IncidentLayout(anchors: readonly IncidentAnchor[], width: number, height: number) {
   if (width <= 0 || height <= 0) return { markers: [], capacityExceeded: true };
   return fittedTexasMarkerLayout(anchors, width, height, 44);

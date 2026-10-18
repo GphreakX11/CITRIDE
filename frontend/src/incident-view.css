@@ -1,6 +1,16 @@
 .incident-view{display:flex;flex-direction:column;gap:18px;min-width:0;color:var(--text);font-size:var(--fs-body);line-height:1.5}
 .iv-command-strip{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
 .iv-command-strip p{margin:0}
+.iv-source-drawing{max-width:100%;overflow:auto;contain:inline-size}
+.iv-source-drawing svg{display:block;width:100%;min-width:760px;max-height:720px}
+.iv-source-drawing text{fill:currentColor;font-size:var(--fs-small)}
+.iv-sector-filters{display:flex;flex-wrap:wrap;gap:8px;padding:12px}
+.iv-sector-filters button{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:6px}
+.iv-sector-filters button[aria-pressed=true]{border-color:var(--blue);color:var(--blue)}
+.iv-sector-chip{display:inline-block;border:1px solid var(--border);border-radius:4px;padding:2px 6px;margin:2px;font-size:var(--fs-small)}
+.iv-watch-record{border:1px dashed var(--amber);padding:10px;margin:8px;color:var(--amber)}
+.iv-analyst-link{border-style:dashed!important;background:transparent!important}
+.iv-list-panel details.iv-facility{padding:12px}.iv-list-panel details.iv-facility small{display:block}
 .iv-summary-band,.iv-panel{border:1px solid var(--border);background:var(--surface);border-radius:10px;min-width:0}
 .iv-summary-band{padding:18px 22px}
 .iv-risk-summary{font-size:var(--fs-body);font-weight:500;margin:0 0 16px;color:var(--text-strong)}

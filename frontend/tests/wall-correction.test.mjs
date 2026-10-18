@@ -146,7 +146,7 @@ test("C1 opens with four statewide tiles and closed cards beside decisions and f
   assert.match(out, /class="c1-columns"/);
   assert.match(out, /class="c1-sidebar"/);
   assert.match(out, /Statewide picture/);
-  for (const title of ["Decisions waiting on the Chief", "Critical facilities at risk", "From the analysts"]) assert.ok(out.includes(title));
+  for (const title of ["Decisions waiting on the Chief", "Critical infrastructure at risk", "From the analysts"]) assert.ok(out.includes(title));
   const tiles = totalsIn(out);
   assert.ok(tiles);
   assert.equal((tiles.match(/<button\b/g) ?? []).length, 4);

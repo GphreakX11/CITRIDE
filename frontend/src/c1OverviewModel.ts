@@ -2,6 +2,8 @@ import type { CommandIncident } from './commandTypes.ts';
 import type { Entity, Run } from './types.ts';
 import type { RecordItem, ScriptedViewProps } from './scriptedTypes.ts';
 import { list, object, text } from './scriptedTypes.ts';
+import { hasCascadingImpact as presentationCascade } from './incidentPresentation.ts';
+import type { ConsequenceProjection } from './consequencesModel.ts';
 import { elapsedMinutes, recordTime } from './scriptedCommandModel.ts';
 import { boilWaterLabel, statewideFootprint, type StatewideFootprintModel } from './statewideFootprint.ts';
 
@@ -21,6 +23,8 @@ export interface C1Decision {
   row: C1Incident;
   window: [number, number] | null;
   windowLabel: string;
+  remainingMinutes?: number;
+  tone?: "red" | "amber" | "green" | "grey";
 }
 export interface C1Update {
   record: RecordItem;
@@ -109,7 +113,7 @@ function mergePopulation(target: Map<string, number | null>, source: Map<string,
 }
 const sumPopulation = (counts: Map<string, number | null>): number | null => [...counts.values()].some(n => n === null) ? null : [...counts.values()].reduce<number>((sum, n) => sum + n!, 0);
 
-export function c1OverviewModel(props: ScriptedViewProps): C1OverviewModel {
+export function c1OverviewModel(props: ScriptedViewProps, projections: Record<string, ConsequenceProjection> = {}): C1OverviewModel {
   // Reference hydration may be partial; absent options never imply a decision.
   props = { ...props, records: { ...props.records, decisions: props.records.decisions ?? [] }, reference: { ...props.reference, responseOptions: props.reference.responseOptions ?? [], optionTimingLabels: props.reference.optionTimingLabels ?? {}, boilWaterRules: props.reference.boilWaterRules ?? [] } };
   // Deliberately ignore selection, including for ambiguous event associations.
@@ -120,7 +124,7 @@ export function c1OverviewModel(props: ScriptedViewProps): C1OverviewModel {
     const incident = props.incidents.find(i => i.id === record.caseId) ?? null;
     const footprint = footprintModel.layers.find(l => l.caseId === incident?.id) ?? null;
     const sectorCodes = entitiesOf(incident?.runSnapshot ?? null).filter(e => e.id === incident?.runSnapshot?.seed.provider || atRiskFacilities(incident!).some(f => f.id === e.id)).flatMap(e => { const idt = object(object(e).idt); const path = text(idt.status === 'below_idt_level' ? idt.parentPath : idt.path); return /^\d+(?:\.\d+)*$/.test(path) ? [path.split('.')[0]!] : []; });
-    return { record, incident, footprint, cascading: hasCascadingImpact(incident, { status: record.status }), elapsed: elapsedMinutes(start(record), props.records.now), sectors: [...new Set([...(record.sectors ?? []), ...sectorCodes])], latestUpdate: null };
+    return { record, incident, footprint, cascading: projections[record.id] ? presentationCascade({...projections[record.id], status:record.status}) : hasCascadingImpact(incident, { status: record.status }), elapsed: elapsedMinutes(start(record), props.records.now), sectors: [...new Set([...(record.sectors ?? []), ...sectorCodes])], latestUpdate: null };
   });
   const allUpdates: C1Update[] = [];
   for (const row of rows) {
@@ -131,6 +135,14 @@ export function c1OverviewModel(props: ScriptedViewProps): C1OverviewModel {
     }
     for (const activity of row.incident?.activity ?? []) allUpdates.push({ record: { ...activity, at: activity.createdAt, text: activity.message, incidentId: row.record.id }, incidentId: row.record.id, time: activity.createdAt, text: activity.message });
   }
+  for (const row of rows) {
+    const analysis=projections[row.record.id]?.analysis;
+    if (analysis?.kind === 'preliminary' && analysis.createdAt) {
+      const at=analysis.createdAt;
+      const update={id:`${row.record.id}:preliminary:${at}`,incidentId:row.record.id,at,text:'Preliminary analysis generated automatically from the recorded incident.'};
+      allUpdates.push({record:update,incidentId:row.record.id,time:at,text:update.text});
+    }
+  }
   allUpdates.sort((a, b) => (timestamp(b.time) - timestamp(a.time) || 0) || a.record.id.localeCompare(b.record.id));
   for (const row of rows) row.latestUpdate = allUpdates.find(u => u.incidentId === row.record.id)?.record ?? null;
   const decisions: C1Decision[] = [];
@@ -138,7 +150,8 @@ export function c1OverviewModel(props: ScriptedViewProps): C1OverviewModel {
     const run = row.incident?.runSnapshot ?? null;
     const eventIds = new Set([...(row.record.linkedEventIds ?? []), ...(row.incident ? [row.incident.eventId] : [])]);
     const observations = new Set([...props.data.events.filter(e => eventIds.has(e.id)), ...(row.incident ? [row.incident.eventSnapshot] : [])].map(e => text(e?.observation)));
-    const records = props.records.decisions.filter(d => linked(d, row));
+    const actual = props.records.decisions.filter(d => linked(d, row));
+    const records = [...actual, ...(props.records.pendingDecisions ?? []).filter(d => linked(d, row) && !actual.some(a => (a.optionId ?? a.id) === (d.optionId ?? d.id) && !pending(a)))];
     const candidates = new Map<string, RecordItem>();
     for (const option of props.reference.responseOptions) if (option.triggers?.eventObservations.some(o => observations.has(o)) || option.triggers?.impactFunctions.some(f => run?.impacts.some(i => i.functionId === f && i.lossOfFunction > 0))) candidates.set(option.id, option);
     // Explicit source-linked requests also work for record-only incidents.
@@ -147,12 +160,18 @@ export function c1OverviewModel(props: ScriptedViewProps): C1OverviewModel {
       const history = records.filter(d => (d.optionId ?? d.id) === id).sort((a, b) => (timestamp(a.at) - timestamp(b.at) || 0));
       if (history.length && !pending(history.at(-1)!)) continue;
       const window = (row.incident ? atRiskFacilities(row.incident) : []).filter(f => record.triggers?.impactFunctions.includes(f.functionId) || record.functionId === f.functionId).map(f => f.windowHours).find(windowPair) ?? (windowPair(record.windowHours) ? record.windowHours : null);
-      decisions.push({ record, row, window, windowLabel: window ? `Beat ${window[0]}–${window[1]} h` : text(record.windowLabel, props.reference.optionTimingLabels[record.id] ?? 'Timing unknown') });
+      const reportedAt = text(row.record.reportedAt) || recordTime({relativeTimeHours: typeof row.record.reportedRelativeHours === 'number' ? row.record.reportedRelativeHours : undefined}, props.data, row.incident);
+      const remaining = typeof record.decideWithinHours === 'number' && reportedAt ? Math.ceil((Date.parse(reportedAt) + record.decideWithinHours * 3600000 - Date.parse(props.records.now)) / 60000) : NaN;
+      const windowLabel = Number.isFinite(remaining) ? remaining <= 0 ? 'Decision overdue' : `${Math.floor(remaining / 60)} h ${remaining % 60} min left` : window ? `Beat ${window[0]}–${window[1]} h` : text(record.windowLabel, props.reference.optionTimingLabels[record.id] ?? 'Timing unknown');
+      decisions.push({ record, row, window, windowLabel, remainingMinutes: Number.isFinite(remaining) ? remaining : undefined,
+        tone: Number.isFinite(remaining) ? remaining <= 60 ? 'red' : remaining <= 180 ? 'amber' : 'green' : 'grey' });
     }
   }
+  decisions.sort((a,b) => (a.remainingMinutes ?? Infinity) - (b.remainingMinutes ?? Infinity) || a.record.id.localeCompare(b.record.id));
   const facilities = rows.flatMap(row => {
-    const items = row.incident ? atRiskFacilities(row.incident) : [];
-    return items.length ? [{ row, items, boilWater: boilWaterLabel(row.incident!.runSnapshot, entitiesOf(row.incident!.runSnapshot), props.reference) ?? '' }] : [];
+    const projection = projections[row.record.id];
+    const items: ModeledFacility[] = projection ? projection.nodes.filter(n => !n.source && !n.notAffected && windowPair(n.windowHours)).map(n => ({id:n.id,label:n.name,functionId:'',state:'at_risk' as const,windowHours:n.windowHours!,coordinates:null})).sort((a,b) => a.windowHours[0]-b.windowHours[0]) : row.incident ? atRiskFacilities(row.incident) : [];
+    return items.length ? [{ row, items, boilWater: text(object(row.record.publicAction).action) || (row.incident ? boilWaterLabel(row.incident.runSnapshot, entitiesOf(row.incident.runSnapshot), props.reference) ?? '' : '') }] : [];
   });
   const earliest = facilities.flatMap(group => group.items.flatMap(item => item.windowHours ? [{ window: item.windowHours, facilityLabel: item.label, row: group.row }] : [])).sort((a, b) => a.window[0] - b.window[0] || a.window[1] - b.window[1])[0] ?? null;
   const affected = new Map<string, number | null>(), probed = new Map<string, number | null>();

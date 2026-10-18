@@ -46,6 +46,13 @@ export function priorityQueue(model: C1OverviewModel, records: RecordsState): { 
       const key = record.optionId ?? record.id, previous = history.get(key);
       if (!previous || (Number.isFinite(stamp(record.at)) ? stamp(record.at) : -Infinity) >= (Number.isFinite(stamp(previous.at)) ? stamp(previous.at) : -Infinity)) history.set(key, record);
     }
+    for (const proposal of (records.pendingDecisions ?? []).filter(linked)) {
+      const key=proposal.optionId ?? proposal.id;
+      if (!history.has(key)) {
+        const resolved=model.decisions.find(d => d.row.record.id === row.record.id && (d.record.optionId ?? d.record.id) === key);
+        if (resolved) history.set(key,{...resolved.record,...proposal,title:resolved.record.title ?? resolved.record.label,dueAt: typeof resolved.remainingMinutes === 'number' ? new Date(Date.parse(records.now) + resolved.remainingMinutes*60000).toISOString() : proposal.dueAt});
+      }
+    }
     const requests = [...history.values()].filter(pending).sort((a, b) => (Number.isFinite(stamp(a.dueAt)) ? stamp(a.dueAt) : Infinity) - (Number.isFinite(stamp(b.dueAt)) ? stamp(b.dueAt) : Infinity) || a.id.localeCompare(b.id));
     const request = requests[0];
     const facility = model.facilities.filter(group => group.row.record.id === row.record.id).flatMap(group => group.items).flatMap(item => validWindow(item.windowHours) ? [{ ...item, windowHours: item.windowHours }] : []).sort((a, b) => a.windowHours[0] - b.windowHours[0] || a.windowHours[1] - b.windowHours[1] || a.id.localeCompare(b.id))[0];

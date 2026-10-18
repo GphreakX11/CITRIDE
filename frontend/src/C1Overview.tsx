@@ -1,4 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { api } from './api.ts';
+import type { ConsequenceProjection } from './consequencesModel.ts';
+import { incidentViewModel } from './incidentViewModel.ts';
 import type { CommandView } from "./commandTypes.ts";
 import { text, type ScriptedViewProps } from "./scriptedTypes.ts";
 import { c1OverviewModel, type C1Incident } from "./c1OverviewModel.ts";
@@ -31,7 +34,15 @@ const age = (at: string, now: string) => {
 };
 /** C1 never derives its totals, panels or expansion state from a selected case. */
 export default function C1Overview(props: Props) {
-  const model = c1OverviewModel(props);
+  const [projections, setProjections] = useState<Record<string, ConsequenceProjection>>({});
+  const projectionIds = props.records.statewideIncidents.filter(r => r.status !== 'closed' && r.modeled).map(r => r.id).sort().join('|');
+  useEffect(() => {
+    let live = true;
+    setProjections({});
+    for (const id of projectionIds.split('|').filter(Boolean)) api<ConsequenceProjection>(`/v1/command/consequences?incidentId=${encodeURIComponent(id)}`).then(value => { if(live) setProjections(old => ({...old,[id]:value})); }).catch(() => {});
+    return () => { live = false; };
+  }, [projectionIds]);
+  const model = c1OverviewModel(props, projections);
   const queue = priorityQueue(model, props.records);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [allFacilities, setAllFacilities] = useState(false);
@@ -48,7 +59,7 @@ export default function C1Overview(props: Props) {
       card?.querySelector("summary")?.focus({ preventScroll: true });
     });
   };
-  const entityFor = (row: C1Incident) => row.incident?.runSnapshot?.seed?.provider ?? row.incident?.contextSnapshot?.provider?.id ?? strings(row.record.nearEntityIds)[0] ?? null;
+  const entityFor = (row: C1Incident) => projections[row.record.id]?.source?.id ?? row.incident?.runSnapshot?.seed?.provider ?? row.incident?.contextSnapshot?.provider?.id ?? strings(row.record.nearEntityIds)[0] ?? null;
   const command = (view: CommandView, row = model.rows[0], entityId?: string) => {
     if (row) {
       persistFocus(row.record.id);
@@ -68,13 +79,13 @@ export default function C1Overview(props: Props) {
     const seen = new Set<string>();
     return group.items.filter(item => !seen.has(item.id) && !!seen.add(item.id)).map(item => ({ item, group }));
   }).sort((a, b) => (a.item.windowHours?.[0] ?? Infinity) - (b.item.windowHours?.[0] ?? Infinity));
-  const displayFacilities = allFacilities ? allFacilityRows : allFacilityRows.slice(0, 3);
+  const displayFacilities = allFacilities ? allFacilityRows : allFacilityRows.filter((item) => allFacilityRows.filter(other => other.group === item.group).indexOf(item) < 3);
   const earliestEntity = earliest && allFacilityRows.find(({ group, item }) => group.row.record.id === earliest.row.record.id && item.label === earliest.facilityLabel)?.item.id;
   return <div className="c1-overview" data-screen="command" data-pending-decisions={model.totals.decisions}>
     <p className="c1-asof">Read-only display · records as of {timeLabel(model.recordsAsOf)}</p>
     <section className="c1-totals" aria-label="Statewide totals">
       <button className="c1-total" onClick={() => { listPanel.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); listPanel.current?.focus({ preventScroll: true }); }}>
-        <strong>{model.totals.active}</strong><span><b>Active incidents</b><small>{model.totals.investigating} under investigation · {model.totals.active - model.totals.investigating} others</small></span><i aria-hidden="true">→</i>
+        <strong>{model.totals.active}</strong><span><b>Active incidents</b><small><Tone status="critical">{model.rows.filter(r => r.record.severity === 'critical').length} critical</Tone> · {model.rows.filter(r => r.record.severity === 'high').length} high · {model.rows.filter(r => !['critical','high'].includes(r.record.severity ?? '')).length} others</small></span><i aria-hidden="true">→</i>
       </button>
       <button className={`c1-total ${model.totals.people && model.totals.people > 0 ? "c1-total-red" : "c1-total-grey"}`} onClick={() => model.mostPeople && command("consequence", model.mostPeople)} disabled={!model.mostPeople}>
         <strong>{model.totals.people === null ? (anyRun ? "Unknown" : "Not yet modeled") : count(model.totals.people)}</strong><span><b>People on unsafe water</b><small>statewide{model.totals.probedPeople !== null ? ` · ${count(model.totals.probedPeople)} more on probed utilities` : " · probe population unknown"}</small></span><i aria-hidden="true">→</i>
@@ -111,7 +122,8 @@ export default function C1Overview(props: Props) {
             const record = row.record, isOpen = expanded === record.id;
             const group = model.facilities.find(item => item.row.record.id === record.id);
             const state = record.status === "open" ? "Under investigation" : words(record.status ?? "unknown");
-            return <details key={record.id} style={c1PulseStyle(record.id)} className={`c1-incident c1-severity-${statusTone(record.severity)}`} data-incident-card={record.id} data-cascading={row.cascading || undefined} open={isOpen} ref={element => { if (element) cards.current.set(record.id, element); else cards.current.delete(record.id); }}>
+            const presentation = incidentViewModel(record, projections[record.id] ?? null, props.records);
+            return <details key={record.id} style={c1PulseStyle(record.id)} className={`c1-incident c1-severity-${statusTone(record.severity)}${record.severity === 'critical' ? ' c1-critical' : ''}`} data-incident-card={record.id} data-cascading={row.cascading || undefined} open={isOpen} ref={element => { if (element) cards.current.set(record.id, element); else cards.current.delete(record.id); }}>
               <summary aria-expanded={isOpen} aria-controls={`c1-details-${record.id}`} onClick={event => { event.preventDefault(); setExpanded(isOpen ? null : record.id); }}>
                 <span className="c1-sector-icon"><InfrastructureIcon kind={infrastructureKind(record)} size={22}/></span>
                 <span className="c1-card-title"><b>{record.title ?? "Untitled incident"}{row.cascading && <span className="c1-cascade-label"><i className="c1-cascade-dot" aria-hidden="true"/>CASCADING IMPACT</span>}</b><small><span className="mono">{record.id}</span> · {record.location?.label ?? "Location not recorded"}</small></span>
@@ -119,10 +131,12 @@ export default function C1Overview(props: Props) {
                 <span className="c1-elapsed mono">{row.elapsed === null ? "Unknown" : formatDuration(row.elapsed)}</span><span className="c1-chevron" aria-hidden="true">›</span>
               </summary>
               {isOpen && <div className="c1-card-body" id={`c1-details-${record.id}`}>
+                {presentation.service && <p className="c1-impact-line">{presentation.service}{group?.items[0] && <> · <Tone window={group.items[0].windowHours}>{planningWindow(group.items[0].windowHours)}</Tone></>}</p>}
+                {presentation.watch.length > 0 && <p className="tone-amber">{presentation.watch.map(w => w.label ?? props.data.entities.find(e => e.id === w.entityId)?.label ?? w.entityId).join(' · ')} · on watch, same campaign</p>}
                 <div className="c1-detail-facts"><span>Sectors <b>{row.sectors.map(code => `${code} ${idtSectorName(code) ?? "Unclassified sector"}`).join(" · ") || "Not recorded"}</b></span></div>
-                {!row.incident?.runSnapshot ? <p className="tone-grey">Not yet modeled</p> : <p className="c1-impact-line">{row.incident.runSnapshot.seed?.lossType === "unsafe_water" ? `${count(row.footprint?.utility?.people ?? null)} people on unsafe water` : words(row.incident.runSnapshot.seed?.lossType ?? "Captured impact")}{group?.items[0]?.windowHours && <> · earliest window <Tone window={group.items[0].windowHours}>{planningWindow(group.items[0].windowHours)}</Tone></>}{!!row.footprint?.probed.length && <> · {row.footprint.probed.length} utilities probed</>}</p>}
+                {!row.incident?.runSnapshot ? (projections[record.id]?.analysis ? null : <p className="tone-grey">Not yet modeled</p>) : <p className="c1-impact-line">{row.incident.runSnapshot.seed?.lossType === "unsafe_water" ? `${count(row.footprint?.utility?.people ?? null)} people on unsafe water` : words(row.incident.runSnapshot.seed?.lossType ?? "Captured impact")}{group?.items[0]?.windowHours && <> · earliest window <Tone window={group.items[0].windowHours}>{planningWindow(group.items[0].windowHours)}</Tone></>}{!!row.footprint?.probed.length && <> · {row.footprint.probed.length} utilities probed</>}</p>}
                 <p className="c1-last-update"><b>Latest analyst update</b> {row.latestUpdate ? <>{activityDisplayText(String(row.latestUpdate.text ?? row.latestUpdate.message ?? ""))} <small>{timeLabel(String(row.latestUpdate.at ?? row.latestUpdate.createdAt ?? ""))}</small></> : "No analyst update recorded."}</p>
-                <div className="c1-actions"><button onClick={() => command("cop", row)}>C2 Incident →</button>{row.incident?.runSnapshot && <><button onClick={() => command("cyber", row)}>C3 Attack →</button><button onClick={() => command("consequence", row)}>C4 Impact →</button></>}{row.incident ? <button className="c1-analyst-link" onClick={() => analyst("case-file", row)}>Case file in Analyst ↗</button> : <button className="c1-analyst-link" onClick={() => analyst("command", row)}>Alerts in Analyst ↗</button>}</div>
+                <div className="c1-actions"><button onClick={() => command("cop", row)}>C2 Incident →</button>{(row.incident?.runSnapshot || projections[record.id]?.analysis) && <><button onClick={() => command("cyber", row)}>C3 Attack →</button><button onClick={() => command("consequence", row)}>C4 Impact →</button></>}{row.incident ? <button className="c1-analyst-link" onClick={() => analyst("case-file", row)}>Case file in Analyst ↗</button> : <button className="c1-analyst-link" onClick={() => analyst("command", row)}>Alerts in Analyst ↗</button>}</div>
               </div>}
             </details>;
           })}</div>
@@ -131,11 +145,11 @@ export default function C1Overview(props: Props) {
         </section>
         <section className="c1-panel" aria-labelledby="c1-decisions-heading">
           <div className="c1-panel-heading"><h2 id="c1-decisions-heading">Decisions waiting on the Chief</h2><small>All incidents</small></div>
-          {model.decisions.map(decision => <button className="c1-action-row" key={`${decision.row.record.id}:${decision.record.id}`} onClick={() => command("leadership", decision.row)}><span><b>{decision.record.title ?? decision.record.label ?? text(decision.record.optionLabel, "Recorded decision")}</b><small className="mono">{decision.row.record.id}</small></span><span><Tone {...(decision.window ? { window: decision.window } : { status: "waiting_on_chief" })}>{decision.windowLabel}</Tone><i>C6 →</i></span></button>)}
+          {model.decisions.map(decision => <button className="c1-action-row" key={`${decision.row.record.id}:${decision.record.id}`} onClick={() => command("leadership", decision.row)}><span><b>{decision.record.title ?? decision.record.label ?? text(decision.record.optionLabel, "Recorded decision")}</b><small className="mono">{decision.row.record.id}</small></span><span><span className={`tone-${decision.tone ?? "grey"}`}>{decision.windowLabel}</span><i>C6 →</i></span></button>)}
           {!model.decisions.length && <p className="tone-grey">No decisions waiting on the Chief.</p>}
         </section>
         <section className="c1-panel" aria-labelledby="c1-facilities-heading">
-          <div className="c1-panel-heading"><h2 id="c1-facilities-heading">Critical facilities at risk</h2><small>All incidents · modeled</small></div>
+          <div className="c1-panel-heading"><h2 id="c1-facilities-heading">Critical infrastructure at risk</h2><small>All incidents · modeled</small></div>
           <div className={allFacilities ? "c1-facilities-scroll" : ""}>{model.facilities.map(group => {
             const items = displayFacilities.filter(item => item.group === group);
             return !!items.length && <div className="c1-facility-group" key={group.row.record.id}><div className="c1-facility-context"><span><b className="mono">{group.row.record.id}</b> · {group.row.record.title}</span><button onClick={() => command("consequence", group.row)}>C4 →</button></div>{items.map(({ item }) => <button className="c1-action-row" data-facility={item.id} key={item.id} onClick={() => command("consequence", group.row, item.id)}><span><b>{item.label}</b><small className="mono">{group.row.record.id}</small></span><span><Tone window={item.windowHours}>{planningWindow(item.windowHours)}</Tone><i>C4 →</i></span></button>)}{group.boilWater && <p className="c1-boil-water tone-grey">{group.boilWater}</p>}</div>;

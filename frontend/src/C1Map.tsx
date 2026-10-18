@@ -5,7 +5,7 @@ import { TEXAS_PATH, TEXAS_BOUNDARY_SOURCE } from "./texasOutline.ts";
 import { InfrastructureIcon } from "./InfrastructureIcon.tsx";
 import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons.ts";
 import { statusTone } from "./statusTone.ts";
-import { C1_CITIES, c1TexasLonLat, c1FittedPoint, c1IncidentLayout, c1PlaceLabels } from "./c1MapLayout.ts";
+import { C1_CITIES, c1TexasLonLat, c1FittedPoint, c1IncidentLayout, c1PlaceLabels, c1GeographicAnchor } from "./c1MapLayout.ts";
 import "./c1-map.css";
 import { c1PulseStyle } from "./c1Pulse.ts";
 
@@ -37,8 +37,8 @@ export function C1Map({ model, cascadingIds, riskCaseIds, onPick }: C1MapProps) 
   }, []);
   const rows = useMemo(() => model.rows.filter(row => row.status?.toLowerCase() !== "closed"), [model.rows]);
   const { markers, capacityExceeded } = useMemo(() => c1IncidentLayout(rows.flatMap(row => {
-    const point = row.location?.schematic;
-    return point && Number.isFinite(point.x) && Number.isFinite(point.y) ? [{ id: row.id, ...point }] : [];
+    const point = c1GeographicAnchor(row);
+    return point ? [point] : [];
   }), size.width, size.height), [rows, size]);
   const byId = new Map(markers.map(marker => [marker.id, marker]));
   const layers = model.layers.flatMap(layer => {
@@ -99,7 +99,7 @@ export function C1Map({ model, cascadingIds, riskCaseIds, onPick }: C1MapProps) 
         {!fallback && <>
           {layers.filter(({ layer }) => layer.utility && layer.run && (riskCaseIds ? riskCaseIds.has(layer.caseId) : layer.facilities.some(facility => facility.id !== layer.utility!.id && facility.windowHours))).map(({ layer, marker }) => <g key={layer.caseId} data-service-area-case={layer.caseId} aria-label={`${layer.utility!.label} · Service area at risk`}><circle cx={marker.x} cy={marker.y} r="66" fill={`url(#${uid}-glow)`}/><circle cx={marker.x} cy={marker.y} r="44" className="c1-map-service"/></g>)}
           {probes.map(probe => <g key={probe.id} className="c1-map-probe" data-probe-case={probe.caseId}><title>{`${probe.label} · recorded position, approximate display`}</title><line x1={probe.source.x} y1={probe.source.y} x2={probe.x} y2={probe.y}/><circle cx={probe.x} cy={probe.y} r="8"/></g>)}
-          {markers.map(marker => { const row = rows.find(item => item.id === marker.id)!; const cascading = cascade(row.id, row.caseId); return <g key={row.id} className={`c1-map-marker c1-map-tone-${statusTone(row.severity)}`} data-incident-pin={row.id} data-cascading={cascading || undefined} transform={`translate(${marker.x} ${marker.y})`} role="button" tabIndex={0} aria-label={`${row.title ?? "Untitled incident"} · ${row.id} · ${severity(row.severity)}${cascading ? " · CASCADING IMPACT" : ""}`} onClick={() => onPick(row.id)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onPick(row.id); } }}>
+          {markers.map(marker => { const row = rows.find(item => item.id === marker.id)!; const cascading = cascade(row.id, row.caseId); return <g key={row.id} className={`c1-map-marker c1-map-tone-${statusTone(row.severity)}${row.severity === "critical" ? " c1-map-critical" : ""}`} data-incident-pin={row.id} data-cascading={cascading || undefined} transform={`translate(${marker.x} ${marker.y})`} role="button" tabIndex={0} aria-label={`${row.title ?? "Untitled incident"} · ${row.id} · ${severity(row.severity)}${cascading ? " · CASCADING IMPACT" : ""}`} onClick={() => onPick(row.id)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onPick(row.id); } }}>
             <title>{`${row.title ?? "Untitled incident"} · ${row.id}${cascading ? " · CASCADING IMPACT" : ""}`}</title>
             {cascading && <g aria-hidden="true" className="c1-map-cascade" style={c1PulseStyle(row.id)}><circle r="24" className="c1-map-cascade-ring"/><circle r="24" className="c1-map-cascade-ring c1-map-cascade-ring-second"/></g>}
             <circle r="22" className="c1-map-marker-disc"/>
@@ -111,7 +111,7 @@ export function C1Map({ model, cascadingIds, riskCaseIds, onPick }: C1MapProps) 
     </div>
     {listRows.length > 0 && <div className="c1-map-fallback"><p>{fallback ? "Map labels cannot fit safely at this size. Select an incident below." : "Incident positions not recorded:"}</p><ul>{listRows.map(row => <li key={row.id}><button type="button" className={`c1-map-list-button c1-map-tone-${statusTone(row.severity)}`} onClick={() => onPick(row.id)}><InfrastructureIcon kind={infrastructureKind(row)} size={22}/><span>{row.title ?? "Untitled incident"}<small>{row.id} · {severity(row.severity)}{cascade(row.id, row.caseId) ? " · CASCADING IMPACT" : ""}</small></span></button></li>)}</ul></div>}
     <div className="c1-map-legend" aria-label="Map legend">
-      <span className="c1-map-tone-red"><i className="c1-map-key-ring"/>High</span><span className="c1-map-tone-amber"><i className="c1-map-key-ring"/>Medium</span><span className="c1-map-tone-blue"><i className="c1-map-key-ring"/>Low</span><span><i className="c1-map-key-probe"/>Same attacker probed</span><span><i className="c1-map-key-service"/>Service area at risk</span><span><i className="c1-map-key-cascade"/>Cascading impact (pulsing)</span>
+      <span className="c1-map-tone-red"><i className="c1-map-key-ring c1-map-key-critical"/>Critical</span><span className="c1-map-tone-red"><i className="c1-map-key-ring"/>High</span><span className="c1-map-tone-amber"><i className="c1-map-key-ring"/>Medium</span><span className="c1-map-tone-blue"><i className="c1-map-key-ring"/>Low</span><span><i className="c1-map-key-probe"/>Same attacker probed</span><span><i className="c1-map-key-service"/>Service area at risk</span><span><i className="c1-map-key-cascade"/>Cascading impact (pulsing)</span>
     </div>
     <div className="c1-map-pictograms" aria-label="Infrastructure pictograms">{[...new Set(rows.map(infrastructureKind))].map(kind => <span key={kind}><InfrastructureIcon kind={kind} size={16}/>{infrastructureLabel(kind)}</span>)}</div>
     <p className="c1-map-caption">Approximate positions · click an incident to select it</p>

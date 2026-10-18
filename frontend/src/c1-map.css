@@ -17,6 +17,8 @@
 .c1-map-tone-green { --c1-map-tone: var(--green-text); }
 .c1-map-marker { color: var(--c1-map-tone); cursor: pointer; outline: none; }
 .c1-map-marker-disc { fill: var(--bg-header); stroke: currentColor; stroke-width: 2.5px; }
+.c1-map-critical .c1-map-marker-disc { stroke-width: 4px; }
+.c1-map-key-critical { border-width: 3px; }
 .c1-map-marker:hover .c1-map-marker-disc, .c1-map-marker:focus-visible .c1-map-marker-disc { fill: var(--surface-2); stroke-width: 4px; }
 .c1-map-marker:focus-visible .c1-map-marker-disc { stroke-dasharray: 5 3; }
 .c1-map-marker .infrastructure-icon { pointer-events: none; }

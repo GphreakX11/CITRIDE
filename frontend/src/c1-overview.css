@@ -1,4 +1,6 @@
 /* C1 only. Palette and font sizes come from theme.css. */
+.c1-critical .c1-sector-icon{background:var(--critical-solid);color:white;border:2px solid var(--red-text);border-radius:50%}
+.c1-critical .c1-cascade-dot{background:var(--red)}
 .c1-overview{display:grid;gap:16px;color:var(--text);font-size:var(--fs-body);line-height:1.4}
 .c1-overview button{font:inherit}
 .c1-asof{margin:-38px 0 0;text-align:right;color:var(--muted);font-size:var(--fs-small)}
