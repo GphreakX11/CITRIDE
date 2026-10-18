@@ -33,6 +33,8 @@ code = code.replace(/from\s+["']([^"']+)["']/g, (_match, spec) => {
       "./ScriptedAnalystViews",
       "./NetworkEvidence",
       "./ResetDemoControl",
+      "./OperationsClock",
+      "./IncidentContextBar",
     ].includes(spec)
   )
     target = moduleData(

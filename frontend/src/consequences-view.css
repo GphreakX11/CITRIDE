@@ -418,7 +418,41 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* The phone briefing precedes technical detail without changing the desktop view. */
+.c4-phone-brief {
+  display: none;
+}
 @media (max-width: 650px) {
+  .command-workspace .c4-view {
+    padding: 0;
+    gap: 12px;
+  }
+  .c4-phone-brief {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  .c4-phone-brief > strong {
+    font-size: var(--fs-card-title);
+  }
+  .c4-phone-brief > button,
+  .c4-picker summary,
+  .c4-picker button {
+    min-height: 44px;
+  }
+  .c4-heading > div { min-width: 0; width: 100%; }
+  .c4-heading { gap: 8px; }
+  /* The live operations clock remains in the shell; do not repeat it here. */
+  .c4-heading time,
+  .c4-heading .c4-badge { display: none; }
+  .c4-picker > div { width: 100%; max-height: 55dvh; overflow-y: auto; }
+  .c4-picker summary { overflow-wrap: anywhere; }
+  .c4-banner { gap: 6px; padding: 10px; }
+  .c4-banner button { min-height: 44px; }
   .c4-view {
     padding: 16px;
   }

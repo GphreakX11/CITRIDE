@@ -126,6 +126,23 @@ export function ConsequencesContent({
   ];
   return (
     <>
+      <section className="c4-phone-brief" aria-label="Impact and next action">
+        <small>Modeled · not observed outages</small>
+        <strong>
+          {value.atRisk == null
+            ? "Impact count not recorded"
+            : `${value.atRisk} infrastructure ${value.atRisk === 1 ? "asset" : "assets"} at risk`}
+        </strong>
+        <span>Earliest modeled window: {hours(value.earliestWindow)}</span>
+        <small>
+          {reviewed ? "Analyst reviewed" : analysis.kind === "reference_preview"
+            ? "Reference projection · not saved or analyst reviewed"
+            : "Preliminary · not analyst reviewed"}
+        </small>
+        <button type="button" onClick={onAnalyst}>
+          {reviewed ? "Open in Analyst ↗" : "Review in Analyst ↗"}
+        </button>
+      </section>
       <div className={`c4-banner ${reviewed ? "reviewed" : ""}`}>
         <strong>
           {reviewed ? "ANALYSIS REVIEWED" : analysis.kind === "reference_preview" ? "READ-ONLY REFERENCE PROJECTION" : "PRELIMINARY ESTIMATE"}

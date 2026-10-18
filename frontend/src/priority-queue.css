@@ -1,0 +1,22 @@
+/* C1 priority queue only: compact evidence cards, no global layout overrides. */
+.c1-priority .c1-panel-heading { margin-bottom: 6px; }
+.c1-priority-basis { margin: 0 0 12px; color: var(--muted); font-size: var(--fs-small); }
+.c1-priority-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.c1-priority-list > li { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); overflow-wrap: anywhere; }
+.c1-priority-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 8px; }
+.c1-priority-title b { font-size: var(--fs-small); color: var(--text-strong); }
+.c1-priority-evidence { align-self: flex-start; font-size: var(--fs-chip); color: var(--blue-text); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; }
+.c1-priority-list p { margin: 0; font-size: var(--fs-small); }
+.c1-priority-list dl { display: grid; gap: 3px; margin: 0 0 4px; font-size: var(--fs-small); }
+.c1-priority-list dl > div { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 6px; }
+.c1-priority-list dt { color: var(--muted); }
+.c1-priority-list dd { margin: 0; }
+.c1-overview .c1-priority button { min-height: 44px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--blue-text); cursor: pointer; font-size: var(--fs-small); white-space: normal; }
+.c1-priority-list button { margin-top: auto; align-self: flex-start; }
+.c1-overview .c1-priority-more { margin-top: 10px; text-align: left; }
+@media (max-width: 800px) {
+  .c1-priority-list { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+}
+@media (max-width: 650px) {
+  .c1-priority { order: -1; }
+}

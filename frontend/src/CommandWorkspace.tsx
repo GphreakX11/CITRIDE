@@ -33,6 +33,7 @@ import { defaultAlertPriority } from "./analystAlerts";
 import { caseDisplayId } from "./caseFilePresentation";
 import { displayText } from "./presentation";
 import OperationsClock from "./OperationsClock";
+import IncidentContextBar from "./IncidentContextBar";
 import {
   potentialScope,
   potentialRequests,
@@ -725,19 +726,17 @@ export default function CommandWorkspace({
       ? null
       : document.getElementById("selected-incident-context");
   const selectedSource = selected
-    ? records?.statewideIncidents?.find(
-        (record) =>
-          record.caseId === selected.id ||
-          record.linkedEventIds?.includes(selected.eventId),
-      )
+    ? records?.statewideIncidents?.find(record => record.caseId === selected.id)
+      ?? records?.statewideIncidents?.find(record =>
+        !record.caseId && record.linkedEventIds?.includes(selected.eventId))
     : null;
   const statewideContext = mode === "command" && view === "command" && records && reference
     ? c1OverviewModel({ data, incidents, selected: null, view, records, reference })
     : null;
   const incidentLine = statewideContext
     ? `Statewide · ${statewideContext.totals.active} open incidents · ${statewideContext.totals.investigating} under investigation · ${statewideContext.rows.filter(row => row.cascading).length} cascading`
-    : mode === "command" && view === "cop"
-    ? null // IncidentView owns its record-driven header context.
+    : mode === "command" && (view === "cop" || view === "consequence")
+    ? null // Record-owned views can display references without a saved case.
     : selected
     ? [
         caseDisplayId(selected, records),
@@ -748,6 +747,31 @@ export default function CommandWorkspace({
         .map((part) => displayText(String(part)))
         .join(" · ")
     : "No incident selected";
+  // C1 remains statewide. C2/C4 own record selection, including reference
+  // scenarios without saved cases; never overlay an unrelated saved-case banner.
+  const showIncidentContextBar = !(mode === "command" && (view === "command" || view === "cop" || view === "consequence"));
+  const [contextSelectionRevision, setContextSelectionRevision] = useState(0);
+  const selectedIncidentContextBar = showIncidentContextBar ? (
+    <IncidentContextBar
+      selected={selected}
+      incidents={incidents}
+      location={[selectedSource?.location?.label, selectedSource?.location?.region].filter(Boolean).join(" · ") || selectedSource?.locationLabel}
+      locked={workspaceNavigationLocked(loaded, loading, busy, uncertain)}
+      onSelect={(id) => {
+        if (writing.current || workspaceNavigationLocked(loaded, loading, busy, uncertain)) return;
+        // An explicit saved-case choice supersedes URL-owned statewide focus.
+        // Do this before children mount: C4 prefers incidentId over selectedId.
+        if (typeof window !== "undefined" && window.location?.href) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("incidentId");
+          url.searchParams.delete("incident");
+          window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+        }
+        setContextSelectionRevision(revision => revision + 1);
+        onSelect(id);
+      }}
+    />
+  ) : null;
   const openCaseFromAlert = (
     <button
       className="button primary"
@@ -783,7 +807,8 @@ export default function CommandWorkspace({
         aria-busy={loading || busy}
       >
         {commandHeaderContext}
-        {incidentContext && createPortal(incidentLine, incidentContext)}
+        {!showIncidentContextBar && incidentContext && createPortal(incidentLine, incidentContext)}
+        {selectedIncidentContextBar}
         {error && (
           <div className="command-error" role="alert">
             <strong>Couldn't refresh — saved picture may be stale.</strong>
@@ -808,6 +833,7 @@ export default function CommandWorkspace({
           </section>
         ) : (
           <CommandCenterViews
+            key={view === "consequence" ? contextSelectionRevision : "record-owned"}
             records={records ?? undefined}
             reference={reference ?? undefined}
             lastPlanningRun={
@@ -897,6 +923,7 @@ export default function CommandWorkspace({
         );
         return headerContext ? createPortal(controls, headerContext) : controls;
       })()}
+      {selectedIncidentContextBar}
       {uncertain &&
         (pending.current || pendingRun.current || pendingPotential.current) && (
           <section className="command-panel" aria-label="Pending save recovery">
@@ -970,6 +997,7 @@ export default function CommandWorkspace({
               ["coordination", "uctf"].includes(view)
             ) && (
               <CommandReadouts
+                key={contextSelectionRevision}
                 records={records}
                 lastPlanningRun={
                   lastPlanningCaseId === selectedId ? lastPlanningRun : null

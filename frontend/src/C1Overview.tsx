@@ -13,6 +13,8 @@ import { idtSectorName } from "./idt.ts";
 import { activityDisplayText } from "./caseFilePresentation.ts";
 import { incidentFocusLocation } from "./incidentFocus.ts";
 import "./c1-overview.css";
+import "./priority-queue.css";
+import { priorityQueue } from "./priorityQueue.ts";
 import { c1PulseStyle } from "./c1Pulse.ts";
 
 interface Props extends ScriptedViewProps {
@@ -30,6 +32,7 @@ const age = (at: string, now: string) => {
 /** C1 never derives its totals, panels or expansion state from a selected case. */
 export default function C1Overview(props: Props) {
   const model = c1OverviewModel(props);
+  const queue = priorityQueue(model, props.records);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [allFacilities, setAllFacilities] = useState(false);
   const cards = useRef(new Map<string, HTMLDetailsElement>());
@@ -82,6 +85,19 @@ export default function C1Overview(props: Props) {
       <button className={`c1-total ${model.totals.decisions > 0 ? "c1-total-amber" : "c1-total-grey"}`} onClick={() => command("leadership", model.decisions[0]?.row ?? model.rows[0])}>
         <strong>{model.totals.decisions}</strong><span><b>Decisions waiting</b><small>on the Chief · all incidents</small></span><i aria-hidden="true">→</i>
       </button>
+    </section>
+    <section className="c1-panel c1-priority" aria-labelledby="c1-priority-heading" aria-describedby="c1-priority-basis">
+      <div className="c1-panel-heading"><h2 id="c1-priority-heading">What needs attention?</h2><small>{queue.items.length} of {queue.total} open incidents</small></div>
+      <p id="c1-priority-basis" className="c1-priority-basis">Review order: saved requests → modeled windows → provisional options → severity.</p>
+      <ol className="c1-priority-list">{queue.items.map(item => <li key={item.row.record.id}>
+        <div className="c1-priority-title"><b>{item.row.record.title || "Untitled incident"}</b><small className="mono">{item.row.incident?.id === item.row.record.id ? "Saved case" : item.row.record.id}</small></div>
+        <span className="c1-priority-evidence">{item.evidence}</span>
+        <p>{item.reason}</p>
+        <dl><div><dt>Owner</dt><dd>{item.owner}</dd></div><div><dt>Timing</dt><dd>{item.timing}</dd></div></dl>
+        <button onClick={() => command(item.view, item.row, item.entityId)} aria-label={`Review ${item.row.record.title || item.row.record.id} in ${item.view === "leadership" ? "Leadership brief" : item.view === "consequence" ? "Consequences" : "Incident view"}`}>{item.view === "leadership" ? "Review in C6" : item.view === "consequence" ? "Review in C4" : "Review in C2"} →</button>
+      </li>)}</ol>
+      {!queue.total && <p className="tone-grey">No open incidents in the priority queue.</p>}
+      {queue.remaining > 0 && <button className="c1-priority-more" onClick={() => { listPanel.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); listPanel.current?.focus({ preventScroll: true }); }}>{queue.remaining} more open {queue.remaining === 1 ? "incident" : "incidents"} · View incident register →</button>}
     </section>
     <div className="c1-columns">
       <section className="c1-panel c1-map-panel" aria-labelledby="c1-map-heading">

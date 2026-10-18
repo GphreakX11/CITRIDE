@@ -140,6 +140,30 @@ test("record-driven C4 includes missing-data, evidence, advisory and no place as
   );
   assert.match(html, /not yet reviewed by an analyst/);
 });
+test("phone briefing puts grounded impact and next action before technical detail", () => {
+  const html = render(fixture);
+  const start = html.indexOf('aria-label="Impact and next action"');
+  assert.ok(start >= 0, "compact briefing exists");
+  assert.ok(start < html.indexOf('class="c4-asset"'));
+  const brief = html.slice(start, html.indexOf('</section>', start));
+  assert.match(brief, /1 infrastructure asset at risk/);
+  assert.match(brief, /1–4 h/);
+  assert.match(brief, /Modeled · not observed outages/);
+  assert.match(brief, /Review in Analyst/);
+  assert.match(brief, /Preliminary · not analyst reviewed/);
+});
+test("phone briefing preserves unknown impact, zero and reference provenance", () => {
+  function brief(value) {
+    const html = render(value);
+    const start = html.indexOf('aria-label="Impact and next action"');
+    return html.slice(start, html.indexOf('</section>', start));
+  }
+  assert.match(brief({ ...fixture, atRisk: undefined, earliestWindow: null }), /Impact count not recorded/);
+  assert.match(brief({ ...fixture, atRisk: 0 }), /0 infrastructure assets at risk/);
+  const ref = brief({ ...fixture, analysis: { ...fixture.analysis, kind: "reference_preview" } });
+  assert.match(ref, /Reference projection · not saved or analyst reviewed/);
+  assert.doesNotMatch(ref, /ANALYSIS REVIEWED/);
+});
 test("reviewed banner and modeled colors are independent", () => {
   const html = render({
     ...fixture,

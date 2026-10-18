@@ -37,7 +37,7 @@ async function compile(name) {
     else if (s === "./api" || s === "./api.ts") t = apiUrl;
     else if (
       s.startsWith(".") &&
-      /Views$|Readouts$|Casework$|EntityProfile$|ResetDemoControl$/.test(s)
+      /Views$|Readouts$|Casework$|EntityProfile$|ResetDemoControl$|OperationsClock$|IncidentContextBar$/.test(s)
     )
       t = mod(
         `export default function ${s.slice(2)}(){return null}export function LateTasks(){return null}export function ConfirmDialog(){return null}`,

@@ -358,9 +358,11 @@ async function workspace(mode = "analyst", view = "command") {
     if (url === "/v1/reference") return {};
     throw new Error(`Unexpected request ${url}`);
   });
+  const props = { ...workspaceProps, mode, view };
+  props.onSelect = id => { props.selectedId = id; };
   const render = () => {
     hooks.reset();
-    return Workspace({ ...workspaceProps, mode, view });
+    return Workspace(props);
   };
   render();
   await hooks.callbacks[0]();
@@ -402,7 +404,7 @@ test("casework controls move to header; refresh, download, reset and new-case ca
   delete globalThis.document;
 });
 
-test("command context shows source display ID/title/provider, not a storage identifier", async () => {
+test("command context uses the saved-case bar instead of the obsolete context portal", async () => {
   globalThis.document = { getElementById: (id) => ({ id }) };
   const { render } = await workspace("command", "cyber");
   const tree = render();
@@ -411,12 +413,67 @@ test("command context shows source display ID/title/provider, not a storage iden
       n.type === "portal" &&
       n.props.container.id === "selected-incident-context",
   );
-  assert.equal(text(context), "TX-26-184 · Source incident · utility-a");
-  assert.ok(!text(context).includes("watershed"));
+  assert.equal(context, undefined, "no duplicate long context portal");
+  const bar = component(tree, "IncidentContextBar");
+  assert.ok(bar);
+  assert.equal(bar.props.selected.id, "watershed");
+  assert.equal(bar.props.selected.title, "Saved source case");
+  assert.equal(bar.props.selected.priority, "high");
+  assert.equal(bar.props.selected.status, "open");
+  assert.equal(bar.props.selected.contextSnapshot.provider.label, "utility-a");
+  assert.deepEqual(bar.props.incidents.map(item => item.id), ["watershed"]);
+  assert.equal(bar.props.locked, false);
+  assert.equal(typeof bar.props.onSelect, "function");
   const liveClock = nodes(tree).find((n) => n.type?.name === "OperationsClock");
   assert.ok(liveClock, "Command header mounts a ticking operations clock");
   assert.equal(liveClock.props.timeZone, "America/Chicago");
   delete globalThis.document;
+});
+
+for (const mode of ["command", "analyst"]) {
+  test(`${mode}: explicit context change and clear discard stale statewide URL focus`, async () => {
+    const originalWindow = globalThis.window;
+    let current = new URL("http://local.invalid/?incidentId=old&incident=old&mode=" + mode + "#keep");
+    globalThis.window = {
+      get location() { return current; },
+      history: { replaceState(_state, _title, next) { current = new URL(next, current); } },
+    };
+    try {
+      const { render } = await workspace(mode, mode === "command" ? "cyber" : "consequence");
+      let tree = render();
+      const childName = mode === "command" ? "CommandCenterViews" : "CommandReadouts";
+      const firstKey = component(tree, childName).key;
+      component(tree, "IncidentContextBar").props.onSelect("watershed");
+      assert.equal(current.searchParams.has("incidentId"), false);
+      assert.equal(current.searchParams.has("incident"), false);
+      assert.equal(current.hash, "#keep");
+      assert.equal(current.searchParams.get("mode"), mode);
+      tree = render();
+      if (mode === "analyst") assert.notEqual(component(tree, childName).key, firstKey, "reset cached URL-owned focus even for the same saved case");
+      current.searchParams.set("incidentId", "old-again");
+      current.searchParams.set("incident", "old-again");
+      component(tree, "IncidentContextBar").props.onSelect(null);
+      assert.equal(current.searchParams.has("incidentId"), false);
+      assert.equal(current.searchParams.has("incident"), false);
+      tree = render();
+      assert.equal(component(tree, "IncidentContextBar").props.selected, null);
+      assert.equal(component(tree, childName).props.selected, null);
+    } finally { globalThis.window = originalWindow; }
+  });
+}
+
+test("C4 keeps its own projected record identity rather than an unrelated saved-case bar", async () => {
+  const { render } = await workspace("command", "consequence");
+  const tree = render();
+  assert.equal(component(tree, "IncidentContextBar"), undefined);
+  assert.ok(component(tree, "CommandCenterViews"));
+});
+
+test("C2 retains its own record selection without the shared saved-case bar", async () => {
+  const { render } = await workspace("command", "cop");
+  const tree = render();
+  assert.equal(component(tree, "IncidentContextBar"), undefined);
+  assert.equal(component(tree, "CommandCenterViews").key, "record-owned");
 });
 
 test("saved notifications use a short-lived toast, never the old full-width banner", async () => {

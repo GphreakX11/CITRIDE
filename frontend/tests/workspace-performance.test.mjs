@@ -14,7 +14,7 @@ code=code.replace(/from\s+["']([^"']+)["']/g,(_m,s)=>{
  let target;
  if(s==='react')target=hooksUrl;
  else if(s==='./api')target=apiUrl;
- else if(['./CommandCasework','./CommandReadouts','./CommandCenterViews','./AnalystEntityProfile','./ScriptedAnalystViews','./NetworkEvidence','./ResetDemoControl'].includes(s))target=mod(`export default function ${s.slice(2)}(){return null};export function LateTasks(){return null};export function ConfirmDialog(){return null}`);
+ else if(['./CommandCasework','./CommandReadouts','./CommandCenterViews','./AnalystEntityProfile','./ScriptedAnalystViews','./NetworkEvidence','./ResetDemoControl','./OperationsClock','./IncidentContextBar'].includes(s))target=mod(`export default function ${s.slice(2)}(){return null};export function LateTasks(){return null};export function ConfirmDialog(){return null}`);
  else if(s.startsWith('.')){const u=new URL(/\.[cm]?[jt]s$/.test(s)?s:s+'.ts',source);assert.ok(existsSync(u));target=u.href;}
  else target=import.meta.resolve(s);
  return `from ${JSON.stringify(target)}`;

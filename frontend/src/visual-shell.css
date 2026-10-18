@@ -341,9 +341,21 @@
 
   .app-shell[data-mode] > .shell-header {
     grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    padding: 16px;
+    gap: 6px;
+    padding: 8px 12px;
+    min-height: 0;
   }
+
+  .shell-header .shell-subtitle { display: none; }
+  .shell-header .brand { font-size: var(--fs-card-title); }
+  .shell-header .brand-symbol { width: 24px; height: 28px; }
+  .shell-header .mobile-menu { width: 44px; height: 44px; }
+  .shell-header .workspace-mode-switch button { min-height: 44px; padding: 8px 16px; }
+  .shell-header .shell-header-context { gap: 4px 10px; justify-content: center; }
+  .shell-header-context .sample-data { border: 0; padding: 0; font-size: var(--fs-chip); }
+  .app-shell.command-mode .content { padding: 12px; }
+  .app-shell.command-mode .page-heading { margin-bottom: 12px; }
+  .app-shell.command-mode .page-heading h1 { font-size: var(--fs-card-title); }
 
   .shell-header .mobile-menu {
     display: inline-flex;
