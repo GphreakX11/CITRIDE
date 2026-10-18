@@ -34,6 +34,7 @@ export interface ConsequenceProjection {
   incident: ConsequenceIncident | null;
   analysis: null | {
     kind: string;
+    request?: { horizonHours: number };
     createdAt: string;
     computedAt?: string;
     modelVersion: string;
@@ -79,6 +80,8 @@ export interface ConsequenceProjection {
 }
 export const missing = "Not recorded for this asset";
 export function hours(value?: Hours): string {
+  if (value && value[0] >= 48 && value.every(v => v % 24 === 0))
+    return `${value[0] / 24}–${value[1] / 24} days`;
   return value ? `${value[0]}–${value[1]} h` : missing;
 }
 export function windowTone(value?: Hours): string {
@@ -114,5 +117,8 @@ export function elapsedLabel(timestamp: string, now: number) {
     0,
     Math.floor((now - Date.parse(timestamp)) / 60000),
   );
-  return Number.isFinite(minutes) ? `${minutes} min ago` : "Time not recorded";
+  if (!Number.isFinite(minutes)) return "Time not recorded";
+  if (minutes >= 1440) return `${Math.floor(minutes / 1440)} days ago`;
+  if (minutes >= 60) return `${Math.floor(minutes / 60)} h ago`;
+  return `${minutes} min ago`;
 }

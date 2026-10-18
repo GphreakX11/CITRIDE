@@ -736,7 +736,7 @@ export default function App() {
           </div>
         )}
         <div className="content">
-          <div className="page-heading">
+          <div className="page-heading" style={mode === "command" && view === "consequence" ? { display: "none" } : undefined}>
             <div>
               {!commandView && (
                 <div className="eyebrow">

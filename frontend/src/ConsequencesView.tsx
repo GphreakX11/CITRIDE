@@ -59,13 +59,14 @@ export function ConsequencesContent({
       (a, b) =>
         (a.windowHours?.[0] ?? Infinity) - (b.windowHours?.[0] ?? Infinity),
     );
-  const focus = value.nodes.find((n) => n.id === selected);
   const risk = value.nodes
     .filter((n) => n.impactCount && !n.source)
     .sort(
       (a, b) =>
         (a.windowHours?.[0] ?? Infinity) - (b.windowHours?.[0] ?? Infinity),
     );
+  const focus = value.nodes.find((n) => n.id === selected) ?? risk[0];
+  const timelineHours = Math.max(1, analysis?.request?.horizonHours ?? 12);
   if (!analysis)
     return (
       <Panel title="Consequence view for this incident type is in development">
@@ -221,6 +222,8 @@ export function ConsequencesContent({
             Source · At risk before 4 h · At risk 4 h or later · Normal upstream
             · Dashed: not affected · Dotted: no dependency
           </p>
+        </Panel>
+        <Panel title="Why it’s at risk">
           {focus && (
             <section className="c4-evidence">
               <h3>Why it’s at risk · {focus.name}</h3>
@@ -269,13 +272,14 @@ export function ConsequencesContent({
             </section>
           )}
         </Panel>
-        <Panel title="Timeline and thresholds">
+      </div>
+      <Panel title="Timeline and thresholds">
           <p>Could lose service in · hours after the modeled loss</p>
           <div className="c4-axis">
             <span>0 h</span>
-            <span>4 h</span>
-            <span>8 h</span>
-            <span>12 h</span>
+            <span>{timelineHours / 3} h</span>
+            <span>{timelineHours * 2 / 3} h</span>
+            <span>{timelineHours} h</span>
           </div>
           {risk.map((n) => (
             <div className="c4-timeline" key={n.id}>
@@ -291,8 +295,8 @@ export function ConsequencesContent({
                 <i
                   className={`tone-${windowTone(n.windowHours)}`}
                   style={{
-                    marginLeft: `${(Math.min(n.windowHours?.[0] || 0, 12) / 12) * 100}%`,
-                    width: `${Math.max(3, (Math.min((n.windowHours?.[1] || 0) - (n.windowHours?.[0] || 0), 12) / 12) * 100)}%`,
+                    marginLeft: `${(Math.min(n.windowHours?.[0] || 0, timelineHours) / timelineHours) * 100}%`,
+                    width: `${Math.max(1, ((Math.min(n.windowHours?.[1] || 0, timelineHours) - Math.min(n.windowHours?.[0] || 0, timelineHours)) / timelineHours) * 100)}%`,
                   }}
                 />
               </div>
@@ -303,7 +307,7 @@ export function ConsequencesContent({
           ))}
           <p className="c4-restoration">
             {source?.name} restored: {hours(value.restoration?.hours)}
-            {(value.restoration?.hours?.[1] || 0) > 12 &&
+            {(value.restoration?.hours?.[1] || 0) > timelineHours &&
               " · beyond this view →"}{" "}
             · planning estimate
           </p>
@@ -323,8 +327,7 @@ export function ConsequencesContent({
           ) : (
             <p>{missing}</p>
           )}
-        </Panel>
-      </div>
+      </Panel>
       <div className="c4-columns c4-bottom">
         <Panel title="By sector">
           <table>
@@ -475,7 +478,7 @@ function CascadeGraph({
     y: g.node.source
       ? 50
       : g.node.upstream
-        ? 16 + i * 18
+        ? 16 + groups.filter((g, j) => j < i && g.node.upstream).length * 68 / Math.max(1, groups.filter(g => g.node.upstream).length - 1)
         : 12 +
           (groups.filter(
             (_, j) =>
@@ -488,26 +491,33 @@ function CascadeGraph({
                 1,
             ),
   }));
+  const seen = new Set<string>();
+  const links = value.edges.flatMap(e => {
+    const a = positions.find(g => g.ids.includes(e.from));
+    const b = positions.find(g => g.ids.includes(e.to));
+    if (!a || !b || a === b) return [];
+    const key = JSON.stringify([a.id, b.id, e.label]);
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [{ e, a, b }];
+  });
   return (
-    <div className="c4-graph">
+    <div className="c4-graph" style={{ height: Math.max(460, groups.filter(g => g.node.upstream).length * 160, groups.filter(g => !g.node.source && !g.node.upstream).length * 110 + 40) }}>
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 1000 500"
         preserveAspectRatio="none"
         aria-label="Recorded dependency links"
       >
-        {value.edges.map((e) => {
-          const a = positions.find((g) => g.ids.includes(e.from)),
-            b = positions.find((g) => g.ids.includes(e.to));
-          if (!a || !b || a === b) return null;
+        {links.map(({ e, a, b }) => {
           const state = consequenceNodeState(b.node);
           return (
             <g key={e.id}>
               <path
                 className={`tone-${a.node.upstream ? "green" : state.tone}`}
-                d={`M${a.x} ${a.y} L${b.x} ${b.y}`}
-                strokeDasharray={state.line === "solid" ? undefined : "1 1"}
+                d={`M${a.x * 10} ${a.y * 5} L${b.x * 10} ${b.y * 5}`}
+                strokeDasharray={state.line === "solid" ? undefined : "6 6"}
               />
-              <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 2}>
+              <text x={(a.x + b.x) * 5} y={(a.y + b.y) * 2.5 - 10}>
                 {e.label}
               </text>
             </g>

@@ -183,7 +183,7 @@
 }
 .c4-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -200,6 +200,7 @@
 }
 .c4-graph {
   position: relative;
+  min-width: 620px;
   height: 420px;
   margin-top: 12px;
   background: var(--bg-header);
@@ -215,26 +216,27 @@
 .c4-graph path {
   fill: none;
   stroke: currentColor;
-  stroke-width: 0.35;
+  stroke-width: 1.7;
 }
 .c4-graph text {
   fill: var(--text-2);
-  font-size: 2px;
+  font-size: 12px;
   text-anchor: middle;
   paint-order: stroke;
   stroke: var(--bg-header);
-  stroke-width: 0.8px;
+  stroke-width: 3px;
   stroke-linejoin: round;
 }
 .c4-graph .c4-node {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 24%;
-  max-width: 200px;
-  min-width: 110px;
+  width: 18%;
+  max-width: 144px;
+  min-width: 120px;
+  aspect-ratio: 1;
   padding: 13px 9px;
   border: 2px solid currentColor;
-  border-radius: 12px;
+  border-radius: 50%;
   background: var(--surface);
   text-align: center;
 }
@@ -370,6 +372,13 @@
 .c4-view footer {
   font-size: 12px;
   color: var(--text-muted);
+}
+.c4-panel:has(.c4-graph) {
+  overflow-x: auto;
+}
+.c4-tile:last-child > strong {
+  font-size: 20px;
+  line-height: 1.25;
 }
 .c4-evidence {
   border-top: 1px solid var(--border);
