@@ -39,7 +39,12 @@
 .iv-empty,.iv-development{padding:24px;color:var(--muted)}
 .incident-view button:focus-visible,.incident-view input:focus-visible{outline:2px solid var(--blue-text);outline-offset:3px}
 .iv-selector{position:relative;max-width:440px;min-width:260px;z-index:3}
-.iv-selector>button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:40px;border:1px solid var(--border-strong);border-radius:8px;padding:9px 12px;background:var(--surface);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.iv-selector>button{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px 10px;width:100%;min-height:40px;border:1px solid var(--border-strong);border-radius:8px;padding:9px 12px;background:var(--surface);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.iv-select-trigger>strong{grid-column:1/-1;grid-row:2;min-width:0;overflow-wrap:anywhere}
+.iv-select-trigger>.iv-incident-id{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.iv-select-trigger>.status-chip{grid-column:3;grid-row:1}
+.iv-select-trigger>span:last-child{grid-column:4;grid-row:1}
+.iv-select-row-title{min-width:0}.iv-select-row-title strong{min-width:0;overflow-wrap:anywhere}
 .iv-selector-popover{position:absolute;right:0;top:calc(100% + 6px);width:500px;max-width:calc(100vw - 40px);padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface);box-shadow:0 14px 36px var(--shadow);z-index:10}
 .iv-selector-search{width:100%;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg-header);padding:10px;color:var(--text);font:inherit}
 .iv-selector-list{max-height:330px;overflow:auto;margin-top:8px}
