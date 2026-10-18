@@ -151,7 +151,11 @@ function render(view, scripted, empty = false) {
     before,
     "SSR must not mutate captured inputs",
   );
-  assert.doesNotMatch(html, /<(input|textarea|select|form)\b/i);
+  if (scripted && view === "cop") {
+    assert.doesNotMatch(html, /<(textarea|select|form)\b/i);
+    const inputs = html.match(/<input\b[^>]*>/g) || [];
+    assert.ok(inputs.every(input => /type="search"/.test(input)), "C2 permits read-only search controls, never editing forms");
+  } else assert.doesNotMatch(html, /<(input|textarea|select|form)\b/i);
   // Download bytes and collapsed Sources retain their existing provenance and export contract.
   const wall = html
     .replace(/<details\b[^>]*>[\s\S]*?<\/details>/g, "")

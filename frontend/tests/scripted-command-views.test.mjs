@@ -116,13 +116,15 @@ const render = (view, r = records(), s = saved(), ref = reference, d = data) =>
       onNavigate() {},
     }),
   );
-test('C2 integrates the recorded footprint, preserves the incident register and has no inputs',()=>{
+test('C2 replaces the statewide register with a selected incident schematic and read-only searches',()=>{
  const html=render('cop');
+ assert.match(html,/data-incident-schematic/);
+ assert.match(html,/What it touches/);
+ assert.match(html,/Facilities/);
+ assert.match(html,/Source/);
  assert.match(html,/sf-recorded-footprints/);
- assert.match(html,/Facility at risk \(modeled\)/);
- assert.match(html,/Not yet modeled/);
- assert.match(html,/TX-26-0398/);
- assert.doesNotMatch(html,/<(?:input|select|textarea)\b/);
+ assert.doesNotMatch(html,/All Statewide Incidents|TX-26-0398/);
+ assert.doesNotMatch(html,/<(?:select|textarea|form)\b/);
 });
 test("C1 reflects four before case opening, five after, and alternate sixth incident", () => {
   assert.equal(model.statewideRows(records(false), []).length, 4);
@@ -264,8 +266,9 @@ test("optional integration delegates populated screens and retains C2 infrastruc
     );
     assert.equal((html.match(/class="cc-page-heading"/g) || []).length, 0, view);
     if (view === "cop") {
-      assert.match(html, /All Statewide Incidents/);
-      assert.match(html, /Infrastructure Schematic/);
+      assert.match(html, /Incident view/);
+      assert.match(html, /data-incident-schematic/);
+      assert.doesNotMatch(html, /All Statewide Incidents|sf-state-map/);
     } else
       assert.doesNotMatch(
         html,

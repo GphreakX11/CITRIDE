@@ -43,7 +43,7 @@ with sync_playwright() as p:
     before = fingerprint()
     names = [
         "C1 Command Overview",
-        "C2 Statewide Map",
+        "C2 Incident View",
         "C3 Attack Picture CTIC",
         "C4 Consequences",
         "C5 Response Teams UCTF",

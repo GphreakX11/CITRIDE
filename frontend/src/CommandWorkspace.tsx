@@ -736,6 +736,8 @@ export default function CommandWorkspace({
     : null;
   const incidentLine = statewideContext
     ? `Statewide · ${statewideContext.totals.active} open incidents · ${statewideContext.totals.investigating} under investigation · ${statewideContext.rows.filter(row => row.cascading).length} cascading`
+    : mode === "command" && view === "cop"
+    ? null // IncidentView owns its record-driven header context.
     : selected
     ? [
         caseDisplayId(selected, records),

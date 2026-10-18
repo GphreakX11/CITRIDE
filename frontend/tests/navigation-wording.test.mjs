@@ -14,7 +14,7 @@ const verifier = readFileSync(
 );
 const expectedCommand = [
   ["command", "C1", "Command Overview", ""],
-  ["cop", "C2", "Statewide Map", ""],
+  ["cop", "C2", "Incident View", ""],
   ["cyber", "C3", "Attack Picture", "CTIC"],
   ["consequence", "C4", "Consequences", ""],
   ["uctf", "C5", "Response Teams", "UCTF"],

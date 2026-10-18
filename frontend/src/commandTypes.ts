@@ -20,7 +20,7 @@ export const commandNavigation = [
   {
     id: "cop",
     code: "C2",
-    label: "Statewide Map",
+    label: "Incident View",
     unit: "",
     color: "#fb923c",
   },

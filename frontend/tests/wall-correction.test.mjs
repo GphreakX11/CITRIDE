@@ -165,19 +165,25 @@ test("C1 uses its richer statewide map and complete legend, not the obsolete C2 
   assert.match(out, /class="c1-map"/);
   for (const entry of ["High", "Medium", "Low", "Same attacker probed", "Service area at risk", "Cascading impact (pulsing)", "Approximate positions · click an incident to select it"]) assert.ok(out.includes(entry));
   assert.doesNotMatch(out, /Active infrastructure incidents|Recorded service footprints|\d+ mapped|class="sc-safe-map"/);
-  assert.match(html(Scripted, { ...input, view: "cop" }), /class="sf-state-map"/);
+  assert.match(html(Scripted, { ...input, view: "cop" }), /data-incident-schematic/);
+  assert.doesNotMatch(html(Scripted, { ...input, view: "cop" }), /class="sf-state-map"/);
   assert.equal(JSON.stringify(input), before);
 });
 test("C1 and C2 never fabricate a pin for a record without a source position", () => {
   const r = records();
   r.statewideIncidents.push({ id: "no-location", title: "Unlocated water incident", status: "open", severity: "high" });
-  for (const view of ["command", "cop"]) {
+  for (const view of ["command"]) {
     const out = html(Scripted, props(view, freeze(r)));
     assert.doesNotMatch(out, /data-incident-pin="no-location"/);
     assert.match(out, /Unlocated water incident/);
     // SSR has no measured viewport, so C1 can use its safe list fallback.
-    assert.match(out, view === "command" ? /Location not recorded/ : /Some incident locations are unknown/);
+    assert.match(out, /Location not recorded/);
   }
+  const c2 = html(Scripted, props("cop", freeze(r)));
+  assert.doesNotMatch(c2, /data-incident-pin="no-location"|data-state-boundary="texas"/);
+  assert.match(c2, /data-incident-schematic/);
+  // C2 exposes other incidents only inside its searchable closed-by-default picker.
+  assert.doesNotMatch(c2, /Unlocated water incident/);
 });
 test("C1 cards sort by severity then newest start, never by the selected case", () => {
   const r = records();

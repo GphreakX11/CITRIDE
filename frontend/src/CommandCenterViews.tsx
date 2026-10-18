@@ -34,6 +34,7 @@ import {
 import "./command-center-views.css";
 import { eventSourceChips } from "./networkEvidence.ts";
 import ScriptedCommandViews from "./ScriptedCommandViews.tsx";
+import IncidentView from "./IncidentView.tsx";
 import type { RecordsState, ReferenceData } from "./scriptedTypes.ts";
 
 export interface CommandCenterViewsProps {
@@ -59,7 +60,7 @@ export interface CommandCenterViewsProps {
 
 const headings: Partial<Record<CommandView, [string, string]>> = {
   command: ["C1", "Command Overview"],
-  cop: ["C2", "Statewide Map"],
+  cop: ["C2", "Incident View"],
   cyber: ["C3", "Attack Picture CTIC"],
   consequence: ["C4", "Consequences"],
   uctf: ["C5", "Response Teams UCTF"],
@@ -357,6 +358,7 @@ export default function CommandCenterViews({
         <Empty>This is not a Command Center screen.</Empty>
       </div>
     );
+  if (view === "cop" && records && reference) return <IncidentView data={data} incidents={incidents} selected={selected} records={records} reference={reference} view={view} selectedEntityId={selectedEntityId} onSelect={onSelect} onClearSelection={onClearSelection} onSelectEntity={onSelectEntity} onOpenAnalyst={onOpenAnalyst} onNavigate={onNavigate} />;
   let content: ReactNode;
   const scripted =
     records &&

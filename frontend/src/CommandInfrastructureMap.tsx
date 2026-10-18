@@ -34,6 +34,8 @@ import { displayText } from "./presentation.ts";
 import { nodeLabels } from "./texasLabels.ts";
 import { TEXAS_PATH, TEXAS_BOUNDARY_SOURCE } from "./texasOutline.ts";
 import "./command-infrastructure-map.css";
+import type { IncidentStackModel } from "./incidentStack.ts";
+import IncidentStackSchematic from "./IncidentStackSchematic.tsx";
 
 const symbols = {
   water: Droplets,
@@ -60,10 +62,18 @@ interface Props {
   onSelectEntity?: (id: string | null) => void;
   onOpenEntity: (id: string, caseId?: string) => void;
   onSelectCase: (id: string) => void;
+  stack?: IncidentStackModel;
+  facilityQuery?: string;
+}
+
+/** Stack callers use C2 topology; all other callers retain the legacy explorer. */
+export default function CommandInfrastructureMap(props: Props) {
+  if (props.stack) return <IncidentStackSchematic model={props.stack} selectedEntityId={props.selectedEntityId ?? null} onSelectEntity={props.onSelectEntity ?? (() => {})} query={props.facilityQuery} />;
+  return <LegacyCommandInfrastructureMap {...props} />;
 }
 
 /** Read-only exploration: all interaction is local view state or explicit navigation. */
-export default function CommandInfrastructureMap({
+function LegacyCommandInfrastructureMap({
   data,
   incidents,
   selected,

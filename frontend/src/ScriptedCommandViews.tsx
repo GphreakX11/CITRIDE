@@ -43,7 +43,7 @@ import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons.t
 import "./scripted-command.css";
 import "./infrastructure-map.css";
 import "./attack-picture.css";
-import StatewideFootprint from "./StatewideFootprint.tsx";
+import IncidentView from "./IncidentView.tsx";
 import { StatusChip } from "./visualPrimitives.ts";
 import { VisualCard } from "./visualPrimitives.ts";
 import { SummaryTile } from "./visualPrimitives.ts";
@@ -68,7 +68,7 @@ const recordAudiencePreview: (
 ) => ReturnType<typeof audiencePreview> = audiencePreview;
 const titles: Partial<Record<CommandView, string>> = {
   command: "Command Overview",
-  cop: "Statewide Map",
+  cop: "Incident View",
   cyber: "Attack Picture CTIC",
   uctf: "Response Teams UCTF",
   leadership: "Leadership Brief",
@@ -238,7 +238,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       )}
     </aside>
   );
-  const rowSummary = pickedRow ? summaryFor(pickedRow) : null;
+
   const registerFor = (registerRows: RecordItem[], kind = "all") => (
     <div className="command-table-wrap">
       <table className={`command-table ${view === "command" ? "sc-overview-register" : ""}`} data-register={kind}>
@@ -322,24 +322,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
   let content: ReactNode;
   if (view === "command") return <C1Overview {...props} />;
   if (view === "cop") {
-    content = (
-      <Panel title="All Statewide Incidents">
-        <StatewideFootprint
-          data={data}
-          incidents={incidents}
-          selected={selected}
-          records={records}
-          reference={reference}
-          onSelect={onSelect}
-          onOpenAnalyst={onOpenAnalyst}
-        />
-        <details>
-          <summary>Advanced · statewide incident register</summary>
-          {register}
-          {rowSummary}
-        </details>
-      </Panel>
-    );
+    return <IncidentView {...props} />;
   } else if (view === "cyber") {
     const timeline = eventTimeline(data, selected);
     const durations = attackDurations(
@@ -804,7 +787,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       data-clock-tone={view === "uctf" ? responseClock(records, reference, selected).tone : undefined}
       aria-label={titles[view]}
     >
-      {view !== "cop" && <p className="sc-records-asof">Read-only display · Records as of {timeLabel(records.storyNow)}</p>}
+      <p className="sc-records-asof">Read-only display · Records as of {timeLabel(records.storyNow)}</p>
       {content}
     </div>
   );
