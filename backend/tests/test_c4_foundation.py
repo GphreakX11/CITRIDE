@@ -59,7 +59,7 @@ def test_authenticated_get_is_read_only(tmp_path, monkeypatch):
         assert (state / 'citride.nq').read_bytes() == before
 
 
-def test_legacy_startup_does_not_migrate_or_compute(store):
+def test_legacy_startup_does_not_persist_analysis_or_migrate(store):
     with store._locked():
         ds = store._load()
         meta = store._record(ds, 'scripted-meta', 'records-meta')
@@ -74,7 +74,10 @@ def test_legacy_startup_does_not_migrate_or_compute(store):
     core = RecordsService(store)
     core.initialize()
     view = ConsequenceService(store, core).view()
-    assert view['analysis'] is None
+    assert view['analysis']['kind'] == 'reference_preview'
+    assert view['analysis']['persisted'] is False
+    assert view['analysis']['referenceOnly'] is True
+    assert store.runs() == []
     assert store.path.read_bytes() == before
     # All read surfaces must preserve an already populated, analysis-free store.
     with TestClient(create_app(store.data_dir, store.scenario_path)) as client:

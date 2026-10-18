@@ -42,11 +42,17 @@ def history_entry(run):
     return {key: run[key] for key in ("id", "createdAt", "scenarioId", "baselineRevision")}
 
 
+def assert_runs(actual, expected):
+    """Retain every seeded analysis while checking exact retry cardinality/payload."""
+    assert sorted(actual, key=lambda run: run['id']) == sorted(expected, key=lambda run: run['id'])
+
+
 def test_override_replays_original_post_after_restart_and_baseline_change(tmp_path):
     state = tmp_path / "state"
     body = submitted_request()
     original = deepcopy(body)
     with TestClient(create_app(state)) as client:
+        initial = client.get('/v1/runs').json()
         first = client.post("/v1/runs", json=body)
         assert first.status_code == 201, first.text
         saved = first.json()
@@ -70,7 +76,7 @@ def test_override_replays_original_post_after_restart_and_baseline_change(tmp_pa
         replay = restarted.post("/v1/runs", json=body)
         assert replay.status_code == 201, replay.text
         assert replay.json() == saved
-        assert restarted.get("/v1/runs").json() == [history_entry(saved)]
+        assert_runs(restarted.get("/v1/runs").json(), initial + [history_entry(saved)])
         assert restarted.get(f"/v1/runs/{saved['id']}").json() == saved
     assert body == original
 
@@ -79,6 +85,7 @@ def test_override_replays_original_post_after_restart_and_baseline_change(tmp_pa
 def test_changed_override_input_conflicts_without_changing_capture(tmp_path, change):
     body = submitted_request()
     with TestClient(create_app(tmp_path / "state")) as client:
+        initial = client.get('/v1/runs').json()
         first = client.post("/v1/runs", json=body)
         assert first.status_code == 201, first.text
         changed = deepcopy(body)
@@ -98,7 +105,7 @@ def test_changed_override_input_conflicts_without_changing_capture(tmp_path, cha
         replay = client.post("/v1/runs", json=body)
         assert replay.status_code == 201, replay.text
         assert replay.json() == first.json()
-        assert client.get("/v1/runs").json() == [history_entry(first.json())]
+        assert_runs(client.get("/v1/runs").json(), initial + [history_entry(first.json())])
 
 
 def test_concurrent_override_retries_across_repositories_save_one_run(tmp_path):
@@ -106,6 +113,7 @@ def test_concurrent_override_retries_across_repositories_save_one_run(tmp_path):
     with TestClient(create_app(state)) as left, TestClient(create_app(state)) as right:
         assert left.get("/v1/bootstrap").status_code == 200
         assert right.get("/v1/bootstrap").status_code == 200
+        initial = left.get('/v1/runs').json()
         body = submitted_request()
         with ThreadPoolExecutor(max_workers=4) as pool:
             responses = list(pool.map(
@@ -114,11 +122,12 @@ def test_concurrent_override_retries_across_repositories_save_one_run(tmp_path):
             ))
         assert all(r.status_code == 201 for r in responses), [r.text for r in responses]
         assert all(r.json() == responses[0].json() for r in responses)
-        assert left.get("/v1/runs").json() == [history_entry(responses[0].json())]
+        assert_runs(left.get("/v1/runs").json(), initial + [history_entry(responses[0].json())])
 
 
 def test_input_is_not_mutated_and_internal_source_ref_remains_part_of_identity(tmp_path):
     repository = Repository(tmp_path / "state", SCENARIO)
+    initial = repository.runs()
     request = repository_request()
     # HTTP forbids this field, but repository callers may supply it. Do not
     # erase it from request identity just because the engine derives its own.
@@ -135,15 +144,16 @@ def test_input_is_not_mutated_and_internal_source_ref_remains_part_of_identity(t
     with pytest.raises(ConflictError):
         restarted.create_run(changed, no_compute, 1)
     no_compute.assert_not_called()
-    assert restarted.runs() == [first]
+    assert_runs(restarted.runs(), initial + [first])
 
 
 def test_api_continues_to_reject_submitted_source_ref(tmp_path):
     body = submitted_request()
     body["overrides"][0]["sourceRef"] = "urn:submitted:analyst-source"
     with TestClient(create_app(tmp_path / "state")) as client:
+        initial = client.get('/v1/runs').json()
         assert client.post("/v1/runs", json=body).status_code == 422
-        assert client.get("/v1/runs").json() == []
+        assert_runs(client.get("/v1/runs").json(), initial)
 
 
 @pytest.mark.parametrize("overrides", [True, False])
@@ -173,6 +183,7 @@ def test_legacy_records_are_not_recomputed_or_rewritten(tmp_path, overrides):
 
 def test_failed_save_rolls_back_run_and_receipt_then_allows_retry(tmp_path, monkeypatch):
     repository = Repository(tmp_path / "state", SCENARIO)
+    initial = repository.runs()
     request = repository_request()
     before = repository.path.read_bytes()
     with monkeypatch.context() as patch:
@@ -180,11 +191,11 @@ def test_failed_save_rolls_back_run_and_receipt_then_allows_retry(tmp_path, monk
         with pytest.raises(OSError, match="failed atomic write"):
             repository.create_run(request, compute_run, 1)
     assert repository.path.read_bytes() == before
-    assert repository.runs() == []
+    assert_runs(repository.runs(), initial)
     assert not list(repository._load().quads((None, NS.submittedRequestFingerprint, None, None)))
     first = repository.create_run(request, compute_run, 1)
     assert repository.create_run(request, compute_run, 1) == first
-    assert repository.runs() == [first]
+    assert_runs(repository.runs(), initial + [first])
     # Receipt is graph metadata, never a public Run extra.
     graph = repository._load().graph(URIRef(f"urn:citride:graph:run:{first['id']}"))
     assert len(list(graph.triples((None, NS.submittedRequestFingerprint, None)))) == 1
@@ -193,9 +204,10 @@ def test_failed_save_rolls_back_run_and_receipt_then_allows_retry(tmp_path, monk
 
 def test_compute_failure_does_not_reserve_request_identity(tmp_path):
     repository = Repository(tmp_path / "state", SCENARIO)
+    initial = repository.runs()
     request = repository_request()
     with pytest.raises(ValueError, match="failed computation"):
         repository.create_run(request, Mock(side_effect=ValueError("failed computation")), 1)
-    assert repository.runs() == []
+    assert_runs(repository.runs(), initial)
     first = repository.create_run(request, compute_run, 1)
     assert repository.create_run(request, compute_run, 1) == first

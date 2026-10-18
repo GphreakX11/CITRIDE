@@ -102,6 +102,7 @@ def test_real_postgres_workflow_restart_replay_and_historical_preservation(
 ):
     store = repository(isolated_state)
     baseline = store.baseline()
+    initial_runs = store.runs()
     old_run = store.create_run(
         {
             "scenarioId": "unsafe-water",
@@ -153,7 +154,8 @@ def test_real_postgres_workflow_restart_replay_and_historical_preservation(
     assert fresh.store.baseline() == baseline
     assert fresh.store.run(old_run["id"]) == old_run
     assert fresh.store.run(reopened["runId"]) == captured_run
-    assert len(fresh.store.runs()) == 2
+    assert len(fresh.store.runs()) == len(initial_runs) + 2
+    assert all(fresh.store.run(run["id"]) == run for run in initial_runs)
 
 
 @pytest.mark.parametrize("failure", ["compute", "after_sql_save"])
@@ -164,6 +166,7 @@ def test_real_postgres_analysis_transaction_rolls_back_everything(
     service = CommandService(store)
     case = service.create(creation())
     before = store.export()
+    initial_runs = store.runs()
 
     def interrupted(*args):
         raise RuntimeError("Injected analysis interruption")
@@ -183,7 +186,7 @@ def test_real_postgres_analysis_transaction_rolls_back_everything(
     assert service.get(case["id"]) == case
     fresh = CommandService(repository(isolated_state))
     assert fresh.get(case["id"]) == case
-    assert fresh.store.runs() == []
+    assert fresh.store.runs() == initial_runs
     assert set(fresh.store.export().splitlines()) == set(before.splitlines())
 
 
@@ -195,6 +198,7 @@ def test_real_postgres_concurrent_writers_across_independent_repositories(
         CommandService(repository(isolated_state)),
         CommandService(repository(isolated_state)),
     )
+    initial_runs = first.store.runs()
     barrier = Barrier(2)
     if operation == "create":
         requests = [creation(), creation()]
@@ -236,4 +240,5 @@ def test_real_postgres_concurrent_writers_across_independent_repositories(
         assert incidents[0]["version"] == 2 and len(incidents[0]["notes"]) == 1
     else:
         assert results.count("conflict") == 1
-    assert len(fresh.store.runs()) == (1 if operation == "analyze" else 0)
+    assert len(fresh.store.runs()) == len(initial_runs) + (1 if operation == "analyze" else 0)
+    assert all(fresh.store.run(run["id"]) == run for run in initial_runs)

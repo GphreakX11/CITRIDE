@@ -46,12 +46,16 @@ def test_reset_replaces_only_the_target_state_with_validated_inline_idt_seed(sta
     url, key, repository = state
     # Exercise actual real-storage mutation before the authorized reset.
     from citride.engine import compute_run
-    repository.create_run({"scenarioId":"unsafe-water","evaluationHour":1,"horizonHours":12,"overrides":[]}, compute_run)
+    authored = repository.create_run({"scenarioId":"unsafe-water","evaluationHour":1,"horizonHours":12,"overrides":[]}, compute_run)
     assert repository.runs()
     before = reset.inspect_state(url, key)
     outcome = reset.reset_state(url, key, before["sha256"], ROOT / "data/scenario.json")
     assert outcome["resetApplied"] is True
-    assert repository.runs() == []
+    seeded_runs = repository.runs()
+    assert authored["id"] not in {run["id"] for run in seeded_runs}
+    assert len(seeded_runs) == 2
+    assert all(run["kind"] == "preliminary" for run in seeded_runs)
+    assert {run["incidentId"] for run in seeded_runs} == {"TX-26-0412", "INC-2026-1002-POH"}
     assert all("idt" in entity for entity in repository.baseline()["entities"])
     expected = Repository(tmp_path / "expected", ROOT / "data/scenario.json").baseline()
     assert repository.baseline() == expected
