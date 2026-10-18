@@ -239,8 +239,10 @@ def test_invalid_domain_draft_can_be_reviewed_but_cannot_promote(client):
     ],
 )
 def test_reject_bad_run_requests(client, payload):
+    before = client.get("/v1/cascade-runs").json()["runs"]
+    assert len(before) == 2 and all(run["id"].startswith("preliminary-") for run in before)
     assert client.post("/v1/cascade-runs", json=payload).status_code == 422
-    assert client.get("/v1/cascade-runs").json()["runs"] == []
+    assert client.get("/v1/cascade-runs").json()["runs"] == before
 
 
 @pytest.mark.parametrize("value", ["NaN", "Infinity", "-Infinity"])

@@ -6,8 +6,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from rdflib import Dataset
-
 from citride.records import ACTION_FIELDS, RecordsService, validate_action
 from citride.scripted_validation import COLLECTIONS
 from citride.storage import InvalidModelError, Repository
@@ -126,15 +124,14 @@ def test_reference_rates_task_groups_and_nested_references(inputs):
 def test_seed_clock_restart_init_reset_and_baseline_preservation(service, inputs):
     core, store, clock = service
     baseline = store.baseline()
-    origin = datetime.fromisoformat(inputs[2]["incidentOrigin"].replace("Z", "+00:00"))
-    assert datetime.fromisoformat(core.story_now()) == origin + timedelta(hours=1)
+    assert datetime.fromisoformat(core.story_now()) == clock[0]
     initial_bytes = store.path.read_bytes()
     clock[0] += timedelta(minutes=10)
     core.initialize()
     assert store.path.read_bytes() == initial_bytes
     restarted = RecordsService(Repository(store.data_dir, store.scenario_path), *inputs, now=lambda: clock[0])
     restarted.initialize()
-    assert datetime.fromisoformat(restarted.story_now()) == origin + timedelta(hours=1, minutes=10)
+    assert datetime.fromisoformat(restarted.story_now()) == clock[0]
     case = opened(core, store, clock)
     apply(core, store, case, action("set_contact_status", contactId="contact-1", status="attempted", note="Operator note"))
     with store._locked():
@@ -142,18 +139,27 @@ def test_seed_clock_restart_init_reset_and_baseline_preservation(service, inputs
         core.seed(ds)
         store._save(ds)
     assert store.baseline() == baseline
-    assert datetime.fromisoformat(core.story_now()) == origin + timedelta(hours=1)
-    assert len(core.records()["statewideIncidents"]) == 4
+    assert datetime.fromisoformat(core.story_now()) == clock[0]
+    assert len(core.records()["statewideIncidents"]) == 5
     assert store._records(store._load(), "command-incident")  # seed doesn't delete cases
 
 
 def test_link_scope_offsets_late_dynamic_live_case_and_detached_snapshots(service):
     core, store, clock = service
-    assert len(core.records()["statewideIncidents"]) == 4
-    assert not core.records()["contacts"]
+    assert len(core.records()["statewideIncidents"]) == 5
+    # Authored unbound records are visible before case creation in C4.
+    before_contacts = core.records()["contacts"]
+    assert before_contacts
     unrelated = opened(core, store, clock, "unrelated", "not-linked")
-    assert len(core.records()["statewideIncidents"]) == 4
+    assert len(core.records()["statewideIncidents"]) == 5
+    assert core.records()["contacts"] == before_contacts
     case = opened(core, store, clock)
+    with store._locked():
+        dataset = store._load()
+        task = store._record(dataset, "responseTasks", "task-ciru-confirm-setpoint")
+        task["dueAt"] = (clock[0] + timedelta(hours=1)).isoformat()
+        store._record_graph(dataset, "responseTasks", task)
+        store._save(dataset)
     snapshot = core.records(case["id"])
     assert len(snapshot["statewideIncidents"]) == 1
     assert snapshot == core.records("TX-26-0412")
@@ -177,10 +183,11 @@ def test_link_scope_offsets_late_dynamic_live_case_and_detached_snapshots(servic
     assert live["status"] == "monitoring"
     assert live["reviews"] == case["decisions"]
     assert live["progress"] == case["tasks"]
-    snapshot["timing"]["storyClock"]["startRelativeHours"] = 90
+    snapshot["timing"]["storyClock"]["now"] = "changed"
     snapshot["contacts"][0]["sourceRefs"].clear()
     assert core.records()["contacts"][0]["sourceRefs"]
-    assert core.records()["timing"]["storyClock"]["startRelativeHours"] == 1
+    assert core.records()["timing"]["storyClock"]["now"] == clock[0].isoformat()
+    assert core.records()["timing"]["storyClock"]["deprecated"] is True
 
 
 PAYLOADS = [
@@ -236,7 +243,8 @@ def test_callbacks_never_save_or_lock_recursively_and_failed_outer_transaction(s
     with pytest.raises(RuntimeError), store._locked():
         ds = store._load()
         with patch.object(store, "_locked", side_effect=AssertionError("recursive lock")), patch.object(store, "_save", side_effect=AssertionError("nested save")):
-            core.seed(Dataset())
+            # C4 intake requires a baseline; exercise a detached full dataset.
+            core.seed(deepcopy(ds))
             core.on_case_opened(ds, case)
             core.apply_action(ds, case, PAYLOADS[3])
         raise RuntimeError("Outer case/receipt transaction failed")

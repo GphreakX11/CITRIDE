@@ -25,18 +25,24 @@ def open_case(client, event="event-vpn-a"):
     return r.json()
 
 
-def test_real_routes_seed_four_then_link_fifth_and_reset(tmp_path):
+def test_real_routes_seed_six_then_link_existing_and_reset(tmp_path):
     client = TestClient(create_app(data_dir=tmp_path))
     r = client.get("/v1/command/records")
     assert r.status_code == 200, r.text
-    assert len(r.json()["statewideIncidents"]) == 4
+    assert len(r.json()["statewideIncidents"]) == 6
+    before_ids = {row["id"] for row in r.json()["statewideIncidents"]}
+    assert "INC-2026-1002-POH" in before_ids
+    preliminary = client.get("/v1/cascade-runs").json()["runs"]
+    assert len(preliminary) == 2
+    assert all(run["id"].startswith("preliminary-") for run in preliminary)
     assert "storyNow" in client.get("/health").json()
     ref = client.get("/v1/reference")
     assert ref.status_code == 200
     assert ref.json()["responseOptions"][0]["id"] == "opt-tdem-health-notice"
     case = open_case(client)
     state = client.get("/v1/command/records").json()
-    assert len(state["statewideIncidents"]) == 5
+    assert {row["id"] for row in state["statewideIncidents"]} == before_ids
+    assert client.get("/v1/cascade-runs").json()["runs"] == preliminary
     linked = next(r for r in state["statewideIncidents"] if r["id"] == "TX-26-0412")
     assert linked["caseId"] == case["id"] and linked["status"] == case["status"]
     task = next(t for t in state["responseTasks"] if t["id"] == "task-util-b-reset")
@@ -76,7 +82,7 @@ def test_real_routes_seed_four_then_link_fifth_and_reset(tmp_path):
     }
     assert client.post("/v1/demo/reset", json=reset).status_code == 200
     assert client.post("/v1/demo/reset", json=reset).status_code == 200
-    assert len(client.get("/v1/command/records").json()["statewideIncidents"]) == 4
+    assert {row["id"] for row in client.get("/v1/command/records").json()["statewideIncidents"]} == before_ids
     case = open_case(client)
     state = client.get("/v1/command/records").json()
     assert (

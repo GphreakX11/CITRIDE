@@ -141,6 +141,7 @@ def test_create_strict_validation_does_not_persist(client, changes):
     ],
 )
 def test_action_strict_validation_does_not_change_case(client, kind, fields):
+    before = client.get("/v1/cascade-runs").json()
     case = client.post(PREFIX, json=creation()).json()
     response = client.post(
         f"{PREFIX}/{case['id']}/actions", json=action(case, kind, **fields)
@@ -151,7 +152,7 @@ def test_action_strict_validation_does_not_change_case(client, kind, fields):
     )
     assert "Private text" not in response.text
     assert client.get(f"{PREFIX}/{case['id']}").json() == case
-    assert client.get("/v1/cascade-runs").json() == {"runs": []}
+    assert client.get("/v1/cascade-runs").json() == before
 
 
 def test_complete_http_workflow_replay_conflicts_and_restart(client, tmp_path):
@@ -241,10 +242,13 @@ def test_complete_http_workflow_replay_conflicts_and_restart(client, tmp_path):
         assert reopened.json()["closedAt"] is None
         assert fresh.get("/v1/bootstrap").json() == baseline
         assert fresh.get(f"/v1/cascade-runs/{old['id']}").json() == old
-        assert len(fresh.get("/v1/cascade-runs").json()["runs"]) == 2
+        runs = fresh.get("/v1/cascade-runs").json()["runs"]
+        assert len(runs) == 4
+        assert sum(run["id"].startswith("preliminary-") for run in runs) == 2
 
 
 def test_not_found_invalid_id_and_probe_scope(client):
+    before = client.get("/v1/cascade-runs").json()["runs"]
     assert client.get(PREFIX + "/missing").status_code == 404
     assert client.get(PREFIX + "/invalid!identifier").status_code == 422
     case = client.post(PREFIX, json=creation(eventId="event-probe-b")).json()
@@ -254,7 +258,7 @@ def test_not_found_invalid_id_and_probe_scope(client):
     )
     assert response.status_code == 422
     assert client.get(path).json() == case
-    assert client.get("/v1/cascade-runs").json()["runs"] == []
+    assert client.get("/v1/cascade-runs").json()["runs"] == before
 
 
 def test_command_storage_outage_returns_only_safe_error(client, monkeypatch):

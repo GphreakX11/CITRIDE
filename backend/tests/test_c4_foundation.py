@@ -1,7 +1,7 @@
 """C4 foundation checks: owned tmp_path RDF only; no external storage."""
 import base64
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 
@@ -76,6 +76,12 @@ def test_legacy_startup_does_not_migrate_or_compute(store):
     view = ConsequenceService(store, core).view()
     assert view['analysis'] is None
     assert store.path.read_bytes() == before
+    # All read surfaces must preserve an already populated, analysis-free store.
+    with TestClient(create_app(store.data_dir, store.scenario_path)) as client:
+        for path in ('/v1/command/records', '/v1/workspace', '/health', '/v1/command/consequences'):
+            assert client.get(path).status_code == 200
+            assert store.path.read_bytes() == before
+        assert client.get('/v1/cascade-runs').json()['runs'] == []
 
 
 def test_intake_idempotent_capture_precedence_and_frozen_times(store):
@@ -104,6 +110,25 @@ def test_clock_rejects_naive_datetime(store):
     from citride.storage import InvalidModelError
     with pytest.raises(InvalidModelError, match='aware'):
         core.now()
+
+
+def test_legacy_clock_metadata_never_simulates_now(store):
+    actual = datetime(2030, 1, 1, 6, tzinfo=timezone(timedelta(hours=6)))
+    core = RecordsService(store, now=lambda: actual)
+    with store._locked():
+        dataset = store._load()
+        meta = store._record(dataset, 'scripted-meta', 'records-meta')
+        meta['storyStartedAt'] = '2025-01-01T00:00:00Z'
+        store._record_graph(dataset, 'scripted-meta', meta)
+        store._save(dataset)
+    before = store.path.read_bytes()
+    envelope = core.records()
+    expected = actual.astimezone(timezone.utc).isoformat()
+    assert envelope['now'] == envelope['storyNow'] == core.story_now() == expected
+    assert envelope['timing']['storyClock'] == {
+        'deprecated': True, 'now': expected, 'operationsTimeZone': 'America/Chicago',
+    }
+    assert store.path.read_bytes() == before
 
 
 def test_sample_anchor_and_explicit_reset_are_isolated(store):

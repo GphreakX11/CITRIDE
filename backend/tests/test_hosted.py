@@ -62,7 +62,8 @@ def test_browser_mutations_cannot_use_cross_site_or_null_origin(tmp_path, monkey
         for origin in ("https://other.example", "null", "http://testserver.other.example", "http://testserver/path"):
             response = client.post("/v1/cascade-runs", json={"scenarioId": "unsafe-water"}, headers={"Origin": origin})
             assert response.status_code == 403
-        assert client.get("/v1/cascade-runs").json()["runs"] == []
+        runs = client.get("/v1/cascade-runs").json()["runs"]
+        assert len(runs) == 2 and all(run["id"].startswith("preliminary-") for run in runs)
         response = client.post("/v1/cascade-runs", json={"scenarioId": "unsafe-water"}, headers={"Origin": "http://testserver"})
         assert response.status_code == 201
 

@@ -13,6 +13,7 @@ def client(tmp_path):
 
 def test_context_connects_explicit_records_and_is_read_only(client):
     before = client.get("/v1/bootstrap").json()
+    runs = client.get("/v1/cascade-runs").json()["runs"]
     response = client.get("/v1/incident-context", params={"eventId": "event-dosing"})
     assert response.status_code == 200, response.text
     context = response.json()
@@ -23,18 +24,19 @@ def test_context_connects_explicit_records_and_is_read_only(client):
     assert [item["id"] for item in context["scenarios"]] == ["unsafe-water"]
     assert context["sourceRefs"]
     assert client.get("/v1/bootstrap").json() == before
-    assert client.get("/v1/cascade-runs").json()["runs"] == []
+    assert client.get("/v1/cascade-runs").json()["runs"] == runs
 
 
 @pytest.mark.parametrize("event_id,provider", [("event-probe-b", "utility-b"), ("event-probe-c", "utility-c")])
 def test_probes_do_not_create_consequences(client, event_id, provider):
+    runs = client.get("/v1/cascade-runs").json()["runs"]
     response = client.get("/v1/incident-context", params={"eventId": event_id})
     assert response.status_code == 200
     context = response.json()
     assert context["provider"]["id"] == provider
     assert context["scenarios"] == []
     assert [item["dependency"]["provider"] for item in context["downstreamDependencies"]] == [provider]
-    assert client.get("/v1/cascade-runs").json()["runs"] == []
+    assert client.get("/v1/cascade-runs").json()["runs"] == runs
 
 
 def test_missing_event_and_invalid_identifier(client):

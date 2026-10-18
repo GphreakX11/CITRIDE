@@ -137,7 +137,7 @@ class ConsequenceService:
         # Resolve records and run precedence from a single locked snapshot.
         with self.store._locked():
             dataset = self.store._load()
-            envelope = self.records.records(_dataset=dataset)
+            envelope = self.records.records_from_dataset(dataset)
             incidents = deepcopy(envelope['statewideIncidents'])
             # New package scenarios remain explicitly reference-only on older
             # stores. Do not invent a persisted incident or mutate its register.
@@ -145,6 +145,7 @@ class ConsequenceService:
             if not any(row['id'] == port_id for row in incidents):
                 prototype = next(row for row in self.records.scripted['incidents'] if row['id'] == port_id)
                 incidents.append({**deepcopy(prototype), 'referenceOnly': True})
+
             if incident_id:
                 incident = next((r for r in incidents if incident_id in (r['id'], r.get('caseId'))), None)
                 if incident is None:

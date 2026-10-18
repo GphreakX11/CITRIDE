@@ -6,7 +6,6 @@ case/version receipts, rollback and the single final save.
 from __future__ import annotations
 
 from copy import deepcopy
-from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
@@ -139,6 +138,10 @@ class RecordsService:
             return None
 
     def _current_time(self, meta=None, wall=None):
+        # Legacy anchors remain validated metadata, never a simulated clock.
+        for field in ('storyStartedAt', 'incidentOrigin', 'sampleDataAnchor'):
+            if meta is not None and field in meta and not aware_time(meta[field]):
+                raise InvalidModelError(f"{field} must be an aware ISO timestamp")
         return wall or self._wall_now()
 
     def _all(self, dataset):
@@ -357,43 +360,49 @@ class RecordsService:
     def now(self):
         return self._wall_now().isoformat()
 
-    def records_from_dataset(self, dataset, incident_id=None):
-        """The workspace caller owns this dataset's existing lock/transaction."""
-        return self.records(incident_id, _dataset=dataset)
+    def story_now(self):
+        """Deprecated compatibility alias: actual aware UTC time, not story time."""
+        return self.now()
 
-    def records(self, incident_id=None, *, _dataset=None):
-        with self.store._locked() if _dataset is None else nullcontext():
-            dataset = self.store._load() if _dataset is None else _dataset
-            meta = self._meta(dataset)
-            if meta is None:
-                raise InvalidModelError("Scripted records have not been initialized")
-            current = self._all(dataset)
-            now = self._wall_now()
-            cases = {r["id"]: r for r in self.store._records(dataset, CASE_KIND)}
-            visible = []
-            for incident in current["statewideIncidents"]:
-                case = cases.get(incident.get("caseId"))
-                if incident.get('status') == 'from_case' and case is None:
-                    incident['status'] = 'open'
-                if case is not None:
-                    incident["status"] = case["status"]
-                    incident["reviews"] = deepcopy(case.get("decisions", []))
-                    incident["progress"] = deepcopy(case.get("tasks", []))
-                    incident["runId"] = case.get("runId")
-                visible.append(incident)
-            if incident_id is not None:
-                visible = [i for i in visible if incident_id in (i["id"], i.get("caseId"))]
-            ids = {i["id"] for i in visible}
-            current["statewideIncidents"] = visible
-            for collection in COLLECTIONS[1:]:
-                current[collection] = [r for r in current[collection] if r.get("incidentId") in ids]
-            for collection, items in current.items():
-                current[collection] = [resolve_record_times(item, self._anchor(meta)) for item in items]
-                for item in current[collection]:
-                    if collection == "responseTasks":
-                        item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
-            config = meta["config"]
-            result = {**current, "now": now.isoformat(), "storyNow": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "timing": config["timing"], "taskGroups": config["taskGroups"]}
-            result.update(STATUS_LABELS)
-            result.update({k: v for k, v in config.items() if k.endswith("Labels")})
-            return deepcopy(result)
+    def records(self, incident_id=None):
+        with self.store._locked():
+            return self.records_from_dataset(self.store._load(), incident_id)
+
+    def records_from_dataset(self, dataset, incident_id=None):
+        """Pure dataset projection; the caller owns the lock/transaction."""
+        meta = self._meta(dataset)
+        if meta is None:
+            raise InvalidModelError("Scripted records have not been initialized")
+        current = self._all(dataset)
+        now = self._current_time(meta)
+        cases = {r["id"]: r for r in self.store._records(dataset, CASE_KIND)}
+        visible = []
+        for incident in current["statewideIncidents"]:
+            case = cases.get(incident.get("caseId"))
+            if incident.get('status') == 'from_case' and case is None:
+                incident['status'] = 'open'
+            if case is not None:
+                incident["status"] = case["status"]
+                incident["reviews"] = deepcopy(case.get("decisions", []))
+                incident["progress"] = deepcopy(case.get("tasks", []))
+                incident["runId"] = case.get("runId")
+            visible.append(incident)
+        if incident_id is not None:
+            visible = [i for i in visible if incident_id in (i["id"], i.get("caseId"))]
+        ids = {i["id"] for i in visible}
+        current["statewideIncidents"] = visible
+        for collection in COLLECTIONS[1:]:
+            current[collection] = [r for r in current[collection] if r.get("incidentId") in ids]
+        for collection, items in current.items():
+            current[collection] = [resolve_record_times(item, self._anchor(meta)) for item in items]
+            for item in current[collection]:
+                if collection == "responseTasks":
+                    item["late"] = item["status"] != "done" and "dueAt" in item and _parse(item["dueAt"]) < now
+        config = meta["config"]
+        timing = deepcopy(config["timing"])
+        # Retain the old nested shape without claiming a simulated clock.
+        timing['storyClock'] = {'deprecated': True, 'now': now.isoformat(), 'operationsTimeZone': self.c4_reference['operationsTimeZone']}
+        result = {**current, "now": now.isoformat(), "storyNow": now.isoformat(), "sampleDataAnchor": self._anchor(meta), "operationsTimeZone": self.c4_reference['operationsTimeZone'], "timing": timing, "taskGroups": config["taskGroups"]}
+        result.update(STATUS_LABELS)
+        result.update({k: v for k, v in config.items() if k.endswith("Labels")})
+        return deepcopy(result)

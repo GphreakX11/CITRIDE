@@ -92,8 +92,11 @@ def test_workspace_matches_all_legacy_views(workspace):
     assert payload["records"] == workspace.client.get("/v1/command/records").json()
     assert payload["reference"] == workspace.client.get("/v1/reference").json()
     assert payload["health"] == workspace.client.get("/health").json()
-    assert set(payload["health"]) == {"status", "baselineRevision", "demoMode", "storyNow", "resetEnabled"}
-    assert len(payload["runs"]) == 2
+    assert set(payload["health"]) == {"status", "baselineRevision", "demoMode", "storyNow", "now", "operationsTimeZone", "resetEnabled"}
+    assert payload["health"]["now"] == workspace.clock[0].isoformat() == payload["health"]["storyNow"]
+    assert payload["health"]["operationsTimeZone"] == "America/Chicago"
+    assert len(payload["runs"]) == 4
+    assert sum(run["id"].startswith("preliminary-") for run in payload["runs"]) == 2
     assert all(set(run) == {"id", "createdAt", "scenarioId", "baselineRevision"} for run in payload["runs"])
     assert payload["incidents"] == [case]
     assert payload["records"]["contacts"]
@@ -105,9 +108,13 @@ def test_workspace_matches_all_legacy_views(workspace):
 
 def test_empty_workspace_matches_legacy_views(workspace):
     payload = snapshot(workspace)
-    assert payload["runs"] == payload["incidents"] == []
+    assert payload["incidents"] == []
+    assert len(payload["runs"]) == 2
+    assert all(run["id"].startswith("preliminary-") for run in payload["runs"])
+    assert {run["scenarioId"] for run in payload["runs"]} == {"unsafe-water", "port-terminal-down"}
     assert payload["records"] == workspace.client.get("/v1/command/records").json()
-    assert len(payload["records"]["statewideIncidents"]) == 4
+    assert len(payload["records"]["statewideIncidents"]) == 6
+    assert "INC-2026-1002-POH" in {i["id"] for i in payload["records"]["statewideIncidents"]}
 
 
 def test_workspace_uses_one_lock_load_and_no_writes_or_nested_readers(workspace, monkeypatch):
@@ -166,6 +173,14 @@ def test_repeated_gets_preserve_state_bytes_and_metadata(workspace):
 
 def test_workspace_clock_and_late_records_are_fresh_without_writes(workspace):
     create_case(workspace)
+    # This owned fixture uses a real UTC test clock; absolute 2025 task times
+    # are legitimately overdue in 2030. Set one deadline to cross explicitly.
+    with workspace.store._locked():
+        dataset = workspace.store._load()
+        target = workspace.store._record(dataset, "responseTasks", "task-ciru-confirm-setpoint")
+        target["dueAt"] = (workspace.clock[0] + timedelta(hours=1)).isoformat()
+        workspace.store._record_graph(dataset, "responseTasks", target)
+        workspace.store._save(dataset)
     first = snapshot(workspace)
     task_id = "task-ciru-confirm-setpoint"
     task = lambda payload: next(row for row in payload["records"]["responseTasks"] if row["id"] == task_id)

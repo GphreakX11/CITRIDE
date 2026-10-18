@@ -87,6 +87,8 @@ def test_persistence_original_snapshots_private_receipts_and_immutability(store,
 
 
 def test_create_and_action_replays_return_current_before_optimistic_checks(store, service):
+    preliminary = store.runs()
+    assert len(preliminary) == 2 and all(run["kind"] == "preliminary" for run in preliminary)
     request = create_request()
     case = service.create(request)
     analysis = action_request(case, "analyze", scenarioId="unsafe-water", evaluationHour=1, horizonHours=12)
@@ -94,7 +96,8 @@ def test_create_and_action_replays_return_current_before_optimistic_checks(store
     updated = act(service, analyzed, note="Local coordination only")
     assert service.create(request) == updated
     assert service.act(case["id"], analysis) == updated
-    assert len(store.runs()) == 1
+    assert len(store.runs()) == len(preliminary) + 1
+    assert all(store.run(run["id"]) == run for run in preliminary)
     fresh = CommandService(Repository(store.data_dir, store.scenario_path))
     assert fresh.create(request) == updated
     assert fresh.act(case["id"], analysis) == updated
@@ -119,6 +122,7 @@ def test_duplicate_active_event_and_stale_versions(service):
 
 
 def test_stale_baseline_analysis_and_immutable_historical_labels(store, service):
+    before = store.runs()
     case = service.create(create_request())
     baseline = store.baseline()
     with store._locked():
@@ -129,17 +133,18 @@ def test_stale_baseline_analysis_and_immutable_historical_labels(store, service)
         store._save(dataset)
     with pytest.raises(ConflictError, match="Baseline revision"):
         analyze(service, case)
-    assert store.runs() == []
+    assert store.runs() == before
     assert service.get(case["id"]) == case
 
 
 @pytest.mark.parametrize("event", ["event-probe-b", "event-probe-c", "event-inbound-a", "event-auth-a"])
 def test_unlinked_probes_reject_analysis(store, service, event):
+    before = store.runs()
     case = service.create(create_request(event))
     assert case["contextSnapshot"]["scenarios"] == []
     with pytest.raises(InvalidModelError, match="explicitly linked"):
         analyze(service, case)
-    assert service.get(case["id"]) == case and store.runs() == []
+    assert service.get(case["id"]) == case and store.runs() == before
 
 
 def test_reviews_notes_closure_closed_protection_and_reopening(store, service):
@@ -217,6 +222,7 @@ def test_malformed_action(service, action, fields):
 
 
 def test_compute_exception_saves_nothing(store, service, monkeypatch):
+    before = store.runs()
     case = service.create(create_request())
     original = store.path.read_bytes()
     def fail(*args):
@@ -226,10 +232,11 @@ def test_compute_exception_saves_nothing(store, service, monkeypatch):
         analyze(service, case)
     assert store.path.read_bytes() == original
     assert service.get(case["id"]) == case
-    assert Repository(store.data_dir, store.scenario_path).runs() == []
+    assert Repository(store.data_dir, store.scenario_path).runs() == before
 
 
 def test_save_exception_rolls_back_case_and_run(store, service, monkeypatch):
+    before = store.runs()
     case = service.create(create_request())
     def fail(*args):
         raise OSError("injected storage interruption")
@@ -238,7 +245,7 @@ def test_save_exception_rolls_back_case_and_run(store, service, monkeypatch):
         analyze(service, case)
     fresh = CommandService(Repository(store.data_dir, store.scenario_path))
     assert fresh.get(case["id"]) == case
-    assert fresh.store.runs() == []
+    assert fresh.store.runs() == before
 
 
 @pytest.mark.parametrize("mutation", [
