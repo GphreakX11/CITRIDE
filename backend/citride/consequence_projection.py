@@ -60,7 +60,8 @@ def project_consequences(incident, analysis, reference, planning_rates, statuses
         paths = [path for row in rows for path in row['paths']]
         path_deps = [dependencies[d] for path in paths for d in path if d in dependencies]
         reserves = [[d['usableBackupMinHours'], d['usableBackupMaxHours']] for d in path_deps[-1:] if d.get('usableBackupMinHours') is not None and d.get('usableBackupMaxHours') is not None]
-        node = {**entity, 'sector': sector(entity)['label'], 'source': identifier == source_id,
+        node = {**entity, 'name': entity.get('name') or entity.get('label') or identifier,
+                'sector': sector(entity)['label'], 'source': identifier == source_id,
                 'upstream': identifier in upstream, 'status': states.get(identifier),
                 'connected': identifier in reachable, 'inArea': identifier in in_area,
                 'notAffected': identifier in reachable and not rows,

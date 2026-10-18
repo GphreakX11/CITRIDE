@@ -33,6 +33,7 @@ def test_legacy_water_preview_is_explicit_and_never_saved(legacy, monkeypatch):
     monkeypatch.setattr(records, 'initialize', forbidden)
     result = ConsequenceService(store, records).view()
     assert result['incident']['id'] == 'TX-26-0412'
+    assert all(n['name'] == n.get('label', n['id']) for n in result['nodes'])
     assert result['analysisState'] == 'reference_preview'
     assert result['analysis']['kind'] == 'reference_preview'
     assert result['analysis']['persisted'] is False
