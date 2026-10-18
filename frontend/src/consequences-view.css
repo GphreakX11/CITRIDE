@@ -377,7 +377,7 @@
   overflow-x: auto;
 }
 .c4-tile:last-child > strong {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   line-height: 1.25;
 }
 .c4-evidence {
