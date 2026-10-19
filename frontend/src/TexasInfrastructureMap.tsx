@@ -33,7 +33,7 @@ import {
 import type { MapEdge } from "./texasGraph";
 import { TEXAS_BOUNDARY_SOURCE, TEXAS_PATH } from "./texasOutline";
 import { nodeLabels } from "./texasLabels";
-import { containedTexasAnchor, texasContainsMarker, texasMarkerLayout } from "./texasMapLayout";
+import { containedTexasAnchor, texasContainsMarker, texasMarkerLayout, TexasMarkerCapacityError } from "./texasMapLayout";
 import { InfrastructureIcon } from "./InfrastructureIcon";
 import { infrastructureKind, infrastructureLabel } from "./infrastructureIcons";
 import "./infrastructure-map.css";
@@ -118,27 +118,6 @@ export default function TexasInfrastructureMap({
     connectionsRef.current?.scrollTo({ top: 0 });
   }, [selectedId, direction]);
   const mapRef = useRef<SVGSVGElement>(null);
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    // Compensate for a narrow SVG viewport without changing graph positions,
-    // labels, pan coordinates or the user's zoom. Bound enlargement in dense
-    // neighborhoods; selecting a mobile node still uses the existing 2× zoom.
-    const resizeMarkers = () => {
-      const box = map.getBoundingClientRect();
-      const scale = Math.min(box.width / 960, box.height / 720) * zoom;
-      if (scale <= 0) return;
-      map.style.setProperty(
-        "--texas-marker-scale",
-        String(Math.max(1, Math.min(1.8, 18 / (26 * scale)))),
-      );
-    };
-    resizeMarkers();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(resizeMarkers);
-    observer.observe(map);
-    return () => observer.disconnect();
-  }, [zoom]);
   const drag = useRef<{
     x: number;
     y: number;
@@ -218,10 +197,46 @@ export default function TexasInfrastructureMap({
       (!(focusOnly || directional) || !selected || neighbors.has(entity.id)),
   );
   const drawnIds = new Set(visible.map((entity) => entity.id));
-  const symbols = infrastructureSymbolPositions(new Map(visible.flatMap(entity => {
-    const position = positions.get(entity.id);
-    return position ? [[entity.id, position] as const] : [];
-  })));
+  const { symbols, capacityError } = (() => {
+    try {
+      return {
+        symbols: infrastructureSymbolPositions(new Map(visible.flatMap(entity => {
+          const position = positions.get(entity.id);
+          return position ? [[entity.id, position] as const] : [];
+        }))),
+        capacityError: null,
+      };
+    } catch (error) {
+      // The geometry guard must keep rejecting unsafe placement. At the render
+      // boundary, expose every record in a list instead of crashing, drawing a
+      // partial map, or reverting to uncontained/overlapping source positions.
+      if (!(error instanceof TexasMarkerCapacityError)) throw error;
+      return { symbols: new Map<string, { x: number; y: number }>(), capacityError: error };
+    }
+  })();
+  const mapAvailable = !capacityError;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    // Reattach after a filtered list becomes a map, even if zoom is unchanged.
+    // Compensate for a narrow SVG viewport without changing graph positions,
+    // labels, pan coordinates or the user's zoom. Bound enlargement in dense
+    // neighborhoods; selecting a mobile node still uses the existing 2× zoom.
+    const resizeMarkers = () => {
+      const box = map.getBoundingClientRect();
+      const scale = Math.min(box.width / 960, box.height / 720) * zoom;
+      if (scale <= 0) return;
+      map.style.setProperty(
+        "--texas-marker-scale",
+        String(Math.max(1, Math.min(1.8, 18 / (26 * scale)))),
+      );
+    };
+    resizeMarkers();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(resizeMarkers);
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, [zoom, mapAvailable]);
   const visibleKinds = [
     ...new Set(
       visible
@@ -599,6 +614,49 @@ export default function TexasInfrastructureMap({
       </div>
       <div className="texas-workspace" data-relationship-direction={direction}>
         <div className="texas-map-wrap">
+          {capacityError ? (
+            <section className="texas-capacity-fallback" aria-label="Map capacity fallback">
+              <h3>{visible.length} entities shown as a list</h3>
+              <p role="status">
+                This Texas schematic supports {capacityError.capacity} safely spaced markers;
+                {" "}{capacityError.requested} were requested. No map positions or relationship lines are drawn
+                rather than overlap markers or place them outside Texas.
+              </p>
+              <p>
+                Filter by name or service area to return to the map. Select an entity
+                below to explore its recorded connections, or open its entity profile.
+                List order does not indicate geographic location.
+              </p>
+              <div className="texas-capacity-list" role="region" aria-label="Infrastructure entities list" tabIndex={0}>
+                <ul>
+                  {visible.map(entity => (
+                    <li key={entity.id}>
+                      <button
+                        className="texas-neighbor"
+                        aria-label={`Show connections for ${displayText(entity.label)}`}
+                        aria-pressed={entity.id === selected?.id}
+                        onClick={() => choose(entity.id)}
+                      >
+                        <strong>{name(entity.id)}</strong>
+                      </button>
+                      <span>{humanize(entity.type.replace(/([a-z0-9])([A-Z])/g, "$1 $2"))}</span>
+                      <code>{entity.id}</code>
+                      {statusChip(entity.id)}
+                      <button
+                        className="command-link"
+                        data-entity-profile={entity.id}
+                        aria-label={`Open ${name(entity.id)} entity profile`}
+                        onClick={() => openProfile(entity.id)}
+                      >
+                        Open entity profile
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          ) : (
+            <>
           <div className="texas-map-actions" aria-label="Map view controls">
             <button
               aria-label="Zoom in map"
@@ -906,6 +964,8 @@ export default function TexasInfrastructureMap({
               );
             })}
           </svg>
+            </>
+          )}
           {!visible.length && (
             <div className="texas-no-match">
               No matching entities. Try another name or clear the filter.

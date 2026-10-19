@@ -1,5 +1,5 @@
 import { analystSourceLocation, analystReturnTarget, analystProfileReturnLocation } from "./analystReturn.ts";
-import { caseSelectionLocation } from "./caseIncidentSelection.ts";
+import { caseSelectionLocation, caseSelectionForIncident } from "./caseIncidentSelection.ts";
 import { useEffect, useRef, useState } from "react";
 import {
   Activity,
@@ -314,10 +314,8 @@ export default function App() {
     const explicitIncident = readIncidentFocus(window.location.href);
     const incidentId = sourceRecords && (explicitIncident || (chooseInitialDefault && perIncident))
       ? defaultIncidentId(sourceRecords, { cases: records, data: data ?? undefined }) : null;
-    const source = sourceRecords?.statewideIncidents.find(row => row.id === incidentId);
-    const requestedCase = source?.caseId ?? (source && records.find(item => source.linkedEventIds?.includes(item.eventId))?.id) ?? incidentId;
     const nextId = incidentId
-      ? records.find(item => item.id === requestedCase)?.id ?? null
+      ? caseSelectionForIncident(incidentId, records, sourceRecords?.statewideIncidents ?? [], selectedCaseId)
       : caseSelectionAfterRead(
       records,
       selectedEntity,

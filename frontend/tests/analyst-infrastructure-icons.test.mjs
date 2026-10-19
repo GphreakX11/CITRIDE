@@ -15,12 +15,12 @@ import {
 } from "../src/texasGraph.ts";
 import { serviceConnections } from "../src/relationshipStory.ts";
 import { utilityMapStatus } from "../src/whoActsFirst.ts";
-import { texasContainsMarker } from "../src/texasMapLayout.ts";
+import { texasContainsMarker, TexasMarkerCapacityError } from "../src/texasMapLayout.ts";
 
 const data = JSON.parse(
   readFileSync(new URL("../../data/scenario.json", import.meta.url), "utf8"),
 );
-const hooks = `data:text/javascript,${encodeURIComponent('export const useEffect=f=>globalThis.__analystInfrastructureEffects?.push(f);export const useId=()=>"icons";export const useMemo=f=>f();export const useRef=value=>({current:value});')}`;
+const hooks = `data:text/javascript,${encodeURIComponent('export const useEffect=(f,deps)=>{globalThis.__analystInfrastructureEffects?.push(f);globalThis.__analystInfrastructureEffectDeps?.push(deps);};export const useId=()=>"icons";export const useMemo=f=>f();export const useRef=value=>({current:value});')}`;
 const cache = new Map();
 async function compile(url, harness = false) {
   const key = `${url.href}:${harness}`;
@@ -141,6 +141,139 @@ function assertLegendMatches(tree) {
     ].sort(),
   );
 }
+
+const largeData = {
+  ...data,
+  entities: Array.from({ length: 328 }, (_, index) => ({
+    id: `large-facility-${index}`,
+    type: "Facility",
+    label: `Large incident facility ${index}`,
+    geometry: { type: "Point", coordinates: [-97.7, 30.3] },
+    provenance: "synthetic_schematic",
+  })),
+  dependencies: [],
+};
+
+test("328-marker geometry retains its capacity guard rather than overlapping or inventing positions", () => {
+  const source = mapPositions(largeData.entities);
+  const before = structuredClone([...source]);
+  assert.equal(source.size, 328);
+  assert.throws(() => infrastructureSymbolPositions(source), (error) => {
+    assert.ok(error instanceof TexasMarkerCapacityError);
+    assert.equal(error.requested, 328);
+    assert.equal(error.capacity, 111);
+    return true;
+  });
+  assert.deepEqual([...source], before);
+});
+
+test("328-entity Analyst layer renders an honest complete list instead of crashing or partial map positions", () => {
+  const before = structuredClone(largeData);
+  const input = props({ data: largeData });
+  const html = renderToStaticMarkup(createElement(MapComponent, input));
+  assert.match(html, /328 entities shown as a list/);
+  assert.match(html, /111 safely spaced markers/);
+  assert.match(html, /No map positions or relationship lines are drawn/);
+  assert.match(html, /Filter by name or service area/);
+  assert.doesNotMatch(html, /data-node-id=|data-edge-id=/);
+  assert.doesNotMatch(html, /aria-label="Zoom in map"/);
+  const tree = CallbackMap(input);
+  const list = elements(tree).find(node => node.props["aria-label"] === "Infrastructure entities list");
+  assert.ok(list, "keyboard-accessible, labelled internal scroll region");
+  assert.equal(list.props.tabIndex, 0);
+  const rows = elements(list).filter(node => node.type === "li");
+  assert.equal(rows.length, 328, "no truncation or hidden subset");
+  assert.deepEqual(
+    elements(list).filter(node => node.props["data-entity-profile"]).map(node => node.props["data-entity-profile"]),
+    largeData.entities.map(entity => entity.id),
+  );
+  assert.deepEqual(largeData, before);
+});
+
+test("large-map fallback retains exact profile and connection callbacks and recovers the map when filtered", () => {
+  const selected = [], opened = [], changed = [];
+  const previousWindow = globalThis.window;
+  globalThis.window = { matchMedia: () => ({ matches: false }) };
+  try {
+    const tree = CallbackMap(props({
+      data: largeData,
+      selectedId: "large-facility-327",
+      onSelectEntity: id => selected.push(id),
+      onOpenEntityProfile: id => opened.push(id),
+      onOpenEntity: () => assert.fail("profile must not use legacy callback"),
+      onMapStateChange: state => changed.push(state),
+    }));
+    const all = elements(tree);
+    for (const entity of largeData.entities) {
+      const button = all.find(node => node.props["aria-label"] === `Show connections for ${entity.label}`);
+      assert.equal(button.type, "button");
+      assert.equal(button.props["aria-pressed"], entity.id === "large-facility-327");
+      button.props.onClick();
+      assert.equal(selected.at(-1), entity.id);
+      const profile = all.find(node => node.props["data-entity-profile"] === entity.id);
+      profile.props.onClick();
+      assert.equal(opened.at(-1), entity.id);
+    }
+    all.find(node => node.props["aria-label"] === "Find infrastructure entity").props.onChange({ target: { value: "facility 327" } });
+    assert.equal(changed.at(-1).query, "facility 327");
+    const filtered = CallbackMap(props({ data: largeData, mapState: changed.at(-1) }));
+    assert.deepEqual(nodes(filtered).map(node => node.props["data-node-id"]), ["large-facility-327"]);
+    assert.ok(!elements(filtered).some(node => node.props.className === "texas-capacity-fallback"));
+    assert.ok(elements(filtered).some(node => node.props["aria-label"] === "Zoom in map"));
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
+test("list-to-map recovery reattaches marker sizing at unchanged zoom", () => {
+  const previousEffects = globalThis.__analystInfrastructureEffects;
+  const previousDeps = globalThis.__analystInfrastructureEffectDeps;
+  const previousObserver = globalThis.ResizeObserver;
+  const observed = [], scales = [];
+  let disconnected = false;
+  globalThis.ResizeObserver = class {
+    observe(map) { observed.push(map); }
+    disconnect() { disconnected = true; }
+  };
+  try {
+    globalThis.__analystInfrastructureEffects = [];
+    globalThis.__analystInfrastructureEffectDeps = [];
+    CallbackMap(props({ data: largeData }));
+    const listDeps = globalThis.__analystInfrastructureEffectDeps[1];
+    assert.equal(globalThis.__analystInfrastructureEffects[1](), undefined);
+    globalThis.__analystInfrastructureEffects = [];
+    globalThis.__analystInfrastructureEffectDeps = [];
+    const tree = CallbackMap(props({ data: largeData, mapState: { ...view, query: "facility 327" } }));
+    const mapDeps = globalThis.__analystInfrastructureEffectDeps[1];
+    assert.equal(listDeps[0], mapDeps[0], "zoom unchanged");
+    assert.notDeepEqual(listDeps, mapDeps, "mounting a map must rerun the effect");
+    const map = {
+      getBoundingClientRect: () => ({ width: 320, height: 330 }),
+      style: { setProperty: (name, value) => scales.push([name, value]) },
+    };
+    elements(tree).find(node => node.props.className === "texas-map").props.ref.current = map;
+    const cleanup = globalThis.__analystInfrastructureEffects[1]();
+    assert.deepEqual(observed, [map]);
+    assert.equal(scales[0][0], "--texas-marker-scale");
+    cleanup();
+    assert.ok(disconnected);
+  } finally {
+    if (previousEffects === undefined) delete globalThis.__analystInfrastructureEffects;
+    else globalThis.__analystInfrastructureEffects = previousEffects;
+    if (previousDeps === undefined) delete globalThis.__analystInfrastructureEffectDeps;
+    else globalThis.__analystInfrastructureEffectDeps = previousDeps;
+    if (previousObserver === undefined) delete globalThis.ResizeObserver;
+    else globalThis.ResizeObserver = previousObserver;
+  }
+});
+
+test("capacity list is bounded and wraps long content rather than widening the page", () => {
+  const css = readFileSync(new URL("../src/texas-map.css", import.meta.url), "utf8");
+  assert.match(css, /\.texas-capacity-fallback\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;/);
+  assert.match(css, /\.texas-capacity-list\s*\{[^}]*max-height:\s*[^;]+;[^}]*overflow-y:\s*auto;[^}]*overflow-x:\s*hidden;/);
+  assert.match(css, /\.texas-capacity-list button\s*\{[^}]*white-space:\s*normal;/);
+});
 
 test("every actual Analyst node uses the shared kind and SVG pictogram without moving source positions", () => {
   const before = structuredClone(data);
