@@ -472,6 +472,8 @@ class CommandService:
                 run_request["overrides"] = []
                 try:
                     run = compute_run(deepcopy(baseline), run_request, "run-" + uuid4().hex)
+                    from .sector_links import capture_for_store
+                    capture_for_store(run, self.store, baseline)
                     run["createdAt"] = now
                     run["kind"] = "reviewed"
                     record["decisions"] = _decisions(run)

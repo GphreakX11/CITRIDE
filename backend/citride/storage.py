@@ -477,6 +477,8 @@ class Repository:
                 raise NotFoundError(f"Scenario {request['scenarioId']} was not found")
             run_id = "run-" + uuid4().hex
             run = compute(deepcopy(baseline), deepcopy(request), run_id)
+            from .sector_links import capture_for_store
+            capture_for_store(run, self, baseline)
             self._record_graph(dataset, "run", run)
             if request_id:
                 # Internal metadata is committed atomically with the immutable

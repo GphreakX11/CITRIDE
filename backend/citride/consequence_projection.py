@@ -6,6 +6,7 @@ from .consequences import bestAnalysisFor, preliminaryScenarioFor
 
 from .records import RecordsService
 from .storage import NotFoundError
+from .sector_links import projected_sector_links, sector_label
 
 
 def source_systems(model, incident, source_id):
@@ -32,7 +33,7 @@ def source_systems(model, incident, source_id):
 
 
 def project_consequences(incident, analysis, reference, planning_rates, statuses=()):
-    empty = {'incident': deepcopy(incident), 'analysis': None, 'nodes': [], 'edges': [], 'sectors': []}
+    empty = {'incident': deepcopy(incident), 'analysis': None, 'nodes': [], 'edges': [], 'sectors': [], 'sectorLinks': []}
     if analysis is None:
         return empty
     model = analysis['baselineSnapshot']
@@ -49,12 +50,7 @@ def project_consequences(incident, analysis, reference, planning_rates, statuses
     affected = {i['entityId'] for i in impacts}
     sector_rules = reference['sectors']
     def sector(entity):
-        if entity.get('sector'):
-            return {'label': entity['sector']}
-        path = entity.get('idt', {}).get('path', '').split('.')[0]
-        # Supplied package has inconsistent sector codes. Explicit typed
-        # reference mappings take precedence, not names or UI heuristics.
-        return next((r for r in sector_rules if entity['type'] in r.get('types', [])), next((r for r in sector_rules if r['prefix'] == path), {'label': 'Unclassified'}))
+        return {'label': sector_label(entity, sector_rules)}
     adjacency = {}
     for dep in dependencies.values():
         adjacency.setdefault(dep['provider'], []).append(dep['dependent'])
@@ -149,7 +145,7 @@ def project_consequences(incident, analysis, reference, planning_rates, statuses
             'source': source, 'sourceSystems': source_systems(model, incident, source_id), 'people': population, 'serviceAffected': incident.get('serviceAffected'),
             'atRisk': len(affected - {source_id}), 'earliestWindow': min(known, key=lambda w: (w[0], w[1])) if known else None,
             'restoration': restoration, 'economic': economic, 'publicAction': public_action,
-            'nodes': nodes, 'edges': edges, 'sectors': sectors, 'alternatives': alternatives,
+            'nodes': nodes, 'edges': edges, 'sectors': sectors, 'sectorLinks': projected_sector_links(analysis, reference), 'alternatives': alternatives,
             'thresholds': sorted(thresholds, key=lambda t: t['hours']), 'responseOwners': owners, 'confidence': confidence}
 
 
@@ -179,7 +175,7 @@ class ConsequenceService:
                     rank = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
                     incident = min(open_incidents, key=lambda r: (rank.get(r.get('severity'), 4), r['id']), default=None)
             if incident is None:
-                return {'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'featuredIncidentId': envelope['featuredIncidentId'], 'incidents': incidents, 'incident': None, 'analysis': None, 'analysisState': 'no_analysis', 'nodes': [], 'edges': [], 'sectors': []}
+                return {'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'featuredIncidentId': envelope['featuredIncidentId'], 'incidents': incidents, 'incident': None, 'analysis': None, 'analysisState': 'no_analysis', 'nodes': [], 'edges': [], 'sectors': [], 'sectorLinks': []}
             runs = self.store._records(dataset, 'run')
             cases = self.store._records(dataset, 'command-incident')
             # Reject stale preliminaries when update removed the causal mapping.

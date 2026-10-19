@@ -200,7 +200,7 @@ class RecordsService:
         for incident in self.store._records(dataset, 'statewideIncidents'):
             if incident_ids is not None and incident['id'] not in incident_ids:
                 continue
-            changed = automatic_intake(self.store, dataset, [incident], model, self.c4_reference, self._wall_now(), _parse(incident.get('sampleDataAnchor', self._anchor(meta)))) or changed
+            changed = automatic_intake(self.store, dataset, [incident], model, self.c4_reference, self._wall_now(), _parse(incident.get('sampleDataAnchor', self._anchor(meta))), self.reference.get('serviceLabels')) or changed
         return changed
 
     def _validate_records(self, records, config):

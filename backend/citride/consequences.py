@@ -58,7 +58,7 @@ def bestAnalysisFor(incident, runs, cases):
     return deepcopy(max(preliminary, key=lambda r: (r.get('computedAt', r.get('createdAt', '')), r['id']))) if preliminary else None
 
 
-def automatic_intake(store, dataset, incidents, model, reference, now, anchor):
+def automatic_intake(store, dataset, incidents, model, reference, now, anchor, service_labels=None):
     """One transaction-neutral path for seed, reload, feed create/update."""
     changed = False
     existing = store._records(dataset, 'run')
@@ -86,6 +86,8 @@ def automatic_intake(store, dataset, incidents, model, reference, now, anchor):
                    createdAt=(trigger + timedelta(minutes=1)).isoformat(), computedAt=now.isoformat(),
                    effectiveAt=(trigger + timedelta(minutes=1)).isoformat(), triggerEventAt=trigger.isoformat(),
                    createdAtBasis='scripted effective analysis time; computedAt is actual execution time' if incident.get('origin') in ('scripted', 'simulated') else 'trigger plus one minute', inputFingerprint=digest)
+        from .sector_links import capture_sector_links
+        capture_sector_links(run, reference, service_labels)
         store._record_graph(dataset, 'run', run)
         existing.append(run)
         changed = True
