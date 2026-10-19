@@ -297,7 +297,11 @@ export default function App() {
       setMobileMenu(false);
     };
     window.addEventListener("popstate", restore);
-    return () => window.removeEventListener("popstate", restore);
+    window.addEventListener("consequence-selection", restore);
+    return () => {
+      window.removeEventListener("popstate", restore);
+      window.removeEventListener("consequence-selection", restore);
+    };
   }, [data, workflowLocked]);
 
   function receiveCases(records: CommandIncident[], sourceRecords?: RecordsState) {

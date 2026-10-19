@@ -3,7 +3,7 @@ import type { ConsequenceNode, ConsequenceProjection } from './consequencesModel
 import { consequenceNodeState } from './consequencesModel.ts';
 import { iconFor } from './incidentPresentation.ts';
 import { InfrastructureIcon } from './InfrastructureIcon.tsx';
-import { dependencyLayout, filteredNodeOpacity } from './incidentDependencyLayout.ts';
+import { dependencyLayout, dependencyTopologyKey, filteredNodeOpacity } from './incidentDependencyLayout.ts';
 import './incident-dependency-map.css';
 interface Props {
  nodes: (ConsequenceNode & { schematic?: {x:number;y:number} })[];
@@ -20,7 +20,8 @@ interface Props {
 /** Nongeographic view of server-computed dependencies. Watch links are not causal. */
 export default function IncidentDependencyMap({nodes,edges,sourceId,visible,entityIcons,attackedSystem,watchRelationships,selectedId,onSelect}:Props) {
  const marker = useId().replace(/:/g,'');
- const layout = useMemo(()=>dependencyLayout(nodes,edges,sourceId),[nodes,edges,sourceId]);
+ const topology = dependencyTopologyKey(nodes,edges,sourceId);
+ const layout = useMemo(()=>dependencyLayout(nodes,edges,sourceId),[topology]);
  const positions = useMemo(()=>new Map(layout.nodes.map(n=>[n.id,n])),[layout]);
  const fitWidth = Math.max(layout.width,layout.height/.65)*1.06;
  const fit = () => ({x:layout.width/2,y:layout.height/2,width:fitWidth});

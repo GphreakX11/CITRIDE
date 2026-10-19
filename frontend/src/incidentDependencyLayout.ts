@@ -18,6 +18,11 @@ export interface DependencyLayoutResult {
 }
 
 const HORIZONTAL = 300;
+/** Only actual geometry changes may discard a user's zoom/pan viewport. */
+export function dependencyTopologyKey(nodes: readonly DependencyLayoutNode[], edges: readonly DependencyLayoutEdge[], sourceId: string): string {
+  const ordered = (rows: unknown[][]) => rows.map(row=>JSON.stringify(row)).sort();
+  return JSON.stringify([sourceId, ordered(nodes.map(n=>[n.id,!!n.upstream,n.status==='on_watch',n.schematic?.x ?? null,n.schematic?.y ?? null])), ordered(edges.map(e=>[e.from,e.to,e.kind ?? 'dependency']))]);
+}
 const VERTICAL = 140;
 const compareIds = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 

@@ -56,11 +56,10 @@ export function ConsequencesContent({
   const [selection] = useConsequenceSelection();
   const setSector = (sector: string | null) => writeConsequenceSelection({incidentId:value.incident?.id ?? null,sector:sector || "all",entityId:null});
   const setSelected = (entityId: string | null) => { const node=value.nodes.find(n=>n.id===entityId); writeConsequenceSelection({incidentId:value.incident?.id ?? null,entityId,sector:node?.sector.toLowerCase() || selection.sector}); };
+
   const { analysis, source } = value;
   const hasSectorMap = !!value.sectorViews?.some(r => r.sectors.length);
-  const displayedSectors = hasSectorMap
-    ? value.sectors.filter(s => value.sectorViews?.some(r => r.sectors.some(v => v.sector === s.label)))
-    : value.sectors;
+  const displayedSectors = value.sectors;
   const infrastructureCount = value.infrastructureCount ?? value.atRisk;
   const countDetail = value.cascadeCount != null && value.watchOnlyCount != null
     ? `${value.cascadeCount} in the cascade · ${value.watchOnlyCount} watch-only (same campaign)` : null;
@@ -291,7 +290,6 @@ export function ConsequencesContent({
                     <button
                       onClick={() => {
                         setSector(s.label);
-                        setSelected(null);
                       }}
                     >
                       {s.label}
