@@ -17,6 +17,10 @@ def validate_customer_receipt(receipt):
  if type(receipt.get('pass')) is not bool or not isinstance(receipt.get('screens'),list):raise ValueError('Customer receipt malformed pass/screens structure')
  if receipt['pass'] is not True:raise ValueError('Customer separation producer failed')
  return receipt
+def customer_search_identity(visible_ids,owned_ids,foreign_id):
+ """A substring hit on an owned ID is not a foreign incident being returned."""
+ foreign=[identifier for identifier in visible_ids if identifier==foreign_id or identifier not in owned_ids]
+ return {'visibleIncidentIds':visible_ids,'foreignIncidentIds':foreign,'ownedOnly':not foreign and len(set(visible_ids))==len(visible_ids)}
 customer=validate_customer_receipt(json.loads((OUT/'check-2-customer.json').read_text()))
 VIEWS=['command','cop','cyber','consequence','coordination','uctf','case-file','entity-profile']
 COMMAND=['command','cop','cyber','consequence','uctf','leadership','federation']
@@ -130,7 +134,10 @@ with sync_playwright() as pw:
  for current,selected,foreign in [(THIRD,customer['incident'],saved['cases'][0]['incident']),(TXCC,saved['cases'][0]['incident'],customer['incident'])]:
   cp,cs=page_for(current)
   try:
-   visit(cp,url(current,'command','cop',selected));cp.locator('.iv-select-trigger').click();cp.get_by_role('combobox').fill(foreign);customer['search'].append({'origin':current,'query':foreign,'matchingOptions':cp.get_by_role('option').count(),'emptyState':cp.get_by_text('No matching open or monitoring incidents.',exact=True).count()})
+   visit(cp,url(current,'command','cop',selected));cp.locator('.iv-select-trigger').click();cp.get_by_role('combobox').fill(foreign)
+   visible=cp.get_by_role('option').evaluate_all("els=>els.map(e=>e.querySelector('.iv-caption')?.textContent.split(' · ')[0].trim()||'')")
+   owned={row['id'] for row in get(current,'/v1/command/records')['statewideIncidents']}
+   customer['search'].append({'origin':current,'query':foreign,'matchingOptions':len(visible),'emptyState':cp.get_by_text('No matching open or monitoring incidents.',exact=True).count(),**customer_search_identity(visible,owned,foreign)})
   except Exception as e:customer['search'].append({'origin':current,'error':str(e)})
  (OUT/'check-2-customer.json').write_text(json.dumps(customer,indent=2))
  result['noExtraCases']=len(get(origin,'/v1/command/incidents')['incidents'])==2

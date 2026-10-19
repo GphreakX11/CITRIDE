@@ -5,15 +5,16 @@ from pathlib import Path
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock
+from typing import Any, Callable
 
 HERE = Path(__file__).parent
 
-def helper(script, name, bindings=None):
+def helper(script: str, name: str, bindings: dict[str, Any] | None = None) -> Callable[..., Any]:
     tree = ast.parse((HERE / script).read_text())
     nodes = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name]
     if not nodes:
         raise AssertionError(f'{script} missing pure helper {name}')
-    namespace = {'json': json}
+    namespace: dict[str, Any] = {'json': json}
     namespace.update(bindings or {})
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(HERE / script), 'exec'), namespace)
     return namespace[name]
@@ -106,6 +107,22 @@ class CreateSynchronizationTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, 'Expected exactly one persisted new case'):
             create(page, state, 'http://127.0.0.1:1234', form, set(), {})
         self.assertFalse(state['allowCreate'])
+
+class CustomerSearchIdentityTests(unittest.TestCase):
+    def assess(self, visible, owned, foreign):
+        return helper('part-b-supplement.py', 'customer_search_identity')(visible, owned, foreign)
+
+    def test_owned_substring_match_is_not_foreign_record(self):
+        result = self.assess(['fixture-third-INC-1'], {'fixture-third-INC-1'}, 'INC-1')
+        self.assertTrue(result['ownedOnly'])
+        self.assertEqual(result['foreignIncidentIds'], [])
+
+    def test_exact_foreign_and_unknown_ids_are_rejected(self):
+        for visible in [['INC-1'], ['unknown'], ['']]:
+            with self.subTest(visible=visible):
+                result = self.assess(visible, {'fixture-third-INC-1'}, 'INC-1')
+                self.assertFalse(result['ownedOnly'])
+                self.assertTrue(result['foreignIncidentIds'])
 
 if __name__ == '__main__':
     unittest.main()
