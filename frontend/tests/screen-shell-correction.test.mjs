@@ -28,6 +28,7 @@ async function load(file) {
   code = code.replace(/from\s+["']([^"']+)["']/g, (_match, spec) => {
     let target;
     if (spec === "react") target = hooksUrl;
+    else if (spec === "./analystIncidentContext.ts") target = moduleData("export const useAnalystIncident=()=>null;export function AnalystIncidentProvider({children}){return children}");
     else if (spec === "react-dom") target = portalUrl;
     else if (spec === "./api") target = apiUrl;
     else if (spec.startsWith(".") && /[A-Z]/.test(spec[2])) {
@@ -274,12 +275,13 @@ test("baseline context remains in Advanced rather than the header", () => {
   assert.ok(!text(header).includes("Baseline r"));
 });
 
-test("source alerts are oldest first without mutating records, all initially visible", () => {
+test("source alerts are newest first from the persisted anchor without mutating records, all initially visible", () => {
   const original = data.events.map((e) => e.id);
   hooks.clear();
   let tree = Alerts({
     data,
     incidents: [],
+    records: {sampleDataAnchor:"2026-10-19T12:00:00Z",statewideIncidents:[]},
     workflowLocked: false,
     onCreate() {},
     onOpenCase() {},
@@ -288,7 +290,7 @@ test("source alerts are oldest first without mutating records, all initially vis
   assert.ok(!text(tree).includes("Show all"));
   assert.equal(
     nodes(tree).find((n) => n.props["data-alert-id"]).props["data-alert-id"],
-    "event-vpn-a",
+    "event-probe-c",
   );
   assert.deepEqual(
     data.events.map((e) => e.id),
@@ -301,6 +303,7 @@ test("source alerts are oldest first without mutating records, all initially vis
       events: [...data.events, { ...data.events.at(-1), id: "eighth" }],
     },
     incidents: [],
+    records: {sampleDataAnchor:"2026-10-19T12:00:00Z",statewideIncidents:[]},
     workflowLocked: false,
     onCreate() {},
     onOpenCase() {},
@@ -309,7 +312,7 @@ test("source alerts are oldest first without mutating records, all initially vis
   assert.ok(text(tree).includes("Show fewer"));
 });
 
-test("source alerts fall back to ascending relative time, unknown last", () => {
+test("source alerts resolve descending relative time with anchor, unknown last", () => {
   hooks.clear();
   const tree = Alerts({
     data: {
@@ -321,6 +324,7 @@ test("source alerts fall back to ascending relative time, unknown last", () => {
       ],
     },
     incidents: [],
+    records: {sampleDataAnchor:"2026-10-19T12:00:00Z",statewideIncidents:[]},
     workflowLocked: false,
     onCreate() {},
     onOpenCase() {},
@@ -329,7 +333,7 @@ test("source alerts fall back to ascending relative time, unknown last", () => {
     nodes(tree)
       .filter((n) => n.props["data-alert-id"])
       .map((n) => n.props["data-alert-id"]),
-    ["early", "late", "unknown"],
+    ["late", "early", "unknown"],
   );
 });
 

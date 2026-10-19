@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {isValidElement} from 'react';
+import {transformWithOxc} from 'vite';
+const moduleUrl=s=>'data:text/javascript;base64,'+Buffer.from(s).toString('base64');
+const hookUrl=moduleUrl('let slots=[],i=0;export function clear(){slots=[];i=0}export function reset(){i=0}export function useState(v){const n=i++;if(!(n in slots))slots[n]=v;return [slots[n],v=>slots[n]=v]}export const useId=()=>"chooser-test"');
+const hooks=await import(hookUrl);
+const source=new URL('../src/AnalystIncidentChooser.tsx',import.meta.url);
+let code=(await transformWithOxc(readFileSync(source,'utf8'),source.pathname,{jsx:{runtime:'automatic'}})).code;
+code=code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm,'').replace(/from\s+["']([^"']+)["']/g,(_,s)=>'from '+JSON.stringify(s==='react'?hookUrl:s.startsWith('.')?new URL(s,source).href:import.meta.resolve(s)));
+const {AnalystIncidentChooser}=await import(moduleUrl(code));
+function nodes(x){if(Array.isArray(x))return x.flatMap(nodes);return isValidElement(x)?[x,...nodes(x.props.children)]:[]}
+function text(x){if(Array.isArray(x))return x.map(text).join('');return isValidElement(x)?text(x.props.children):typeof x==='string'?x:''}
+function setup(extra={}){hooks.clear();const calls=[];const a={id:'incident-a',title:'Harbor incident',severity:'high',status:'open',linkedEventIds:['event-a']};const c={id:'case-a',title:'Older review',status:'open',eventId:'event-a'};const ctx={openIncidents:[a,{id:'incident-b',title:'Relay incident',severity:'medium',status:'monitoring',linkedEventIds:['event-b']}],selectedIncident:a,selectedIncidentId:a.id,activeCase:null,matchingOpenCases:[],cases:[],locked:false,selectIncident:id=>calls.push(['incident',id]),selectCase:id=>calls.push(['case',id]),...extra};function render(){hooks.reset();return AnalystIncidentChooser({context:ctx})}return {a,c,ctx,calls,render}}
+function open(h){let t=h.render();nodes(t).find(n=>n.type==='button'&&text(n)==='Change incident').props.onClick();return h.render()}
+test('chooser lists operative register IDs/title/severity/case status even with zero cases, excluding closed/reference records',()=>{const h=setup();h.ctx.openIncidents.push({id:'closed',status:'closed',title:'Closed'},{id:'reference',referenceOnly:true,status:'open',title:'Reference'});const t=open(h);const opts=nodes(t).filter(n=>n.type==='option');assert.equal(opts.length,2);assert.match(text(opts[0]),/incident-a.*Harbor incident.*high.*No case yet/);assert.match(text(opts[1]),/incident-b.*Relay incident.*medium.*No case yet/);assert.doesNotMatch(text(t),/No incident selected/)});
+test('incident selection invokes public host callback only; forged/closed identifiers cannot select or create cases',()=>{const h=setup();let t=open(h);let select=nodes(t).find(n=>n.type==='select');select.props.onChange({target:{value:'foreign'}});assert.deepEqual(h.calls,[]);select.props.onChange({target:{value:'incident-b'}});assert.deepEqual(h.calls,[['incident','incident-b']])});
+test('multiple open cases show Case chooser, use host active case, and reject foreign case IDs',()=>{const h=setup();const older=h.c,newer={...older,id:'case-new',title:'Latest review'};h.ctx.cases=[older,newer];h.ctx.matchingOpenCases=[newer,older];h.ctx.activeCase=newer;let t=open(h);assert.match(text(t),/Case open/);const select=nodes(t).find(n=>n.props['aria-label']==='Case');assert.equal(select.props.value,'case-new');select.props.onChange({target:{value:'other-customer'}});assert.deepEqual(h.calls,[]);select.props.onChange({target:{value:'case-a'}});assert.deepEqual(h.calls,[['case','case-a']])});
+test('explicit closed history remains selected without being treated as an open case',()=>{const h=setup();h.ctx.activeCase={...h.c,status:'closed'};const t=h.render();const select=nodes(t).find(n=>n.props['aria-label']==='Case');assert.equal(select.props.value,'case-a');assert.match(text(t),/Historical case.*closed/)});
+test('lock guards both chooser callbacks, including already open controls',()=>{const h=setup();let t=open(h);h.ctx.locked=true;t=h.render();const select=nodes(t).find(n=>n.props['aria-label']==='Incident');assert.equal(select.props.disabled,true);select.props.onChange({target:{value:'incident-b'}});assert.deepEqual(h.calls,[])});

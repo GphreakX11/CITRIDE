@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {readConsequenceSelection, writeConsequenceSelection} from '../src/consequenceSelection.ts';
 
-test('A1 uses the shared selection writer and listens to its same-document updates',()=>{
+test('A1 uses provider selection without hiding other alerts and listens to same-document updates',()=>{
  const source=readFileSync(new URL('../src/AnalystAlerts.tsx',import.meta.url),'utf8');
- assert.match(source,/writeConsequenceSelection\(\{ incidentId: null \}\)/);
+ assert.match(source,/context \? context.selectedIncidentId : focusId/);
+ assert.match(source,/orderedAlerts\(data.events, focusedEvents, eventTimestamp\)/);
+ assert.doesNotMatch(source,/filter\(event => !focusedEvents/);
  assert.match(source,/addEventListener\("consequence-selection", restore\)/);
  assert.match(source,/removeEventListener\("consequence-selection", restore\)/);
  assert.doesNotMatch(source,/incidentFocusLocation|readIncidentFocus/);

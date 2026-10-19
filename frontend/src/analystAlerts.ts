@@ -1,4 +1,4 @@
-import type { Event } from "./types.ts";
+import type { Bootstrap, Entity, Event } from "./types.ts";
 import type { CommandIncident, IncidentPriority } from "./commandTypes.ts";
 import type { RecordsState } from "./scriptedTypes.ts";
 import { formatTime, resolveEventTimestamp, type SampleDataTiming } from "./displayTime.ts";
@@ -74,4 +74,60 @@ export function alertTechniques(event: Event): string[] {
           : "",
     )
     .filter(Boolean);
+}
+
+/** A single queue: case linkage never changes incident/time priority. */
+export function orderedAlerts(
+  events: readonly Event[],
+  selectedEventIds: ReadonlySet<string> = new Set(),
+  eventTimestamp: (event: Event) => string | undefined = event => resolveEventTimestamp(event, {}),
+): Event[] {
+  const time = (event: Event) => {
+    const value = Date.parse(eventTimestamp(event) ?? "");
+    return Number.isFinite(value) ? value : -Infinity;
+  };
+  return [...events].sort((a, b) =>
+    Number(selectedEventIds.has(b.id)) - Number(selectedEventIds.has(a.id)) ||
+    (time(b) - time(a) || 0),
+  );
+}
+
+const parentIds = (value: unknown): string[] => typeof value === "string" ? [value]
+  : Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+
+/** Match inventory type families, never customer names or IDs. */
+const isSite = (entity: Entity) => /facility|site|plant|terminal|provider|refinery|station|building|campus/i.test(entity.type);
+export function alertLocation(event: Event, data: Pick<Bootstrap, "entities">): string {
+  const index = new Map(data.entities.map(entity => [entity.id, entity]));
+  const queue = parentIds(event.seenOn);
+  const seen = new Set<string>();
+  let assetLabel: string | undefined;
+  while (queue.length) {
+    const id = queue.shift()!;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const entity = index.get(id);
+    if (!entity) continue;
+    const label = entity.label?.trim();
+    if (!assetLabel && label) assetLabel = label;
+    if (label && isSite(entity)) {
+      // Add one useful ancestor site/provider to the nearest facility label.
+      const parents = [...parentIds(entity.hostedBy), ...parentIds(entity.partOf)];
+      const ancestors = new Set([entity.id]);
+      while (parents.length) {
+        const parentId = parents.shift()!;
+        if (ancestors.has(parentId)) continue;
+        ancestors.add(parentId);
+        const parent = index.get(parentId);
+        if (!parent) continue;
+        const parentLabel = parent.label?.trim();
+        if (parentLabel && isSite(parent) && parentLabel !== label)
+          return `${parentLabel} · ${label}`;
+        parents.push(...parentIds(parent.hostedBy), ...parentIds(parent.partOf));
+      }
+      return label;
+    }
+    queue.push(...parentIds(entity.hostedBy), ...parentIds(entity.partOf));
+  }
+  return assetLabel ?? "Location not recorded";
 }

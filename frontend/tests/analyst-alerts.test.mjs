@@ -12,7 +12,11 @@ import {
   campaignCaseLink,
   alertTime,
   alertTechniques,
+  orderedAlerts,
+  alertLocation,
 } from "../src/analystAlerts.ts";
+import { resolveEventTimestamp, formatTime } from "../src/displayTime.ts";
+import { AnalystIncidentProvider } from "../src/analystIncidentContext.ts";
 const data = {
   ...JSON.parse(
     readFileSync(new URL("../../data/scenario.json", import.meta.url)),
@@ -102,7 +106,7 @@ test("anomalous priority defaults high and ordinary or explicitly normal alerts 
   assert.equal(defaultAlertPriority({ id: "new", anomalous: true }), "high");
 });
 test("CT time and ATT&CK chips use source values, including legacy string techniques", () => {
-  assert.equal(alertTime(data.events[0], { sampleDataAnchor: data.incidentOrigin }), "01:30 CDT");
+  assert.equal(alertTime(data.events[0], { sampleDataAnchor: "2026-10-13T07:00:00Z" }), "01:30 CDT");
   assert.ok(alertTechniques(data.events[0]).some((t) => t.includes("T0822")));
   assert.deepEqual(alertTechniques({ id: "legacy", techniques: ["T1234"] }), [
     "T1234",
@@ -125,7 +129,8 @@ async function load(name, fake = false) {
   const matches = [...code.matchAll(/from\s+["']([^"']+)["']/g)];
   for (const m of matches) {
     let target;
-    if (fake && m[1] === "react") target = hookUrl;
+    if (fake && m[1] === "./analystIncidentContext.ts") target = moduleUrl("export const useAnalystIncident = () => null;");
+    else if (fake && m[1] === "react") target = hookUrl;
     else if (m[1].endsWith(".tsx")) target = await load(m[1].slice(2), fake);
     else
       target = m[1].startsWith(".")
@@ -256,4 +261,130 @@ test("alerts render all missing-case events when expanded and provide an open-ca
       "Alerts never become cases on their own; an analyst opens the case.",
     ),
   );
+});
+
+const port = JSON.parse(readFileSync(new URL("../../data/scripted/port_houston.json", import.meta.url)));
+const allData = { ...data, events: [...data.events, ...port.events], entities: [...data.entities, ...port.entities] };
+const clock = { sampleDataAnchor: "2026-10-19T18:00:00Z" };
+const idsIn = html => [...html.matchAll(/data-alert-id="([^"]+)"/g)].map(match => match[1]);
+function alertMarkup({ selected, cases = [], timing = clock, source = allData, provider = false } = {}) {
+  const p = { data: source, incidents: cases, records: { ...timing, statewideIncidents: selected ? [selected] : [] }, workflowLocked: false, onCreate: async () => ({}), onOpenCase() {} };
+  let element = createElement(Alerts, p);
+  if (provider) element = createElement(AnalystIncidentProvider, {
+    selection: { selectedIncidentId: selected?.id ?? null, selectedIncident: selected ?? null, openIncidents: selected ? [selected] : [], matchingOpenCases: cases, activeCase: null },
+    mainStore: source, records: p.records, reference: null, telemetry: null, cases,
+    selectIncident() {}, selectCase() {}, locked: false, enabled: false,
+  }, element);
+  return renderToStaticMarkup(element);
+}
+test("all 13 alerts render by default, newest first globally regardless of linked/pending cases", () => {
+  assert.equal(allData.events.length, 13);
+  const expected = orderedAlerts(allData.events, new Set(), event => resolveEventTimestamp(event, clock)).map(event => event.id);
+  const cases = [ { id: "new-case", eventId: expected[0], status: "open" }, { id: "old-case", eventId: expected.at(-1), status: "monitoring" } ];
+  const html = alertMarkup({ cases });
+  assert.deepEqual(idsIn(html), expected);
+  assert.equal((html.match(/Open case file/g) ?? []).length, 2);
+  assert.ok(!html.includes("Utility unresolved"));
+  assert.ok(!html.includes("Time unavailable"));
+});
+test("selected incident alerts come first without hiding others or separating linked cases", () => {
+  const selected = { id: "arbitrary-selection", title: "Selected register row", linkedEventIds: port.events.map(event => event.id) };
+  const expected = orderedAlerts(allData.events, new Set(selected.linkedEventIds), event => resolveEventTimestamp(event, clock)).map(event => event.id);
+  const cases = [{ id: "selected-linked", eventId: expected[0], status: "open" }, { id: "other-linked", eventId: expected.at(-1), status: "open" }];
+  const html = alertMarkup({ selected, cases, provider: true });
+  assert.deepEqual(idsIn(html), expected);
+  assert.equal(idsIn(html).length, 13);
+  assert.deepEqual(idsIn(html).slice(0, 6).sort(), selected.linkedEventIds.toSorted());
+  assert.ok(html.includes("Selected register row"));
+});
+test("sample card datetime and label share the persisted anchor; live aware timestamps survive", () => {
+  const source = { ...data, events: [
+    { id: "sample", relativeTimeHours: -0.5, timestamp: "2020-01-01T00:00:00Z" },
+    { id: "live", timestamp: "2026-10-19T14:15:00-04:00" },
+    { id: "event-time", eventTime: "2026-10-19T18:30:00Z" },
+    { id: "unknown" },
+  ] };
+  for (const provider of [false, true]) {
+    const html = alertMarkup({ source, provider });
+    for (const event of source.events.slice(0, 3)) {
+      const timestamp = resolveEventTimestamp(event, clock);
+      assert.ok(html.includes(`<time dateTime="${timestamp}">${formatTime(timestamp)}</time>`));
+    }
+    assert.deepEqual(idsIn(html), ["event-time", "live", "sample", "unknown"]);
+    assert.ok(html.includes("<time>Time unavailable</time>"));
+    const noAnchor = alertMarkup({ source, provider, timing: { now: clock.sampleDataAnchor } });
+    assert.ok(!noAnchor.includes("2020-01-01"));
+    assert.ok(noAnchor.includes('data-alert-id="sample"'));
+  }
+});
+test("location follows hosting/containment to nearest named facility and useful parent, never customer IDs", () => {
+  const entity = (id, type, label, extra = {}) => ({ id, type, label, ...extra });
+  const inventory = { entities: [
+    entity("cyber", "CyberAsset", "Controller network identity", { hostedBy: "physical" }),
+    entity("physical", "PhysicalOTAsset", "Controller", { partOf: "facility" }),
+    entity("facility", "TreatmentPlant", "North Works", { partOf: "provider" }),
+    entity("provider", "WaterServiceProvider", "Regional Operator"),
+    entity("terminal", "PortFacility", "Cargo Terminal"),
+    entity("it", "PhysicalITAsset", "Scheduling server", { partOf: "terminal" }),
+    entity("blank", "Site", " ", { partOf: "terminal" }),
+  ] };
+  assert.equal(alertLocation({ id: "a", seenOn: "cyber" }, inventory), "Regional Operator · North Works");
+  assert.equal(alertLocation({ id: "a", seenOn: "it" }, inventory), "Cargo Terminal");
+  assert.equal(alertLocation({ id: "a", seenOn: "blank" }, inventory), "Cargo Terminal");
+});
+test("location cycles and missing parents terminate with a named asset or explicit fallback", () => {
+  const inventory = { entities: [
+    { id: "a", type: "CyberAsset", label: "Named sensor", hostedBy: "b" },
+    { id: "b", type: "PhysicalOTAsset", label: "", partOf: "a" },
+    { id: "site", type: "PortFacility", label: "Cyclic site", partOf: "site" },
+  ] };
+  assert.equal(alertLocation({ id: "event", seenOn: "a" }, inventory), "Named sensor");
+  assert.equal(alertLocation({ id: "event", seenOn: "site" }, inventory), "Cyclic site");
+  for (const event of [{ id: "missing" }, { id: "absent", seenOn: "unknown" }])
+    assert.equal(alertLocation(event, inventory), "Location not recorded");
+  assert.equal(alertLocation({ id: "blank", seenOn: "blank" }, { entities: [{ id: "blank", type: "PhysicalITAsset", label: "", partOf: "missing" }] }), "Location not recorded");
+});
+test("unknown sort times stay last within their incident group and equal times preserve source order", () => {
+  const events = [{ id: "other" }, { id: "unknown-selected" }, { id: "first", timestamp: "2026-10-19T18:00:00Z" }, { id: "second", timestamp: "2026-10-19T18:00:00Z" }];
+  assert.deepEqual(orderedAlerts(events, new Set(["unknown-selected", "first", "second"])).map(event => event.id), ["first", "second", "unknown-selected", "other"]);
+});
+const { default: InteractiveAlerts } = await import(await load("AnalystAlerts.tsx", true));
+test("queue keeps existing-case action and opens/cancels inline create without creating a case automatically", () => {
+  hooks.clear();
+  const opened = [];
+  const p = { data, incidents: [active], records: { ...clock, statewideIncidents: [] }, workflowLocked: false, onOpenCase: id => opened.push(id), onCreate: async () => { throw new Error("Not submitted"); } };
+  const render = () => { hooks.reset(); return InteractiveAlerts(p); };
+  let tree = render();
+  const existing = nodes(tree).find(node => node.props["data-alert-id"] === active.eventId);
+  nodes(existing).find(node => node.type === "button").props.onClick();
+  assert.deepEqual(opened, [active.id]);
+  const pending = nodes(tree).find(node => node.props["data-alert-id"] === data.events[0].id);
+  nodes(pending).find(node => node.type === "button").props.onClick();
+  tree = render();
+  const form = nodes(tree).find(node => node.type === CaseCreateForm || (typeof node.type === "function" && node.type.name === "CaseCreateForm"));
+  assert.ok(form);
+  assert.equal(form.props.event.id, data.events[0].id);
+  form.props.onCancel();
+  tree = render();
+  assert.ok(!nodes(tree).some(node => typeof node.type === "function" && node.type.name === "CaseCreateForm"));
+});
+
+test("case-linked newest alert precedes pending older alert in each priority group", () => {
+  const source = { ...data, events: [
+    { id: "other-old", timestamp: "2026-10-19T12:00:00Z" },
+    { id: "selected-old", timestamp: "2026-10-19T10:00:00Z" },
+    { id: "other-new", timestamp: "2026-10-19T14:00:00Z" },
+    { id: "selected-new", timestamp: "2026-10-19T11:00:00Z" },
+  ] };
+  const cases = ["other-new", "selected-new"].map(eventId => ({ id: `case-${eventId}`, eventId, status: "open" }));
+  assert.deepEqual(idsIn(alertMarkup({ source, cases })), ["other-new", "other-old", "selected-new", "selected-old"]);
+  const selected = { id: "selection", title: "Priority", linkedEventIds: ["selected-old", "selected-new"] };
+  assert.deepEqual(idsIn(alertMarkup({ source, cases, selected, provider: true })), ["selected-new", "selected-old", "other-new", "other-old"]);
+});
+test("changing persisted sample anchor moves rendered sample times, not live feed times", () => {
+  const source = { ...data, events: [{ id: "sample", relativeTimeHours: -0.5 }, { id: "live", timestamp: "2026-10-19T18:15:00Z" }] };
+  const html = alertMarkup({ source, timing: { sampleDataAnchor: "2026-10-20T18:00:00Z" }, provider: true });
+  assert.ok(html.includes('<time dateTime="2026-10-20T17:30:00.000Z">12:30 CDT</time>'));
+  assert.ok(html.includes('<time dateTime="2026-10-19T18:15:00Z">13:15 CDT</time>'));
+  assert.deepEqual(idsIn(html), ["sample", "live"]);
 });

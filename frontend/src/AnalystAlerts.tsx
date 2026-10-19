@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
-import { readConsequenceSelection, writeConsequenceSelection } from "./consequenceSelection.ts";
+import { readConsequenceSelection } from "./consequenceSelection.ts";
 import type { Bootstrap, Event } from "./types.ts";
 import type { CommandCreate, CommandIncident } from "./commandTypes.ts";
 import type { RecordsState } from "./scriptedTypes.ts";
 import { CaseCreateForm } from "./CaseCreateForm.tsx";
 import {
-  alertsWithoutCases,
+  orderedAlerts,
+  alertLocation,
   openCaseForEvent,
   campaignCaseLink,
   alertTime,
   alertTechniques,
 } from "./analystAlerts.ts";
-import { utilityForEvent } from "./whoActsFirst.ts";
+import { resolveEventTimestamp, formatTime } from "./displayTime.ts";
+import { useAnalystIncident } from "./analystIncidentContext.ts";
 interface Props {
   data: Bootstrap;
   incidents: CommandIncident[];
@@ -22,18 +24,20 @@ interface Props {
   showAllInitially?: boolean;
 }
 export default function AnalystAlerts({
-  data,
-  incidents,
-  records,
+  data: legacyData,
+  incidents: legacyIncidents,
+  records: legacyRecords,
   workflowLocked,
   onCreate,
   onOpenCase,
   showAllInitially = true,
 }: Props) {
+  const context = useAnalystIncident();
+  const data = context?.mainStore ?? legacyData;
+  const incidents = context?.cases ?? legacyIncidents;
+  const records = context?.records ?? legacyRecords;
   const [showAll, setShowAll] = useState(showAllInitially),
     [editing, setEditing] = useState<string | null>(null);
-  // The shared helper retains its newest-first record contract. Only this
-  // queue presents story order, with unknown times after recorded times.
   const [focusId, setFocusId] = useState(() => typeof window === "undefined" ? null : readConsequenceSelection(window.location.href).incidentId);
   useEffect(() => {
     const restore = () => setFocusId(readConsequenceSelection(window.location.href).incidentId);
@@ -44,30 +48,16 @@ export default function AnalystAlerts({
       window.removeEventListener("consequence-selection", restore);
     };
   }, []);
-  const focusRecord = records?.statewideIncidents.find(record => record.id === focusId);
-  const focusedEvents = focusId ? new Set(focusRecord?.linkedEventIds ?? []) : null;
-  const pending = [...alertsWithoutCases(data.events, incidents)].filter(event => !focusedEvents || focusedEvents.has(event.id)).sort(
-    (a, b) => {
-      const at = Date.parse(String(a.timestamp ?? "")),
-        bt = Date.parse(String(b.timestamp ?? ""));
-      if (Number.isFinite(at) && Number.isFinite(bt)) return at - bt;
-      if (Number.isFinite(at) !== Number.isFinite(bt))
-        return Number.isFinite(at) ? -1 : 1;
-      return (
-        (typeof a.relativeTimeHours === "number"
-          ? a.relativeTimeHours
-          : Infinity) -
-        (typeof b.relativeTimeHours === "number"
-          ? b.relativeTimeHours
-          : Infinity)
-      );
-    },
-  );
-  const linked = data.events.filter((e) => openCaseForEvent(e.id, incidents) && (!focusedEvents || focusedEvents.has(e.id)));
+  const selectedId = context ? context.selectedIncidentId : focusId;
+  const focusRecord = context?.selectedIncident ?? records?.statewideIncidents.find(record => record.id === selectedId);
+  const focusedEvents = new Set(focusRecord?.linkedEventIds ?? []);
+  const eventTimestamp = context?.eventTimestamp ?? ((event: Event) => resolveEventTimestamp(event, records ?? {}));
+  const alerts = orderedAlerts(data.events, focusedEvents, eventTimestamp);
+  const pendingCount = alerts.filter(event => !openCaseForEvent(event.id, incidents)).length;
   const row = (event: Event) => {
     const existing = openCaseForEvent(event.id, incidents),
       campaign = campaignCaseLink(event, incidents, records),
-      utility = utilityForEvent(event, data);
+      timestamp = eventTimestamp(event);
     return (
       <li
         className="command-event prototype-alert"
@@ -78,12 +68,11 @@ export default function AnalystAlerts({
           {String(event.origin ?? event.evidenceCategory ?? "Source evidence")}
         </span>
         <p>
-          <time dateTime={String(event.timestamp ?? "")}>
-            {alertTime(event)}
+          <time dateTime={timestamp}>
+            {context ? formatTime(timestamp, undefined, "Time unavailable") : alertTime(event, records)}
           </time>
           {" · "}
-          {data.entities.find((e) => e.id === utility)?.label ??
-            "Utility unresolved"}
+          {alertLocation(event, data)}
         </p>
         <h3>{String(event.label ?? event.title ?? event.id)}</h3>
         <div className="sc-chips" aria-label="ATT&CK techniques">
@@ -127,45 +116,33 @@ export default function AnalystAlerts({
       className="command-panel"
       id="analyst-alerts"
       tabIndex={-1}
-      aria-label="Alerts not yet cases"
+      aria-label="Analyst alerts"
     >
-      {focusId && <div className="command-panel" role="status"><h3>Alerts for {focusRecord?.title ?? "requested incident"}</h3><p>{focusRecord?.id ?? "Incident record unavailable"}</p>{!focusedEvents?.size && <p>No linked source alerts were supplied for this incident. No case was created.</p>}<button type="button" onClick={() => { writeConsequenceSelection({ incidentId: null }); setFocusId(null); }}>Clear incident filter</button></div>}
+      {selectedId && <div role="status"><h3>Alerts for {focusRecord?.title ?? "requested incident"} first</h3><p>All source alerts remain listed below.</p>{!focusedEvents.size && <p>No linked source alerts were supplied for this incident. No case was created.</p>}</div>}
       <div className="command-panel-heading">
-        <h2>Alerts not yet cases</h2>
-        <span>{pending.length} source alerts without an open case</span>
+        <h2>Alerts</h2>
+        <span>{alerts.length} source alerts · {pendingCount} without an open case</span>
       </div>
       <ul
         className="prototype-alerts"
-        aria-label="Alerts without open cases"
+        aria-label="Source alerts"
         style={{ listStyle: "none", padding: 0 }}
       >
-        {(showAll ? pending : pending.slice(0, 7)).map(row)}
+        {(showAll ? alerts : alerts.slice(0, 7)).map(row)}
       </ul>
-      {!pending.length && <p>No alerts are waiting for a case.</p>}
-      {pending.length > 7 && (
+      {!alerts.length && <p>No source alerts were supplied.</p>}
+      {alerts.length > 7 && (
         <button
           type="button"
           aria-expanded={showAll}
           onClick={() => setShowAll(!showAll)}
         >
-          {showAll ? "Show fewer" : `Show all (${pending.length})`}
+          {showAll ? "Show fewer" : `Show all (${alerts.length})`}
         </button>
       )}
       <p className="cc-muted">
         Alerts never become cases on their own; an analyst opens the case.
       </p>
-      {!!linked.length && (
-        <details open>
-          <summary>Alerts with open cases ({linked.length})</summary>
-          <ul
-            className="prototype-alerts"
-            aria-label="Alerts with open cases"
-            style={{ listStyle: "none", padding: 0 }}
-          >
-            {linked.map(row)}
-          </ul>
-        </details>
-      )}
     </section>
   );
 }

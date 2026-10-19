@@ -1,4 +1,6 @@
 import { StatusChip } from "./visualPrimitives.ts";
+import type { AnalystIncidentContextValue } from "./analystIncidentContext.ts";
+import { formatTime } from "./displayTime.ts";
 import { useEffect, useId, useState } from "react";
 import type {
   Bootstrap,
@@ -24,6 +26,8 @@ import "./command-casework.css";
 import "./analyst-detail.css";
 
 export interface AnalystEntityProfileProps {
+  /** Host supplies public selection context; standalone/case embeddings remain unchanged. */
+  incidentContext?: AnalystIncidentContextValue | null;
   data: Bootstrap;
   entityId: string | null;
   incidents: CommandIncident[];
@@ -42,7 +46,8 @@ export interface AnalystEntityProfileProps {
 }
 
 export default function AnalystEntityProfile({
-  data,
+  incidentContext,
+  data: suppliedData,
   entityId,
   incidents,
   locked,
@@ -52,6 +57,10 @@ export default function AnalystEntityProfile({
   onEditDependency,
   onBack,
 }: AnalystEntityProfileProps) {
+  // With no saved case the host may still hold a previous case snapshot. Never
+  // use that snapshot as inventory; preserve the existing case path unchanged.
+  const noCaseContext = incidentContext && !incidentContext.activeCase ? incidentContext : null;
+  const data = noCaseContext?.mainStore ?? suppliedData;
   const prefix = useId();
   const sectionId = (name: string) => `${prefix}-entity-${name}`;
   const model = analystEntityModel(data, incidents, entityId);
@@ -395,7 +404,9 @@ export default function AnalystEntityProfile({
             <article className="analyst-relationship-row" key={event.id}>
               <h3>{displayText(event.label ?? event.title ?? event.id)}</h3>
               <p>
-                {event.timestamp ?? event.eventTime ?? "Time not recorded"} ·{" "}
+                {noCaseContext
+                  ? formatTime(noCaseContext.eventTimestamp(event), undefined, "Time not recorded")
+                  : event.timestamp ?? event.eventTime ?? "Time not recorded"} ·{" "}
                 {typeof event.origin === "string"
                   ? event.origin
                   : typeof event.evidenceCategory === "string"

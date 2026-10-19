@@ -120,17 +120,19 @@ test('A5 unit fetch uses existing incident projection contract, rejects wrong sc
   } finally { globalThis.fetch = previous; delete globalThis.__ownerHooks; }
 });
 
-test('A1 fresh combined inventory lists 13 alerts, incident focus lists all six new alerts', async () => {
+test('A1 retains all 13 alerts and prioritizes the six selected-incident alerts', async () => {
   const props = { data, incidents: [], records, workflowLocked: false, onCreate: noop, onOpenCase: noop };
   const all = await render('AnalystAlerts.tsx', props);
-  assert.match(all, /13 source alerts without an open case/);
+  assert.match(all, /13 source alerts.*13 without an open case/);
   assert.equal((all.match(/data-alert-id=/g) ?? []).length, 13);
   globalThis.window = { location: new URL('https://example.test/?mode=analyst&view=command&incidentId=INC-RELAY') };
   try {
     const focused = await render('AnalystAlerts.tsx', props);
-    assert.equal((focused.match(/data-alert-id=/g) ?? []).length, 6);
+    assert.equal((focused.match(/data-alert-id=/g) ?? []).length, 13);
+    const orderedIds=[...focused.matchAll(/data-alert-id="([^"]+)/g)].map(m=>m[1]);
+    assert.deepEqual(new Set(orderedIds.slice(0,6)),new Set(events.map(e=>e.id)));
     for (const event of events) assert.ok(focused.includes(event.label));
-    assert.ok(!focused.includes(water.events[0].label));
+    assert.ok(focused.includes(water.events[0].label));
   } finally { delete globalThis.window; }
 });
 
