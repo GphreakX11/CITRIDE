@@ -11,6 +11,7 @@ import type { CommandIncident } from "./commandTypes.ts";
 import type { RecordItem } from "./scriptedTypes.ts";
 import { object, text } from "./scriptedTypes.ts";
 import { statusTone, windowTone } from "./statusTone.ts";
+import { resolveEventTimestamp, type SampleDataTiming } from "./displayTime.ts";
 import {
   capturedClassification,
   originLabel,
@@ -45,6 +46,7 @@ export interface IncidentNodeContext {
   serviceAreaIds: readonly string[];
   incident?: CommandIncident | null;
   incidentRecord?: RecordItem | null;
+  sampleDataAnchor?: unknown;
 }
 export type IncidentStackRole =
   "source" | "plant" | "upstream" | "dependent" | "in-area";
@@ -286,8 +288,10 @@ function confirmedAttack(event: Event): boolean {
       cyber)
   );
 }
-function recordClock(record: Record<string, unknown> | undefined): string {
-  const at = text(record?.timestamp, text(record?.eventTime, text(record?.at)));
+function recordClock(record: Record<string, unknown> | undefined, timing?: SampleDataTiming): string {
+  const at = typeof record?.relativeTimeHours === "number"
+    ? resolveEventTimestamp(record as Event, timing ?? {})
+    : text(record?.timestamp, text(record?.eventTime, text(record?.at)));
   // Do not display raw IDs, invalid times or invented timezone/time-of-day values.
   return at && Number.isFinite(Date.parse(at)) ? timeLabel(at) : "";
 }
@@ -403,7 +407,7 @@ export function incidentNodeState(
         ? selectedEvent
         : undefined;
     const clock =
-      recordClock(attack) || recordClock(attacked) || recordClock(linkedEvent);
+      recordClock(attack, context) || recordClock(attacked, context) || recordClock(linkedEvent, context);
     return {
       tone: statusTone("attacked") as IncidentTone,
       line: "solid",
@@ -424,7 +428,7 @@ export function incidentNodeState(
   const probe = events.find(probeEvent);
   const suspected = statuses.find((s) => probeStatuses.has(key(s.status)));
   if (probe || suspected) {
-    const clock = recordClock(probe) || recordClock(suspected);
+    const clock = recordClock(probe, context) || recordClock(suspected, context);
     const isProbe = !!probe || key(suspected?.status) !== "suspected";
     return {
       tone: statusTone("probed") as IncidentTone,
@@ -712,6 +716,7 @@ export function incidentStack(
     serviceAreaIds,
     incident,
     incidentRecord,
+    sampleDataAnchor: incidentRecord?.sampleDataAnchor ?? props.records?.sampleDataAnchor,
   };
   const nodes: IncidentStackNode[] = [];
   const edges: IncidentStackEdge[] = [];

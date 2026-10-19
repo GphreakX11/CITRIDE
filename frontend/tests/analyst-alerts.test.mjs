@@ -102,7 +102,7 @@ test("anomalous priority defaults high and ordinary or explicitly normal alerts 
   assert.equal(defaultAlertPriority({ id: "new", anomalous: true }), "high");
 });
 test("CT time and ATT&CK chips use source values, including legacy string techniques", () => {
-  assert.equal(alertTime(data.events[0]), "01:30 CDT");
+  assert.equal(alertTime(data.events[0], { sampleDataAnchor: data.incidentOrigin }), "01:30 CDT");
   assert.ok(alertTechniques(data.events[0]).some((t) => t.includes("T0822")));
   assert.deepEqual(alertTechniques({ id: "legacy", techniques: ["T1234"] }), [
     "T1234",

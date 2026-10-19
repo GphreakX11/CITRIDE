@@ -1,4 +1,27 @@
 import { consequenceSelectionLocation } from './consequenceSelection.ts';
+import type { CommandIncident } from './commandTypes.ts';
+
+/** Shared register membership; no inference from names, sectors or providers. */
+export function caseMatchesIncident(incident: Incident, item: SavedCase): boolean {
+  return incident.caseId === item.id || incident.id === item.id ||
+    !!incident.linkedEventIds?.includes(item.eventId);
+}
+
+/** Newest means case creation, not a recent note on an older investigation. */
+export function openCasesForIncident(incident: Incident, cases: readonly CommandIncident[]): CommandIncident[] {
+  const created = (item: CommandIncident) => {
+    const value = Date.parse(item.createdAt);
+    return Number.isFinite(value) ? value : -Infinity;
+  };
+  return cases.filter(item => item.status !== 'closed' && caseMatchesIncident(incident, item))
+    .sort((a, b) => (created(a) === created(b) ? 0 : created(a) > created(b) ? -1 : 1) || a.id.localeCompare(b.id));
+}
+
+/** Retain explicit matching history, but never default to a closed case. */
+export function activeCaseForIncident(incident: Incident, cases: readonly CommandIncident[], selectedCaseId: string | null): CommandIncident | null {
+  return cases.find(item => item.id === selectedCaseId && caseMatchesIncident(incident, item))
+    ?? openCasesForIncident(incident, cases)[0] ?? null;
+}
 
 type SavedCase = { id: string; eventId: string };
 type Incident = { id: string; caseId?: string; linkedEventIds?: string[] };

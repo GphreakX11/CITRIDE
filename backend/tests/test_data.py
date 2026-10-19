@@ -7,7 +7,7 @@ import ipaddress
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -130,6 +130,7 @@ def test_curated_events_match_exact_raw_evidence_and_chronology(dataset, streams
     times = [event["relativeTimeHours"] for event in dataset["events"]]
     assert times == sorted(times)
     events = {row["id"]: row for row in dataset["events"]}
+    epoch = datetime.fromisoformat(dataset["incidentOrigin"].replace("Z", "+00:00"))
     for event in events.values():
         reference = event["rawRef"]
         stream = streams[reference["streamId"]]
@@ -137,14 +138,15 @@ def test_curated_events_match_exact_raw_evidence_and_chronology(dataset, streams
         raw = records[reference["recordId"]]
         assert reference["sourceRef"] == stream["sourceRef"]
         assert event["sourceRefs"] == raw["sourceRefs"]
-        assert event["timestamp"] == raw["timestamp"]
+        assert "timestamp" not in event, "Curated sample alerts must resolve from the sample-data anchor"
+        assert datetime.fromisoformat(raw["timestamp"].replace("Z", "+00:00")) == epoch + timedelta(hours=event["relativeTimeHours"])
         assert event["relativeTimeHours"] == raw["relativeTimeHours"]
         assert event["seenOn"] in entities
     assert events["event-inbound-a"]["relativeTimeHours"] < events["event-auth-a"]["relativeTimeHours"] < events["event-dosing"]["relativeTimeHours"] < events["event-sensor"]["relativeTimeHours"]
     assert events["event-sensor"]["relativeTimeHours"] < events["event-probe-b"]["relativeTimeHours"] < events["event-probe-c"]["relativeTimeHours"]
     assessment = dataset["assessments"][0]
     assert assessment["relativeTimeHours"] < events["event-inbound-a"]["relativeTimeHours"]
-    assert datetime.fromisoformat(assessment["timestamp"].replace("Z", "+00:00")) < datetime.fromisoformat(events["event-inbound-a"]["timestamp"].replace("Z", "+00:00"))
+    assert datetime.fromisoformat(assessment["timestamp"].replace("Z", "+00:00")) < epoch + timedelta(hours=events["event-inbound-a"]["relativeTimeHours"])
 
 
 def test_sensor_baseline_quality_drift_and_stable_pressure(streams):

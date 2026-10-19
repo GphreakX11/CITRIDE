@@ -249,7 +249,9 @@ def generate() -> dict[str, dict | list[dict]]:
         ("event-probe-c", "Related source probes Utility C", 0.75, "cyber-plc-c", "probing_only", "corelight/conn", "conn-c-unusual-001", "src-network", "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at C."),
     ]
     events = [{
-        "id": event_id, "type": "CyberEvent", "label": label, **instant(hour), "seenOn": seen_on,
+        # Curated sample alerts follow the persisted sample-data anchor. Raw
+        # telemetry keeps its source timestamps; live-feed events are untouched.
+        "id": event_id, "type": "CyberEvent", "label": label, "relativeTimeHours": hour, "seenOn": seen_on,
         "observation": observation, "description": description, "evidenceCategory": "simulated",
         "rawRef": {"streamId": stream_id, "recordId": record_id, "sourceRef": src}, **metadata(src),
     } for event_id, label, hour, seen_on, observation, stream_id, record_id, src, description in event_specs]

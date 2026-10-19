@@ -1,4 +1,27 @@
+import type { Event } from './types.ts';
+import type { RecordsState } from './scriptedTypes.ts';
+
 type Timestamp = string | Date | null | undefined;
+
+/** Persisted records.sampleDataAnchor, never records.now or the authored model epoch. */
+export type SampleDataTiming = { sampleDataAnchor?: unknown } | RecordsState;
+
+/** Shared cards/sorting clock. Sample offsets take precedence over stale authored
+ * timestamps. Live feeds without an offset retain their aware source timestamp.
+ * Missing/invalid anchors stay unavailable rather than inventing a wall time.
+ */
+export function resolveEventTimestamp(event: Event, timing: SampleDataTiming): string | undefined {
+  if (typeof event.relativeTimeHours === 'number') {
+    const anchor = typeof timing.sampleDataAnchor === 'string' ? timestampMillis(timing.sampleDataAnchor) : null;
+    if (anchor === null || !Number.isFinite(event.relativeTimeHours)) return undefined;
+    const time = anchor + event.relativeTimeHours * 3600000;
+    const date = new Date(time);
+    return Number.isFinite(date.getTime()) ? date.toISOString() : undefined;
+  }
+  for (const direct of [event.timestamp, event.eventTime])
+    if (direct && timestampMillis(direct) !== null) return direct;
+  return undefined;
+}
 
 // Only the active customer's display preference is held here, never records or runs.
 let operationsTimeZone: string | undefined;

@@ -2,6 +2,7 @@ import type { Bootstrap, Entity, Event, Telemetry } from "./types.ts";
 import type { CommandIncident } from "./commandTypes.ts";
 import { evidenceTime, evidenceRefs } from "./networkEvidence.ts";
 import type { RecordsState } from "./scriptedTypes.ts";
+import { resolveEventTimestamp, type SampleDataTiming } from "./displayTime.ts";
 import { sourceIncidentForCase } from "./analystCaseScope.ts";
 
 export type TimelineData = Pick<Bootstrap, "events"> &
@@ -56,15 +57,11 @@ export function eventUtility(event: Event, data: TimelineData): Entity | null {
 export function eventTimestamp(
   event: Event,
   data: TimelineData,
+  timing?: SampleDataTiming | null,
 ): string | undefined {
-  const direct = event.timestamp ?? event.eventTime;
-  if (direct) return direct;
-  if (data.incidentOrigin && typeof event.relativeTimeHours === "number") {
-    const time =
-      Date.parse(data.incidentOrigin) + event.relativeTimeHours * 3600000;
-    if (Number.isFinite(time)) return new Date(time).toISOString();
-  }
-  return undefined;
+  // Standalone legacy consumers can still use their model epoch. Application
+  // consumers supply the authenticated records envelope and its persisted anchor.
+  return resolveEventTimestamp(event, timing ?? { sampleDataAnchor: data.incidentOrigin });
 }
 
 /** Case-local activity plus evidence-backed campaign links. Probes are links, not consequences. */
@@ -72,7 +69,7 @@ export function caseTimeline(
   incident: CommandIncident | null | undefined,
   data: TimelineData,
   telemetry: Telemetry | null | undefined,
-  records?: Pick<RecordsState, "statewideIncidents"> | null,
+  records?: (Pick<RecordsState, "statewideIncidents"> & SampleDataTiming) | null,
 ): CaseTimelineRow[] {
   const events = new Map(data.events.map((e) => [e.id, e]));
   if (incident) events.set(incident.eventId, incident.eventSnapshot);
@@ -119,18 +116,8 @@ export function caseTimeline(
           : local.includes(e) || identities(e).some((id) => campaign.has(id))),
     )
     .sort((a, b) => {
-      const hour = (e: Event) =>
-        typeof e.relativeTimeHours === "number"
-          ? e.relativeTimeHours
-          : (Date.parse(eventTimestamp(e, data) ?? "") -
-              Date.parse(data.incidentOrigin ?? "")) /
-            3600000;
-      const time = (e: Event) =>
-        Number.isFinite(hour(e))
-          ? hour(e)
-          : Date.parse(eventTimestamp(e, data) ?? "") / 3600000;
-      const av = time(a),
-        bv = time(b);
+      const time = (event: Event) => Date.parse(eventTimestamp(event, data, records) ?? '');
+      const av = time(a), bv = time(b);
       return (
         (Number.isFinite(av) ? av : Infinity) -
           (Number.isFinite(bv) ? bv : Infinity) || a.id.localeCompare(b.id)
@@ -138,7 +125,7 @@ export function caseTimeline(
     })
     .map((event) => ({
       event,
-      time: evidenceTime(eventTimestamp(event, data)),
+      time: evidenceTime(eventTimestamp(event, data, records)),
       utility: eventUtility(event, data),
       asset: (data.entities ?? []).find((e) => e.id === event.seenOn) ?? null,
       techniques: Array.isArray(event.attackTechniques)

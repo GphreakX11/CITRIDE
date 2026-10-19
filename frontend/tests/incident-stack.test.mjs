@@ -362,6 +362,9 @@ function props() {
   records.statewideIncidents = records.incidents;
   records.responseTasks = records.tasks;
   records.now = "2026-10-13T08:42:00Z";
+  // Real API records envelopes supply the shared sample clock. Keep this
+  // historical fixture anchored to its model, without restoring event timestamps.
+  records.sampleDataAnchor = data.incidentOrigin;
   records.statewideIncidents[0].caseId = "saved-case";
   records.statewideIncidents[0].status = "open";
   const selected = {

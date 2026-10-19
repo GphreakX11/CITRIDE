@@ -410,8 +410,17 @@ class RecordsService:
             case = cases.get(incident.get("caseId"))
             if incident.get('status') == 'from_case' and case is None:
                 incident['status'] = 'open'
+            # caseId is durable ownership of authored records, not the Analyst
+            # selection default. A closed first case must not hide an incident
+            # while a newer sibling case is still open. Derive status only;
+            # never rebind records, case snapshots or historical runs on reads.
+            open_cases = [row for row in cases.values() if row.get('status') != 'closed'
+                          and (row['id'] == incident.get('caseId')
+                               or row.get('eventId') in incident.get('linkedEventIds', []))]
+            status_case = max(open_cases, key=lambda row: (_parse(row['createdAt']), row['id']), default=case)
+            if status_case is not None:
+                incident["status"] = status_case["status"]
             if case is not None:
-                incident["status"] = case["status"]
                 incident["reviews"] = deepcopy(case.get("decisions", []))
                 incident["progress"] = deepcopy(case.get("tasks", []))
                 incident["runId"] = case.get("runId")

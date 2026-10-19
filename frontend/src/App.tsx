@@ -1,5 +1,7 @@
 import { analystSourceLocation, analystReturnTarget, analystProfileReturnLocation } from "./analystReturn.ts";
-import { caseSelectionLocation, caseSelectionForIncident } from "./caseIncidentSelection.ts";
+import { caseSelectionLocation, caseSelectionForIncident, activeCaseForIncident } from "./caseIncidentSelection.ts";
+import { AnalystIncidentProvider } from "./analystIncidentContext.ts";
+import { resolveAnalystIncidentSelection, analystIncidentSelectionLocation } from "./analystIncidentShared.ts";
 import { useEffect, useRef, useState } from "react";
 import {
   Activity,
@@ -40,7 +42,7 @@ import NetworkEvidence from "./NetworkEvidence";
 import type { CommandView, CommandIncident } from "./commandTypes";
 import type { WorkspaceSnapshot } from "./workspaceTypes";
 import { defaultIncidentId } from "./incidentSelection.ts";
-import { readIncidentFocus } from "./incidentFocus.ts";
+import { readIncidentFocus, incidentFocusLocation } from "./incidentFocus.ts";
 import type { RecordsState } from "./scriptedTypes.ts";
 import { configureDisplayTime } from "./displayTime.ts";
 import InvestigationBar from "./InvestigationBar";
@@ -206,6 +208,11 @@ export default function App() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(
     () => readPrototypeLocation(window.location.href).caseId,
   );
+  const [activeIncidentId, setActiveIncidentId] = useState<string | null>(
+    () => readIncidentFocus(window.location.href),
+  );
+  const [sharedRecords, setSharedRecords] = useState<RecordsState | null>(null);
+  const sharedRecordsRef = useRef<RecordsState | null>(null);
   const [caseRecords, setCaseRecords] = useState<CommandIncident[]>([]);
   const caseRecordsRef = useRef<CommandIncident[]>([]);
   const selectionInitialized = useRef(
@@ -254,7 +261,9 @@ export default function App() {
     const entityId = record ? caseFocusEntity(record, selectedEntity) : null;
     const validEntity = entityId && data?.entities.some((entity) => entity.id === entityId) ? entityId : null;
     setSelectedEntity(validEntity);
-    window.history.replaceState(null, "", caseSelectionLocation(window.location.href, record ?? null, workspaceSnapshot?.records.statewideIncidents ?? [], validEntity));
+    const next = caseSelectionLocation(window.location.href, record ?? null, sharedRecordsRef.current?.statewideIncidents ?? [], validEntity);
+    setActiveIncidentId(readIncidentFocus(next));
+    window.history.replaceState(null, "", next);
     window.dispatchEvent(new Event("consequence-selection"));
     if (!record) return;
     // A new investigation should not be hidden by a previous utility's map filter.
@@ -266,35 +275,47 @@ export default function App() {
         direction: "all",
       }));
   }
+  function selectIncident(id: string) {
+    if (workflowLocked || !data || !sharedRecordsRef.current) return;
+    const next = analystIncidentSelectionLocation(window.location.href, id, sharedRecordsRef.current, caseRecordsRef.current, data);
+    if (next === window.location.href) return;
+    selectionInitialized.current = true;
+    window.history.pushState(null, "", next);
+    window.dispatchEvent(new Event("consequence-selection"));
+  }
   useEffect(() => {
     if (data && casesRead.current)
       window.history.replaceState(
         null,
         "",
-        prototypeLocation(
+        incidentFocusLocation(prototypeLocation(
           window.location.href,
           view,
           selectedEntity,
           selectedCaseId,
           mode,
-        ),
+        ), activeIncidentId),
       );
-  }, [data, view, selectedEntity, selectedCaseId, caseRecords, mode]);
+  }, [data, view, selectedEntity, selectedCaseId, caseRecords, mode, activeIncidentId]);
   useEffect(() => {
     const restore = () => {
       if (workflowLocked) return;
       const loc = readPrototypeLocation(window.location.href);
+      const source = sharedRecordsRef.current;
+      const selection = data && source && loc.mode === "analyst"
+        ? resolveAnalystIncidentSelection(source, caseRecordsRef.current, data, window.location.href) : null;
+      const incidentId = selection?.selectedIncidentId ?? readIncidentFocus(window.location.href);
+      const row = source?.statewideIncidents.find(item => item.id === incidentId);
+      setActiveIncidentId(incidentId);
       selectionInitialized.current = true;
       setView(loc.view as View);
       setMode(loc.mode);
       setSelectedEntity(
         data?.entities.some((e) => e.id === loc.entityId) ? loc.entityId : null,
       );
-      setSelectedCaseId(
-        caseRecordsRef.current.some((r) => r.id === loc.caseId)
-          ? loc.caseId
-          : null,
-      );
+      setSelectedCaseId(selection ? selection.activeCase?.id ?? null
+        : row ? activeCaseForIncident(row, caseRecordsRef.current, loc.caseId)?.id ?? null
+        : caseRecordsRef.current.some((r) => r.id === loc.caseId) ? loc.caseId : null);
       setMobileMenu(false);
     };
     window.addEventListener("popstate", restore);
@@ -334,11 +355,34 @@ export default function App() {
       );
     }
   }
+  /** Register state extends the existing saved-case hydration contract. */
+  function receiveSharedCases(records: CommandIncident[], sourceRecords?: RecordsState) {
+    const chooseInitialDefault = !selectionInitialized.current;
+    receiveCases(records, sourceRecords);
+    if (!sourceRecords || !data) return;
+    sharedRecordsRef.current = sourceRecords;
+    setSharedRecords(sourceRecords);
+    configureDisplayTime(sourceRecords.operationsTimeZone);
+    const selection = mode === "analyst"
+      ? resolveAnalystIncidentSelection(sourceRecords, records, data, window.location.href) : null;
+    const incidentId = selection ? selection.selectedIncidentId
+      : readIncidentFocus(window.location.href) ?? activeIncidentId
+        ?? (chooseInitialDefault && view !== "command" ? defaultIncidentId(sourceRecords, { cases: records, data }) : null);
+    setActiveIncidentId(incidentId);
+    if (selection) setSelectedCaseId(selection.activeCase?.id ?? null);
+    else {
+      const row = sourceRecords.statewideIncidents.find(item => item.id === incidentId);
+      if (row) setSelectedCaseId(activeCaseForIncident(row, records, selectedCaseId)?.id ?? null);
+    }
+  }
   function reportFailure(failure: unknown) {
     if (failure instanceof ApiError && failure.status === 401) {
       selectionInitialized.current = true;
       caseRecordsRef.current = [];
       setCaseRecords([]);
+      sharedRecordsRef.current = null;
+      setSharedRecords(null);
+      setActiveIncidentId(null);
       setSelectedCaseId(null);
       setSelectedEntity(null);
       setMapState(initialMapView());
@@ -364,6 +408,8 @@ export default function App() {
         api<Telemetry>("/v1/telemetry"),
       ]);
       configureDisplayTime(snapshot.records.operationsTimeZone);
+      sharedRecordsRef.current = snapshot.records;
+      setSharedRecords(snapshot.records);
       setWorkspaceSnapshot(snapshot);
       setData(snapshot.bootstrap);
       setTelemetry(feeds);
@@ -437,17 +483,14 @@ export default function App() {
   function switchMode(nextMode: WorkspaceMode) {
     if (workflowLocked || nextMode === mode) return;
     const nextView = modeLanding(nextMode, view, !!selectedCaseId) as View;
-    window.history.pushState(
-      null,
-      "",
-      prototypeLocation(
-        window.location.href,
-        nextView,
-        selectedEntity,
-        selectedCaseId,
-        nextMode,
-      ),
-    );
+    let next = prototypeLocation(window.location.href, nextView, selectedEntity, selectedCaseId, nextMode);
+    if (nextMode === "analyst" && sharedRecordsRef.current && data) {
+      const selection = resolveAnalystIncidentSelection(sharedRecordsRef.current, caseRecordsRef.current, data, next);
+      setActiveIncidentId(selection.selectedIncidentId);
+      setSelectedCaseId(selection.activeCase?.id ?? null);
+      next = incidentFocusLocation(prototypeLocation(next, nextView, selectedEntity, selection.activeCase?.id ?? null, nextMode), selection.selectedIncidentId);
+    }
+    window.history.pushState(null, "", next);
     setMode(nextMode);
     setView(nextView);
     setMobileMenu(false);
@@ -906,11 +949,7 @@ export default function App() {
                         key={id}
                         type="button"
                         aria-current={view === id ? "page" : undefined}
-                        disabled={
-                          workflowLocked ||
-                          ((id === "consequence" || id === "uctf") &&
-                            !contextCase)
-                        }
+                        disabled={workflowLocked}
                         onClick={() => changeView(id)}
                       >
                         {label}
@@ -929,6 +968,19 @@ export default function App() {
                   </button>
                 </section>
               )}
+              <AnalystIncidentProvider
+                selection={resolveAnalystIncidentSelection(sharedRecords ?? { statewideIncidents: [] }, caseRecords, data,
+                  incidentFocusLocation(prototypeLocation(window.location.href, view, selectedEntity, selectedCaseId, mode), activeIncidentId))}
+                mainStore={data}
+                records={sharedRecords}
+                reference={workspaceSnapshot?.reference ?? null}
+                telemetry={telemetry}
+                cases={caseRecords}
+                selectIncident={selectIncident}
+                selectCase={selectCase}
+                locked={workflowLocked}
+                enabled={mode === "analyst"}
+              >
               <div hidden={!commandView}>
                 <CommandWorkspace
                   telemetry={telemetry}
@@ -953,7 +1005,7 @@ export default function App() {
                   view={(commandView?.id ?? "command") as CommandView}
                   selectedId={selectedCaseId}
                   onSelect={selectCase}
-                  onCasesLoaded={receiveCases}
+                  onCasesLoaded={receiveSharedCases}
                   onWorkflowLockChange={setWorkflowLocked}
                   selectedEntityId={selectedEntity}
                   onSelectEntity={selectEntity}
@@ -993,6 +1045,7 @@ export default function App() {
                   onAccessFailure={reportFailure}
                 />
               </div>
+              </AnalystIncidentProvider>
               {view === "overview" && (
                 <>
                   <section className="incident-banner">
