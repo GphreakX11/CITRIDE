@@ -136,6 +136,7 @@ class RecordsService:
         # are installed. Validate configured rows once their model is installed;
         # the model installer separately validates its entire staged addition.
         pending = {b['incident']['id'] for b in self.model_sources if b not in installed_sources}
+        self._pending_model_incidents = pending
         for collection in COLLECTIONS:
             key = INPUT_KEYS.get(collection, collection)
             configured[key] = [row for row in configured.get(key, [])
@@ -255,7 +256,17 @@ class RecordsService:
                 existing[item["id"]] = item
                 changes.append((collection, item))
             current[collection] = list(existing.values())
-        self._validate_records(current, meta["config"])
+        # Pre-intake records are protected historical state, not permission to
+        # accept new references to a model that has not been installed. Exclude
+        # only those untouched rows from validation of an unrelated incident.
+        pending = self._pending_model_incidents
+        if any(row.get('incidentId', row.get('id')) in pending for _, row in changes):
+            raise InvalidModelError('Complete model intake before editing its incident records')
+        validation_records = {
+            collection: [row for row in rows if row.get('incidentId', row.get('id')) not in pending]
+            for collection, rows in current.items()
+        }
+        self._validate_records(validation_records, meta["config"])
         # Nothing is mutated until all references and collections validate.
         for collection, item in changes:
             self.store._record_graph(dataset, collection, item)

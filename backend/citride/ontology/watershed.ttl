@@ -65,6 +65,34 @@ c:ElectricSupplyFacility a owl:Class ;
   rdfs:label "Electric supply facility" ;
   rdfs:comment "A fictional physical electricity-supply facility or service node." .
 
+c:ChemicalPlant a owl:Class ;
+  rdfs:label "Chemical plant" ;
+  rdfs:comment "A declared physical chemical-processing facility; no operational effect is implied." .
+
+c:ChemicalSupply a owl:Class ;
+  rdfs:label "Chemical supply" ;
+  rdfs:comment "A declared chemical-supply facility or service node." .
+
+c:LNGFacility a owl:Class ;
+  rdfs:label "LNG facility" ;
+  rdfs:comment "A declared physical liquefied-natural-gas facility." .
+
+c:Pipeline a owl:Class ;
+  rdfs:label "Pipeline" ;
+  rdfs:comment "A declared physical pipeline infrastructure node." .
+
+c:PortFacility a owl:Class ;
+  rdfs:label "Port facility" ;
+  rdfs:comment "A declared physical maritime terminal or port facility." .
+
+c:Refinery a owl:Class ;
+  rdfs:label "Refinery" ;
+  rdfs:comment "A declared physical petroleum-processing facility." .
+
+c:VesselGroup a owl:Class ;
+  rdfs:label "Vessel group" ;
+  rdfs:comment "A declared group of physical vessels; membership does not imply disruption." .
+
 c:Organization a owl:Class ;
   rdfs:label "Organization" ;
   rdfs:comment "An operating organization; its identity is separate from facilities it operates." .
