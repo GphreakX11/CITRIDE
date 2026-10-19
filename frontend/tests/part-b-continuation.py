@@ -1,16 +1,36 @@
 """Real disposable-store Part B browser exercise. No production, resets, inferred passes.
 Uses existing built assets; only permits the explicit case-create POSTs during setup.
 """
-import json,mimetypes,re,sys,traceback
+import json,mimetypes,os,re,sys,traceback
 from pathlib import Path
 from urllib.parse import urlencode,urlsplit,parse_qs
 from urllib.request import urlopen
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[2];OUT=Path(sys.argv[1]);DIST=ROOT/'frontend/dist'
+TXCC=os.environ['PART_B_TXCC_ORIGIN'];THIRD=os.environ['PART_B_THIRD_ORIGIN'];LARGE=os.environ['PART_B_LARGE_ORIGIN']
+THIRD_METADATA=Path(os.environ['PART_B_THIRD_METADATA']);LARGE_METADATA=Path(os.environ['PART_B_LARGE_METADATA'])
 VIEWS=['command','cop','cyber','consequence','coordination','uctf','case-file','entity-profile']
 COMMAND=['command','cop','cyber','consequence','uctf','leadership','federation']
 report={'candidateBeforeCommit':sys.argv[2],'matrix':[],'analyst':[],'cases':[],'history':[],'errors':[],'blocked':[],'coverageGaps':[]}
 def get(origin,path):return json.load(urlopen(origin+path,timeout=20))
+def customer_failure(context,error,trace):
+ return {**context,'pass':False,'error':str(error) or type(error).__name__,'errorType':type(error).__name__,'traceback':trace}
+def create_from_form(page,state,origin,form,before_ids,context):
+ """Keep writes enabled until the real POST and resulting UI have completed."""
+ state['allowCreate']=True
+ try:
+  with page.expect_response(lambda r:r.url==origin+'/v1/command/incidents' and r.request.method=='POST',timeout=20000) as pending:
+   form.get_by_role('button',name='Open case',exact=True).click()
+  response=pending.value
+  context['createResponse']={'status':response.status,'body':response.text()}
+  assert response.ok, f'Case-create POST returned {response.status}: {response.text()}'
+  form.wait_for(state='hidden',timeout=20000)
+  cases=get(origin,'/v1/command/incidents')['incidents'];context['caseIdsAfterCreate']=[c['id'] for c in cases]
+  created=[c for c in cases if c['id'] not in before_ids]
+  assert len(created)==1, f'Expected exactly one persisted new case; before={sorted(before_ids)!r}, after={context["caseIdsAfterCreate"]!r}'
+  return created[0]
+ finally:
+  state['allowCreate']=False
 def ids(x):
  if isinstance(x,dict):return ({x['id']} if isinstance(x.get('id'),str) else set()).union(*(ids(v) for v in x.values()))
  if isinstance(x,list):return set().union(*(ids(v) for v in x))
@@ -71,7 +91,7 @@ with sync_playwright() as pw:
     row['visibleErrors']=page.locator('[role=alert]').all_text_contents();row['navigation']=page.locator('main button,main a').evaluate_all("els=>els.filter(e=>e.getBoundingClientRect().width&&!e.disabled).map(e=>({label:e.innerText.trim(),href:e.getAttribute('href')})).filter(e=>/→|↗|Back|case file/i.test(e.label))")
    except Exception as e:row['error']=str(e)
  # TXCC no-case then one real explicit UI case creation per incident.
- origin='http://127.0.0.1:8196';page,state=page_for(origin)
+ origin=TXCC;page,state=page_for(origin)
  records=get(origin,'/v1/command/records');wanted=['INC-2026-1002-POH','TX-26-0412'];before=get(origin,'/v1/command/incidents')['incidents'];report['initialCaseIds']=[x['id'] for x in before];assert not before, 'Requires fresh empty disposable store: refuse duplicate case creation on rerun'
  for incident in wanted:
   try:
@@ -80,9 +100,7 @@ with sync_playwright() as pw:
    state['allowCreate']=True
    page.locator('[data-alert-id]').first.get_by_role('button',name='Open case',exact=True).click()
    form=page.get_by_role('form',name='Open case from alert');form.get_by_label('Case title').fill('Disposable Part B '+incident)
-   form.get_by_role('button',name='Open case',exact=True).click();page.wait_for_load_state('networkidle');page.wait_for_timeout(200);state['allowCreate']=False
-   cases=get(origin,'/v1/command/incidents')['incidents'];created=[c for c in cases if c['id'] not in before_ids];assert len(created)==1,repr(created)
-   case=created[0];entity=case['contextSnapshot'].get('provider') or case['contextSnapshot'].get('facility') or case['contextSnapshot'].get('physicalAsset');entity=entity['id'] if entity else None
+   case=create_from_form(page,state,origin,form,before_ids,report);entity=case['contextSnapshot'].get('provider') or case['contextSnapshot'].get('facility') or case['contextSnapshot'].get('physicalAsset');entity=entity['id'] if entity else None
    report['cases'].append({'incident':incident,'id':case['id'],'eventId':case['eventId'],'createdExactlyOne':True,'uiAfterCreate':snapshot(page)})
    page.reload(wait_until='networkidle');report['cases'][-1]['afterReload']=snapshot(page)
    analyst_views(page,origin,incident,case['id'],entity);audit_commands(page,origin,incident,case['id'],'saved')
@@ -95,10 +113,12 @@ with sync_playwright() as pw:
   report['history'].append({'start':start,'clear':cleared,'back':back,'forward':forward,'reload':reload,'pass':back['query'].get('incidentId')==wanted[0] and not any(k in reload['query'] for k in ['incident','incidentId','entity','sector'])})
  except Exception as e:report['history'].append({'error':str(e)})
  # Environment-scoped customer separation. Exact IDs, not substring name claims.
+ ts=None;separation={'origin':THIRD,'metadataPath':str(THIRD_METADATA),'screens':[],'search':[],'pass':False}
  try:
-  third='http://127.0.0.1:8197';tp,ts=page_for(third);tboot=get(third,'/v1/bootstrap');trecord=get(third,'/v1/command/records');xboot=get(origin,'/v1/bootstrap');xrecord=get(origin,'/v1/command/records')
-  xid=ids(xboot)|ids(xrecord);tid=ids(tboot)|ids(trecord);metadata=json.loads(Path('/Users/jakegroth/workspaces/citride-collaboration/incoming/overnight-package/third-fixture.json').read_text());incident=metadata['incidentId']
-  separation={'boundary':'environment-scoped stores, NOT row-level tenancy or customer selector','originalIds':len(xid),'thirdIds':len(tid),'overlapIds':sorted(xid&tid),'incident':incident,'customerId':metadata['customerId'],'api':{'thirdScenario':str(Path('/Users/jakegroth/workspaces/citride-collaboration/incoming/overnight-package/third-fixture-inputs/scenario.json'))},'screens':[],'search':[]}
+  metadata=json.loads(THIRD_METADATA.read_text());incident=metadata['incidentId'];separation.update({'incident':incident,'customerId':metadata['customerId']})
+  third=THIRD;tp,ts=page_for(third);tboot=get(third,'/v1/bootstrap');trecord=get(third,'/v1/command/records');xboot=get(origin,'/v1/bootstrap');xrecord=get(origin,'/v1/command/records')
+  xid=ids(xboot)|ids(xrecord);tid=ids(tboot)|ids(trecord)
+  separation.update({'boundary':'environment-scoped stores, NOT row-level tenancy or customer selector','originalIds':len(xid),'thirdIds':len(tid),'overlapIds':sorted(xid&tid),'api':{'thirdScenario':metadata['scenarioPath']}})
   thirdIncidentIds={i['id'] for i in trecord['statewideIncidents']};txIncidentIds={i['id'] for i in xrecord['statewideIncidents']}
   for current,pag,selected,foreign in [(third,tp,incident,txIncidentIds),(origin,page,wanted[0],thirdIncidentIds)]:
    for mode,views in [('command',COMMAND),('analyst',VIEWS[:6])]:
@@ -108,21 +128,28 @@ with sync_playwright() as pw:
     inp.fill(next(iter(foreign)));separation['search'].append({'origin':current,'foreignQuery':next(iter(foreign)),'visibleForeignIds':[v for v in foreign if re.search(r'(?<![\w:-])'+re.escape(v)+r'(?![\w:-])',pag.locator('main').inner_text())]})
   separation['pass']=not separation['overlapIds'] and all(not s['foreignIncidentIds'] for s in separation['screens']);(OUT/'check-2-customer.json').write_text(json.dumps(separation,indent=2))
   audit_commands(tp,third,incident,None,'third-no-case');analyst_views(tp,third,incident,None,metadata['sourceId'])
- except Exception as e:(OUT/'check-2-customer.json').write_text(json.dumps({'error':str(e),'traceback':traceback.format_exc()}))
+  visit(tp,url(third,'analyst','command',incident));oldids={c['id'] for c in get(third,'/v1/command/incidents')['incidents']};separation['caseIdsBeforeCreate']=sorted(oldids);assert not oldids, 'Requires fresh empty third-customer store'
+  tp.locator('[data-alert-id]').first.get_by_role('button',name='Open case',exact=True).click()
+  form=tp.get_by_role('form',name='Open case from alert');form.get_by_label('Case title').fill('Disposable third customer case')
+  tc=create_from_form(tp,ts,third,form,oldids,separation)
+  report['thirdCase']={'id':tc['id'],'incident':incident,'requests':ts['writes']};separation['savedCase']=report['thirdCase']
+  analyst_views(tp,third,incident,tc['id'],metadata['sourceId']);audit_commands(tp,third,incident,tc['id'],'third-saved')
+ except Exception as e:
+  separation=customer_failure(separation,e,traceback.format_exc())
+  if ts is not None:ts['allowCreate']=False;separation['createRequests']=ts['writes']
+ finally:(OUT/'check-2-customer.json').write_text(json.dumps(separation,indent=2))
  # Actual durable scale fixture: API totals + select menu + last incident switching.
  try:
-  large='http://127.0.0.1:8198';lp,ls=page_for(large);boot=get(large,'/v1/bootstrap');rr=get(large,'/v1/command/records');projection=get(large,'/v1/command/consequences?incidentId='+wanted[0]);inc=rr['statewideIncidents'];entities=boot['entities']
-  scale={'productionTouched':False,'prepared':json.loads(Path('/Users/jakegroth/.hermes/cache/scratch/part-b-continuation/large-fixture.json').read_text()),'apiIncidentCount':len(inc),'uniqueIncidentIds':len({r['id'] for r in inc}),'entityCount':len(entities),'uniqueEntityIds':len({r['id'] for r in entities}),'nodes':len(projection['nodes']),'cascadeCount':projection['cascadeCount'],'screens':[]}
+  large=LARGE;lp,ls=page_for(large);boot=get(large,'/v1/bootstrap');rr=get(large,'/v1/command/records');projection=get(large,'/v1/command/consequences?incidentId='+wanted[0]);inc=rr['statewideIncidents'];entities=boot['entities']
+  scale={'productionTouched':False,'prepared':json.loads(LARGE_METADATA.read_text()),'apiIncidentCount':len(inc),'uniqueIncidentIds':len({r['id'] for r in inc}),'entityCount':len(entities),'uniqueEntityIds':len({r['id'] for r in entities}),'nodes':len(projection['nodes']),'cascadeCount':projection['cascadeCount'],'screens':[]}
   for view in ['command','cop','consequence']:
    visit(lp,url(large,'command',view,wanted[0]));row={'view':view,'landing':snapshot(lp),'selects':lp.locator('main select').evaluate_all('els=>els.map(e=>({label:e.getAttribute("aria-label"),count:e.options.length,value:e.value}))'),'text':lp.locator('main').inner_text()[:4500]};scale['screens'].append(row)
-  sel=lp.get_by_role('combobox',name='Incident',exact=True)
-  if not sel.count():sel=lp.locator('main select').first
-  options=sel.locator('option').evaluate_all('els=>els.map(e=>({value:e.value,text:e.textContent}))');scale['options']=options
-  target='large-fixture-incident-49';sel.select_option(target);lp.wait_for_load_state('networkidle');lp.wait_for_timeout(100);scale['lastSelection']=snapshot(lp);lp.reload(wait_until='networkidle');scale['reloadedSelection']=snapshot(lp)
+  lp.locator('.c4-picker summary').click();options=lp.locator('.c4-picker button');scale['options']=options.all_text_contents()
+  target='large-fixture-incident-49';options.filter(has_text=target).click();lp.wait_for_url(lambda u:parse_qs(urlsplit(u).query).get('incidentId')==[target]);scale['lastSelection']=snapshot(lp);lp.reload(wait_until='networkidle');scale['reloadedSelection']=snapshot(lp)
   scale['pass']=len(inc)>=50 and len(entities)>=300 and len({r['id'] for r in inc})==len(inc) and len({r['id'] for r in entities})==len(entities) and scale['lastSelection']['query'].get('incidentId')==target and scale['reloadedSelection']['query'].get('incidentId')==target
   scale['percentageCoverage']='Not asserted: need DOM count-to-percentage denominator verification, not fixed labels.'
-  (OUT/'check-9-large.json').write_text(json.dumps(scale,indent=2))
- except Exception as e:(OUT/'check-9-large.json').write_text(json.dumps({'error':str(e),'traceback':traceback.format_exc()}))
+  (OUT/'check-9-large-preliminary.json').write_text(json.dumps(scale,indent=2))
+ except Exception as e:(OUT/'check-9-large-preliminary.json').write_text(json.dumps({'error':str(e) or type(e).__name__,'traceback':traceback.format_exc()}))
  browser.close()
-report['coverageGaps']=['Entity profile source-specific Back and all Analyst navigation links not yet individually followed','not every sector/asset interactive layout expanded','third customer saved-case phase not run','computed solid Command-link assertions and percentage assertions incomplete']
+report['coverageGaps']=['Entity profile source-specific Back and all Analyst navigation links covered by supplement','not every sector/asset interactive layout expanded','computed solid Command-link assertions and percentage assertions incomplete']
 (OUT/'browser-receipt.json').write_text(json.dumps(report,indent=2));print(json.dumps({'cases':report['cases'],'matrixRows':len(report['matrix']),'followed':sum(r['followed'] for r in report['matrix']),'analystViews':len(report['analyst']),'errors':report['errors'],'noExtraCases':report.get('noExtraCases')}))

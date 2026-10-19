@@ -1,12 +1,23 @@
 """Real disposable-store Part B browser exercise. No production, resets, inferred passes.
 Uses existing built assets; only permits the explicit case-create POSTs during setup.
 """
-import json,mimetypes,re,sys,traceback
+import json,mimetypes,os,re,sys,traceback
 from pathlib import Path
 from urllib.parse import urlencode,urlsplit,parse_qs
 from urllib.request import urlopen
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[2];OUT=Path(sys.argv[1]);DIST=ROOT/'frontend/dist'
+TXCC=os.environ['PART_B_TXCC_ORIGIN'];THIRD=os.environ['PART_B_THIRD_ORIGIN'];LARGE=os.environ['PART_B_LARGE_ORIGIN']
+LARGE_METADATA=Path(os.environ['PART_B_LARGE_METADATA'])
+def validate_customer_receipt(receipt):
+ if not isinstance(receipt,dict):raise ValueError('Customer receipt must be an object')
+ if 'error' in receipt or receipt.get('traceback'):
+  raise ValueError('Customer receipt producer failed: '+str(receipt.get('error') or receipt.get('traceback') or 'unknown producer error'))
+ if not isinstance(receipt.get('incident'),str) or not receipt['incident'].strip():raise ValueError('Customer receipt missing valid incident')
+ if type(receipt.get('pass')) is not bool or not isinstance(receipt.get('screens'),list):raise ValueError('Customer receipt malformed pass/screens structure')
+ if receipt['pass'] is not True:raise ValueError('Customer separation producer failed')
+ return receipt
+customer=validate_customer_receipt(json.loads((OUT/'check-2-customer.json').read_text()))
 VIEWS=['command','cop','cyber','consequence','coordination','uctf','case-file','entity-profile']
 COMMAND=['command','cop','cyber','consequence','uctf','leadership','federation']
 report={'candidateBeforeCommit':sys.argv[2],'matrix':[],'analyst':[],'cases':[],'history':[],'errors':[],'blocked':[],'coverageGaps':[]}
@@ -71,7 +82,7 @@ with sync_playwright() as pw:
     row['visibleErrors']=page.locator('[role=alert]').all_text_contents();row['navigation']=page.locator('main button,main a').evaluate_all("els=>els.filter(e=>e.getBoundingClientRect().width&&!e.disabled).map(e=>({label:e.innerText.trim(),href:e.getAttribute('href')})).filter(e=>/→|↗|Back|case file/i.test(e.label))")
    except Exception as e:row['error']=str(e)
  # Read-only supplementary checks: existing cases, real custom incident picker.
- origin='http://127.0.0.1:8196';page,state=page_for(origin)
+ origin=TXCC;page,state=page_for(origin)
  saved=json.loads((OUT/'browser-receipt.json').read_text());result={'analystFollowed':[],'profileHistory':[],'large':{},'errors':[]}
  for case in saved['cases']:
   incident=case['incident'];caseid=case['id']
@@ -98,8 +109,8 @@ with sync_playwright() as pw:
    visit(page,source);page.locator('main details').evaluate_all('els=>els.forEach(e=>e.open=true)');page.get_by_role('button',name='Inspect current record in Analyst ↗',exact=True).first.click();page.wait_for_load_state('networkidle');page.go_back(wait_until='networkidle');back=snapshot(page);page.go_forward(wait_until='networkidle');forward=snapshot(page);page.reload(wait_until='networkidle');reloaded=snapshot(page)
    result['profileHistory'].append({'source':start,'profile':profile,'buttonBack':buttonBack,'browserBack':back,'forward':forward,'reload':reloaded,'buttonPass':buttonBack['query'].get('view')==start['query'].get('view') and buttonBack['query'].get('mode')==start['query'].get('mode'),'browserPass':back['query'].get('view')==start['query'].get('view') and reloaded['query'].get('entity')==profile['query'].get('entity')})
   except Exception as e:result['profileHistory'].append({'error':str(e)})
- large='http://127.0.0.1:8198';lp,ls=page_for(large)
- scale={'prepared':json.loads(Path('/Users/jakegroth/.hermes/cache/scratch/part-b-continuation/large-fixture.json').read_text()),'screens':[],'errors':[]}
+ large=LARGE;lp,ls=page_for(large)
+ scale={'prepared':json.loads(LARGE_METADATA.read_text()),'screens':[],'errors':[]}
  rr=get(large,'/v1/command/records');bb=get(large,'/v1/bootstrap');scale.update({'apiIncidentCount':len(rr['statewideIncidents']),'uniqueIncidentIds':len({i['id'] for i in rr['statewideIncidents']}),'entityCount':len(bb['entities']),'uniqueEntityIds':len({i['id'] for i in bb['entities']})})
  for view in ['command','cop','consequence']:
   try:
@@ -110,13 +121,13 @@ with sync_playwright() as pw:
     else:
      lp.locator('.c4-picker summary').click();options=lp.locator('.c4-picker button')
     scale.setdefault('menuCounts',{})[view]=options.count();scale['menuCount']=options.count();scale['optionIds']=options.all_text_contents()
-    target='large-fixture-incident-49';options.filter(has_text=target).click();lp.wait_for_load_state('networkidle');scale.setdefault('switches',[]).append(snapshot(lp));lp.reload(wait_until='networkidle');scale.setdefault('reloads',[]).append(snapshot(lp))
+    target='large-fixture-incident-49';options.filter(has_text=target).click();lp.wait_for_url(lambda u:parse_qs(urlsplit(u).query).get('incidentId')==[target]);scale.setdefault('switches',[]).append(snapshot(lp));lp.reload(wait_until='networkidle');scale.setdefault('reloads',[]).append(snapshot(lp))
   except Exception as e:scale['errors'].append(str(e))
- scale['pass']=scale['apiIncidentCount']>=50 and scale['entityCount']>=300 and scale['apiIncidentCount']==scale['uniqueIncidentIds'] and scale['entityCount']==scale['uniqueEntityIds'] and scale.get('menuCount',0)>=50 and len(scale.get('switches',[]))==2 and all(x['query'].get('incidentId')=='large-fixture-incident-49' for x in scale['switches']+scale['reloads'])
+ scale['pass']=not scale['errors'] and scale['apiIncidentCount']>=50 and scale['entityCount']>=300 and scale['apiIncidentCount']==scale['uniqueIncidentIds'] and scale['entityCount']==scale['uniqueEntityIds'] and all(scale.get('menuCounts',{}).get(view,0)>=50 for view in ['cop','consequence']) and len(scale.get('switches',[]))==2 and len(scale.get('reloads',[]))==2 and all(x['query'].get('incidentId')=='large-fixture-incident-49' for x in scale['switches']+scale['reloads'])
  scale['percentageCoverage']='not yet independently asserted';(OUT/'check-9-large.json').write_text(json.dumps(scale,indent=2))
  # Exercise real incident-search UI both directions.
- customer=json.loads((OUT/'check-2-customer.json').read_text());customer['search']=[]
- for current,selected,foreign in [('http://127.0.0.1:8197',customer['incident'],saved['cases'][0]['incident']),('http://127.0.0.1:8196',saved['cases'][0]['incident'],customer['incident'])]:
+ customer['search']=[]
+ for current,selected,foreign in [(THIRD,customer['incident'],saved['cases'][0]['incident']),(TXCC,saved['cases'][0]['incident'],customer['incident'])]:
   cp,cs=page_for(current)
   try:
    visit(cp,url(current,'command','cop',selected));cp.locator('.iv-select-trigger').click();cp.get_by_role('combobox').fill(foreign);customer['search'].append({'origin':current,'query':foreign,'matchingOptions':cp.get_by_role('option').count(),'emptyState':cp.get_by_text('No matching open or monitoring incidents.',exact=True).count()})
