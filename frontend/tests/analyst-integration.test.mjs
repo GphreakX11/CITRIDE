@@ -17,7 +17,7 @@ test("live investigation map receives case overlay data and Entity Profile navig
     );
   assert.match(map, /incidents=\{incidents\}/);
   assert.match(map, /onOpenEntityProfile=/);
-  assert.match(map, /onNavigate\("entity-profile"\)/);
+  assert.match(map, /onOpenAnalyst\("entity-profile", selected\?\.id \?\? null, id\)/);
   assert.match(s, /Advanced · all located records/);
   assert.match(s, /members\.map/);
 });

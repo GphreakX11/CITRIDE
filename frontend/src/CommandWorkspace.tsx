@@ -1100,6 +1100,7 @@ export default function CommandWorkspace({
                 refreshedAt={refreshedAt}
                 onSelect={focus}
                 onNavigate={onNavigate}
+                onOpenAnalyst={onOpenAnalyst}
                 onOpenTool={onOpenTool}
                 selectedEntityId={selectedEntityId}
                 onSelectEntity={onSelectEntity}

@@ -49,6 +49,7 @@ interface Props {
   refreshedAt: string | null;
   onSelect: (id: string) => void;
   onNavigate: (view: CommandView) => void;
+  onOpenAnalyst: (view: CommandView, caseId?: string | null, entityId?: string | null) => void;
   onOpenTool: (
     tool:
       | "overview"
@@ -85,6 +86,7 @@ export default function CommandReadouts({
   refreshedAt,
   onSelect,
   onNavigate,
+  onOpenAnalyst,
   onOpenTool,
   onDownload,
   onInvestigate,
@@ -381,16 +383,15 @@ export default function CommandReadouts({
           incidents={incidents}
           onOpenEntityProfile={(id) => {
             if (workflowLocked) return;
-            onSelectEntity(id);
-            onNavigate("entity-profile");
+            onOpenAnalyst("entity-profile", selected?.id ?? null, id);
           }}
           selectedId={selectedEntityId}
           onSelectEntity={onSelectEntity}
           mapState={mapState}
           onMapStateChange={onMapStateChange}
           onOpenEntity={(id) => {
-            onSelectEntity(id);
-            onNavigate("entity-profile");
+            if (workflowLocked) return;
+            onOpenAnalyst("entity-profile", selected?.id ?? null, id);
           }}
         />
         <details className="command-panel">
@@ -574,8 +575,7 @@ export default function CommandReadouts({
         }}
         onOpenEntity={(id) => {
           if (workflowLocked) return;
-          onSelectEntity(id);
-          onNavigate("entity-profile");
+          onOpenAnalyst("entity-profile", selected?.id ?? null, id);
         }}
         onOpenLab={() => onOpenTool("lab")}
       />
