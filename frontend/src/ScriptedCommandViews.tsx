@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import C1Overview from "./C1Overview.tsx";
 import { readIncidentFocus } from "./incidentFocus.ts";
+import { commandRecordFocus, focusedResponseClock } from "./commandRecordFocus.ts";
 import type { CommandView } from "./commandTypes.ts";
 import {
   object,
@@ -15,10 +16,7 @@ import {
   elapsedMinutes,
   optionCards,
   recordTime,
-  responseClock,
-  scopedRecords,
   staffing,
-  statewideRows,
   vendorExposure,
 } from "./scriptedCommandModel.ts";
 import {
@@ -197,7 +195,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
   const {
     data,
     incidents,
-    selected,
+    selected: savedSelection,
     view,
     records,
     reference,
@@ -205,19 +203,21 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     onOpenAnalyst,
     onNavigate,
   } = props;
-  const [picked, setPicked] = useState<string | null>(typeof window === "undefined" ? null : readIncidentFocus(window.location.href));
+  const urlFocus = typeof window === "undefined" ? null : readIncidentFocus(window.location.href);
+  const [picked, setPicked] = useState<string | null>(urlFocus);
   const [teamId, setTeamId] = useState<string | null>(null);
-  const rows = statewideRows(records, incidents);
-  const selectedRow = rows.find((row) => row.caseId === selected?.id);
-  const scope = (items: RecordItem[]) =>
-    scopedRecords(items, records, selected);
+  const { rows, row: selectedRow, selected, scope } = commandRecordFocus(records, incidents, savedSelection, urlFocus);
+  const focusedTeams = urlFocus ? scope(records.teams) : records.teams;
+  const previewRows = urlFocus ? rows.filter(row => row.id === selectedRow?.id) : rows;
+  const pickedRow = previewRows.find(row => row.id === (picked ?? selectedRow?.id)) ?? previewRows.find(row => row.id === selectedRow?.id);
+  const clock = focusedResponseClock(records, reference, selected, selectedRow);
   const model = consequenceModel(selected);
   const selectRow = (id: string) => {
     setPicked(id);
     const row = rows.find((item) => item.id === id);
     if (row?.caseId) onSelect(row.caseId);
   };
-  const pickedRow = rows.find((row) => row.id === (picked ?? selectedRow?.id));
+
   // Keep archived summaries available without replacing the canonical case or
   // inventing a saved run. Only the locally selected summary is visible.
   const summaryFor = (row: RecordItem, hidden = false) => (
@@ -318,18 +318,18 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       </table>
     </div>
   );
-  const register = registerFor(rows);
+
   let content: ReactNode;
   if (view === "command") return <C1Overview {...props} />;
   if (view === "cop") {
     return <IncidentView {...props} />;
   } else if (view === "cyber") {
-    const timeline = eventTimeline(data, selected);
+    const timeline = eventTimeline(data, selected).filter(item => (!urlFocus && !selected) || selectedRow?.linkedEventIds?.includes(item.event.id) || item.captured);
     const durations = attackDurations(
       timeline
         .filter(
           (item) =>
-            !selected ||
+            (!urlFocus && !selected) ||
             selectedRow?.linkedEventIds?.includes(item.event.id) ||
             item.captured,
         )
@@ -394,7 +394,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
               </article>
             ))}
             <div className="sc-exposure-check"><h3>Exposure check</h3>
-            {vendorExposure(data, selected).map(({ vendor, utilities }) => (
+            {(selected ? vendorExposure(data, selected) : []).map(({ vendor, utilities }) => (
               <p key={vendor.id}>
                 {utilities.length} more utilities use {vendor.label}:{" "}
                 {utilities.map((utility) => utility.label).join(", ") ||
@@ -441,9 +441,8 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       </>
     );
   } else if (view === "uctf") {
-    const people = staffing(records);
-    const clock = responseClock(records, reference, selected);
-    const team = records.teams.find((item) => item.id === teamId) ?? records.teams.find((item) => item.incidentId === selectedRow?.id) ?? records.teams[0];
+    const people = staffing({ ...records, teams: focusedTeams });
+    const team = focusedTeams.find((item) => item.id === teamId) ?? focusedTeams[0];
     const eta = (item: RecordItem) =>
       item.etaAt ??
       (selected &&
@@ -457,9 +456,9 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       <>
         <Metrics
           values={[
-            [records.teams.length, "Teams"],
+            [focusedTeams.length, "Teams"],
             [people.onSite + people.remote + people.traveling, "Analysts deployed", `${people.onSite} on site · ${people.remote} remote · ${people.traveling} traveling · ${people.standby} on standby`],
-            [records.teams.filter((item) => item.status === "en_route").length, "En route", records.teams.filter((item) => item.status === "en_route").map((item) => `${item.shortLabel ?? item.name} · ETA ${formatTime(eta(item))}`).join(" · ")],
+            [focusedTeams.filter((item) => item.status === "en_route").length, "En route", focusedTeams.filter((item) => item.status === "en_route").map((item) => `${item.shortLabel ?? item.name} · ETA ${formatTime(eta(item))}`).join(" · ")],
             [
               clock.elapsedMinutes === null ? "—" : formatDuration(clock.elapsedMinutes),
               "Response clock",
@@ -469,17 +468,17 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
         />
 
         <div className="sc-team-layout"><Panel title="Deployment map">
-          {!records.teams.length && <p>No teams deployed for this incident.</p>}
+          {!focusedTeams.length && <p>Not recorded · No teams deployed for this incident.</p>}
           <Schematic
-            items={records.teams}
+            items={focusedTeams}
             active={team?.id ?? null}
             onSelect={setTeamId}
             label="Team deployment schematic"
             mode="teams"
-            incidents={rows.filter((row) => row.status !== "closed" && records.teams.some((item) => item.incidentId === row.id))}
+            incidents={rows.filter((row) => row.status !== "closed" && focusedTeams.some((item) => item.incidentId === row.id))}
           />
           <p className="sc-team-map-key">Illustrative locations · circles show recorded team status; dashed rings show incident footprints. Select or hover a team for details.</p>
-          </Panel><Panel title="Team details">{team && (
+          </Panel><Panel title="Team details">{!team && <p>Not recorded</p>}{team && (
             <aside className="sc-summary">
               <h3>{team.name}</h3>
               <p>
@@ -507,7 +506,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
             </aside>
           )}
         </Panel></div>
-        <Panel title="All teams" note={`${records.teams.filter((item) => item.status === "en_route").length} en route`}>
+        <Panel title="All teams" note={`${focusedTeams.filter((item) => item.status === "en_route").length} en route`}>
           <div className="command-table-wrap">
             <table className="command-table sc-team-register">
               <thead>
@@ -524,7 +523,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                 </tr>
               </thead>
               <tbody>
-                {records.teams.map((item) => (
+                {focusedTeams.map((item) => (
                   <tr key={item.id} className={item.id === team?.id ? "selected" : undefined} aria-selected={item.id === team?.id}>
                     <td>
                       <button
@@ -582,10 +581,10 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
       </>
     );
   } else if (view === "leadership") {
-    const caseMetrics = overviewModel(incidents).metrics;
+    const caseMetrics = overviewModel(selected ? [selected] : []).metrics;
     const decisions = scope(records.decisions);
     const products = scope(records.partnerProducts);
-    const briefRow = rows.find((row) => row.caseId === selected?.id);
+    const briefRow = selectedRow;
     const briefEvents = eventTimeline(data, selected).filter((item) => briefRow?.linkedEventIds?.includes(item.event.id) || item.captured);
     const notice = boilWaterLabel(model.run, model.captured.entities, reference);
     const sectorClasses = [capturedClassification(model.captured.entities.find((entity) => entity.id === model.run?.seed.provider)), ...model.rows.map((row) => row.classification)].filter((item) => item.classified);
@@ -593,7 +592,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     content = (
       <>
         <Panel title="1 · What happened">
-          <p className="sc-brief-story">{briefEvents.length ? briefEvents.map((item, index) => <span key={item.event.id} data-story-event={item.event.id}>{index ? "; " : ""}{item.label}</span>) : briefRow?.summary ?? selected?.eventSnapshot.description ?? "Select a saved case."}</p>
+          <p className="sc-brief-story">{briefEvents.length ? briefEvents.map((item, index) => <span key={item.event.id} data-story-event={item.event.id}>{index ? "; " : ""}{item.label}</span>) : briefRow?.summary ?? selected?.eventSnapshot.description ?? "Not recorded"}</p>
           <div className="cc-sources">{[...new Set(briefEvents.flatMap((item) => item.event.sourceRefs ?? []))].map((id) => <span className="cc-tag" key={id}>{data.sources.find((source) => source.id === id)?.label ?? id}</span>)}</div>
           <details className="sc-brief-sequence"><summary>Recorded sequence and evidence</summary>{briefRow?.summary && <p>{briefRow.summary}</p>}{briefEvents.map((item) => <p key={item.event.id}>{item.time} {item.label}<small>{item.description}</small><small>{eventSourceChips(item.event).join(" · ")}</small></p>)}</details>
           {selected?.status === "closed" && (
@@ -602,13 +601,14 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
         </Panel>
         <Panel title="2 · So what">
           <small>Modeled · not observed outages</small>
-          <div className="sc-brief-impact" data-earliest-known={!!model.earliest} data-notice={notice ? "possible" : "unknown"}><Metrics values={[
+          {!selected && <p>Not recorded · No captured consequence run for this incident.</p>}
+          {selected && <><div className="sc-brief-impact" data-earliest-known={!!model.earliest} data-notice={notice ? "possible" : "unknown"}><Metrics values={[
             [model.people === null ? "Unknown" : model.people.toLocaleString("en-US"), "People in affected water service"],
             [planningWindow(model.earliest), "Earliest window"],
             [model.run ? sectors.size : "Unknown", "Sectors affected", [...sectors.values()].join(" · ")],
             [notice ? "Possible" : model.run ? "Not triggered" : "Not yet modeled", "Boil-water notice"],
           ]} /></div>
-          <p className="sc-brief-windows">{model.rows.map((row) => `${row.label} ${planningWindow(row.windowHours)}`).join(" · ")}</p>
+          <p className="sc-brief-windows">{model.rows.map((row) => `${row.label} ${planningWindow(row.windowHours)}`).join(" · ")}</p></>}
           {!model.run && (
             <p>No captured consequence run; service effects remain unknown.</p>
           )}
@@ -620,7 +620,8 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
             Chief's decision in the Analyst workspace.
           </p>
           <div className="sc-grid sc-brief-option-cards">
-            {optionCards(reference, selected).map(({ option, timing }) => {
+            {!decisions.length && <p>Not recorded</p>}
+            {optionCards(reference, selected).filter(({option}) => selected || decisions.some(item => item.optionId === option.id)).map(({ option, timing }) => {
               const decision = decisions
                 .filter((item) => item.optionId === option.id)
                 .at(-1);
@@ -689,11 +690,11 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
         <Panel title="Cases behind this brief">
           <div className="sc-brief-case-layout">
             <nav className="sc-brief-case-list" aria-label="Cases behind this brief">
-              {[...rows].sort((a, b) => Number(b.caseId === selected?.id) - Number(a.caseId === selected?.id) || Number(a.status === "closed") - Number(b.status === "closed")).map((row) => <button key={row.id} className={row.id === pickedRow?.id ? "selected" : ""} aria-controls={`brief-summary-${row.id}`} aria-pressed={row.id === pickedRow?.id} onClick={() => setPicked(row.id)}><span>{row.title}<small>{row.id}</small></span><StatusChip status={row.status}>{words(row.status ?? "unknown")}</StatusChip></button>)}
+              {previewRows.map((row) => <button key={row.id} className={row.id === pickedRow?.id ? "selected" : ""} aria-controls={`brief-summary-${row.id}`} aria-pressed={row.id === pickedRow?.id} onClick={() => setPicked(row.id)}><span>{row.title}<small>{row.id}</small></span><StatusChip status={row.status}>{words(row.status ?? "unknown")}</StatusChip></button>)}
             </nav>
-            {[...rows].sort((a, b) => Number(b.id === pickedRow?.id) - Number(a.id === pickedRow?.id)).map((row) => summaryFor(row, row.id !== pickedRow?.id))}
+            {[...previewRows].sort((a,b) => Number(b.id === pickedRow?.id) - Number(a.id === pickedRow?.id)).map((row) => summaryFor(row, row.id !== pickedRow?.id))}
           </div>
-          <details className="sc-brief-register"><summary>Full incident register</summary>{register}</details>
+          <details className="sc-brief-register"><summary>Full incident register</summary>{registerFor(previewRows)}</details>
         </Panel>
       </>
     );
@@ -725,6 +726,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                     }{" "}
                     · {items.length}
                   </h3>
+                  {!items.length && <p>Not recorded</p>}
                   {items.map((item) => (
                     <div className="sc-contact-row" key={item.id}>
                       <span>{item.partnerRole}</span>
@@ -772,7 +774,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
                 );
               })
             ) : (
-              <p>Select a saved case for audience previews.</p>
+              <p>Not recorded · No audience previews for this incident.</p>
             )}
           </div>
         </Panel>
@@ -784,7 +786,7 @@ export default function ScriptedCommandViews(props: ScriptedCommandViewsProps) {
     <div
       className="scripted-command"
       data-screen={view}
-      data-clock-tone={view === "uctf" ? responseClock(records, reference, selected).tone : undefined}
+      data-clock-tone={view === "uctf" ? clock.tone : undefined}
       aria-label={titles[view]}
     >
       <p className="sc-records-asof">Read-only display · Records as of {timeLabel(records.now)}</p>

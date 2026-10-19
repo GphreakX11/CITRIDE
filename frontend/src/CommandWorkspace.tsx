@@ -1,4 +1,5 @@
 import { c1OverviewModel } from "./c1OverviewModel.ts";
+import { readIncidentFocus } from "./incidentFocus.ts";
 import type { ConsequenceProjection } from "./consequencesModel.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -755,7 +756,13 @@ export default function CommandWorkspace({
   const statewideContext = mode === "command" && view === "command" && records && reference
     ? c1OverviewModel({ data, incidents, selected: null, view, records, reference }, statewideProjections)
     : null;
-  const incidentLine = statewideContext
+  const recordContextId = mode === "command" && ["cyber", "uctf", "leadership", "federation"].includes(view) && typeof window !== "undefined"
+    ? readIncidentFocus(window.location.href)
+    : null;
+  const contextRecord = recordContextId ? records?.statewideIncidents.find(row => row.id === recordContextId || row.caseId === recordContextId) : null;
+  const incidentLine = recordContextId
+    ? contextRecord ? [contextRecord.id, contextRecord.title, contextRecord.location?.label].filter(Boolean).join(" · ") : "Incident record not available"
+    : statewideContext
     ? `Statewide · ${statewideContext.totals.active} open incidents · ${statewideContext.totals.investigating} under investigation · ${statewideContext.rows.filter(row => row.cascading).length} cascading`
     : mode === "command" && (view === "cop" || view === "consequence")
     ? null // Record-owned views can display references without a saved case.
@@ -773,9 +780,26 @@ export default function CommandWorkspace({
   // scenarios without saved cases; never overlay an unrelated saved-case banner.
   const showIncidentContextBar = !(mode === "command" && (view === "command" || view === "cop" || view === "consequence"));
   const [contextSelectionRevision, setContextSelectionRevision] = useState(0);
-  const selectedIncidentContextBar = showIncidentContextBar ? (
+  const selectedIncidentContextBar = showIncidentContextBar && contextRecord ? (
+    <section className="incident-context-bar" aria-label="Selected incident context">
+      <div className="incident-context-main"><span className="incident-context-label">Selected incident</span>
+        <strong>{contextRecord?.title ?? "Incident record not available"}</strong>
+        <p>{contextRecord?.id} · {contextRecord?.location?.label ?? "Location not recorded"} · {contextRecord?.status ?? "Not recorded"}</p>
+      </div>
+      <label>Change saved incident<select disabled={workspaceNavigationLocked(loaded, loading, busy, uncertain)} value={contextRecord?.caseId ?? ""} onChange={event => {
+        if (writing.current || workspaceNavigationLocked(loaded, loading, busy, uncertain)) return;
+        const id = event.target.value;
+        if (id && !incidents.some(incident => incident.id === id)) return;
+        const url = new URL(window.location.href);
+        url.searchParams.delete("incidentId"); url.searchParams.delete("incident");
+        window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+        setContextSelectionRevision(revision => revision + 1);
+        onSelect(id || null);
+      }}><option value="">Choose a saved incident</option>{incidents.map(incident => <option key={incident.id} value={incident.id}>{incident.title}</option>)}</select></label>
+    </section>
+  ) : showIncidentContextBar ? (
     <IncidentContextBar
-      selected={selected}
+      selected={recordContextId ? null : selected}
       incidents={incidents}
       location={[selectedSource?.location?.label, selectedSource?.location?.region].filter(Boolean).join(" · ") || selectedSource?.locationLabel}
       locked={workspaceNavigationLocked(loaded, loading, busy, uncertain)}
