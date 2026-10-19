@@ -21,13 +21,13 @@ const Workspace=(await import(moduleData(code))).default;
 const data=JSON.parse(readFileSync(new URL('../../data/scenario.json',import.meta.url)));
 const nodes=x=>Array.isArray(x)?x.flatMap(nodes):isValidElement(x)?[x,...nodes(x.props.children)]:[];
 const text=x=>Array.isArray(x)?x.map(text).join(''):isValidElement(x)?text(x.props.children):typeof x==='string'?x:'';
-for(const view of ['cyber','uctf','leadership','federation'])test(`${view} workspace renders URL record context instead of unrelated saved case`,async()=>{
+for(const {mode,view} of [...['cyber','uctf','leadership','federation'].map(view=>({mode:'command',view})),{mode:'analyst',view:'command'}])test(`${mode} ${view} workspace renders URL record context instead of unrelated saved case`,async()=>{
  hooks.clear();let current=new URL('https://example.test/?incidentId=focused-record');
  globalThis.window={get location(){return current;},history:{replaceState(_a,_b,next){current=new URL(next,current);}}};
  try{
  const saved={id:'saved',title:'Unrelated saved case',priority:'high',status:'open',eventId:data.events[0].id,contextSnapshot:{provider:null},decisions:[],tasks:[],activity:[],notes:[]};
  transport.plan(url=>url==='/v1/command/incidents'?{incidents:[saved]}:url==='/v1/command/records'?{statewideIncidents:[{id:'focused-record',title:'Focused record title',location:{label:'Recorded location'},status:'active'}],now:'2026-10-13T10:00:00Z'}:{});
- const p={data,mode:'command',view,selectedId:saved.id,selectedEntityId:null,mapState:{},onSelect(id){p.selectedId=id;},onCasesLoaded(){},onWorkflowLockChange(){},onSelectEntity(){},onMapStateChange(){},onNavigate(){},onOpenTool(){},onOpenAnalyst(){},onEditDependency(){},onAccessFailure(){}};
+ const p={data,mode,view,selectedId:saved.id,selectedEntityId:null,mapState:{},onSelect(id){p.selectedId=id;},onCasesLoaded(){},onWorkflowLockChange(){},onSelectEntity(){},onMapStateChange(){},onNavigate(){},onOpenTool(){},onOpenAnalyst(){},onEditDependency(){},onAccessFailure(){}};
  const render=()=>{hooks.reset();return Workspace(p);};render();await hooks.callbacks[0]();
  const tree=render(),bar=nodes(tree).find(n=>n.props['aria-label']==='Selected incident context');
  assert.ok(bar);assert.match(text(bar),/Focused record title/);assert.match(text(bar),/Recorded location/);assert.doesNotMatch(text(bar),/No incident selected/);

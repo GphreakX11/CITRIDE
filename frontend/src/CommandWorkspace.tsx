@@ -756,7 +756,7 @@ export default function CommandWorkspace({
   const statewideContext = mode === "command" && view === "command" && records && reference
     ? c1OverviewModel({ data, incidents, selected: null, view, records, reference }, statewideProjections)
     : null;
-  const recordContextId = mode === "command" && ["cyber", "uctf", "leadership", "federation"].includes(view) && typeof window !== "undefined"
+  const recordContextId = ((mode === "command" && ["cyber", "uctf", "leadership", "federation"].includes(view)) || (mode === "analyst" && view === "command")) && typeof window !== "undefined"
     ? readIncidentFocus(window.location.href)
     : null;
   const contextRecord = recordContextId ? records?.statewideIncidents.find(row => row.id === recordContextId || row.caseId === recordContextId) : null;
