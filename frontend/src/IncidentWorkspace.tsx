@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { api, humanize } from "./api";
 import { displayText } from "./presentation";
+import { contextIsStale, snapshotFreshnessLabel } from "./incidentFreshness";
 import {
   deriveIncidentDecisions,
   reviewDisplayText,
@@ -234,7 +235,7 @@ export default function IncidentWorkspace({
       setContext(null);
       return;
     }
-    api<unknown>(`/v1/incident-context?eventId=${encodeURIComponent(eventId)}`)
+    api<unknown>(`/v1/incident-context?eventId=${encodeURIComponent(eventId)}&freshness=true`)
       .then((result) => {
         if (!active) return;
         if (!validContext(result, eventId))
@@ -264,7 +265,7 @@ export default function IncidentWorkspace({
   const stale =
     !!context &&
     context.event.id === eventId &&
-    context.baselineRevision !== data.baselineRevision;
+    contextIsStale(context, data, eventId);
   const currentContext =
     !error && context?.event.id === eventId && !stale ? context : null;
   const matchedScenarios = useMemo(
@@ -686,9 +687,7 @@ export default function IncidentWorkspace({
               <p>
                 Snapshot version {review.baselineRevision} · Model{" "}
                 {review.modelVersion}
-                {run?.baselineRevision !== data.baselineRevision
-                  ? " · Historical snapshot; not the current baseline"
-                  : " · Captured baseline snapshot"}
+                {snapshotFreshnessLabel(run, data, eventId)}
               </p>
               {run && (
                 <p className="incident-muted">

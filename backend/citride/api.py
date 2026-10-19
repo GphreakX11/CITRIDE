@@ -319,7 +319,7 @@ def create_app(
         return {"streams": streams}
 
     @app.get("/v1/incident-context")
-    def incident_context(store: RepositoryDependency, eventId: QueryIdentifier):
+    def incident_context(store: RepositoryDependency, eventId: QueryIdentifier, freshness: bool = False):
         from .incident_context import incident_context as build_context
 
         def operation():
@@ -328,7 +328,7 @@ def create_app(
                 event.get("id") == eventId for event in baseline.get("events", [])
             ):
                 raise NotFoundError(f"Event {eventId} was not found")
-            return build_context(baseline, eventId)
+            return build_context(baseline, eventId, freshness=freshness)
 
         return handle_operation(operation)
 

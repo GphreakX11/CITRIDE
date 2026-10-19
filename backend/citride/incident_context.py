@@ -323,7 +323,7 @@ def _provenance(lookup: _Lookup, records: list[dict]) -> list[str]:
     return result
 
 
-def incident_context(data: dict, event_id: str) -> dict:
+def incident_context(data: dict, event_id: str, *, freshness=False) -> dict:
     """Return detached, typed incident context without altering the baseline.
 
     Unknown or duplicate event IDs raise ``ValueError('Unknown event: ...')``.
@@ -365,7 +365,9 @@ def incident_context(data: dict, event_id: str) -> dict:
     # the response. Flag their gaps but do not add their IDs to the aggregate.
     _provenance(lookup, supporting_chain)
     source_refs = _provenance(lookup, records)
+    from .incident_freshness import incident_inputs
     return deepcopy({
+        **({"freshnessInputs": incident_inputs(data, event_id)} if freshness else {}),
         "baselineRevision": revision,
         "event": event,
         "cyberAsset": cyber,

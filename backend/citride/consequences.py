@@ -68,11 +68,28 @@ def automatic_intake(store, dataset, incidents, model, reference, now, anchor, s
             # Invalidate the selection without erasing immutable past runs.
             continue
         scenario, event = match
+        from .incident_freshness import incident_inputs
         payload = {'incident': {k: v for k, v in project_saved_record(incident).items() if k not in {'caseId', 'runId', 'openedAt', 'history'}},
-                   'model': model, 'anchor': anchor.isoformat(), 'scenarioId': scenario['id']}
+                   'model': incident_inputs(model, event['id']), 'anchor': anchor.isoformat(), 'scenarioId': scenario['id']}
         digest = sha256(json.dumps(payload, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
         identifier = 'preliminary-' + digest
         if any(r['id'] == identifier for r in existing):
+            continue
+        # Older runs used the entire baseline in their digest. Recognize that
+        # exact legacy identity from its immutable snapshot; never rewrite it.
+        legacy_match = False
+        for captured in existing:
+            snapshot = captured.get('baselineSnapshot')
+            if captured.get('incidentId') != incident['id'] or not isinstance(snapshot, dict):
+                continue
+            if incident_inputs(snapshot, event['id']) != payload['model']:
+                continue
+            old_payload = {**payload, 'model': snapshot}
+            old_digest = sha256(json.dumps(old_payload, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+            if captured.get('inputFingerprint') == old_digest:
+                legacy_match = True
+                break
+        if legacy_match:
             continue
         horizon = scenario.get('horizonHours', model['defaultHorizonHours'])
         run = compute_run(deepcopy(model), {'scenarioId': scenario['id'], 'evaluationHour': model['defaultEvaluationHour'], 'horizonHours': horizon, 'overrides': []}, identifier)
