@@ -694,10 +694,7 @@ export default function CommandWorkspace({
       incidents={incidents}
       selected={selected}
       mode={caseMode}
-      onOpenEntity={(id) => {
-        onSelectEntity(id);
-        onNavigate("entity-profile");
-      }}
+      onOpenEntity={(id) => onOpenAnalyst("entity-profile", selected?.id, id)}
       onOpenTool={(tool) => onOpenTool(tool)}
       onDownloadRecord={() => {
         if (!selected) return;

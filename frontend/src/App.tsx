@@ -1,4 +1,4 @@
-import { analystSourceLocation, analystReturnTarget } from "./analystReturn.ts";
+import { analystSourceLocation, analystReturnTarget, analystProfileReturnLocation } from "./analystReturn.ts";
 import { caseSelectionLocation } from "./caseIncidentSelection.ts";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -457,7 +457,7 @@ export default function App() {
   }
   function openAnalyst(next: CommandView, caseId?: string | null, entityId?: string | null) {
     if (workflowLocked) return;
-    window.history.replaceState(null, "", analystSourceLocation(window.location.href, mode, view));
+    window.history.replaceState(null, "", analystSourceLocation(window.location.href, mode, view, next === "entity-profile"));
     if (caseId !== undefined) selectCase(caseId);
     if (entityId !== undefined) selectEntity(entityId);
     window.history.pushState(
@@ -937,7 +937,17 @@ export default function App() {
                   initialSnapshot={workspaceSnapshot}
                   mode={mode}
                   onOpenAnalyst={openAnalyst}
-                  onReturnToSource={() => { const target=analystReturnTarget(window.location.href); if(target){setMode(target.mode);setView(target.view);} else changeView("cop"); }}
+                  onReturnToSource={() => {
+                    const source = analystProfileReturnLocation(window.location.href);
+                    if (source) {
+                      window.history.pushState(null, "", source);
+                      window.dispatchEvent(new PopStateEvent("popstate"));
+                      return;
+                    }
+                    const target = analystReturnTarget(window.location.href);
+                    if (target) { setMode(target.mode); setView(target.view); }
+                    else changeView("cop");
+                  }}
                   onEditDependency={(dependency, prefill) =>
                     setEditor({ initial: dependency, prefill })
                   }
