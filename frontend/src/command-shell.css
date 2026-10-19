@@ -288,7 +288,9 @@
   overflow-wrap: anywhere;
 }
 .command-link {
-  border: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  max-width: 100%;
   background: none;
   color: var(--link);
   font-size: inherit;
@@ -297,7 +299,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 0;
+  padding: 5px 8px;
   overflow-wrap: anywhere;
 }
 .command-link:hover {

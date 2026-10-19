@@ -946,7 +946,7 @@ export default function App() {
                     }
                     const target = analystReturnTarget(window.location.href);
                     if (target) { setMode(target.mode); setView(target.view); }
-                    else changeView("cop");
+                    else changeView("command");
                   }}
                   onEditDependency={(dependency, prefill) =>
                     setEditor({ initial: dependency, prefill })
