@@ -9,7 +9,10 @@ import { C1_CITIES, c1TexasLonLat, c1FittedPoint, c1IncidentLayout, c1PlaceLabel
 import "./c1-map.css";
 import { c1PulseStyle } from "./c1Pulse.ts";
 
+import type { ConsequenceProjection } from './consequencesModel.ts';
+
 export interface C1MapProps {
+  relationships?: Record<string, ConsequenceProjection>;
   model: StatewideFootprintModel;
   cascadingIds: ReadonlySet<string>;
   riskCaseIds?: ReadonlySet<string>;
@@ -19,7 +22,7 @@ const severity = (value?: string) => value ? value.charAt(0).toUpperCase() + val
 const short = (value: string, length = 33) => value.length > length ? `${value.slice(0, length - 1)}…` : value;
 
 /** C1 is statewide and selection-free. The parent owns its panel and heading. */
-export function C1Map({ model, cascadingIds, riskCaseIds, onPick }: C1MapProps) {
+export function C1Map({ model, cascadingIds, riskCaseIds, onPick, relationships = {} }: C1MapProps) {
   const uid = `c1-map-${useId().replaceAll(":", "")}`;
   const host = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -40,6 +43,7 @@ export function C1Map({ model, cascadingIds, riskCaseIds, onPick }: C1MapProps) 
     const point = c1GeographicAnchor(row);
     return point ? [point] : [];
   }), size.width, size.height), [rows, size]);
+
   const byId = new Map(markers.map(marker => [marker.id, marker]));
   const layers = model.layers.flatMap(layer => {
     const row = rows.find(item => item.caseId === layer.caseId);
@@ -97,6 +101,7 @@ export function C1Map({ model, cascadingIds, riskCaseIds, onPick }: C1MapProps) 
           {C1_CITIES.map(city => { const point = c1FittedPoint(c1TexasLonLat(city.lon, city.lat), size.width, size.height); return <g key={city.name} transform={`translate(${point.x} ${point.y})`}><circle r="2.5"/><text x="6" y="4">{city.name}</text></g>; })}
         </g>
         {!fallback && <>
+          {layout.labels.map(label => { const anchor = byId.get(label.id) ?? probes.find(p => p.id === label.id); return anchor && <line key={`leader-${label.id}`} data-label-leader={label.id} x1={anchor.x} y1={anchor.y} x2={Math.max(label.x, Math.min(label.x + label.width, anchor.x))} y2={Math.max(label.y, Math.min(label.y + label.height, anchor.y))} stroke="var(--muted)" strokeWidth="1" opacity=".7"/>; })}
           {layers.filter(({ layer }) => layer.utility && layer.run && (riskCaseIds ? riskCaseIds.has(layer.caseId) : layer.facilities.some(facility => facility.id !== layer.utility!.id && facility.windowHours))).map(({ layer, marker }) => <g key={layer.caseId} data-service-area-case={layer.caseId} aria-label={`${layer.utility!.label} · Service area at risk`}><circle cx={marker.x} cy={marker.y} r="66" fill={`url(#${uid}-glow)`}/><circle cx={marker.x} cy={marker.y} r="44" className="c1-map-service"/></g>)}
           {probes.map(probe => <g key={probe.id} className="c1-map-probe" data-probe-case={probe.caseId}><title>{`${probe.label} · recorded position, approximate display`}</title><line x1={probe.source.x} y1={probe.source.y} x2={probe.x} y2={probe.y}/><circle cx={probe.x} cy={probe.y} r="8"/></g>)}
           {markers.map(marker => { const row = rows.find(item => item.id === marker.id)!; const cascading = cascade(row.id, row.caseId); return <g key={row.id} className={`c1-map-marker c1-map-tone-${statusTone(row.severity)}${row.severity === "critical" ? " c1-map-critical" : ""}`} data-incident-pin={row.id} data-cascading={cascading || undefined} transform={`translate(${marker.x} ${marker.y})`} role="button" tabIndex={0} aria-label={`${row.title ?? "Untitled incident"} · ${row.id} · ${severity(row.severity)}${cascading ? " · CASCADING IMPACT" : ""}`} onClick={() => onPick(row.id)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onPick(row.id); } }}>
@@ -110,8 +115,9 @@ export function C1Map({ model, cascadingIds, riskCaseIds, onPick }: C1MapProps) 
       </svg>}
     </div>
     {listRows.length > 0 && <div className="c1-map-fallback"><p>{fallback ? "Map labels cannot fit safely at this size. Select an incident below." : "Incident positions not recorded:"}</p><ul>{listRows.map(row => <li key={row.id}><button type="button" className={`c1-map-list-button c1-map-tone-${statusTone(row.severity)}`} onClick={() => onPick(row.id)}><InfrastructureIcon kind={infrastructureKind(row)} size={22}/><span>{row.title ?? "Untitled incident"}<small>{row.id} · {severity(row.severity)}{cascade(row.id, row.caseId) ? " · CASCADING IMPACT" : ""}</small></span></button></li>)}</ul></div>}
+    {Object.entries(relationships).some(([,p])=>p.source && ((p.watchAssets?.length ?? 0)>0 || p.nodes.some(n=>!n.source && n.windowHours))) && <details className="c1-relationship-inset"><summary>Infrastructure relationships · schematic list, not geographic positions</summary>{Object.entries(relationships).map(([id,p])=>p.source && <section key={id}><h3>Source · {p.source.name ?? p.source.label} · {id}</h3><ul>{p.nodes.filter(n=>!n.source && n.windowHours).map(n=><li key={n.id}><button onClick={()=>onPick(id)}><span className="c1-relationship-impact" aria-label="Modeled impact">●</span> {n.name} · modeled {n.windowHours?.join('–')} h</button></li>)}{p.watchAssets?.map(w=><li key={w.entityId}><button onClick={()=>onPick(id)}><span className="c1-relationship-watch">○</span> {p.nodes.find(n=>n.id===w.entityId)?.name ?? w.entity?.name ?? w.entity?.label ?? w.entityId} · {w.reason} · {p.nodes.some(n=>n.id===w.entityId && n.windowHours)?'Also in modeled cascade':'On watch; no modeled service loss'}</button></li>)}</ul></section>)}</details>}
     <div className="c1-map-legend" aria-label="Map legend">
-      <span className="c1-map-tone-red"><i className="c1-map-key-ring c1-map-key-critical"/>Critical</span><span className="c1-map-tone-red"><i className="c1-map-key-ring"/>High</span><span className="c1-map-tone-amber"><i className="c1-map-key-ring"/>Medium</span><span className="c1-map-tone-blue"><i className="c1-map-key-ring"/>Low</span><span><i className="c1-map-key-probe"/>Same attacker probed</span><span><i className="c1-map-key-service"/>Service area at risk</span><span><i className="c1-map-key-cascade"/>Cascading impact (pulsing)</span>
+      <span className="c1-map-tone-red"><i className="c1-map-key-ring c1-map-key-critical"/>Critical</span><span className="c1-map-tone-red"><i className="c1-map-key-ring"/>High</span><span className="c1-map-tone-amber"><i className="c1-map-key-ring"/>Medium</span><span className="c1-map-tone-blue"><i className="c1-map-key-ring"/>Low</span><span><i className="c1-map-key-probe"/>Same attacker probed or same login pattern</span><span><i className="c1-map-key-service"/>Service area at risk</span><span><i className="c1-map-key-cascade"/>Cascading impact (pulsing)</span>
     </div>
     <div className="c1-map-pictograms" aria-label="Infrastructure pictograms">{[...new Set(rows.map(infrastructureKind))].map(kind => <span key={kind}><InfrastructureIcon kind={kind} size={16}/>{infrastructureLabel(kind)}</span>)}</div>
     <p className="c1-map-caption">Approximate positions · click an incident to select it</p>

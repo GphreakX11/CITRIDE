@@ -120,6 +120,45 @@ def test_update_only_preserves_saved_cases_runs_and_audit(store):
     assert all(c == {'add': 0, 'update': 0} for c in adopt_source(store, INCIDENT)['counts'].values())
 
 
+def test_source_update_preserves_exact_history_and_anchor(store):
+    from citride.source_adoption import adopt_source
+    with store._locked():
+        ds = store._load()
+        row = next(r for r in store._records(ds, 'watchAssets') if r['incidentId'] == INCIDENT)
+        source_reason = row['reason']
+        row['reason'] = 'Previous source description requiring adoption'
+        row['history'] = [
+            {'who': 'Operator', 'when': '2021-01-02T03:04:05+00:00',
+             'what': {'action': 'review', 'note': 'Preserve the original review'}},
+            {'who': 'Operator', 'when': '2021-02-03T04:05:06+00:00',
+             'what': {'action': 'review', 'note': 'Preserve event order too'}},
+        ]
+        row['sampleDataAnchor'] = '2020-03-04T05:06:07+00:00'
+        expected = deepcopy(row)
+        expected['reason'] = source_reason
+        store._record_graph(ds, 'watchAssets', row)
+        store._save(ds)
+    before = store.path.read_bytes()
+    plan = adopt_source(store, INCIDENT)
+    assert plan['counts']['watchAssets'] == {'add': 0, 'update': 1}
+    assert plan['changes']['watchAssets']['update'] == [row['id']]
+    assert store.path.read_bytes() == before
+    assert adopt_source(store, INCIDENT, apply=True, expected_token=plan['token'])['applied']
+    with store._locked():
+        actual = store._record(store._load(), 'watchAssets', row['id'])
+    assert actual['reason'] == source_reason
+    assert actual['sampleDataAnchor'] == row['sampleDataAnchor']
+    assert actual['history'] == row['history']
+    assert actual == expected
+    applied = store.path.read_bytes()
+    retry = adopt_source(store, INCIDENT)
+    assert all(c == {'add': 0, 'update': 0} for c in retry['counts'].values())
+    assert retry['configChanges'] == []
+    assert store.path.read_bytes() == applied
+    assert not adopt_source(store, INCIDENT, apply=True, expected_token=retry['token'])['applied']
+    assert store.path.read_bytes() == applied
+
+
 def test_adoption_config_updates_and_validation_rollback(store, monkeypatch):
     from citride.source_adoption import adopt_source
     with store._locked():

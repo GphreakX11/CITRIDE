@@ -16,8 +16,9 @@ import { api } from './api.ts';
 import { object, text } from './scriptedTypes.ts';
 import { incidentViewModel } from './incidentViewModel.ts';
 import { c1OverviewModel } from './c1OverviewModel.ts';
-import { iconFor, sectorOf } from './incidentPresentation.ts';
-import { InfrastructureIcon } from './InfrastructureIcon.tsx';
+import { sectorOf } from './incidentPresentation.ts';
+import IncidentDependencyMap from './IncidentDependencyMap.tsx';
+import type { ConsequenceNode } from './consequencesModel.ts';
 import { consequenceNodeState, type ConsequenceProjection } from './consequencesModel.ts';
 import "./incident-view.css";
 
@@ -55,13 +56,14 @@ export default function IncidentView(props: Props) {
     if (!chosen) return { ...initial, incidentRecord: null };
     return chosen === initial.incidentRecord?.id ? initial : incidentStack(props, chosen);
   }, [props.data, props.incidents, props.selected, props.records, props.reference, picked]);
-  const model = stack.footPrintModel;
+  const model = { ...stack.footPrintModel, layers: stack.footPrintModel.layers.filter(layer => layer.caseId === stack.incidentRecord?.caseId) };
   const rows = model.rows;
   const record = stack.incidentRecord;
   const caseId = stack.incident?.id ?? null;
   const selectedId = stack.nodes.some(n => n.entity.id === localEntity) ? localEntity : null;
   const incidentId = record?.id ?? null;
   const [projection, setProjection] = useState<ConsequenceProjection | null>(null);
+  const projectionCards = useRef(new Map<string, HTMLElement>());
   const [projectionError, setProjectionError] = useState('');
   const [sector, setSector] = useState(() => typeof window === 'undefined' ? 'all' : new URL(window.location.href).searchParams.get('sector') ?? 'all');
   useEffect(() => {
@@ -71,6 +73,27 @@ export default function IncidentView(props: Props) {
   }, [incidentId]);
   const currentProjection = projection?.incident?.id === incidentId ? projection : null;
   const presentation = incidentViewModel(record ?? {id:''}, currentProjection, props.records, sector);
+  // Watch records enrich the schematic without inventing geography or a dependency.
+  const watchRows = presentation.watch.length ? presentation.watch : (currentProjection?.watchAssets ?? []).map((w,i)=>({...w,id:`watch-${i}`}));
+  const mapNodes = useMemo(() => {
+    const nodes: ConsequenceNode[] = (currentProjection?.nodes ?? []).map(node => {
+      const watched = watchRows.some(w=>w.entityId===node.id);
+      return watched && !node.windowHours && !node.source && !node.upstream ? {...node,status:'on_watch'} : node;
+    });
+    for(const watch of watchRows) if(!nodes.some(n=>n.id===watch.entityId)) {
+      const entity = props.data.entities.find(e=>e.id===watch.entityId);
+      const recorded = object(object(watch).entity);
+      nodes.push({id:String(watch.entityId),name:entity?.label ?? text(recorded.name ?? recorded.label,String(watch.entityId)),type:entity?.type ?? text(recorded.type),icon:text(recorded.icon),sector:sectorOf(entity ?? recorded) ?? '',status:'on_watch',windowHours:null,impactCount:0,paths:[],reserves:[],reserveLabel:'Not recorded',sourceRefs:[]});
+    }
+    return nodes;
+  }, [currentProjection, props.data.entities, JSON.stringify(watchRows)]);
+  const mapVisible = new Set(presentation.visible);
+  for(const node of mapNodes) if(sector==='all' || sectorOf(node)?.toLowerCase()===sector) mapVisible.add(node.id);
+  const selectProjectionEntity = (id: string | null) => {
+    setLocalEntity(id); props.onSelectEntity?.(id);
+    if(id && !mapVisible.has(id)) changeSector('all');
+    if(id) requestAnimationFrame(()=>projectionCards.current.get(id)?.scrollIntoView({behavior:'smooth',block:'nearest'}));
+  };
   const waiting = c1OverviewModel(props).decisions.filter(d => d.row.record.id === incidentId);
   const changeSector = (value: string) => { setSector(value); const url = new URL(window.location.href); if(value === 'all') url.searchParams.delete('sector'); else url.searchParams.set('sector', value); window.history.replaceState(null, '', url); };
   useEffect(() => {
@@ -83,7 +106,7 @@ export default function IncidentView(props: Props) {
     return () => observer.disconnect();
   }, [incidentId, stack.infrastructureAvailable]);
   useEffect(() => {
-    const sync = () => setPicked(readIncidentFocus(window.location.href));
+    const sync = () => { setPicked(readIncidentFocus(window.location.href)); setSector(new URL(window.location.href).searchParams.get('sector') ?? 'all'); };
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, []);
@@ -178,20 +201,17 @@ export default function IncidentView(props: Props) {
         <section className="iv-panel iv-map-panel" aria-label="What it touches">
           <h2>What it touches · {currentProjection.source?.name ?? currentProjection.source?.label}</h2>
           <div className="iv-sector-filters" role="group" aria-label="Infrastructure sectors">{['All', ...presentation.sectors].map(name => <button key={name} aria-pressed={sector === name.toLowerCase()} onClick={() => changeSector(name.toLowerCase())}>{name}</button>)}</div>
-          <div className="iv-source-drawing"><svg viewBox="0 0 960 650" aria-label="Incident infrastructure dependencies">
-            {(() => {
-              const nodes = currentProjection.nodes;
-              const position = (id:string) => { const index = nodes.findIndex(n => n.id === id); const authored = object(object(nodes[index]).schematic); return {x: typeof authored.x === 'number' ? authored.x : 100 + (index % 4) * 240, y: typeof authored.y === 'number' ? authored.y : 80 + Math.floor(index / 4) * 145}; };
-              return <>{currentProjection.edges.map(edge => { const a = position(edge.from), b = position(edge.to); return <g key={edge.id} opacity={presentation.visible.has(edge.from) && presentation.visible.has(edge.to) ? 1 : .1}><line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor"/><text x={(a.x+b.x)/2} y={(a.y+b.y)/2-8} textAnchor="middle">{edge.label}</text></g>; })}{nodes.map(node => { const p=position(node.id), state=consequenceNodeState(node); return <g key={node.id} className={`tone-${state.tone}`} opacity={presentation.visible.has(node.id) ? 1 : .1} transform={`translate(${p.x} ${p.y})`} role="button" tabIndex={0} aria-label={node.name} onClick={() => setLocalEntity(node.id)} onKeyDown={event => {if(event.key==='Enter' || event.key===' ') setLocalEntity(node.id);}}><circle r="27" fill="var(--bg-panel, #142336)" stroke="currentColor" strokeWidth="2" strokeDasharray={state.line === 'dashed' ? '6 4' : undefined}/><foreignObject x="-13" y="-13" width="26" height="26"><InfrastructureIcon icon={iconFor({...node,icon:text(object(node).icon)},props.reference.entityIcons)} size={24}/></foreignObject><text y="44" textAnchor="middle">{node.name}</text><text y="61" textAnchor="middle">{state.label}</text></g>; })}</>;
-            })()}
-          </svg></div><p className="iv-hint">Infrastructure at risk (modeled) · select an item to see why it matters</p>
+          <IncidentDependencyMap key={incidentId} nodes={mapNodes} edges={currentProjection.edges} sourceId={currentProjection.source?.id ?? mapNodes.find(n => n.source)?.id ?? ''} visible={mapVisible} entityIcons={currentProjection.entityIcons ?? props.reference.entityIcons} watchRelationships={watchRows.map(w => ({entityId:String(w.entityId),reason:text(w.reason,'Watch reason not recorded')}))} attackedSystem={currentProjection.sourceSystems?.[0]} selectedId={localEntity} onSelect={selectProjectionEntity}/>
+          <p className="iv-hint">Infrastructure at risk (modeled) · select an item to see why it matters</p>
         </section>
-        <aside className="iv-panel iv-list-panel"><header className="iv-panel-heading"><h2>Infrastructure</h2><small>Modeled {timeLabel(currentProjection.analysis.createdAt)}</small></header><p className="iv-hint">Select any item, here or on the drawing, to see why it matters.</p>
-          {['At risk','Supply chain','Not affected'].map(group => { const nodes = currentProjection.nodes.filter(n => presentation.visible.has(n.id) && (group === 'At risk' ? !n.source && !!n.windowHours : group === 'Supply chain' ? n.source || n.upstream : n.notAffected)); return nodes.length > 0 && <section key={group}><h3 className="iv-group-caption">{group} · {nodes.length}</h3>{nodes.map(node => <details className="iv-facility" key={node.id} open={localEntity === node.id}><summary onClick={event => {event.preventDefault(); setLocalEntity(localEntity === node.id ? null : node.id);}}><b>{node.name}</b><span className={`tone-${consequenceNodeState(node).tone}`}> · {consequenceNodeState(node).label}</span><small>{sectorOf(node)}{node.idt?.path ? ` · IDT ${node.idt.path}` : ''}</small></summary><p>{text(object(node).whyItMatters, `${node.name} depends on ${currentProjection.edges.filter(e => e.to === node.id).map(e => e.label).join(', ') || 'the recorded infrastructure chain'}.`)}</p><button className="command-link iv-analyst-link" onClick={() => analyst('entity-profile',node.id)}>Inspect current record in Analyst ↗</button></details>)}</section>; })}
-          {presentation.watch.length > 0 && <section><h3 className="iv-group-caption">On watch · same campaign · {presentation.watch.length}</h3>{presentation.watch.map(w => <article className="iv-watch-record" key={w.id}><b>{currentProjection.nodes.find(n => n.id === w.entityId)?.name ?? props.data.entities.find(e => e.id === w.entityId)?.label ?? w.entityId}</b><StatusChip status={w.status ?? 'monitoring'}/><p>{text(w.reason)}</p></article>)}</section>}
-          <button className="command-link iv-analyst-link" onClick={() => analyst(caseId ? 'case-file' : 'command')}>{caseId ? 'Case file' : 'Alerts'} in Analyst ↗</button>
+        <aside className="iv-panel iv-list-panel iv-projection-list"><header className="iv-panel-heading"><h2>Infrastructure</h2><small>Modeled {timeLabel(currentProjection.analysis.createdAt)}</small></header><p className="iv-hint">Select any item, here or on the drawing, to see why it matters.</p>
+          <div className="iv-projection-scroll">
+          {['At risk','Supply chain','Not affected'].map(group => { const nodes = currentProjection.nodes.filter(n => presentation.visible.has(n.id) && (group === 'At risk' ? !n.source && !!n.windowHours : group === 'Supply chain' ? n.source || n.upstream : n.notAffected)).sort((a,b)=>(a.windowHours?.[0] ?? Infinity)-(b.windowHours?.[0] ?? Infinity) || a.name.localeCompare(b.name)); return nodes.length > 0 && <section key={group}><h3 className="iv-group-caption">{group} · {nodes.length}</h3>{nodes.map(node => <details className={`iv-facility${localEntity===node.id?' selected':''}`} key={node.id} ref={element=>{if(element)projectionCards.current.set(node.id,element);else projectionCards.current.delete(node.id);}} open={localEntity === node.id}><summary onClick={event => {event.preventDefault(); selectProjectionEntity(localEntity === node.id ? null : node.id);}}><b>{node.name}</b><span className={`tone-${consequenceNodeState(node).tone}`}> · {consequenceNodeState(node).label}</span><small>{sectorOf(node)}{node.score!=null?` · score ${node.score}`:''}{node.idt?.path ? ` · IDT ${node.idt.path}` : ''}</small></summary><p>{text(object(node).whyItMatters, `${node.name} depends on ${currentProjection.edges.filter(e => e.to === node.id).map(e => e.label).join(', ') || 'the recorded infrastructure chain'}.`)}</p>{watchRows.filter(w=>w.entityId===node.id).map(w=><p className="tone-amber" key={w.id}>{text(w.reason,'Same campaign · relationship recorded, not proof of compromise')}</p>)}<button className="command-link iv-analyst-link" onClick={() => analyst('entity-profile',node.id)}>Inspect current record in Analyst ↗</button></details>)}</section>; })}
+          {watchRows.filter(w=>mapVisible.has(String(w.entityId)) && !currentProjection.nodes.some(n=>n.id===w.entityId && n.windowHours)).length > 0 && <section><h3 className="iv-group-caption">On watch · same campaign · {watchRows.filter(w=>mapVisible.has(String(w.entityId)) && !currentProjection.nodes.some(n=>n.id===w.entityId && n.windowHours)).length}</h3>{watchRows.filter(w=>mapVisible.has(String(w.entityId)) && !currentProjection.nodes.some(n=>n.id===w.entityId && n.windowHours)).map(w => <article className={`iv-watch-record${localEntity===w.entityId?' selected':''}`} key={w.id} ref={element=>{if(element)projectionCards.current.set(String(w.entityId),element);else projectionCards.current.delete(String(w.entityId));}}><button className="iv-watch-button" aria-expanded={localEntity===w.entityId} onClick={()=>selectProjectionEntity(localEntity===w.entityId?null:String(w.entityId))}><b>{mapNodes.find(n => n.id === w.entityId)?.name ?? String(w.entityId)}</b><span>On watch · no modeled service loss</span></button><p>{text(w.reason,'Same campaign · relationship recorded, not proof of compromise')}</p>{localEntity===w.entityId && <button className="command-link iv-analyst-link" onClick={()=>analyst('entity-profile',String(w.entityId))}>Inspect current record in Analyst ↗</button>}</article>)}</section>}
+          </div>
+          <footer className="iv-list-footer"><button className="command-link iv-analyst-link" onClick={() => analyst(caseId ? 'case-file' : 'command')}>{caseId ? 'Case file' : 'Alerts'} in Analyst ↗</button></footer>
         </aside>
-      </div> : !stack.infrastructureAvailable ? <section className="iv-panel iv-development"><p>Infrastructure view for this incident type is in development.</p><button className="command-link" onClick={() => analyst("command")}>Open in Analyst ↗</button></section> : <div className="iv-workspace">
+      </div> : !stack.infrastructureAvailable ? <section className="iv-panel iv-development"><p>No consequence model yet. Infrastructure view for this incident type is in development.</p><button className="command-link" onClick={() => analyst("command")}>Open in Analyst ↗</button></section> : <div className="iv-workspace">
         <section ref={mapPanel} className="iv-panel iv-map-panel" aria-label="What it touches"><CommandInfrastructureMap key={record.id} data={props.data} incidents={props.incidents} selected={stack.incident} selectedEntityId={selectedId} onSelectEntity={id => selectEntity(id)} onOpenEntity={id => analyst("entity-profile",id)} onSelectCase={props.onSelect} stack={stack} facilityQuery={query}/>{stack.missingRecords > 0 && <p className="iv-caption">{stack.missingRecords} captured records cannot be placed; no missing infrastructure inferred.</p>}</section>
         <aside className="iv-panel iv-list-panel" style={{height:panelHeight}} aria-labelledby="iv-facilities-heading"><header className="iv-panel-heading"><h2 id="iv-facilities-heading">Facilities</h2><small>{stack.run ? `Modeled ${timeLabel(stack.run.createdAt)}` : "Not yet modeled"}</small></header><p className="iv-hint">Select any facility, here or on the drawing, to see why it matters.</p>
           {stack.nodes.length > 12 && <input className="iv-facility-search" type="search" aria-label="Find a facility" placeholder="Find a facility" value={query} onChange={e => setQuery(e.target.value)}/>}

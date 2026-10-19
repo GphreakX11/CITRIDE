@@ -2,7 +2,9 @@
 .iv-command-strip{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
 .iv-command-strip p{margin:0}
 .iv-source-drawing{max-width:100%;overflow:auto;contain:inline-size}
-.iv-source-drawing svg{display:block;width:100%;min-width:760px;max-height:720px}
+.iv-source-drawing>svg{display:block;width:100%;min-width:0;max-height:720px}
+.iv-projection-list{height:730px;max-height:85vh}.iv-projection-scroll{overflow:auto;min-height:0;flex:1;padding:0 16px 16px;scrollbar-gutter:stable}.iv-watch-button{display:flex;flex-direction:column;gap:5px;width:100%;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}.iv-watch-button span{font-size:var(--fs-small)}.iv-watch-record.selected{outline:2px solid var(--blue-text)}.iv-projection-scroll summary{cursor:pointer}.iv-projection-scroll summary:focus-visible{outline:2px solid var(--blue-text)}
+@media(max-width:1000px){.iv-projection-list{height:600px;max-height:none}}
 .iv-source-drawing text{fill:currentColor;font-size:var(--fs-small)}
 .iv-sector-filters{display:flex;flex-wrap:wrap;gap:8px;padding:12px}
 .iv-sector-filters button{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:6px}

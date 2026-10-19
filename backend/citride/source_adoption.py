@@ -71,7 +71,10 @@ def adopt_source(store, incident_id, *, apply=False, expected_token=None):
         if apply and (not expected_token or expected_token != token):
             raise ConflictError('State or source changed; review a fresh dry-run token before apply')
         # Always exercise the actual shared validator/ingest, including dry runs.
-        core._ingest_records(dataset, records, 'source-adoption')
+        # Source adoption is scripted metadata intake, not an operational action:
+        # use its no-audit-append mode so existing history stays exactly intact.
+        # The ingest still preserves each existing record's origin and validates.
+        core._ingest_records(dataset, records, 'scripted')
         if apply and (config_changes or any(records.values())):
             store._save(dataset)
             plan['applied'] = True

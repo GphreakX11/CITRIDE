@@ -31,6 +31,15 @@ export function c1PlaceLabels(items: readonly { id: string; x: number; y: number
         candidates.push({ x, y: item.y + dy, width: item.width, height: h });
       }
     }
+    // Dense incident clusters need a deterministic whole-canvas fallback. Keep
+    // actual marker anchors fixed; existing leader lines tie displaced labels
+    // back to their incidents instead of blanking every pin on a desktop map.
+    const fallback: MapBox[] = [];
+    for (let y = 8; y + h <= height - 8; y += 12) {
+      for (let x = 8; x + item.width <= width - 8; x += 12) fallback.push({x,y,width:item.width,height:h});
+    }
+    fallback.sort((a,b) => (a.x+item.width/2-item.x)**2+(a.y+h/2-item.y)**2 - ((b.x+item.width/2-item.x)**2+(b.y+h/2-item.y)**2) || a.y-b.y || a.x-b.x);
+    candidates.push(...fallback);
     const box = candidates.find(candidate => candidate.x >= 8 && candidate.y >= 8 &&
       candidate.x + candidate.width <= width - 8 && candidate.y + candidate.height <= height - 8 &&
       [...obstacles, ...labels].every(other => !c1BoxesOverlap(candidate, other)));

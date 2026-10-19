@@ -34,12 +34,12 @@ const age = (at: string, now: string) => {
 };
 /** C1 never derives its totals, panels or expansion state from a selected case. */
 export default function C1Overview(props: Props) {
-  const [projections, setProjections] = useState<Record<string, ConsequenceProjection>>({});
   const projectionIds = props.records.statewideIncidents.filter(r => r.status !== 'closed' && r.modeled).map(r => r.id).sort().join('|');
+  const [projections, setProjections] = useState<Record<string, ConsequenceProjection>>({});
   useEffect(() => {
     let live = true;
     setProjections({});
-    for (const id of projectionIds.split('|').filter(Boolean)) api<ConsequenceProjection>(`/v1/command/consequences?incidentId=${encodeURIComponent(id)}`).then(value => { if(live) setProjections(old => ({...old,[id]:value})); }).catch(() => {});
+    for (const id of projectionIds.split('|').filter(Boolean)) api<ConsequenceProjection>(`/v1/command/consequences?incidentId=${encodeURIComponent(id)}`).then(value => { if(live && value.incident?.id === id) setProjections(old => ({...old,[id]:value})); }).catch(() => {});
     return () => { live = false; };
   }, [projectionIds]);
   const model = c1OverviewModel(props, projections);
@@ -113,7 +113,7 @@ export default function C1Overview(props: Props) {
     <div className="c1-columns">
       <section className="c1-panel c1-map-panel" aria-labelledby="c1-map-heading">
         <div className="c1-panel-heading"><h2 id="c1-map-heading">Statewide picture</h2><small>{model.rows.length} open incidents · {new Set(model.footprintModel.layers.flatMap(layer => layer.probed.map(item => item.id))).size} utilities probed</small></div>
-        <C1Map model={model.footprintModel} cascadingIds={cascadeIds} riskCaseIds={new Set(model.facilities.flatMap(group => group.row.incident ? [group.row.incident.id] : []))} onPick={pick}/>
+        <C1Map model={model.footprintModel} relationships={projections} cascadingIds={cascadeIds} riskCaseIds={new Set(model.facilities.flatMap(group => group.row.incident ? [group.row.incident.id] : []))} onPick={pick}/>
       </section>
       <aside className="c1-sidebar" aria-label="Statewide incident details and decisions">
         <section className="c1-panel" aria-labelledby="c1-incidents-heading" tabIndex={-1} ref={listPanel}>

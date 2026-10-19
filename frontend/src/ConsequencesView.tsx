@@ -12,6 +12,8 @@ import {
 } from "./consequencesModel.ts";
 import { clockLabel, useRealClock } from "./useRealClock.ts";
 import type { CommandView } from "./commandTypes.ts";
+import { C4Functions, C4SectorDetails, C4WatchPosture, C4Scores, sectorScore } from "./C4Metadata.tsx";
+import { C4SectorMap } from "./C4SectorMap.tsx";
 import "./consequences-view.css";
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -53,6 +55,13 @@ export function ConsequencesContent({
   const [sector, setSector] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const { analysis, source } = value;
+  const hasSectorMap = !!value.sectorViews?.some(r => r.sectors.length);
+  const displayedSectors = hasSectorMap
+    ? value.sectors.filter(s => value.sectorViews?.some(r => r.sectors.some(v => v.sector === s.label)))
+    : value.sectors;
+  const infrastructureCount = value.infrastructureCount ?? value.atRisk;
+  const countDetail = value.cascadeCount != null && value.watchOnlyCount != null
+    ? `${value.cascadeCount} in the cascade · ${value.watchOnlyCount} watch-only (same campaign)` : null;
   const nodes = value.nodes
     .filter((n) => !sector || n.sector === sector || n.source || n.upstream)
     .sort(
@@ -84,13 +93,13 @@ export function ConsequencesContent({
           ? missing
           : value.people.toLocaleString("en-US"),
       value.serviceAffected ? "Service affected" : "People affected",
-      value.serviceAffected ? "As reported in the supplied reference scenario" : "People in the modeled service area",
+      value.serviceAffected ? value.serviceAffected.note || "As reported in the supplied reference scenario" : "People in the modeled service area",
       "grey",
     ],
     [
-      String(value.atRisk ?? 0),
+      infrastructureCount == null ? "Not recorded" : String(infrastructureCount),
       "Critical infrastructure at risk",
-      [...new Set(risk.map((n) => n.type.replace(/([a-z])([A-Z])/g, "$1 $2")))]
+      countDetail || [...new Set(risk.map((n) => n.type.replace(/([a-z])([A-Z])/g, "$1 $2")))]
         .slice(0, 3)
         .join(" · "),
       value.atRisk ? "red" : "grey",
@@ -129,10 +138,11 @@ export function ConsequencesContent({
       <section className="c4-phone-brief" aria-label="Impact and next action">
         <small>Modeled · not observed outages</small>
         <strong>
-          {value.atRisk == null
+          {infrastructureCount == null
             ? "Impact count not recorded"
-            : `${value.atRisk} infrastructure ${value.atRisk === 1 ? "asset" : "assets"} at risk`}
+            : `${infrastructureCount} infrastructure ${infrastructureCount === 1 ? "asset" : "assets"} at risk`}
         </strong>
+        {countDetail && <small>{countDetail}</small>}
         <span>Earliest modeled window: {hours(value.earliestWindow)}</span>
         <small>
           {reviewed ? "Analyst reviewed" : analysis.kind === "reference_preview"
@@ -210,7 +220,8 @@ export function ConsequencesContent({
           </article>
         ))}
       </section>
-      <div className="c4-columns">
+      <C4Functions value={value}/>
+      <div className={`c4-columns ${hasSectorMap ? "c4-sector-overview" : ""}`}>
         <Panel
           title={`${sector || "Sector"} dependencies · ${value.incident?.id}`}
         >
@@ -227,17 +238,23 @@ export function ConsequencesContent({
               </button>
             )}
           </div>
-          <CascadeGraph
-            value={value}
-            nodes={nodes}
-            sector={sector}
-            selected={selected}
-            onSector={setSector}
-            onSelect={setSelected}
-          />
+          {hasSectorMap ? (
+            <C4SectorMap value={value} sector={sector} onSector={setSector} onSelect={setSelected}/>
+          ) : (
+            <CascadeGraph
+              value={value}
+              nodes={nodes}
+              sector={sector}
+              selected={selected}
+              onSector={setSector}
+              onSelect={setSelected}
+            />
+          )}
           <p className="c4-legend">
-            Source · At risk before 4 h · At risk 4 h or later · Normal upstream
-            · Dashed: not affected · Dotted: no dependency
+            Source · At risk before 4 h · At risk 4 h or later
+            {!hasSectorMap && " · Normal upstream · Dashed: not affected · Dotted: no dependency"}
+            {!!value.watchAssets?.length && " · Dashed amber: watch posture, not a service dependency"}
+            {!!value.consequenceScores?.length && " · Score: supplied consequence score 0–100"}
           </p>
         </Panel>
         <Panel title="Why it’s at risk">
@@ -281,8 +298,8 @@ export function ConsequencesContent({
                 </dd>
                 <dt>Sources</dt>
                 <dd>
-                  {focus.sourceRefs.length} recorded references
-                  {focus.sourceRefs.length > 0 &&
+                  {focus.sourceRefs?.length ?? 0} recorded references
+                  {!!focus.sourceRefs?.length &&
                     ` · ${focus.sourceRefs.join(", ")}`}
                 </dd>
               </dl>
@@ -290,6 +307,8 @@ export function ConsequencesContent({
           )}
         </Panel>
       </div>
+      <C4SectorDetails value={value} sector={sector} onSector={setSector}/>
+      <C4WatchPosture value={value} onSelect={setSelected}/>
       <Panel title="Timeline and thresholds">
           <p>Could lose service in · hours after the modeled loss</p>
           <div className="c4-axis">
@@ -351,13 +370,14 @@ export function ConsequencesContent({
             <thead>
               <tr>
                 <th>Sector</th>
+                {!!value.consequenceScores?.length && <th>Score</th>}
                 <th>At risk</th>
                 <th>Earliest window</th>
                 <th>Spread</th>
               </tr>
             </thead>
             <tbody>
-              {value.sectors.map((s) => (
+              {displayedSectors.map((s) => (
                 <tr key={s.label}>
                   <td>
                     <button
@@ -379,11 +399,12 @@ export function ConsequencesContent({
                       </small>
                     )}
                   </td>
+                  {!!value.consequenceScores?.length && <td className={`tone-${windowTone(s.windowHours)}`}>{sectorScore(value, s.label) ?? "Not recorded"}</td>}
                   <td>{s.atRisk}</td>
                   <td
-                    className={`tone-${s.source ? "red" : windowTone(s.windowHours)}`}
+                    className={`tone-${s.source && !hasSectorMap ? "red" : windowTone(s.windowHours)}`}
                   >
-                    {s.source
+                    {s.source && !hasSectorMap
                       ? "Now"
                       : s.windowHours
                         ? hours(s.windowHours)
@@ -444,9 +465,11 @@ export function ConsequencesContent({
         <p>
           <strong>
             Confidence: {value.confidence?.level || "Not recorded"}
+            {value.confidence?.value != null && ` (cascade confidence ${Math.round(value.confidence.value * 100)}%)`}
           </strong>{" "}
           · {value.confidence?.note || missing}
         </p>
+        <C4Scores value={value}/>
       </footer>
     </>
   );
@@ -486,6 +509,10 @@ function CascadeGraph({
             ids: s.nodes,
           })),
       ];
+  // Watch-only assets can be absent from the cascade's sector index.
+  for (const node of nodes.filter(n => n.watch?.length || n.status === "on_watch")) {
+    if (!groups.some(g => g.ids.includes(node.id))) groups.push({id: node.id, name: node.name, node, ids: [node.id]});
+  }
   const positions = groups.map((g, i) => ({
     ...g,
     x: g.node.source ? 35 : g.node.upstream ? 13 : 76,
@@ -524,6 +551,7 @@ function CascadeGraph({
         aria-label="Recorded dependency links"
       >
         {links.map(({ e, a, b }) => {
+          // Only recorded service edges have direction; watch links below do not.
           const state = consequenceNodeState(b.node);
           const ay = a.y * graphHeight / 100;
           const by = b.y * graphHeight / 100;
@@ -536,12 +564,26 @@ function CascadeGraph({
                   ? `M${a.x * 10} ${ay} L930 ${ay} L930 ${by} L${b.x * 10} ${by}`
                   : `M${a.x * 10} ${ay} L${b.x * 10} ${by}`}
                 strokeDasharray={state.line === "solid" ? undefined : "6 6"}
+                markerEnd="url(#c4-supply-arrow)"
               />
               <text x={sameColumn ? 925 : (a.x + b.x) * 5} y={(ay + by) / 2 - 10}>
                 {e.label}
               </text>
             </g>
           );
+        })}
+        <defs><marker id="c4-supply-arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
+        {(value.watchAssets || []).map((w, i) => {
+          const a = positions.find(g => g.node.source);
+          const b = positions.find(g => g.ids.includes(w.entityId));
+          if (!a || !b || a === b) return null;
+          const ay = a.y * graphHeight / 100;
+          const by = b.y * graphHeight / 100;
+          return <g key={`watch-${i}`} data-relationship="watch">
+            <title>{`${w.reason} · watch posture only`}</title>
+            <path className="c4-watch-edge" d={`M${a.x * 10} ${ay + 18} Q${(a.x + b.x) * 5} ${(ay + by) / 2 + 40} ${b.x * 10} ${by + 18}`} />
+            <text className="c4-watch-label" x={(a.x + b.x) * 5} y={(ay + by) / 2 + 35}>watch posture</text>
+          </g>;
         })}
       </svg>
       {positions.map((g) => {
@@ -556,18 +598,20 @@ function CascadeGraph({
               borderStyle: state.line as "solid" | "dashed" | "dotted",
             }}
             onClick={() =>
-              sector || g.node.source || g.node.upstream
+              sector || g.node.source || g.node.upstream || (g.ids.length === 1 && !!g.node.watch?.length)
                 ? onSelect(g.node.id)
                 : onSector(g.name)
             }
           >
             <strong>{g.name}</strong>
+            {(sector ? g.node.score : sectorScore(value, g.name)) != null && <small>Score {sector ? g.node.score : sectorScore(value, g.name)}</small>}
             <small>
               {g.node.source
                 ? value.analysis?.seed.lossType.replaceAll("_", " ") +
                   " · source"
                 : state.label}
             </small>
+            {g.node.watch?.length ? <small className="tone-amber" title={g.node.watch.map(w => w.reason).join(" · ")}>On watch · same campaign</small> : null}
           </button>
         );
       })}

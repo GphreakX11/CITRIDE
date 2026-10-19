@@ -17,6 +17,7 @@ export interface ConsequenceNode {
   sector: string;
   icon?: string;
   score?: number | null;
+  schematic?: { x: number; y: number };
   watch?: C4Watch[];
   source?: boolean;
   upstream?: boolean;
@@ -64,6 +65,7 @@ export interface ConsequenceProjection {
     throughput?: { value: number | string; unit: string; basis?: string };
     spread?: { level: string; note?: string };
   };
+  sourceSystems?: { id: string; type: string; label?: string; name?: string; eventRefs: string[] }[];
   people?: number | null;
   serviceAffected?: { value: number; unit: string; note?: string } | null;
   atRisk?: number;

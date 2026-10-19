@@ -1,0 +1,52 @@
+.c4-functions, .c4-sector-tabs, .c4-score-summary ul { display: flex; flex-wrap: wrap; gap: 12px; }
+.c4-functions h2 { flex-basis: 100%; }
+.c4-functions article { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.c4-sector-tabs { margin-bottom: 16px; }
+.c4-sector-tabs button { min-height: 44px; }
+.c4-sector-tabs button[aria-pressed="true"] { border-color: var(--blue); background: var(--nav-active); }
+.c4-sector-cards, .c4-watch-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 16px; }
+.c4-sector-card { min-width: 0; padding: 14px; border: 1px solid var(--border); border-top: 3px solid currentColor; border-radius: 8px; background: var(--surface); }
+.c4-sector-card header, .c4-sector-card li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.c4-sector-card h3, .c4-sector-card li > span:first-child { color: var(--text); }
+.c4-sector-card ul, .c4-score-summary ul { list-style: none; padding: 0; margin: 0; }
+.c4-sector-card li { padding: 8px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.c4-sector-card li > span { min-width: 0; }
+.c4-sector-card li .status-chip { white-space: normal; }
+.c4-watch-list article { min-width: 0; padding: 12px; border: 1px dashed var(--amber); border-radius: 8px; }
+.c4-watch-list button { display: flex; align-items: center; gap: 8px; min-height: 44px; text-align: left; overflow-wrap: anywhere; }
+.c4-watch-list p { overflow-wrap: anywhere; }
+.c4-graph .c4-watch-edge { stroke: var(--amber); stroke-dasharray: 6 6; }
+.c4-graph .c4-watch-label { fill: var(--amber); }
+.c4-score-summary { margin-top: 16px; }
+.c4-sector-map-scroll { overflow-x: auto; min-width: 0; max-width: 100%; }
+.c4-sector-overview, .c4-sector-overview > .c4-panel { min-width: 0; }
+.c4-bottom > .c4-panel { min-width: 0; overflow-x: auto; }
+.c4-bottom table { min-width: 460px; }
+.c4-mobile-map { display: none; }
+.c4-sector-overview > .c4-panel:first-child { grid-column: 1 / -1; }
+.c4-sector-map { position: relative; min-width: 1100px; }
+.c4-sector-map svg { width: 100%; height: 100%; position: absolute; inset: 0; }
+.c4-sector-map path { fill: none; stroke: currentColor; stroke-width: 2; }
+.c4-sector-map .c4-watch-edge { stroke: var(--amber); stroke-dasharray: 6 6; }
+.c4-sector-map text { fill: var(--amber-text); font-size: var(--fs-small); text-anchor: middle; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.command-workspace .c4-sector-map button { position: absolute; transform: translate(-50%, -50%); width: 150px; min-height: 150px; border: 2px solid currentColor; border-radius: 50%; background: var(--surface); padding: 14px; white-space: normal; overflow-wrap: anywhere; }
+.command-workspace .c4-sector-map .c4-map-source { width: 200px; min-height: 200px; }
+.command-workspace .c4-sector-map .c4-map-watch { border-style: dashed; }
+.c4-sector-map button strong, .c4-sector-map button small { display: block; color: inherit; margin-top: 5px; }
+.command-workspace .c4-sector-map .tone-red, .command-workspace .c4-mobile-map .tone-red { color: var(--red-text); }
+.command-workspace .c4-sector-map .tone-amber, .command-workspace .c4-mobile-map .tone-amber { color: var(--amber-text); }
+.c4-sector-map button[aria-pressed="true"] { outline: 3px solid var(--text-strong); outline-offset: 4px; }
+.c4-sector-map button:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+@media (max-width: 600px) {
+  .c4-desktop-map { display: none; }
+  .c4-mobile-map { display: block; }
+  .c4-mobile-map button { width: 100%; min-height: 60px; white-space: normal; overflow-wrap: anywhere; text-align: left; border: 2px solid currentColor; padding: 12px; border-radius: 10px; }
+  .c4-mobile-map button strong, .c4-mobile-map button small { display: block; margin: 4px 0; }
+  .c4-mobile-map button[aria-pressed="true"] { outline: 2px solid var(--blue-text); outline-offset: 3px; }
+  .c4-mobile-sectors { display: grid; gap: 16px; padding: 16px 0 0 14px; margin-left: 8px; border-left: 2px solid var(--muted); }
+  .c4-mobile-sector { min-width: 0; display: grid; gap: 8px; }
+  .c4-mobile-map .c4-mobile-watch { border-style: dashed; margin-left: 12px; width: calc(100% - 12px); }
+  .c4-mobile-map-note { color: var(--muted); font-size: var(--fs-small); }
+  .c4-functions article { flex-basis: 100%; }
+  .c4-sector-cards, .c4-watch-list { grid-template-columns: minmax(0, 1fr); }
+}

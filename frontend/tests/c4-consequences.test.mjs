@@ -209,6 +209,100 @@ test("source-sector grouping retains impacted dependents instead of hiding them"
   ] });
   assert.match(html, /<strong>Transportation<\/strong>/);
 });
+test("C4 rich metadata is optional, generic, immutable and keeps zero scores", () => {
+  const value = { ...fixture, infrastructureCount: 14, cascadeCount: 11, watchOnlyCount: 3,
+    criticalFunctions: [{ function: "Keep regional freight moving", level: "medium", windowHours: [6, 9], note: "Regional feed" }],
+    sectorViews: [{ sectors: [{ sector: "Logistics", score: 0, items: [{label: "Depot", status: "normal", score: 0}, {label: "Unknown score", status: "reviewing"}], vessels: [{name: "Regional carrier", role: "Inbound", status: "diverted"}] }] }],
+    consequenceScores: [{basis: "Supplied model", sectors: [{sector: "Logistics", score: 0}], energySubsectors: [{label: "Local generation", score: 0}]}],
+    watchAssets: [{ entityId: "peer", reason: "Correlated indicators", status: "monitoring", inCascade: false, entity: {name: "Peer depot"} }],
+    confidence: {level: "high", value: 0.91, note: "Operator source"},
+  };
+  const before = JSON.stringify(value);
+  const html = render(value);
+  for (const text of ["14 infrastructure assets", "11 in the cascade", "3 watch-only", "Keep regional freight moving", "Inside each sector", "Regional carrier", "Local generation", "Score 0", "Peer depot", "not service dependencies", "91%"]) assert.ok(html.includes(text), text);
+  assert.match(html, /status-chip--green/);
+  assert.equal(JSON.stringify(value), before);
+  assert.doesNotMatch(render(fixture), /Inside each sector|Critical functions at risk|ON WATCH/);
+});
+test("watch-only nodes stay amber dashed without computed impact or window", () => {
+  assert.deepEqual(model.consequenceNodeState({status: "on_watch", watch: [{reason: "Review"}]}), {tone: "amber", line: "dashed", label: "On watch · no modeled service loss"});
+  assert.equal(model.consequenceNodeState({windowHours: [1, 4], watch: [{reason: "Review"}]}).tone, "red");
+});
+test("watch graph edges remain separate from service dependencies and timeline", () => {
+  const watch = {entityId: "peer", reason: "Same login pattern", status: "monitoring", inCascade: false};
+  const value = {...fixture, nodes: [
+    {...fixture.nodes[0], id: "source", name: "Regional source", source: true},
+    {...fixture.nodes[0], id: "peer", name: "Peer depot", windowHours: null, impactCount: 0, watch: [watch]},
+  ], watchAssets: [watch]};
+  const before = JSON.stringify(value);
+  const html = render(value);
+  assert.match(html, /data-relationship="watch"/);
+  assert.match(html, /class="c4-watch-edge"/);
+  assert.doesNotMatch(html, /class="c4-timeline"/);
+  assert.equal(JSON.stringify(value), before);
+});
+const richMapFixture = {
+  ...fixture,
+  source: {id: 'hub', name: 'Regional freight hub', type: 'PortFacility'},
+  nodes: [
+    {...fixture.nodes[0], id: 'hub', name: 'Regional freight hub', source: true, sector: 'Freight'},
+    {...fixture.nodes[0], id: 'grid', name: 'Upstream grid', upstream: true, sector: 'Power', windowHours: null, impactCount: 0},
+    ...['Fuel', 'Freight', 'Materials', 'Water'].map((sector, i) => ({...fixture.nodes[0], id: `asset-${i}`, name: `Asset ${i}`, sector, windowHours: [3 + i * 5, 6 + i * 6]})),
+    {...fixture.nodes[0], id: 'peer', name: 'Peer harbor', sector: 'Freight', windowHours: null, impactCount: 0},
+  ],
+  sectors: ['Fuel', 'Freight', 'Materials', 'Water'].map((label, i) => ({label, source: label === 'Freight', nodes: [`asset-${i}`], atRisk: 1, windowHours: [3 + i * 5, 6 + i * 6]})),
+  sectorViews: [{sectors: ['Fuel', 'Freight', 'Materials', 'Water'].map((sector, i) => ({sector, score: i * 20, items: [{label: `Sector item ${i}`, entityId: `asset-${i}`}]}))}],
+  watchAssets: [{entityId: 'asset-0', reason: 'Same login pattern', inCascade: true}, {entityId: 'peer', reason: 'Correlated indicators', inCascade: false}],
+};
+test('rich sector map centers source, preserves supplied windows and excludes upstream infrastructure', () => {
+  const before = JSON.stringify(richMapFixture);
+  const html = render(richMapFixture);
+  assert.match(html, /aria-label="Sector consequence map"/);
+  assert.match(html, /data-map-role="source"[^>]*style="left:50%;top:50%/);
+  assert.equal((html.match(/data-map-role="sector"/g) || []).length, 4);
+  assert.doesNotMatch(html, /Upstream grid/);
+  assert.match(html, /Score 0/);
+  assert.match(html, /6–12 h|8–12 h/);
+  assert.equal(JSON.stringify(richMapFixture), before);
+});
+test('rich map watch satellites attach to their recorded sector even when also in cascade', () => {
+  const html = render(richMapFixture);
+  assert.match(html, /data-watch-sector="Fuel"/);
+  assert.match(html, /data-watch-sector="Freight"/);
+  assert.equal((html.match(/data-map-role="watch"/g) || []).length, 2);
+  assert.match(html, /same login pattern/i);
+  assert.match(html, /same campaign/i);
+  assert.match(html, /c4-map-watch tone-amber/);
+});
+test('map sector activation opens the corresponding controlled sector card and retains map', async () => {
+  const {C4SectorMap} = await import(await compile(new URL('../src/C4SectorMap.tsx', import.meta.url)));
+  const {C4SectorDetails} = await import(await compile(new URL('../src/C4Metadata.tsx', import.meta.url)));
+  let selected = null;
+  const props = {value: richMapFixture, sector: selected, onSector: s => { selected = s; }, onSelect() {}};
+  function elements(node) {
+    if (!node || typeof node !== 'object') return [];
+    return [node, ...[node.props?.children].flat(Infinity).flatMap(elements)];
+  }
+  const tree = C4SectorMap(props);
+  const target = elements(tree).find(e => e.props?.['data-sector'] === 'Materials');
+  assert.equal(target.type, 'button');
+  target.props.onClick();
+  assert.equal(selected, 'Materials');
+  const details = renderToStaticMarkup(createElement(C4SectorDetails, {...props, sector: selected}));
+  assert.match(details, /Sector item 2/);
+  assert.doesNotMatch(details, /Sector item 0|Sector item 1|Sector item 3/);
+  const map = renderToStaticMarkup(createElement(C4SectorMap, {...props, sector: selected}));
+  assert.equal((map.match(/data-map-role="sector"/g) || []).length, 4);
+  assert.match(map, /aria-pressed="true"/);
+});
+test('compact phone map retains every sector and watch relationship without a wide canvas', () => {
+  const html = render(richMapFixture);
+  assert.match(html, /c4-mobile-map/);
+  assert.match(html, /compact layout/);
+  assert.equal((html.match(/data-relationship="sector-summary"/g) || []).length, 4);
+  assert.equal((html.match(/marker-end="url\(/g) || []).length, 4);
+  assert.equal((html.match(/class="c4-mobile-watch tone-amber"/g) || []).length, 2);
+});
 if (process.env.C4_PROJECTIONS) {
   const projections = JSON.parse(
     readFileSync(process.env.C4_PROJECTIONS, "utf8"),
@@ -216,7 +310,7 @@ if (process.env.C4_PROJECTIONS) {
   for (const value of projections)
     test(`actual backend projection renders ${value.incident.id}`, () => {
       const html = render(value);
-      assert.match(html, /PRELIMINARY ESTIMATE/);
+      assert.ok(html.includes(value.analysis.kind === "reference_preview" ? "READ-ONLY REFERENCE PROJECTION" : value.analysis.kind === "reviewed" ? "ANALYSIS REVIEWED" : "PRELIMINARY ESTIMATE"));
       assert.ok(html.includes(value.source.label || value.source.name));
       assert.ok(html.includes(String(value.atRisk)));
       assert.ok(html.includes("Who owns the response"));

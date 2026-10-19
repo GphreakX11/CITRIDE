@@ -1,4 +1,5 @@
 import { c1OverviewModel } from "./c1OverviewModel.ts";
+import type { ConsequenceProjection } from "./consequencesModel.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { RefreshCw, Download, AlertTriangle } from "lucide-react";
@@ -741,8 +742,16 @@ export default function CommandWorkspace({
       ?? records?.statewideIncidents?.find(record =>
         !record.caseId && record.linkedEventIds?.includes(selected.eventId))
     : null;
+  const statewideProjectionIds = mode === "command" && view === "command" ? (records?.statewideIncidents ?? []).filter(r => r.status !== "closed" && r.modeled).map(r => r.id).sort().join("|") : "";
+  const [statewideProjections, setStatewideProjections] = useState<Record<string, ConsequenceProjection>>({});
+  useEffect(() => {
+    let live = true;
+    setStatewideProjections({});
+    for (const id of statewideProjectionIds.split('|').filter(Boolean)) api<ConsequenceProjection>(`/v1/command/consequences?incidentId=${encodeURIComponent(id)}`).then(value => { if (live && value.incident?.id === id) setStatewideProjections(old => ({...old,[id]:value})); }).catch(() => {});
+    return () => { live = false; };
+  }, [statewideProjectionIds]);
   const statewideContext = mode === "command" && view === "command" && records && reference
-    ? c1OverviewModel({ data, incidents, selected: null, view, records, reference })
+    ? c1OverviewModel({ data, incidents, selected: null, view, records, reference }, statewideProjections)
     : null;
   const incidentLine = statewideContext
     ? `Statewide · ${statewideContext.totals.active} open incidents · ${statewideContext.totals.investigating} under investigation · ${statewideContext.rows.filter(row => row.cascading).length} cascading`

@@ -8,6 +8,29 @@ from .records import RecordsService
 from .storage import NotFoundError
 
 
+def source_systems(model, incident, source_id):
+    """Recorded IT observations attached to this source; no facility inference."""
+    entities = {e['id']: e for e in model['entities']}
+    observed = {}
+    for event in model.get('events', []):
+        if event['id'] not in incident.get('linkedEventIds', []):
+            continue
+        entity = entities.get(event.get('seenOn'), {})
+        identity_chain = set()
+        while entity.get('type') != 'PhysicalITAsset' and entity.get('id') not in identity_chain:
+            identity_chain.add(entity.get('id'))
+            entity = entities.get(entity.get('hostedBy') or entity.get('partOf'), {})
+        if entity.get('type') != 'PhysicalITAsset':
+            continue
+        target, visited = entity.get('id'), set()
+        while target in entities and target not in visited and target != source_id:
+            visited.add(target)
+            target = entities[target].get('hostedBy') or entities[target].get('partOf')
+        if target == source_id:
+            observed.setdefault(entity['id'], {**deepcopy(entity), 'eventRefs': []})['eventRefs'].append(event['id'])
+    return list(observed.values())
+
+
 def project_consequences(incident, analysis, reference, planning_rates, statuses=()):
     empty = {'incident': deepcopy(incident), 'analysis': None, 'nodes': [], 'edges': [], 'sectors': []}
     if analysis is None:
@@ -123,7 +146,7 @@ def project_consequences(incident, analysis, reference, planning_rates, statuses
         windows = [n['windowHours'] for n in group if n['windowHours'] is not None]
         sectors.append({'label': name, 'source': any(n['source'] for n in group), 'atRisk': len({n['id'] for n in group if n['impactCount']}), 'windowHours': [min(w[0] for w in windows), max(w[1] for w in windows)] if windows else None, 'order': min((n['order'] for n in group if n['order'] is not None), default=None), 'spread': source.get('spread'), 'nodes': [n['id'] for n in group]})
     return {'incident': deepcopy(incident), 'analysis': {k: deepcopy(analysis.get(k)) for k in ('kind', 'persisted', 'referenceOnly', 'createdAt', 'computedAt', 'effectiveAt', 'triggerEventAt', 'createdAtBasis', 'modelVersion', 'request', 'seed')},
-            'source': source, 'people': population, 'serviceAffected': incident.get('serviceAffected'),
+            'source': source, 'sourceSystems': source_systems(model, incident, source_id), 'people': population, 'serviceAffected': incident.get('serviceAffected'),
             'atRisk': len(affected - {source_id}), 'earliestWindow': min(known, key=lambda w: (w[0], w[1])) if known else None,
             'restoration': restoration, 'economic': economic, 'publicAction': public_action,
             'nodes': nodes, 'edges': edges, 'sectors': sectors, 'alternatives': alternatives,
