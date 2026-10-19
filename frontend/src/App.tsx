@@ -1,3 +1,4 @@
+import { caseSelectionLocation } from "./caseIncidentSelection.ts";
 import { useEffect, useRef, useState } from "react";
 import {
   Activity,
@@ -249,13 +250,12 @@ export default function App() {
     selectionInitialized.current = true;
     const record = caseRecordsRef.current.find((item) => item.id === id);
     setSelectedCaseId(record?.id ?? null);
+    const entityId = record ? caseFocusEntity(record, selectedEntity) : null;
+    const validEntity = entityId && data?.entities.some((entity) => entity.id === entityId) ? entityId : null;
+    setSelectedEntity(validEntity);
+    window.history.replaceState(null, "", caseSelectionLocation(window.location.href, record ?? null, workspaceSnapshot?.records.statewideIncidents ?? [], validEntity));
+    window.dispatchEvent(new Event("consequence-selection"));
     if (!record) return;
-    const entityId = caseFocusEntity(record, selectedEntity);
-    setSelectedEntity(
-      entityId && data?.entities.some((entity) => entity.id === entityId)
-        ? entityId
-        : null,
-    );
     // A new investigation should not be hidden by a previous utility's map filter.
     if (entityId !== selectedEntity)
       setMapState((current) => ({

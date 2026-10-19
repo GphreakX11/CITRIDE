@@ -385,6 +385,7 @@ export default function ConsequencesView({
   records,
   captured: capturedCase,
   onSelect,
+  onClearSelection,
   onOpenAnalyst,
   onNavigate,
 }: {
@@ -392,6 +393,7 @@ export default function ConsequencesView({
   records?: import("./incidentSelection.ts").IncidentSelectionRecords;
   captured?: ReactNode;
   onSelect: (id: string) => void;
+  onClearSelection?: () => void;
   onOpenAnalyst: (view: CommandView, caseId?: string | null, entityId?: string | null) => void;
   onNavigate: (view: CommandView) => void;
 }) {
@@ -428,7 +430,7 @@ export default function ConsequencesView({
   const choose = (next: string) => {
     setId(next);
     const selectedCase = value?.incidents.find((incident) => incident.id === next)?.caseId;
-    if (selectedCase) onSelect(selectedCase);
+    if (selectedCase) onSelect(selectedCase); else onClearSelection?.();
     writeConsequenceSelection({incidentId:next,sector:"all",entityId:null});
   };
   const analyst = (view: CommandView = "consequence", entityId?: string | null) => {

@@ -14,7 +14,7 @@ import { planningWindow, timeLabel, words, strings } from "./commandCenterModel.
 import { formatDuration } from "./displayTime.ts";
 import { idtSectorName } from "./idt.ts";
 import { activityDisplayText } from "./caseFilePresentation.ts";
-import { incidentFocusLocation } from "./incidentFocus.ts";
+import { writeConsequenceSelection, readConsequenceSelection } from "./consequenceSelection.ts";
 import "./c1-overview.css";
 import "./priority-queue.css";
 import { priorityQueue } from "./priorityQueue.ts";
@@ -49,7 +49,7 @@ export default function C1Overview(props: Props) {
   const cards = useRef(new Map<string, HTMLDetailsElement>());
   const listPanel = useRef<HTMLElement>(null);
   const persistFocus = (id: string | null) => {
-    if (typeof window !== "undefined") window.history.replaceState(null, "", incidentFocusLocation(window.location.href, id));
+    writeConsequenceSelection({incidentId:id},true);
   };
   const pick = (id: string, scroll = true) => {
     setExpanded(id);
@@ -160,7 +160,7 @@ export default function C1Overview(props: Props) {
       </aside>
     </div>
     <section className="c1-panel c1-updates" aria-labelledby="c1-updates-heading">
-      <div className="c1-panel-heading"><h2 id="c1-updates-heading">From the analysts</h2><button className="c1-analyst-link" onClick={() => { persistFocus(null); props.onOpenAnalyst("command", null, null); }}>All updates in Analyst ↗</button></div>
+      <div className="c1-panel-heading"><h2 id="c1-updates-heading">From the analysts</h2><button className="c1-analyst-link" onClick={() => { const incidentId=expanded ?? (typeof window !== "undefined" ? readConsequenceSelection(window.location.href).incidentId : null); props.onOpenAnalyst("command", null, null); persistFocus(incidentId); }}>All updates in Analyst ↗</button></div>
       <div className="c1-update-grid">{model.updates.map(update => <button key={update.record.id} onClick={() => update.incidentId && pick(update.incidentId)} disabled={!update.incidentId}><time className="mono">{timeLabel(update.time)} · {age(update.time, model.recordsAsOf)}</time><p>{activityDisplayText(update.text)}</p>{update.incidentId && <small className="mono">{update.incidentId} →</small>}</button>)}</div>
       {!model.updates.length && <p className="tone-grey">No analyst updates recorded for open incidents.</p>}
     </section>
