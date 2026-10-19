@@ -116,12 +116,13 @@ const render = (view, r = records(), s = saved(), ref = reference, d = data) =>
       onNavigate() {},
     }),
   );
-test('C2 replaces the statewide register with a selected incident schematic and read-only searches',()=>{
+test('C2 replaces the statewide register with selected incident sectors and a read-only C4 asset route',()=>{
  const html=render('cop');
- assert.match(html,/data-incident-schematic/);
+ assert.match(html,/data-screen="cop"/);
+ assert.match(html,/No consequence model yet/);
  assert.match(html,/What it touches/);
- assert.match(html,/Facilities/);
- assert.match(html,/Source/);
+ assert.match(html,/Every asset, and why: C4/);
+ assert.match(html,/aria-label="What happened"/);
  assert.match(html,/sf-recorded-footprints/);
  assert.doesNotMatch(html,/All Statewide Incidents|TX-26-0398/);
  assert.doesNotMatch(html,/<(?:select|textarea|form)\b/);
@@ -267,7 +268,8 @@ test("optional integration delegates populated screens and retains C2 infrastruc
     assert.equal((html.match(/class="cc-page-heading"/g) || []).length, 0, view);
     if (view === "cop") {
       assert.match(html, /Incident view/);
-      assert.match(html, /data-incident-schematic/);
+      assert.match(html, /What it touches · by sector/);
+      assert.match(html, /Every asset, and why: C4/);
       assert.doesNotMatch(html, /All Statewide Incidents|sf-state-map/);
     } else
       assert.doesNotMatch(

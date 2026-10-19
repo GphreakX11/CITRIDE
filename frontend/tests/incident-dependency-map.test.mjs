@@ -16,7 +16,10 @@ test('map uses configured icons, filter opacity, watch-only noncausal edges and 
 test('C2 empty analysis remains selected and preserves recorded footprints',()=>{
  const s=source('IncidentView.tsx');
  assert.match(s,/No consequence model yet/); assert.match(s,/IncidentRecordedFootprints model=\{model\}/);
- assert.match(s,/IncidentDependencyMap/); assert.match(s,/iv-projection-list/);
- assert.match(s,/selectProjectionEntity/); assert.match(s,/projectionCards/);
+ assert.match(s,/SectorCascadeView value=\{current\}/);
+ const assets=source('AssetConsequenceView/AssetConsequenceView.tsx');
+ assert.match(source('ConsequencesView.tsx'),/AssetConsequenceView value=\{value\}/);
+ assert.match(assets,/IncidentDependencyMap/); assert.match(assets,/ac-scroll/);
+ assert.match(assets,/selectedId=\{selection.entityId\}/); assert.match(assets,/cards.current/);
  assert.doesNotMatch(source('incident-view.css'),/\.iv-source-drawing svg\s*\{/);
 });

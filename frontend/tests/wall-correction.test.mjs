@@ -165,7 +165,8 @@ test("C1 uses its richer statewide map and complete legend, not the obsolete C2 
   assert.match(out, /class="c1-map"/);
   for (const entry of ["High", "Medium", "Low", "Same attacker probed", "Service area at risk", "Cascading impact (pulsing)", "Approximate positions · click an incident to select it"]) assert.ok(out.includes(entry));
   assert.doesNotMatch(out, /Active infrastructure incidents|Recorded service footprints|\d+ mapped|class="sc-safe-map"/);
-  assert.match(html(Scripted, { ...input, view: "cop" }), /data-incident-schematic/);
+  assert.match(html(Scripted, { ...input, view: "cop" }), /What it touches · by sector/);
+  assert.match(html(Scripted, { ...input, view: "cop" }), /Every asset, and why: C4/);
   assert.doesNotMatch(html(Scripted, { ...input, view: "cop" }), /class="sf-state-map"/);
   assert.equal(JSON.stringify(input), before);
 });
@@ -181,7 +182,8 @@ test("C1 and C2 never fabricate a pin for a record without a source position", (
   }
   const c2 = html(Scripted, props("cop", freeze(r)));
   assert.doesNotMatch(c2, /data-incident-pin="no-location"|data-state-boundary="texas"/);
-  assert.match(c2, /data-incident-schematic/);
+  assert.match(c2, /What it touches · by sector/);
+  assert.match(c2, /Every asset, and why: C4/);
   // C2 exposes other incidents only inside its searchable closed-by-default picker.
   assert.doesNotMatch(c2, /Unlocated water incident/);
 });

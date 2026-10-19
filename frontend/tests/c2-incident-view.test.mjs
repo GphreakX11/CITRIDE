@@ -43,9 +43,11 @@ test('C2 explicit URL incident overrides the configured third incident',()=>{
  globalThis.window={location:{href:'https://local.invalid/?view=cop&incidentId=test-c2-record'}};
  try { assert.match(html(p),/Captured renal facility/); } finally { delete globalThis.window; }
 });
-test('C2 renders the five bands without the removed statewide map/register',()=>{
+test('C2 composes summary, sector destination and recorded footprints without the statewide register',()=>{
  const out=html(props());
- for(const text of ['Incident view','records as of','What it touches','Facilities','Source','Where','People affected','Sectors','Also probed','Waiting on','Recorded service footprints']) assert.ok(out.includes(text),text);
+ for(const text of ['Incident view','records as of','What it touches · by sector','Every asset, and why: C4','Where','People affected','Sectors','Also probed','Waiting on','Recorded service footprints']) assert.ok(out.includes(text),text);
+ assert.ok(out.indexOf('iv-summary-band') < out.indexOf('iv-development'));
+ assert.ok(out.indexOf('iv-development') < out.indexOf('iv-more'));
  assert.doesNotMatch(out,/All Statewide Incidents|All incidents|Recorded infrastructure footprints|data-state-boundary="texas"/);
  assert.match(out,/data-screen="cop"/);
 });

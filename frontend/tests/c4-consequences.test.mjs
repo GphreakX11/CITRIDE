@@ -5,8 +5,9 @@ import { transformWithOxc } from "vite";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 const cache = new Map();
-async function compile(url) {
-  if (cache.has(url.href)) return cache.get(url.href);
+async function compile(url, mockHooks = false) {
+  const key = `${url.href}:${mockHooks}`;
+  if (cache.has(key)) return cache.get(key);
   let code = (
     await transformWithOxc(readFileSync(url, "utf8"), url.pathname, {
       jsx: { runtime: "automatic" },
@@ -19,8 +20,10 @@ async function compile(url) {
     imports.set(
       s,
       s.startsWith(".")
-        ? await compile(new URL(s, url))
-        : import.meta.resolve(s),
+        ? await compile(new URL(s, url), mockHooks)
+        : mockHooks && s === 'react'
+          ? `data:text/javascript,export const useState=i=>[typeof i==='function'?i():i,()=>{}];export const useEffect=()=>{};`
+          : import.meta.resolve(s),
     );
   }
   code = code.replace(
@@ -28,7 +31,7 @@ async function compile(url) {
     (_, s) => `from ${JSON.stringify(imports.get(s))}`,
   );
   const out = `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
-  cache.set(url.href, out);
+  cache.set(key, out);
   return out;
 }
 const model = await import(
@@ -37,6 +40,9 @@ const model = await import(
 const { ConsequencesContent, default: ConsequencesView } = await import(
   await compile(new URL("../src/ConsequencesView.tsx", import.meta.url))
 );
+const {default: SectorCascadeView} = await import(await compile(new URL('../src/SectorCascadeView/SectorCascadeView.tsx', import.meta.url)));
+const {default: AssetConsequenceView} = await import(await compile(new URL('../src/AssetConsequenceView/AssetConsequenceView.tsx', import.meta.url)));
+const renderSectors = value => renderToStaticMarkup(createElement(SectorCascadeView, {value}));
 const { clockLabel } = await import(
   await compile(new URL("../src/useRealClock.ts", import.meta.url))
 );
@@ -187,24 +193,24 @@ test("unmodeled incident retains explicit development state", () => {
   );
   assert.match(html, /Alerts in Analyst/);
 });
-test("C4 graph reserves vertical room and a larger source node for long labels", () => {
+test("C2 sector graph reserves vertical room and a larger source node for long labels", () => {
   const source = { ...fixture.nodes[0], id: "source", source: true, upstream: false,
     name: "Port of Houston · Barbours Cut Container Terminal" };
   const sectors = ["Chemical", "Emergency Services", "Energy", "Water"];
   const nodes = sectors.map((sector, i) => ({ ...fixture.nodes[0], id: `node-${i}`, sector }));
-  const html = render({ ...fixture, nodes: [source, ...nodes],
+  const html = renderSectors({ ...fixture, nodes: [source, ...nodes],
     sectors: sectors.map((label, i) => ({ label, nodes: [`node-${i}`], atRisk: 1 })) });
-  assert.match(html, /class="c4-graph" style="height:760px"/);
-  assert.match(html, /c4-node tone-red c4-source/);
+  assert.match(html, /class="sc-graph" style="height:680px"/);
+  assert.match(html, /sc-node tone-red sc-source/);
   assert.ok(html.includes(source.name));
-  const css = readFileSync(new URL("../src/consequences-view.css", import.meta.url), "utf8");
-  assert.match(css, /\.command-workspace \.c4-graph \.c4-node\s*\{[^}]*border-radius: 50%/);
-  assert.match(css, /\.c4-node\.c4-source\s*\{[^}]*width: 220px/);
+  const css = readFileSync(new URL("../src/SectorCascadeView/sector-cascade.css", import.meta.url), "utf8");
+  assert.match(css, /\.sc-node\s*\{[^}]*border-radius:50%/);
+  assert.match(css, /\.sc-graph>\.sc-source\s*\{[^}]*width:210px/);
 });
 test("source-sector grouping retains impacted dependents instead of hiding them", () => {
   const source = { ...fixture.nodes[0], id: "source", name: "Source terminal", source: true, sector: "Transportation" };
   const dependent = { ...fixture.nodes[0], id: "ships", name: "Vessels", sector: "Transportation" };
-  const html = render({ ...fixture, nodes: [source, dependent], sectors: [
+  const html = renderSectors({ ...fixture, nodes: [source, dependent], sectors: [
     { label: "Transportation", source: true, nodes: ["source", "ships"], atRisk: 1 },
   ] });
   assert.match(html, /<strong>Transportation<\/strong>/);
@@ -219,7 +225,8 @@ test("C4 rich metadata is optional, generic, immutable and keeps zero scores", (
   };
   const before = JSON.stringify(value);
   const html = render(value);
-  for (const text of ["14 infrastructure assets", "11 in the cascade", "3 watch-only", "Keep regional freight moving", "Inside each sector", "Regional carrier", "Local generation", "Score 0", "Peer depot", "not service dependencies", "91%"]) assert.ok(html.includes(text), text);
+  for (const text of ["14 infrastructure assets", "11 in the cascade", "3 watch-only", "Keep regional freight moving", "Regional carrier", "Local generation", "Score 0", "Peer depot", "not service dependencies", "91%"]) assert.ok(html.includes(text), text);
+  assert.doesNotMatch(html, /Inside each sector/);
   assert.match(html, /status-chip--green/);
   assert.equal(JSON.stringify(value), before);
   assert.doesNotMatch(render(fixture), /Inside each sector|Critical functions at risk|ON WATCH/);
@@ -235,9 +242,10 @@ test("watch graph edges remain separate from service dependencies and timeline",
     {...fixture.nodes[0], id: "peer", name: "Peer depot", windowHours: null, impactCount: 0, watch: [watch]},
   ], watchAssets: [watch]};
   const before = JSON.stringify(value);
-  const html = render(value);
+  const html = renderSectors(value);
   assert.match(html, /data-relationship="watch"/);
-  assert.match(html, /class="c4-watch-edge"/);
+  assert.match(html, /class="sc-watch-edge"/);
+  assert.doesNotMatch(render(value), /class="c4-timeline"/);
   assert.doesNotMatch(html, /class="c4-timeline"/);
   assert.equal(JSON.stringify(value), before);
 });
@@ -256,7 +264,7 @@ const richMapFixture = {
 };
 test('rich sector map centers source, preserves supplied windows and excludes upstream infrastructure', () => {
   const before = JSON.stringify(richMapFixture);
-  const html = render(richMapFixture);
+  const html = renderSectors(richMapFixture);
   assert.match(html, /aria-label="Sector consequence map"/);
   assert.match(html, /data-map-role="source"[^>]*style="left:50%;top:50%/);
   assert.equal((html.match(/data-map-role="sector"/g) || []).length, 4);
@@ -266,42 +274,53 @@ test('rich sector map centers source, preserves supplied windows and excludes up
   assert.equal(JSON.stringify(richMapFixture), before);
 });
 test('rich map watch satellites attach to their recorded sector even when also in cascade', () => {
-  const html = render(richMapFixture);
+  const html = renderSectors(richMapFixture);
   assert.match(html, /data-watch-sector="Fuel"/);
   assert.match(html, /data-watch-sector="Freight"/);
   assert.equal((html.match(/data-map-role="watch"/g) || []).length, 2);
   assert.match(html, /same login pattern/i);
-  assert.match(html, /same campaign/i);
-  assert.match(html, /c4-map-watch tone-amber/);
+  assert.match(html, /Correlated indicators/);
+  assert.match(html, /Watch · not a dependency/);
+  assert.match(html, /sc-watch tone-amber/);
 });
-test('map sector activation opens the corresponding controlled sector card and retains map', async () => {
-  const {C4SectorMap} = await import(await compile(new URL('../src/C4SectorMap.tsx', import.meta.url)));
-  const {C4SectorDetails} = await import(await compile(new URL('../src/C4Metadata.tsx', import.meta.url)));
+test('C2 sector activation opens the corresponding C4 asset filter and retains the sector map', async () => {
+  const {default: InteractiveSectors} = await import(await compile(new URL('../src/SectorCascadeView/SectorCascadeView.tsx', import.meta.url), true));
   let selected = null;
-  const props = {value: richMapFixture, sector: selected, onSector: s => { selected = s; }, onSelect() {}};
   function elements(node) {
     if (!node || typeof node !== 'object') return [];
     return [node, ...[node.props?.children].flat(Infinity).flatMap(elements)];
   }
-  const tree = C4SectorMap(props);
+  const tree = InteractiveSectors({value:richMapFixture,onSelect:s=>{selected=s;}});
   const target = elements(tree).find(e => e.props?.['data-sector'] === 'Materials');
   assert.equal(target.type, 'button');
   target.props.onClick();
-  assert.equal(selected, 'Materials');
-  const details = renderToStaticMarkup(createElement(C4SectorDetails, {...props, sector: selected}));
-  assert.match(details, /Sector item 2/);
-  assert.doesNotMatch(details, /Sector item 0|Sector item 1|Sector item 3/);
-  const map = renderToStaticMarkup(createElement(C4SectorMap, {...props, sector: selected}));
-  assert.equal((map.match(/data-map-role="sector"/g) || []).length, 4);
-  assert.match(map, /aria-pressed="true"/);
+  assert.deepEqual(selected, {sector:'materials',entityId:null});
+  globalThis.window = {location:{href:'https://local.invalid/?view=consequence&incidentId=OTHER-1&sector=materials'}};
+  try {
+    const details = renderToStaticMarkup(createElement(AssetConsequenceView, {value:richMapFixture,onAnalyst(){}}));
+    assert.match(details, /data-facility-id="asset-2"/);
+    assert.doesNotMatch(details, /data-facility-id="asset-(?:0|1|3)"/);
+    assert.match(details, /aria-label="Infrastructure sectors"/);
+    const map = renderSectors(richMapFixture);
+    assert.equal((map.match(/data-map-role="sector"/g) || []).length, 4);
+    assert.match(map, /data-sector="Materials" aria-pressed="true"/);
+  } finally { delete globalThis.window; }
 });
 test('compact phone map retains every sector and watch relationship without a wide canvas', () => {
-  const html = render(richMapFixture);
-  assert.match(html, /c4-mobile-map/);
-  assert.match(html, /compact layout/);
-  assert.equal((html.match(/data-relationship="sector-summary"/g) || []).length, 4);
-  assert.equal((html.match(/marker-end="url\(/g) || []).length, 4);
-  assert.equal((html.match(/class="c4-mobile-watch tone-amber"/g) || []).length, 2);
+  const value = {...richMapFixture, sectorLinks:richMapFixture.sectors.map(s=>({id:`link-${s.label}`,from:'hub',fromKind:'source',to:s.label,service:`Recorded service for ${s.label}`,step:1,windowHours:s.windowHours,dependencyIds:[]}))};
+  const html = renderSectors(value);
+  const mobile = html.slice(html.indexOf('class="sc-mobile"'));
+  for (const sector of ['Fuel','Freight','Materials','Water']) assert.match(mobile, new RegExp(`data-sector="${sector}"`));
+  assert.equal((html.match(/data-relationship="dependency"/g) || []).length,4);
+  assert.equal((html.match(/marker-end="url\(/g) || []).length,4);
+  assert.equal((mobile.match(/Recorded service for /g) || []).length,4);
+  assert.equal((mobile.match(/class="sc-mobile-watch"/g) || []).length, 2);
+  assert.match(mobile,/Same login pattern/);
+  assert.match(mobile,/Correlated indicators/);
+  const css=readFileSync(new URL('../src/SectorCascadeView/sector-cascade.css',import.meta.url),'utf8');
+  assert.match(css,/@media\s*\(max-width:600px\)/);
+  assert.match(css,/\.sc-desktop\{display:none\}/);
+  assert.match(css,/\.sc-mobile\{display:grid/);
 });
 if (process.env.C4_PROJECTIONS) {
   const projections = JSON.parse(
