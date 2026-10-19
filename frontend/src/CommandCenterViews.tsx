@@ -576,10 +576,10 @@ export default function CommandCenterViews({
                 </p>
                 <ImpactList model={model} />
                 <button
-                  className="button primary"
+                  className="button primary analyst-link"
                   onClick={() => openCase(selected)}
                 >
-                  Open in Analyst
+                  Open in Analyst ↗
                 </button>
               </>
             ) : (
@@ -676,11 +676,10 @@ export default function CommandCenterViews({
           <Panel title="Attack Picture Coverage">
             <p>No additional attack assessments recorded.</p>
             {selected && (
-              <button
-                className="command-link"
+              <button className="command-link analyst-link"
                 onClick={() => onOpenAnalyst("cyber", selected.id)}
               >
-                Open in Analyst
+                Open in Analyst ↗
               </button>
             )}
           </Panel>
@@ -751,10 +750,10 @@ export default function CommandCenterViews({
         </Empty>
         {selected && (
           <button
-            className="command-link"
+            className="command-link analyst-link"
             onClick={() => onOpenAnalyst("consequence", selected.id)}
           >
-            Open in Analyst
+            Open in Analyst ↗
           </button>
         )}
       </Panel>
@@ -896,10 +895,10 @@ export default function CommandCenterViews({
               )}
 
               <button
-                className="command-link"
+                className="command-link analyst-link"
                 onClick={() => openCase(selected)}
               >
-                Open in Analyst
+                Open in Analyst ↗
               </button>
             </Panel>
             <Panel title="Recorded Review and Analysis Trail">

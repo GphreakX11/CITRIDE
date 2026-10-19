@@ -143,7 +143,7 @@ export function ConsequencesContent({
             ? "Reference projection · not saved or analyst reviewed"
             : "Preliminary · not analyst reviewed"}
         </small>
-        <button type="button" onClick={onAnalyst}>
+        <button type="button" className="analyst-link" onClick={onAnalyst}>
           {reviewed ? "Open in Analyst ↗" : "Review in Analyst ↗"}
         </button>
       </section>

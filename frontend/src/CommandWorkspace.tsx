@@ -69,6 +69,7 @@ export interface CommandWorkspaceProps {
   telemetry?: Telemetry | null;
   initialSnapshot?: WorkspaceSnapshot | null;
   mode: WorkspaceMode;
+  onReturnToSource?: () => void;
   onOpenAnalyst: (
     view: CommandView,
     caseId?: string | null,
@@ -108,6 +109,7 @@ export default function CommandWorkspace({
   telemetry = null,
   initialSnapshot = null,
   mode,
+  onReturnToSource,
   onOpenAnalyst,
   onEditDependency,
   data,
@@ -1005,7 +1007,7 @@ export default function CommandWorkspace({
               onOpenCase={focus}
               onOpenTool={onOpenTool}
               onEditDependency={onEditDependency}
-              onBack={() => onNavigate("cop")}
+              onBack={onReturnToSource ?? (() => onNavigate("cop"))}
             />
           )}
           {records && view === "command" && <LateTasks records={records} />}

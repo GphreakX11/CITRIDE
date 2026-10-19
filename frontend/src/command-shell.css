@@ -65,6 +65,14 @@
 .command-workspace {
   min-width: 0;
 }
+.command-workspace button.analyst-link {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: var(--accent, var(--text-strong));
+  padding: 6px 10px;
+  cursor: pointer;
+}
 .command-workspace h2,
 .command-workspace h3 {
   color: var(--command-text, var(--text-strong));
