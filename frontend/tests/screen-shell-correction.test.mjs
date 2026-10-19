@@ -65,6 +65,8 @@ function setup(query = "") {
   globalThis.window = {
     location: { href: `http://local.invalid/${query}` },
     history: { replaceState() {}, pushState() {} },
+    dispatched: [],
+    dispatchEvent(event) { this.dispatched.push(event.type); return true; },
     scrollTo() {},
   };
   globalThis.localStorage = {
@@ -187,6 +189,7 @@ test("configured featured case is selected on initial C2 visit; explicit clear s
     "watershed",
   );
   component(tree, "CommandWorkspace").props.onSelect(null);
+  assert.ok(window.dispatched.includes("consequence-selection"), "case selection notifies URL-owned views");
   tree = render();
   component(tree, "CommandWorkspace").props.onCasesLoaded(records, sourceRecords);
   tree = render();
