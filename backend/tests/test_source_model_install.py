@@ -34,8 +34,7 @@ def quads(store):
         return set(store._load().quads((None, None, None, None)))
 
 
-@pytest.fixture
-def store(tmp_path):
+def earlier_release_store(tmp_path, *, include_current_preliminary=False):
     shutil.copytree(ROOT / 'data', tmp_path / 'inputs')
     scenario = tmp_path / 'inputs/scenario.json'
     seeded = Repository(tmp_path / 'state', scenario)
@@ -46,10 +45,21 @@ def store(tmp_path):
     command.act(case['id'], {'action': 'analyze', 'scenarioId': 'unsafe-water', 'evaluationHour': 1,
                              'horizonHours': 12, 'expectedVersion': case['version'], 'clientRequestId': str(uuid4())})
     # Earlier release: incident already present, infrastructure not yet stored.
-    baseline, _, _ = inputs(scenario)
+    baseline, bundle, _ = inputs(scenario)
     baseline.update(baselineRevision=1, modelVersion=MODEL_VERSION)
     with seeded._locked():
         dataset = seeded._load()
+        if not include_current_preliminary:
+            # Current seeding already analyzed the infrastructure model. An
+            # earlier-release fixture must not retain that future-model run
+            # after rewinding only its baseline. Remove only this disposable
+            # seed artifact, never the saved water case or historical runs.
+            future_runs = [run for run in seeded._records(dataset, 'run')
+                           if run.get('incidentId') == bundle['incident']['id']
+                           and run.get('kind') == 'preliminary']
+            assert len(future_runs) == 1
+            assert len(future_runs[0]['baselineSnapshot']['events']) > len(baseline['events'])
+            dataset.remove_graph(_graph_id('run', future_runs[0]['id']))
         seeded._write_baseline(dataset, baseline)
         meta = seeded._record(dataset, META_KIND, META_ID)
         meta['opaqueLegacyMetadata'] = {'keep': ['exact', 17, None]}
@@ -57,6 +67,11 @@ def store(tmp_path):
         seeded._record_graph(dataset, SNAPSHOT_KIND, {'id': 'older-revision', 'opaque': 'unchanged'})
         seeded._save(dataset)
     return Repository(seeded.data_dir, scenario, existing_only=True)
+
+
+@pytest.fixture
+def store(tmp_path):
+    return earlier_release_store(tmp_path)
 
 
 def incident_id(store):
@@ -182,6 +197,30 @@ def test_dry_run_apply_preserves_all_records_metadata_history_and_replay(store):
         assert store._record(store._load(), SNAPSHOT_KIND, plan['baselineSnapshotId'])['baselineSnapshot'] == baseline
     installed_bytes = store.path.read_bytes()
     replay = install_source_model(store, incident_id(store), apply=True, expected_token=plan['token'])
+    assert replay['noop'] and replay['replayed'] and not replay['applied']
+    assert store.path.read_bytes() == installed_bytes
+
+
+def test_equivalent_preliminary_is_preserved_without_duplicate_on_model_install(tmp_path):
+    store = earlier_release_store(tmp_path, include_current_preliminary=True)
+    before_bytes, before = store.path.read_bytes(), quads(store)
+    runs = {run['id']: run for run in store.runs()}
+    selected = incident_id(store)
+    existing = [run for run in runs.values()
+                if run.get('incidentId') == selected and run.get('kind') == 'preliminary']
+    assert len(existing) == 1
+    plan = install_source_model(store, selected)
+    assert not plan['noop'] and not plan['applied']
+    assert plan['counts']['events'] == {'add': 6, 'update': 0}
+    assert plan['counts']['run'] == {'add': 0, 'update': 0}
+    assert plan['preliminaryRunIds'] == []
+    assert store.path.read_bytes() == before_bytes and quads(store) == before
+    result = install_source_model(store, selected, apply=True, expected_token=plan['token'])
+    assert result['applied'] and result['baselineRevision'] == 2
+    assert {q for q in before if q[3] != BASELINE} <= quads(store)
+    assert {run['id']: run for run in store.runs()} == runs
+    installed_bytes = store.path.read_bytes()
+    replay = install_source_model(store, selected, apply=True, expected_token=plan['token'])
     assert replay['noop'] and replay['replayed'] and not replay['applied']
     assert store.path.read_bytes() == installed_bytes
 
