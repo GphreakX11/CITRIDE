@@ -1,19 +1,18 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api as apiGet } from "./api.ts";
 import {
-  consequenceNodeState,
   elapsedLabel,
   hours,
   initialConsequenceIncident,
   missing,
   windowTone,
   type ConsequenceProjection,
-  type ConsequenceNode,
 } from "./consequencesModel.ts";
 import { clockLabel, useRealClock } from "./useRealClock.ts";
 import type { CommandView } from "./commandTypes.ts";
-import { C4Functions, C4SectorDetails, C4WatchPosture, C4Scores, sectorScore } from "./C4Metadata.tsx";
-import { C4SectorMap } from "./C4SectorMap.tsx";
+import { C4Functions, C4WatchPosture, C4Scores, sectorScore } from "./C4Metadata.tsx";
+import AssetConsequenceView from "./AssetConsequenceView/AssetConsequenceView.tsx";
+import { useConsequenceSelection, writeConsequenceSelection } from "./consequenceSelection.ts";
 import "./consequences-view.css";
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -36,11 +35,13 @@ export function ConsequencesContent({
   now,
   onAnalyst,
   onPartners,
+  onEntity,
 }: {
   value: ConsequenceProjection;
   now: number;
   onAnalyst: () => void;
   onPartners: () => void;
+  onEntity?: (view: CommandView, entityId?: string | null) => void;
 }) {
   value = {
     ...value,
@@ -52,8 +53,9 @@ export function ConsequencesContent({
       : undefined,
     nodes: value.nodes.map((n) => ({ ...n, name: n.label || n.name || n.id })),
   };
-  const [sector, setSector] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selection] = useConsequenceSelection();
+  const setSector = (sector: string | null) => writeConsequenceSelection({incidentId:value.incident?.id ?? null,sector:sector || "all",entityId:null});
+  const setSelected = (entityId: string | null) => { const node=value.nodes.find(n=>n.id===entityId); writeConsequenceSelection({incidentId:value.incident?.id ?? null,entityId,sector:node?.sector.toLowerCase() || selection.sector}); };
   const { analysis, source } = value;
   const hasSectorMap = !!value.sectorViews?.some(r => r.sectors.length);
   const displayedSectors = hasSectorMap
@@ -62,19 +64,12 @@ export function ConsequencesContent({
   const infrastructureCount = value.infrastructureCount ?? value.atRisk;
   const countDetail = value.cascadeCount != null && value.watchOnlyCount != null
     ? `${value.cascadeCount} in the cascade · ${value.watchOnlyCount} watch-only (same campaign)` : null;
-  const nodes = value.nodes
-    .filter((n) => !sector || n.sector === sector || n.source || n.upstream)
-    .sort(
-      (a, b) =>
-        (a.windowHours?.[0] ?? Infinity) - (b.windowHours?.[0] ?? Infinity),
-    );
   const risk = value.nodes
     .filter((n) => n.impactCount && !n.source)
     .sort(
       (a, b) =>
         (a.windowHours?.[0] ?? Infinity) - (b.windowHours?.[0] ?? Infinity),
     );
-  const focus = value.nodes.find((n) => n.id === selected) ?? risk[0];
   const timelineHours = Math.max(1, analysis?.request?.horizonHours ?? 12);
   if (!analysis)
     return (
@@ -221,93 +216,7 @@ export function ConsequencesContent({
         ))}
       </section>
       <C4Functions value={value}/>
-      <div className={`c4-columns ${hasSectorMap ? "c4-sector-overview" : ""}`}>
-        <Panel
-          title={`${sector || "Sector"} dependencies · ${value.incident?.id}`}
-        >
-          <div className="c4-panel-actions">
-            <span>Select a sector or asset to inspect its evidence</span>
-            {sector && (
-              <button
-                onClick={() => {
-                  setSector(null);
-                  setSelected(null);
-                }}
-              >
-                ← All sectors
-              </button>
-            )}
-          </div>
-          {hasSectorMap ? (
-            <C4SectorMap value={value} sector={sector} onSector={setSector} onSelect={setSelected}/>
-          ) : (
-            <CascadeGraph
-              value={value}
-              nodes={nodes}
-              sector={sector}
-              selected={selected}
-              onSector={setSector}
-              onSelect={setSelected}
-            />
-          )}
-          <p className="c4-legend">
-            Source · At risk before 4 h · At risk 4 h or later
-            {!hasSectorMap && " · Normal upstream · Dashed: not affected · Dotted: no dependency"}
-            {!!value.watchAssets?.length && " · Dashed amber: watch posture, not a service dependency"}
-            {!!value.consequenceScores?.length && " · Score: supplied consequence score 0–100"}
-          </p>
-        </Panel>
-        <Panel title="Why it’s at risk">
-          {focus && (
-            <section className="c4-evidence">
-              <h3>Why it’s at risk · {focus.name}</h3>
-              <p className="c4-idt">
-                {focus.idtPath || focus.idt?.path || "IDT path not recorded"}
-              </p>
-              <p>
-                {focus.impactCount
-                  ? `${focus.name} depends on the recorded supply paths below. Service loss is conditional on the modeled scenario and available reserves.`
-                  : consequenceNodeState(focus).label}
-              </p>
-              <dl>
-                <dt>Could lose service in</dt>
-                <dd className={`tone-${windowTone(focus.windowHours)}`}>
-                  {hours(focus.windowHours)}
-                </dd>
-                <dt>{focus.reserveLabel}</dt>
-                <dd>
-                  {focus.reserves.length
-                    ? focus.reserves.map((r) => hours(r)).join(" · ")
-                    : missing}
-                </dd>
-                <dt>Dependency paths</dt>
-                <dd>
-                  {focus.paths.length
-                    ? focus.paths
-                        .map((p) =>
-                          p
-                            .map(
-                              (id) =>
-                                value.edges.find((e) => e.id === id)?.label ||
-                                id,
-                            )
-                            .join(" → "),
-                        )
-                        .join("; ")
-                    : "No modeled path recorded"}
-                </dd>
-                <dt>Sources</dt>
-                <dd>
-                  {focus.sourceRefs?.length ?? 0} recorded references
-                  {!!focus.sourceRefs?.length &&
-                    ` · ${focus.sourceRefs.join(", ")}`}
-                </dd>
-              </dl>
-            </section>
-          )}
-        </Panel>
-      </div>
-      <C4SectorDetails value={value} sector={sector} onSector={setSector}/>
+      <AssetConsequenceView value={value} onAnalyst={onEntity ?? (() => onAnalyst())}/>
       <C4WatchPosture value={value} onSelect={setSelected}/>
       <Panel title="Timeline and thresholds">
           <p>Could lose service in · hours after the modeled loss</p>
@@ -321,8 +230,7 @@ export function ConsequencesContent({
             <div className="c4-timeline" key={n.id}>
               <button
                 onClick={() => {
-                  setSelected(n.id);
-                  setSector(n.sector);
+                  writeConsequenceSelection({incidentId:value.incident?.id ?? null,entityId:n.id,sector:n.sector.toLowerCase()});
                 }}
               >
                 {n.name}
@@ -474,150 +382,6 @@ export function ConsequencesContent({
     </>
   );
 }
-function CascadeGraph({
-  value,
-  nodes,
-  sector,
-  selected,
-  onSector,
-  onSelect,
-}: {
-  value: ConsequenceProjection;
-  nodes: ConsequenceNode[];
-  sector: string | null;
-  selected: string | null;
-  onSector: (s: string) => void;
-  onSelect: (s: string) => void;
-}) {
-  const groups = sector
-    ? nodes.map((n) => ({ id: n.id, name: n.name, node: n, ids: [n.id] }))
-    : [
-        ...nodes
-          .filter((n) => n.source || n.upstream)
-          .map((n) => ({ id: n.id, name: n.name, node: n, ids: [n.id] })),
-        ...value.sectors
-          .map((s) => ({ ...s, nodes: s.nodes.filter((id) =>
-            nodes.some((n) => n.id === id && !n.source && !n.upstream),
-          ) }))
-          .filter((s) => s.nodes.length > 0)
-          .map((s) => ({
-            id: s.label,
-            name: s.label,
-            node:
-              nodes.find((n) => s.nodes.includes(n.id) && n.windowHours) ||
-              nodes.find((n) => s.nodes.includes(n.id))!,
-            ids: s.nodes,
-          })),
-      ];
-  // Watch-only assets can be absent from the cascade's sector index.
-  for (const node of nodes.filter(n => n.watch?.length || n.status === "on_watch")) {
-    if (!groups.some(g => g.ids.includes(node.id))) groups.push({id: node.id, name: node.name, node, ids: [node.id]});
-  }
-  const positions = groups.map((g, i) => ({
-    ...g,
-    x: g.node.source ? 35 : g.node.upstream ? 13 : 76,
-    y: g.node.source
-      ? 50
-      : g.node.upstream
-        ? 16 + groups.filter((g, j) => j < i && g.node.upstream).length * 68 / Math.max(1, groups.filter(g => g.node.upstream).length - 1)
-        : 12 +
-          (groups.filter(
-            (_, j) =>
-              j < i && !groups[j].node.source && !groups[j].node.upstream,
-          ).length *
-            76) /
-            Math.max(
-              1,
-              groups.filter((g) => !g.node.source && !g.node.upstream).length -
-                1,
-            ),
-  }));
-  const seen = new Set<string>();
-  const links = value.edges.flatMap(e => {
-    const a = positions.find(g => g.ids.includes(e.from));
-    const b = positions.find(g => g.ids.includes(e.to));
-    if (!a || !b || a === b) return [];
-    const key = JSON.stringify([a.id, b.id, e.label]);
-    if (seen.has(key)) return [];
-    seen.add(key);
-    return [{ e, a, b }];
-  });
-  const graphHeight = Math.max(720, groups.filter(g => g.node.upstream).length * 190, groups.filter(g => !g.node.source && !g.node.upstream).length * 190);
-  return (
-    <div className="c4-graph" style={{ height: graphHeight }}>
-      <svg
-        viewBox={`0 0 1000 ${graphHeight}`}
-        preserveAspectRatio="none"
-        aria-label="Recorded dependency links"
-      >
-        {links.map(({ e, a, b }) => {
-          // Only recorded service edges have direction; watch links below do not.
-          const state = consequenceNodeState(b.node);
-          const ay = a.y * graphHeight / 100;
-          const by = b.y * graphHeight / 100;
-          const sameColumn = a.x === b.x;
-          return (
-            <g key={e.id}>
-              <path
-                className={`tone-${a.node.upstream ? "green" : state.tone}`}
-                d={sameColumn
-                  ? `M${a.x * 10} ${ay} L930 ${ay} L930 ${by} L${b.x * 10} ${by}`
-                  : `M${a.x * 10} ${ay} L${b.x * 10} ${by}`}
-                strokeDasharray={state.line === "solid" ? undefined : "6 6"}
-                markerEnd="url(#c4-supply-arrow)"
-              />
-              <text x={sameColumn ? 925 : (a.x + b.x) * 5} y={(ay + by) / 2 - 10}>
-                {e.label}
-              </text>
-            </g>
-          );
-        })}
-        <defs><marker id="c4-supply-arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
-        {(value.watchAssets || []).map((w, i) => {
-          const a = positions.find(g => g.node.source);
-          const b = positions.find(g => g.ids.includes(w.entityId));
-          if (!a || !b || a === b) return null;
-          const ay = a.y * graphHeight / 100;
-          const by = b.y * graphHeight / 100;
-          return <g key={`watch-${i}`} data-relationship="watch">
-            <title>{`${w.reason} · watch posture only`}</title>
-            <path className="c4-watch-edge" d={`M${a.x * 10} ${ay + 18} Q${(a.x + b.x) * 5} ${(ay + by) / 2 + 40} ${b.x * 10} ${by + 18}`} />
-            <text className="c4-watch-label" x={(a.x + b.x) * 5} y={(ay + by) / 2 + 35}>watch posture</text>
-          </g>;
-        })}
-      </svg>
-      {positions.map((g) => {
-        const state = consequenceNodeState(g.node);
-        return (
-          <button
-            key={g.id}
-            className={`c4-node tone-${state.tone} ${g.node.source ? "c4-source" : ""} ${selected === g.id ? "selected" : ""}`}
-            style={{
-              left: `${g.x}%`,
-              top: `${g.y}%`,
-              borderStyle: state.line as "solid" | "dashed" | "dotted",
-            }}
-            onClick={() =>
-              sector || g.node.source || g.node.upstream || (g.ids.length === 1 && !!g.node.watch?.length)
-                ? onSelect(g.node.id)
-                : onSector(g.name)
-            }
-          >
-            <strong>{g.name}</strong>
-            {(sector ? g.node.score : sectorScore(value, g.name)) != null && <small>Score {sector ? g.node.score : sectorScore(value, g.name)}</small>}
-            <small>
-              {g.node.source
-                ? value.analysis?.seed.lossType.replaceAll("_", " ") +
-                  " · source"
-                : state.label}
-            </small>
-            {g.node.watch?.length ? <small className="tone-amber" title={g.node.watch.map(w => w.reason).join(" · ")}>On watch · same campaign</small> : null}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 export default function ConsequencesView({
   selectedId,
   records,
@@ -630,9 +394,10 @@ export default function ConsequencesView({
   records?: import("./incidentSelection.ts").IncidentSelectionRecords;
   captured?: ReactNode;
   onSelect: (id: string) => void;
-  onOpenAnalyst: (view: CommandView, caseId?: string | null) => void;
+  onOpenAnalyst: (view: CommandView, caseId?: string | null, entityId?: string | null) => void;
   onNavigate: (view: CommandView) => void;
 }) {
+  const [selection] = useConsequenceSelection();
   const [id, setId] = useState(() =>
     initialConsequenceIncident(typeof window === "undefined" ? "" : window.location.search, selectedId, records),
   );
@@ -661,33 +426,18 @@ export default function ConsequencesView({
       live = false;
     };
   }, [id]);
-  useEffect(() => {
-    const changed = () =>
-      setId(initialConsequenceIncident(window.location.search, selectedId, records));
-    window.addEventListener("popstate", changed);
-    return () => window.removeEventListener("popstate", changed);
-  }, [selectedId, records]);
+  useEffect(() => { setId(selection.incidentId ?? initialConsequenceIncident("", selectedId, records)); }, [selection.incidentId, selectedId, records]);
   const choose = (next: string) => {
     setId(next);
-    const url = new URL(window.location.href);
-    url.searchParams.set("incidentId", next);
-    url.searchParams.set("incident", next);
-    window.history.replaceState(null, "", url);
     const selectedCase = value?.incidents.find((incident) => incident.id === next)?.caseId;
     if (selectedCase) onSelect(selectedCase);
+    writeConsequenceSelection({incidentId:next,sector:"all",entityId:null});
   };
-  const analyst = () => {
-    const incidentId = value?.incident?.id;
-    onOpenAnalyst("command", value?.incident?.caseId ?? null);
-    // Selecting the saved case deliberately clears old URL focus. Restore the
-    // source incident for this explicit C4 -> filtered A1 handoff afterwards.
-    if (incidentId) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("incident", incidentId);
-      url.searchParams.set("incidentId", incidentId);
-      window.history.replaceState(null, "", url);
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    }
+  const analyst = (view: CommandView = "consequence", entityId?: string | null) => {
+    const incidentId = value?.incident?.id ?? id;
+    const caseId = value?.incident?.caseId ?? null;
+    onOpenAnalyst(caseId ? view : "command", caseId, entityId);
+    writeConsequenceSelection({incidentId,sector:selection.sector,entityId:entityId ?? selection.entityId},true);
   };
   return (
     <div className="c4-view">
@@ -763,8 +513,9 @@ export default function ConsequencesView({
           key={value.incident?.id}
           value={value}
           now={now}
-          onAnalyst={analyst}
-          onPartners={() => onNavigate("federation")}
+          onAnalyst={() => analyst()}
+          onEntity={(view,entityId) => analyst(view,entityId)}
+          onPartners={() => { onNavigate("federation"); writeConsequenceSelection({incidentId:value.incident?.id ?? id,sector:selection.sector,entityId:selection.entityId},true); }}
         />
       ) : (
         captured ?? <p role="status">Loading consequence records…</p>

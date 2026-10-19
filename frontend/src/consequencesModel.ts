@@ -2,7 +2,7 @@ import { defaultIncidentId, type IncidentSelectionRecords } from "./incidentSele
 export type Hours = [number, number] | null;
 export interface C4Watch {
   entityId: string; reason: string; status?: string; inCascade?: boolean;
-  entity?: { name?: string; label?: string; icon?: string; type?: string } | null;
+  entity?: { name?: string; label?: string; icon?: string; type?: string; sector?: string } | null;
 }
 export interface C4SectorView {
   sector: string; idt?: string; score?: number | null;
@@ -73,6 +73,7 @@ export interface ConsequenceProjection {
   cascadeCount?: number;
   watchOnlyCount?: number;
   watchAssets?: C4Watch[];
+  sectorLinks?: { id: string; from: string; fromKind: 'source' | 'sector'; to: string; service: string; step: number; windowHours: Hours; dependencyIds: string[] }[];
   entityIcons?: Record<string, string>;
   criticalFunctions?: { function: string; level: string; idt?: string; windowHours?: Hours; note?: string }[];
   sectorViews?: { sectors: C4SectorView[]; note?: string }[];
