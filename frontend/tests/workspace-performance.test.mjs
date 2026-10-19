@@ -1,4 +1,5 @@
 import test from "node:test";
+import { analystHostUnitStub } from './analyst-host-unit-stubs.mjs';
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 import {isValidElement} from "react";
@@ -12,7 +13,9 @@ let code=(await transformWithOxc(readFileSync(source,'utf8'),source.pathname,{js
 code=code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm,'');
 code=code.replace(/from\s+["']([^"']+)["']/g,(_m,s)=>{
  let target;
- if(s==='react')target=hooksUrl;
+ const boundary=analystHostUnitStub(s);
+ if(boundary)target=boundary;
+ else if(s==='react')target=hooksUrl;
  else if(s==='./api')target=apiUrl;
  else if(['./CommandCasework','./CommandReadouts','./CommandCenterViews','./AnalystEntityProfile','./ScriptedAnalystViews','./NetworkEvidence','./ResetDemoControl','./OperationsClock','./IncidentContextBar'].includes(s))target=mod(`export default function ${s.slice(2)}(){return null};export function LateTasks(){return null};export function ConfirmDialog(){return null}`);
  else if(s.startsWith('.')){const u=new URL(/\.[cm]?[jt]s$/.test(s)?s:s+'.ts',source);assert.ok(existsSync(u));target=u.href;}

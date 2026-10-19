@@ -672,7 +672,7 @@ function CaseDetails({
         )}
         {selected.status === "closed" && (
           <p className="cc-note">
-            Closed at {selected.closedAt || "timestamp not captured"}. Closure
+            Closed at {recordClock(selected.closedAt)}. Closure
             note: {selected.closureNote || "Not captured"}. Reopen with a
             tracking note to resume app review.
           </p>
@@ -769,7 +769,7 @@ function CaseDetails({
                         — {run.scenarioId}
                       </dd>
                       <dt>Created</dt>
-                      <dd>{run.createdAt || "Not captured"}</dd>
+                      <dd>{recordClock(run.createdAt)}</dd>
                       <dt>Baseline / model</dt>
                       <dd>
                         Revision {run.baselineRevision} /{" "}

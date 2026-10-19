@@ -38,6 +38,9 @@ import OperationsClock from "./OperationsClock";
 import { configureDisplayTime } from "./displayTime.ts";
 import { defaultIncidentId } from "./incidentSelection.ts";
 import IncidentContextBar from "./IncidentContextBar";
+import { AnalystIncidentContextBar } from "./AnalystIncidentChooser.tsx";
+import AnalystIncidentScreens, { handlesAnalystIncidentView } from "./AnalystIncidentScreens.tsx";
+import { useAnalystIncident } from "./analystIncidentContext.ts";
 import {
   potentialScope,
   potentialRequests,
@@ -127,6 +130,7 @@ export default function CommandWorkspace({
   onOpenTool,
   onAccessFailure,
 }: CommandWorkspaceProps) {
+  const analystContext = useAnalystIncident();
   const initial = initialSnapshot?.bootstrap.baselineRevision === data.baselineRevision
     ? initialSnapshot : null;
   const [incidents, setIncidents] = useState<CommandIncident[]>(initial?.incidents ?? []);
@@ -757,7 +761,11 @@ export default function CommandWorkspace({
     ? readIncidentFocus(window.location.href)
     : null;
   const contextRecord = recordContextId ? records?.statewideIncidents.find(row => row.id === recordContextId || row.caseId === recordContextId) : null;
-  const incidentLine = recordContextId
+  const incidentLine = mode === "analyst"
+    ? analystContext?.selectedIncident
+      ? `${analystContext.selectedIncident.id} · ${analystContext.selectedIncident.title ?? "Title not recorded"}`
+      : "Loading incident context"
+    : recordContextId
     ? contextRecord ? [contextRecord.id, contextRecord.title, contextRecord.location?.label].filter(Boolean).join(" · ") : "Incident record not available"
     : statewideContext
     ? `Statewide · ${statewideContext.totals.active} open incidents · ${statewideContext.totals.investigating} under investigation · ${statewideContext.rows.filter(row => row.cascading).length} cascading`
@@ -776,8 +784,11 @@ export default function CommandWorkspace({
   // C1 remains statewide. C2/C4 own record selection, including reference
   // scenarios without saved cases; never overlay an unrelated saved-case banner.
   const showIncidentContextBar = !(mode === "command" && (view === "command" || view === "cop" || view === "consequence"));
+  const showAnalystIncidentScreen = mode === "analyst" && analystContext && handlesAnalystIncidentView(view, analystContext.activeCase);
   const [contextSelectionRevision, setContextSelectionRevision] = useState(0);
-  const selectedIncidentContextBar = showIncidentContextBar && contextRecord ? (
+  const selectedIncidentContextBar = showIncidentContextBar && mode === "analyst" && analystContext ? (
+    <AnalystIncidentContextBar />
+  ) : showIncidentContextBar && contextRecord ? (
     <section className="incident-context-bar" aria-label="Selected incident context">
       <div className="incident-context-main"><span className="incident-context-label">Selected incident</span>
         <strong>{contextRecord?.title ?? "Incident record not available"}</strong>
@@ -1016,10 +1027,18 @@ export default function CommandWorkspace({
               : "Case records are unavailable. Refresh to retry."}
           </p>
         </section>
+      ) : showAnalystIncidentScreen ? (
+        <AnalystIncidentScreens
+          view={view}
+          context={analystContext}
+          onOpenAlerts={() => onNavigate("command")}
+          onOpenEntity={(id) => onOpenAnalyst("entity-profile", analystContext?.activeCase?.id ?? null, id)}
+        />
       ) : (
         <>
           {view === "entity-profile" && (
             <AnalystEntityProfile
+              incidentContext={analystContext}
               data={data}
               entityId={selectedEntityId}
               incidents={incidents}

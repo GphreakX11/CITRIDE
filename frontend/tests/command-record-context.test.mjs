@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { analystHostUnitStub } from './analyst-host-unit-stubs.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isValidElement } from 'react';
@@ -11,7 +12,9 @@ const source=new URL('../src/CommandWorkspace.tsx',import.meta.url);
 let code=(await transformWithOxc(readFileSync(source,'utf8'),source.pathname,{jsx:{runtime:'automatic'}})).code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm,'');
 code=code.replace(/from\s+["']([^"']+)["']/g,(_,spec)=>{
  let target;
- if(spec==='react')target=hooksUrl;
+ const boundary=analystHostUnitStub(spec);
+ if(boundary)target=boundary;
+ else if(spec==='react')target=hooksUrl;
  else if(spec==='./api')target=apiUrl;
  else if(spec.startsWith('.')&&/[A-Z]/.test(spec[2])){const name=spec.slice(2).replace(/\.tsx$/,'');target=moduleData(`function ${name}(){return null};export default ${name};export {${name} as ConfirmDialog,${name} as LateTasks};`);}
  else target=spec.startsWith('.')?new URL(spec.endsWith('.ts')?spec:spec+'.ts',source).href:import.meta.resolve(spec);

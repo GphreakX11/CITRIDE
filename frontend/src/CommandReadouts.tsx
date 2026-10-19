@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { displayText } from "./presentation";
 import { activityDisplayText } from "./caseFilePresentation.ts";
+import { formatTime } from "./displayTime.ts";
+import { eventTimestamp } from "./caseTimeline.ts";
 import { humanize, windowLabel } from "./api";
 import { commandMetrics, orderIncidents } from "./commandMetrics";
 import type { Bootstrap, Event, Telemetry, Run, RunRequest } from "./types";
@@ -317,7 +319,7 @@ export default function CommandReadouts({
                 <h3>
                   {incidents.length
                     ? "No cases match these filters"
-                    : "No active incidents"}
+                    : "No cases yet"}
                 </h3>
                 <p>Select an evidence card to investigate.</p>
               </div>
@@ -361,7 +363,7 @@ export default function CommandReadouts({
               <small>
                 Last confirmed casework read:{" "}
                 {refreshedAt
-                  ? new Date(refreshedAt).toLocaleString()
+                  ? formatTime(refreshedAt)
                   : "Unknown"}
               </small>
             </div>
@@ -659,7 +661,7 @@ export default function CommandReadouts({
                       </small>
                       <small>
                         Recorded:{" "}
-                        {event.timestamp ?? event.eventTime ?? "Unknown"}
+                        {formatTime(eventTimestamp(event, data, records))}
                       </small>
                       <div className="command-tags">
                         {(event.sourceRefs ?? []).map((id) => (
@@ -773,7 +775,7 @@ export default function CommandReadouts({
                   <strong>{entry.title}</strong>
                   <p>{activityDisplayText(entry.message)}</p>
                   <time dateTime={entry.createdAt}>
-                    {new Date(entry.createdAt).toLocaleString()}
+                    {formatTime(entry.createdAt)}
                   </time>
                 </li>
               ))}

@@ -1,4 +1,5 @@
 import test from "node:test";
+import { analystHostUnitStub } from './analyst-host-unit-stubs.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { isValidElement } from "react";
@@ -27,7 +28,9 @@ async function load(file) {
   code = code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm, "");
   code = code.replace(/from\s+["']([^"']+)["']/g, (_match, spec) => {
     let target;
-    if (spec === "react") target = hooksUrl;
+    const boundary = analystHostUnitStub(spec);
+    if (boundary) target = boundary;
+    else if (spec === "react") target = hooksUrl;
     else if (spec === "./analystIncidentContext.ts") target = moduleData("export const useAnalystIncident=()=>null;export function AnalystIncidentProvider({children}){return children}");
     else if (spec === "react-dom") target = portalUrl;
     else if (spec === "./api") target = apiUrl;

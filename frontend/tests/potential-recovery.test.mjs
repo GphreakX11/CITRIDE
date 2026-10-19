@@ -1,4 +1,5 @@
 import test from "node:test";
+import { analystHostUnitStub } from './analyst-host-unit-stubs.mjs';
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { isValidElement } from "react";
@@ -33,7 +34,9 @@ async function compile(name) {
   code = code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm, "");
   code = code.replace(/from\s+["']([^"']+)["']/g, (_, s) => {
     let t;
-    if (s === "react") t = hookUrl;
+    const boundary = analystHostUnitStub(s);
+    if (boundary) t = boundary;
+    else if (s === "react") t = hookUrl;
     else if (s === "./api" || s === "./api.ts") t = apiUrl;
     else if (
       s.startsWith(".") &&

@@ -404,9 +404,9 @@ export default function AnalystEntityProfile({
             <article className="analyst-relationship-row" key={event.id}>
               <h3>{displayText(event.label ?? event.title ?? event.id)}</h3>
               <p>
-                {noCaseContext
-                  ? formatTime(noCaseContext.eventTimestamp(event), undefined, "Time not recorded")
-                  : event.timestamp ?? event.eventTime ?? "Time not recorded"} ·{" "}
+                {incidentContext
+                  ? formatTime(incidentContext.eventTimestamp(event), undefined, "Time not recorded")
+                  : formatTime(event.timestamp ?? event.eventTime, undefined, "Time not recorded")} ·{" "}
                 {typeof event.origin === "string"
                   ? event.origin
                   : typeof event.evidenceCategory === "string"
