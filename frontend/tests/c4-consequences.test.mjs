@@ -132,6 +132,14 @@ function render(value) {
     }),
   );
 }
+test("desktop and phone C4 Analyst links share the dashed-boundary class", () => {
+  for (const kind of ['preliminary', 'reviewed', 'reference_preview']) {
+    const html = render({...fixture, analysis: {...fixture.analysis, kind}});
+    const links = [...html.matchAll(/<button\b([^>]*)>(?:Open|Review) in Analyst ↗<\/button>/g)];
+    assert.ok(links.length >= 2, `${kind}: desktop and phone links must both render`);
+    for (const link of links) assert.match(link[1], /class="[^"]*\banalyst-link\b[^"]*"/, `${kind}: ${link[0]}`);
+  }
+});
 test("record-driven C4 includes missing-data, evidence, advisory and no place assumptions", () => {
   const html = render(fixture);
   for (const text of [

@@ -157,7 +157,7 @@ export function ConsequencesContent({
           {clockLabel(Date.parse(time), value.operationsTimeZone)}
           {!reviewed && <em> · not yet reviewed by an analyst</em>}
         </span>
-        <button onClick={onAnalyst}>
+        <button type="button" className="analyst-link" onClick={onAnalyst}>
           {reviewed ? "Open" : "Review"} in Analyst ↗
         </button>
       </div>
