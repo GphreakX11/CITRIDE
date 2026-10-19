@@ -18,7 +18,14 @@ export function sectorCascadeModel(value:ConsequenceProjection) {
  rowHeights.forEach((rowHeight,row)=>{for(const sector of sectors.slice(row*2,row*2+2))sector.y=(top+rowHeight/2)*100/height;top+=rowHeight;});
  const satellites=watchGroups.map(w=>{const parent=sectors.find(s=>s.sector===w.sector) ?? sectors.find(s=>s.items.some(i=>w.items.some(w=>w.entityId===i.entityId)));const siblings=watchGroups.filter(g=>g.sector===w.sector);return {...w,parent,x:parent?(parent.x<50?8:92):50,y:parent?parent.y+(siblings.indexOf(w)-(siblings.length-1)/2)*25000/height:8};});
  const sectorLinks=(value.sectorLinks ?? []).filter(l=>value.sectors.some(s=>s.label===l.to) && (l.fromKind==='source' ? l.from===value.source?.id : value.sectors.some(s=>s.label===l.from))).map(l=>({...l,tone:windowTone(value.sectors.find(s=>s.label===l.to)?.windowHours ?? l.windowHours)}));
- const groups=[...nodes.filter(n=>n.source || n.upstream).map(n=>({id:n.id,name:n.name,node:n,ids:[n.id],kind:'entity'})),...value.sectors.flatMap(s=>{const members=nodes.filter(n=>s.nodes.includes(n.id) && !n.source && !n.upstream);if(!members.length)return [];return [{id:`sector-${s.label}`,name:s.label,node:members.find(n=>n.windowHours) || members[0],ids:members.map(n=>n.id),kind:'sector'}];})];
+ const groups=[...nodes.filter(n=>n.source || n.upstream).map(n=>({id:n.id,name:n.name,node:n,ids:[n.id],kind:'entity'})),...value.sectors.flatMap(s=>{
+  const members=nodes.filter(n=>s.nodes.includes(n.id) && !n.source && !n.upstream);
+  if(!members.length)return [];
+  // The fallback circle represents the earliest asset, not the full sector envelope
+  // used by the authored map and C4 table. Keep both endpoints from that asset.
+  const earliest=members.filter(n=>n.windowHours).sort((a,b)=>a.windowHours![0]-b.windowHours![0] || a.windowHours![1]-b.windowHours![1] || a.id.localeCompare(b.id))[0];
+  return [{id:`sector-${s.label}`,name:s.label,node:earliest || members[0],ids:members.map(n=>n.id),kind:'sector'}];
+ })];
  for(const node of nodes)if(!groups.some(g=>g.ids.includes(node.id)))groups.push({id:node.id,name:node.name,node,ids:[node.id],kind:'entity'});
  const positions=groups.map((g,i)=>({...g,state:consequenceNodeState(g.node),x:g.node.source?35:g.node.upstream?13:76,y:g.node.source?50:g.node.upstream?16+groups.filter((n,j)=>j<i && n.node.upstream).length*68/Math.max(1,groups.filter(n=>n.node.upstream).length-1):12+groups.filter((n,j)=>j<i && !n.node.source && !n.node.upstream).length*76/Math.max(1,groups.filter(n=>!n.node.source && !n.node.upstream).length-1)}));
  const seen=new Set<string>();

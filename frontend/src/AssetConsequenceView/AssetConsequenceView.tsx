@@ -3,6 +3,7 @@ import IncidentDependencyMap from '../IncidentDependencyMap.tsx';
 import StatusChip from '../StatusChip.tsx';
 import { type ConsequenceProjection, hours } from '../consequencesModel.ts';
 import { useConsequenceSelection } from '../consequenceSelection.ts';
+import { formatTime } from '../displayTime.ts';
 import { assetConsequenceModel } from './viewModel.ts';
 import type { CommandView } from '../commandTypes.ts';
 import './asset-consequence.css';
@@ -24,7 +25,7 @@ export default function AssetConsequenceView({value,onAnalyst}:{value:Consequenc
    <IncidentDependencyMap key={value.incident?.id} nodes={model.nodes} edges={value.edges} sourceId={value.source?.id || model.nodes.find(n=>n.source)?.id || ''} visible={model.visible} entityIcons={value.entityIcons} watchRelationships={model.watches} attackedSystem={value.sourceSystems?.[0]} selectedId={selection.entityId} onSelect={select}/>
    <p className="ac-hint">Infrastructure at risk (modeled) · select an item to see why it matters</p>
   </section>
-  <aside className="ac-panel ac-list"><header><h2>Infrastructure</h2><small>Modeled {value.analysis?.createdAt ? new Date(value.analysis.createdAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',timeZone:value.operationsTimeZone || 'UTC'}) : 'time not recorded'}</small></header>
+  <aside className="ac-panel ac-list"><header><h2>Infrastructure</h2><small>Modeled {formatTime(value.analysis?.computedAt || value.analysis?.createdAt,value.operationsTimeZone,'time not recorded')}</small></header>
    <p className="ac-hint">Select any item, here or on the drawing, to see why it matters.</p>
    <input type="search" aria-label="Find infrastructure" placeholder="Find infrastructure" value={query} onChange={e=>setQuery(e.target.value)}/>
    <div className="ac-scroll">{model.groups.map(group=>{const items=model.items.filter(n=>n.group===group);return items.length>0 && <section key={group}><h3>{group} · {items.length}</h3>{items.map(n=><details className={`ac-asset${selection.entityId===n.id?' selected':''}`} data-facility-id={n.id} key={n.id} open={selection.entityId===n.id} ref={el=>{if(el)cards.current.set(n.id,el);else cards.current.delete(n.id);}}>
