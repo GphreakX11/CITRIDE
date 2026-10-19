@@ -59,7 +59,7 @@ Disposable Postgres integration tests additionally verify exactly one real
 connection, N-Quads parse, and load per snapshot; unchanged N-Quads and row update
 time; and visibility of another repository connection's committed changes.
 
-The built application was exercised with real local Postgres at both viewport
+The built application was tested with real local Postgres at both viewport
 widths through Command and Analyst view switches, including a focus-triggered
 refresh, without browser errors. Startup used exactly `/v1/workspace` plus
 `/v1/telemetry`; repeated navigation downloaded the IDT reference once. This

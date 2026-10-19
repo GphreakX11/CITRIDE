@@ -70,7 +70,7 @@ This is a locally authored OWL 2 RL slice with supported, explicitly checked axi
 bash scripts/check.sh
 ```
 
-Tests cover coherent synthetic inputs, loss-specific activation, interval arithmetic, what-ifs, persistence, unknowns, model limits, relationship validation/promotion, immutable runs, and API behavior. OWL checks exercise actual entailments, source witnesses, negative controls, revision history, and RDF export. The frontend build includes TypeScript checking. GitHub Actions repeats the automated checks.
+Tests cover coherent synthetic inputs, loss-specific activation, interval arithmetic, what-ifs, persistence, unknowns, model limits, relationship validation/promotion, immutable runs, and API behavior. OWL checks test actual entailments, source witnesses, negative controls, revision history, and RDF export. The frontend build includes TypeScript checking. GitHub Actions repeats the automated checks.
 
 ## Scope of this first increment
 

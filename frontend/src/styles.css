@@ -354,7 +354,7 @@ main {
   color: var(--amber-text);
   border-color: var(--amber);
 }
-.badge.exercise {
+.badge.reference-source {
   background: var(--surface);
   color: var(--link);
   border-color: var(--accent);

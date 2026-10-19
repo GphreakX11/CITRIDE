@@ -144,21 +144,10 @@ export function connectedEdges(
   return edges.filter((edge) => edge.source === id || edge.target === id);
 }
 
+import displayCatalog from "../../data/reference/display_catalog.json" with { type: "json" };
 const referencePositions: Readonly<Record<string, readonly [number, number]>> =
-  {
-    "electric-e": [220, 335],
-    "plant-a": [395, 340],
-    "utility-a": [510, 345],
-    "dialysis-x": [575, 240],
-    "hospital-y": [670, 345],
-    "nursing-z": [420, 190],
-    "fire-f": [590, 445],
-    "facility-q": [740, 270],
-    "plant-b": [450, 450],
-    "utility-b": [535, 510],
-    "plant-c": [695, 435],
-    "utility-c": [770, 380],
-  };
+  Object.fromEntries(Object.entries(displayCatalog.schematicPositions)
+    .map(([id, point]) => [id, [point[0], point[1]] as const]));
 
 // Check structured provenance, including nested metadata, without interpreting narrative notes.
 function synthetic(value: unknown, seen = new Set<object>()): boolean {

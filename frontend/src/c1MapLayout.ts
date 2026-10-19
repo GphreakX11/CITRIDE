@@ -62,13 +62,5 @@ export function c1IncidentLayout(anchors: readonly IncidentAnchor[], width: numb
   return fittedTexasMarkerLayout(anchors, width, height, 44);
 }
 
-export const C1_CITIES = [
-  { name: "Dallas", lon: -96.797, lat: 32.777 },
-  { name: "Houston", lon: -95.370, lat: 29.760 },
-  { name: "Austin", lon: -97.743, lat: 30.267 },
-  { name: "San Antonio", lon: -98.494, lat: 29.425 },
-  { name: "El Paso", lon: -106.485, lat: 31.762 },
-  { name: "Lubbock", lon: -101.855, lat: 33.578 },
-  { name: "Amarillo", lon: -101.832, lat: 35.222 },
-  { name: "Corpus Christi", lon: -97.396, lat: 27.801 },
-] as const;
+import displayCatalog from "../../data/reference/display_catalog.json" with { type: "json" };
+export const C1_CITIES = displayCatalog.cities;

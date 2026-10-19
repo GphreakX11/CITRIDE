@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { isValidElement } from "react";
-import { transformWithOxc } from "vite";
+import { transformWithOxc } from "./json-module-transform.mjs";
 const root = new URL("../src/", import.meta.url);
 const hooks = `data:text/javascript;base64,${Buffer.from(`export const useEffect=()=>{},useId=()=>"entity-prefill-test",useState=x=>[typeof x==='function'?x():x,()=>{}],useRef=x=>({current:x}),useMemo=f=>f();`).toString("base64")}`;
 const cache = new Map();

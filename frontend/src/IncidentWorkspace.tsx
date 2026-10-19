@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
+import displayCatalog from "../../data/reference/display_catalog.json" with { type: "json" };
 import {
   ArrowRight,
   BookOpen,
@@ -212,7 +213,7 @@ export default function IncidentWorkspace({
 }: IncidentWorkspaceProps) {
   const inputId = useId();
   const defaultEvent =
-    data.events.find((event) => event.id === "event-dosing") ?? data.events[0];
+    data.events.find((event) => event.id === displayCatalog.defaultCaseEventId) ?? data.events[0];
   const [requestedEventId, setRequestedEventId] = useState(
     defaultEvent?.id ?? "",
   );

@@ -59,6 +59,7 @@ export interface Scenario {
   id: string;
   label: string;
   description: string;
+  horizonHours?: number;
   seed: {
     provider: string;
     service: string;

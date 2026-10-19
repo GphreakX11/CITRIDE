@@ -84,7 +84,7 @@ def install_source(store, incident_id, *, apply=False, expected_token=None):
             raise InvalidModelError('Installation requires an existing initialized store; no seed/reset') from None
         if any(r['id'] == incident_id for r in store._records(original, 'statewideIncidents')):
             raise InvalidModelError('Incident already exists; installation never overwrites it')
-        core = RecordsService(store)
+        core = RecordsService(store, scenario=store._baseline(original))
         bundles = [b for b in core.model_sources if b['incident']['id'] == incident_id]
         if len(bundles) != 1:
             raise InvalidModelError('Select exactly one configured model-source incident')

@@ -434,7 +434,7 @@ def test_real_postgres_install_transaction_rollback_and_unrelated_state(tmp_path
             with pytest.raises(InvalidModelError):
                 install_source(store, INCIDENT, apply=True, expected_token=plan['token'])
         assert rows() == before
-        # Simulate failure after UPDATE to exercise real transaction rollback.
+        # Simulate failure after UPDATE to test real transaction rollback.
         save = store._save
         def fail_after_update(dataset):
             save(dataset)

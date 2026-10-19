@@ -145,7 +145,11 @@ def create_app(
     if scenario_path is None:
         # Validate source configuration before traffic without durable writes.
         from types import SimpleNamespace
-        RecordsService(SimpleNamespace(scenario_path=fixture_path))
+        from .scripted_sources import load_sources
+        from .consequence_model import intake_source_models
+        _, source_models, source_reference = load_sources(fixture_path)
+        proposed_seed = intake_source_models(json.loads(fixture_path.read_text()), source_reference, source_models)
+        RecordsService(SimpleNamespace(scenario_path=fixture_path), scenario=proposed_seed)
 
     @app.exception_handler(StorageUnavailableError)
     async def unavailable_storage(_request, _error):

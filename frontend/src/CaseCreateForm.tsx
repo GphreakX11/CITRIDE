@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import displayCatalog from "../../data/reference/display_catalog.json" with { type: "json" };
 import type { Bootstrap, Event } from "./types.ts";
 import type {
   CommandCreate,
@@ -31,7 +32,7 @@ export function CaseCreateForm({
   const [eventId, setEventId] = useState(
     () =>
       event?.id ??
-      data.events.find((e) => e.id === "event-dosing")?.id ??
+      data.events.find((e) => e.id === displayCatalog.defaultCaseEventId)?.id ??
       data.events[0]?.id ??
       "",
   );

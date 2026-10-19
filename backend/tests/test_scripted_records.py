@@ -1,4 +1,4 @@
-"""Scripted records contract, exercised only against owned temporary RDF stores."""
+"""Scripted records contract, tested only against owned temporary RDF stores."""
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import json
@@ -251,7 +251,7 @@ def test_callbacks_never_save_or_lock_recursively_and_failed_outer_transaction(s
     with pytest.raises(RuntimeError), store._locked():
         ds = store._load()
         with patch.object(store, "_locked", side_effect=AssertionError("recursive lock")), patch.object(store, "_save", side_effect=AssertionError("nested save")):
-            # C4 intake requires a baseline; exercise a detached full dataset.
+            # C4 intake requires a baseline; test a detached full dataset.
             core.seed(deepcopy(ds))
             core.on_case_opened(ds, case)
             core.apply_action(ds, case, PAYLOADS[3])

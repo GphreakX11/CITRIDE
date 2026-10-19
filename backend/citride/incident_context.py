@@ -137,7 +137,57 @@ def _physical_host(lookup: _Lookup, cyber: dict) -> dict | None:
     return host
 
 
-def _structural_context(lookup: _Lookup, host: dict) -> tuple[dict | None, dict | None, list[dict]]:
+def _generic_providers(lookup: _Lookup, chain: list[dict], event_id: str) -> list[dict]:
+    """Resolve supply roles, not names, sectors, operators or geography.
+
+    A facility must own the service explicitly supplied by a scenario seed or
+    promoted outgoing dependency. An exact event seed constrains the provider;
+    it never repairs missing containment or makes a remote provider an ancestor.
+    """
+    candidates = {}
+    event_providers = set()
+    constrained = False
+    for scenario in lookup.indices["scenarios"].values():
+        seed = scenario.get("seed")
+        if not isinstance(seed, dict):
+            continue
+        refs = seed.get("eventRefs")
+        if isinstance(refs, list) and event_id in refs:
+            constrained = True
+            provider_id, valid = lookup.reference(seed, "provider")
+            if valid:
+                event_providers.add(provider_id)
+    for facility in chain:
+        if not _typed(facility, _FACILITIES):
+            continue
+        identifier = facility["id"]
+        if constrained and identifier not in event_providers:
+            continue
+        services = set()
+        for function in lookup.indices["serviceFunctions"].values():
+            owner, valid = lookup.reference(function, "facility")
+            service = function.get("service")
+            if (valid and owner == identifier and _typed(function, {"ServiceFunction"}, "ServiceFunction")
+                    and isinstance(service, str) and service.strip()):
+                services.add(service)
+        if not services:
+            continue
+        for scenario in lookup.indices["scenarios"].values():
+            seed = scenario.get("seed")
+            if not isinstance(seed, dict):
+                continue
+            provider_id, valid = lookup.reference(seed, "provider")
+            service = seed.get("service")
+            if valid and provider_id == identifier and isinstance(service, str) and service in services:
+                candidates[identifier] = facility
+        for item in _downstream(lookup, facility):
+            service = item["dependency"].get("requiredService")
+            if isinstance(service, str) and service in services:
+                candidates[identifier] = facility
+    return list(candidates.values())
+
+
+def _structural_context(lookup: _Lookup, host: dict, event_id: str) -> tuple[dict | None, dict | None, list[dict]]:
     chain: list[dict] = []
     seen = set()
     current = host
@@ -162,6 +212,14 @@ def _structural_context(lookup: _Lookup, host: dict) -> tuple[dict | None, dict 
         lookup.warn(f"Physical asset {host['id']} has no explicit physical facility in its partOf chain.")
     provider = providers[0] if len(providers) == 1 else None
     if not providers:
+        generic = _generic_providers(lookup, chain, event_id)
+        if len(generic) == 1:
+            return facility, generic[0], chain
+        if len(generic) > 1:
+            lookup.warn(f"Physical asset {host['id']} has ambiguous service-provider ancestors; provider context was withheld.")
+            return facility, None, chain
+        # Keep the legacy warning stable: historical reviewed cases compare
+        # their complete captured context (including warnings) on reopen.
         lookup.warn(f"Physical asset {host['id']} has no explicit WaterServiceProvider in its partOf chain; operatedBy and locatedIn do not supply a provider.")
     elif len(providers) > 1:
         lookup.warn(f"Physical asset {host['id']} has ambiguous WaterServiceProvider ancestors; provider context was withheld.")
@@ -295,8 +353,8 @@ def incident_context(data: dict, event_id: str) -> dict:
     if cyber is not None:
         physical = _physical_host(lookup, cyber)
     if physical is not None:
-        facility, provider, supporting_chain = _structural_context(lookup, physical)
-    if provider is not None:
+        facility, provider, supporting_chain = _structural_context(lookup, physical, event_id)
+    if provider is not None and ("serves" in provider or _typed(provider, {"WaterServiceProvider"})):
         area = lookup.endpoint(provider, "serves", "entities", {"ServiceArea"})
     downstream = _downstream(lookup, provider)
     scenarios = _scenarios(lookup, event_id)

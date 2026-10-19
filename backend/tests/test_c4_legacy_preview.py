@@ -43,17 +43,12 @@ def test_legacy_water_preview_is_explicit_and_never_saved(legacy, monkeypatch):
     assert store.path.read_bytes() == before
 
 
-def test_port_reference_catalog_is_visible_without_new_saved_incident(legacy):
+def test_uninstalled_incident_is_not_synthesized_from_a_display_catalog(legacy):
     store, records, port_id = legacy
     before = store.path.read_bytes()
-    view = ConsequenceService(store, records).view(port_id)
-    assert view['incident']['referenceOnly'] is True
-    assert view['analysisState'] == 'reference_preview'
-    assert view['atRisk'] == 11
-    nodes = {n['id']: n for n in view['nodes']}
-    assert nodes['galveston-refinery']['notAffected'] is True
-    assert nodes['grid-houston']['upstream'] is True
-    assert nodes['grid-houston']['impactCount'] == 0
+    from citride.storage import NotFoundError
+    with pytest.raises(NotFoundError, match='Incident was not found'):
+        ConsequenceService(store, records).view(port_id)
     assert port_id not in {r['id'] for r in records.records()['statewideIncidents']}
     assert store.path.read_bytes() == before
 

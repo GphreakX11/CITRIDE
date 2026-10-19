@@ -32,7 +32,7 @@ def validate_reference(data: dict, scenario: dict) -> list[str]:
 NS = Namespace("urn:citride:")
 SAFE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9._:-]{0,255}$")
 FACILITY_TYPES = frozenset({
-    "PortFacility", "LNGFacility", "Pipeline", "ChemicalPlant", "ChemicalSupply", "VesselGroup", "EmergencyServices",
+    "PortFacility", "LNGFacility", "Pipeline", "Refinery", "ChemicalPlant", "ChemicalSupply", "VesselGroup", "EmergencyServices",
     "WaterServiceProvider", "TreatmentPlant", "DialysisCenter", "Hospital",
     "NursingHome", "FireService", "ElectricSupplyFacility", "HealthcareFacility",
 })

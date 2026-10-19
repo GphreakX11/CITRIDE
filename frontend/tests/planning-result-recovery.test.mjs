@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync, existsSync } from "node:fs";
 import { isValidElement } from "react";
-import { transformWithOxc } from "vite";
+import { transformWithOxc } from "./json-module-transform.mjs";
 
 // Artifact-free hook-slot/handler tests, not DOM or browser acceptance.
 const moduleUrl = (code) =>
@@ -29,7 +29,7 @@ async function compile(url) {
     else if (s.startsWith(".")) {
       let u = new URL(s, url);
       if (!existsSync(u)) u = new URL(s + ".ts", url);
-      // Readouts' other screens are deliberately not exercised by this harness.
+      // Readouts' other screens are deliberately not tested by this harness.
       if (
         url.pathname.endsWith("CommandReadouts.tsx") &&
         /\.tsx$/.test(u.pathname) &&

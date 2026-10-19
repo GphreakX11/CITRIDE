@@ -96,7 +96,7 @@ def test_clock_and_relative_timestamps_keep_seed_origin_after_restart(service, i
 
 
 def test_default_files_validate_after_final_generator_handoff():
-    # This is not a polling loop: full seed acceptance is exercised at final run.
+    # This is not a polling loop: full seed acceptance is tested at final run.
     import json
     from test_scripted_records import ROOT
     scenario = json.loads((ROOT / "data/scenario.json").read_text())

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync, existsSync } from "node:fs";
-import { transformWithOxc } from "vite";
+import { transformWithOxc } from "./json-module-transform.mjs";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const baseline = JSON.parse(read("../../data/scenario.json"));

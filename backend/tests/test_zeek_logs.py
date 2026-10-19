@@ -130,7 +130,7 @@ def test_source_packaging_copies_all_logs_and_manifest_with_safe_counts(tmp_path
         path = source / filename
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{}")
-    # Exercise manifest-driven source packaging with valid, independent fixtures.
+    # Test manifest-driven source packaging with valid, independent fixtures.
     manifest = {"records": ["records.json"], "models": ["model.json"], "reference": "c4.json"}
     (source / "scripted/sources.json").write_text(json.dumps(manifest))
     for name in manifest["records"] + manifest["models"] + [manifest["reference"]]:

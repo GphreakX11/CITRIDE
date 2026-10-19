@@ -271,7 +271,7 @@ test("baseline context remains in Advanced rather than the header", () => {
   assert.ok(!text(header).includes("Baseline r"));
 });
 
-test("source alerts are oldest first without mutating records, seven initially visible", () => {
+test("source alerts are oldest first without mutating records, all initially visible", () => {
   const original = data.events.map((e) => e.id);
   hooks.clear();
   let tree = Alerts({
@@ -302,8 +302,8 @@ test("source alerts are oldest first without mutating records, seven initially v
     onCreate() {},
     onOpenCase() {},
   });
-  assert.equal(nodes(tree).filter((n) => n.props["data-alert-id"]).length, 7);
-  assert.ok(text(tree).includes("Show all (8)"));
+  assert.equal(nodes(tree).filter((n) => n.props["data-alert-id"]).length, 8);
+  assert.ok(text(tree).includes("Show fewer"));
 });
 
 test("source alerts fall back to ascending relative time, unknown last", () => {

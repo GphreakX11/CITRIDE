@@ -31,7 +31,7 @@ async function compile(url) {
       spec.startsWith(".") && /\.tsx$/.test(spec)
         ? await compile(new URL(spec, url))
         : spec.startsWith(".")
-          ? new URL(/\.[cm]?[jt]s$/.test(spec) ? spec : `${spec}.ts`, url).href
+          ? new URL(/\.(?:[cm]?[jt]s|json)$/.test(spec) ? spec : `${spec}.ts`, url).href
           : import.meta.resolve(spec),
     );
   }

@@ -676,11 +676,19 @@ export default function ConsequencesView({
     const selectedCase = value?.incidents.find((incident) => incident.id === next)?.caseId;
     if (selectedCase) onSelect(selectedCase);
   };
-  const analyst = () =>
-    onOpenAnalyst(
-      value?.incident?.caseId ? "case-file" : "command",
-      value?.incident?.caseId,
-    );
+  const analyst = () => {
+    const incidentId = value?.incident?.id;
+    onOpenAnalyst("command", value?.incident?.caseId ?? null);
+    // Selecting the saved case deliberately clears old URL focus. Restore the
+    // source incident for this explicit C4 -> filtered A1 handoff afterwards.
+    if (incidentId) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("incident", incidentId);
+      url.searchParams.set("incidentId", incidentId);
+      window.history.replaceState(null, "", url);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
+  };
   return (
     <div className="c4-view">
       <header className="c4-heading">

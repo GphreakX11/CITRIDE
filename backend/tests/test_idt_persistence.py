@@ -84,11 +84,16 @@ def assignments():
 
 def assert_inline_inventory(baseline, assignments):
     entities = baseline["entities"]
-    assert len(entities) == 67, "Only the nine approved storyline entities extend the original inventory"
-    assert len({entity["id"] for entity in entities}) == 67
+    assert len(entities) == 97, "The 67 original entities plus 30 normalized source-model entities share the main store"
+    assert len({entity["id"] for entity in entities}) == 97
+    assert len([entity for entity in entities if entity['id'] in assignments]) == 67
     assert {"vendor-v", "hospital-w", "dialysis-u"}.issubset(entity["id"] for entity in entities)
     for entity in entities:
-        assert entity.get("idt") == assignments[entity["id"]], entity["id"]
+        if entity['id'] in assignments:
+            assert entity.get("idt") == assignments[entity["id"]], entity["id"]
+        else:
+            assert entity.get('idt'), entity['id']
+            assert 'SIMULATED' in entity['handling'] and entity['assumptionNote']
     assert {entity["idt"]["status"] for entity in entities} == {
         "coded", "below_idt_level", "not_idt_asset", "unassigned"
     }
@@ -201,7 +206,7 @@ def test_case_api_captures_inline_idt_and_preserves_history_after_restart(
         assert captured == expected
         assert client.get(path).json() == expected
 
-    # Exercise a real save/reopen, then durable baseline drift. Historical reads
+    # Test a real save/reopen, then durable baseline drift. Historical reads
     # must retain their own IDT, not re-resolve against today's unassigned data.
     fresh_store = open_repository()
     assert_inline_inventory(fresh_store.baseline(), assignments)

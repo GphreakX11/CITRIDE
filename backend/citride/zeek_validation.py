@@ -10,6 +10,10 @@ from datetime import datetime
 import ipaddress
 import math
 import re
+import json
+from pathlib import Path
+
+_SENSORS = json.loads((Path(__file__).resolve().parents[2] / 'data/reference/display_catalog.json').read_text())['telemetrySensors']
 
 COMMON = (
     "_path",
@@ -203,8 +207,8 @@ def validate_demo_logs(
                 )
             utility = record.get("utilityId")
             if (
-                utility not in ("utility-a", "utility-b", "utility-c")
-                or record.get("_system_name") != "w250-sensor-" + str(utility)[-1:]
+                utility not in _SENSORS
+                or record.get("_system_name") != _SENSORS.get(utility)
             ):
                 error(
                     "sensor",

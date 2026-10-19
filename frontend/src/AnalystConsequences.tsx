@@ -14,6 +14,7 @@ import {
   words,
 } from "./commandCenterModel.ts";
 import { displayText } from "./presentation.ts";
+import { analysisHorizons, analysisScenarios } from "./analystAnalysis.ts";
 import { excludedSentence, quickWhatIfRequest } from "./dependencyNetwork.ts";
 import { exposureAvoided, exposureDollars, runExposure } from "./exposure.ts";
 import "./analyst-consequences.css";
@@ -86,15 +87,13 @@ function CaseConsequences({
   const model = consequenceModel(incident),
     run = model.run;
   const linked = incident.contextSnapshot.scenarios;
-  const scenarios = data.scenarios.filter(
-    (s) =>
-      ["unsafe-water", "low-pressure", "power-loss"].includes(s.id) ||
-      linked.some((l) => l.id === s.id),
-  );
+  const scenarios = analysisScenarios(data, incident);
   const [scenarioId, setScenarioId] = useState(
     run?.request.scenarioId ?? linked[0]?.id ?? scenarios[0]?.id ?? "",
   );
-  const [horizon, setHorizon] = useState(run?.request.horizonHours ?? 12);
+  const horizons = analysisHorizons(scenarios, run?.request.horizonHours);
+  const [horizon, setHorizon] = useState(run?.request.horizonHours ??
+    (horizons.includes(linked[0]?.horizonHours ?? NaN) ? linked[0].horizonHours! : 12));
   const options = model.rows.flatMap((row) =>
     model.captured.dependencies
       .filter(
@@ -242,8 +241,7 @@ function CaseConsequences({
               disabled={blocked}
               onChange={(e) => setHorizon(Number(e.target.value))}
             >
-              <option value={12}>12 hours</option>
-              <option value={24}>24 hours</option>
+              {horizons.map((hours) => <option key={hours} value={hours}>{hours} hours</option>)}
             </select>
           </label>
           <button

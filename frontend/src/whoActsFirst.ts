@@ -98,10 +98,8 @@ const validWindow = (value: unknown): value is [number, number] =>
   value.length === 2 &&
   value.every((v) => typeof v === "number" && Number.isFinite(v) && v >= 0) &&
   value[0] <= value[1];
-const potentialIds = [
-  "potential-unsafe-water-b",
-  "potential-unsafe-water-c",
-] as const;
+import displayCatalog from "../../data/reference/display_catalog.json" with { type: "json" };
+const potentialIds = displayCatalog.potentialScenarioIds;
 export function potentialRequests(data: Bootstrap) {
   return potentialIds.map((scenarioId) => {
     if (!data.scenarios.some((s) => s.id === scenarioId))
@@ -338,11 +336,8 @@ export function rankUtilities(
             data.scenarios.find((s) => s.id === id)?.seed.provider ===
             utility.id,
         ) ??
-        potentialIds.find(
-          (id) =>
-            id ===
-            `potential-unsafe-water-${utility.id.replace(/^utility-/, "")}`,
-        );
+        runs.find((run) => potentialIds.includes(run.scenarioId) &&
+          object(run).seed && object(object(run).seed).provider === utility.id)?.scenarioId;
       const caseRun =
         cases
           .filter((c) => c.runSnapshot?.seed.provider === utility.id)

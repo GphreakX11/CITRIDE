@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from .billington_reference import lineage
 from .consequences import bestAnalysisFor, preliminaryScenarioFor
-from .consequence_model import consequence_model
+
 from .records import RecordsService
 from .storage import NotFoundError
 
@@ -164,11 +164,6 @@ class ConsequenceService:
             dataset = self.store._load()
             envelope = self.records.records_from_dataset(dataset)
             incidents = deepcopy(envelope['statewideIncidents'])
-            # New package scenarios remain explicitly reference-only on older
-            # stores. Do not invent a persisted incident or mutate its register.
-            for prototype in self.records.scripted['incidents']:
-                if prototype.get('preliminaryScenario') and not any(row['id'] == prototype['id'] for row in incidents):
-                    incidents.append({**deepcopy(prototype), 'referenceOnly': True})
 
             if incident_id:
                 incident = next((r for r in incidents if incident_id in (r['id'], r.get('caseId'))), None)
@@ -188,7 +183,7 @@ class ConsequenceService:
             runs = self.store._records(dataset, 'run')
             cases = self.store._records(dataset, 'command-incident')
             # Reject stale preliminaries when update removed the causal mapping.
-            model = consequence_model(self.store._baseline(dataset), self.records.c4_reference, self.records.model_sources)
+            model = self.store._baseline(dataset)
             if preliminaryScenarioFor(incident, model, self.records.c4_reference['eventLossRules']) is None:
                 runs = [r for r in runs if r.get('kind') != 'preliminary']
             analysis = bestAnalysisFor(incident, runs, cases)
@@ -202,10 +197,7 @@ class ConsequenceService:
                 analysis = {**analysis, 'kind': 'reviewed'}
             refs = deepcopy(self.records.c4_reference)
             refs['serviceLabels'].update(envelope.get('serviceLabels', {}))
-            for bundle in self.records.model_sources:
-                if analysis and analysis['seed']['provider'] == bundle['incident']['sourceProvider']:
-                    source_id = analysis['seed']['provider']
-                    refs['assets'].setdefault(source_id, {}).update({k: deepcopy(bundle.get(k, [])) for k in ('alternatives', 'thresholds', 'responseOwners')})
+
             view = project_consequences(incident, analysis, refs, self.records.reference['planningRates'], [r for r in envelope['assetStatuses'] if r['incidentId'] == incident['id']])
             view = enrich_consequences(view, envelope, analysis)
             return {**view, 'now': envelope['now'], 'operationsTimeZone': envelope['operationsTimeZone'], 'featuredIncidentId': envelope['featuredIncidentId'], 'incidents': incidents,

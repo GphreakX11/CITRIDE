@@ -14,7 +14,7 @@ const read = (p) =>
 const data = read("../../data/scenario.json");
 const supplied = read("../../data/scripted/watershed_beta.json");
 const reference = read("../../data/reference.json");
-// Exercise the real engine, not an authored approximation of its output.
+// Test the real engine, not an authored approximation of its output.
 const run = JSON.parse(
   execFileSync(
     "python3",

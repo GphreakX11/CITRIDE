@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFileSync, existsSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { transformWithOxc } from "vite";
+import { transformWithOxc } from "./json-module-transform.mjs";
 import { networkSource } from "../src/networkEvidence.ts";
 const root = new URL("../src/", import.meta.url);
 const read = (name) => readFileSync(new URL(name, root), "utf8");

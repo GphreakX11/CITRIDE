@@ -410,7 +410,7 @@ class VisualCompareTests(unittest.TestCase):
                     self.assertTrue(all(len(c.args) == 2 for c in api.call_args_list))
 
     def test_capture_page_requires_loaded_records_and_matching_case_run_version(self):
-        # Exercise browser orchestration offline, not Chromium or a live server.
+        # Test browser orchestration offline, not Chromium or a live server.
         args = self.parse('--capture', '--case-id', 'new-case')
         args.capture_case = dict(run_id='run-real', version=2)
         screen = next(s for s in vc.SCREENS if s.name == 'C4')

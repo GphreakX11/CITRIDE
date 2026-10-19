@@ -21,7 +21,7 @@ def store(request, tmp_path, monkeypatch):
     local = Repository(tmp_path / "state", FIXTURE)
     if request.param == "local":
         return local
-    # Exercise the actual inherited method and Postgres load/save/transaction
+    # Test the actual inherited method and Postgres load/save/transaction
     # path against an isolated connection double, not a live database claim.
     row = {"nquads": local.path.read_text(), "writes": 0}
 

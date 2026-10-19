@@ -87,6 +87,13 @@ class Repository:
         """Build a new seed only when the selected durable state is absent."""
         with self.scenario_path.open(encoding="utf-8") as source:
             data = json.load(source)
+        # Model intake precedes record seeding and automatic analysis. Generic
+        # event-free RDF fixtures intentionally do not load application feeds.
+        if data.get("events"):
+            from .scripted_sources import load_sources
+            from .consequence_model import intake_source_models
+            _, bundles, reference = load_sources(self.scenario_path)
+            data = intake_source_models(data, reference, bundles)
         errors = validate_baseline(data)
         if errors:
             raise InvalidModelError("Invalid initial model: " + "; ".join(errors))
@@ -98,7 +105,7 @@ class Repository:
         # An event-free generic RDF fixture is not the scripted application.
         # Actual app startup independently validates its record configuration.
         if data.get("events"):
-            RecordsService(self).seed(dataset)
+            RecordsService(self, scenario=data).seed(dataset)
         return dataset
 
     def reset_demo(self, expected_revision: int, client_request_id: str) -> dict:
@@ -148,8 +155,15 @@ class Repository:
     @contextmanager
     def _locked(self):
         with self._thread_lock:
+            # Nested repository reads share this thread's existing file lock,
+            # just as Postgres reads share the outer transaction. A second
+            # independently opened flock would deadlock the same thread.
+            if getattr(self, '_lock_depth', 0):
+                yield
+                return
             with self.lock_path.open("a", encoding="utf-8") as lock_file:
                 fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                self._lock_depth = 1
                 try:
                     yield
                 except BaseException:
@@ -159,6 +173,7 @@ class Repository:
                     self._cached_signature = None
                     raise
                 finally:
+                    self._lock_depth = 0
                     fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
     def _load(self) -> Dataset:

@@ -1,4 +1,4 @@
-"""Exercise persisted user workflows and failure boundaries through HTTP."""
+"""Test persisted user workflows and failure boundaries through HTTP."""
 
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -248,7 +248,7 @@ def test_reject_bad_run_requests(client, payload):
 
 @pytest.mark.parametrize("value", ["NaN", "Infinity", "-Infinity"])
 def test_reject_nonfinite_request_numbers(client, value):
-    # Sending raw JSON exercises nonstandard input accepted by Python's decoder.
+    # Sending raw JSON tests nonstandard input accepted by Python's decoder.
     response = client.post(
         "/v1/cascade-runs",
         content='{"scenarioId":"unsafe-water","evaluationHour":' + value + "}",

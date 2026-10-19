@@ -18,7 +18,7 @@ from .scripted_validation import (
 from .storage import ConflictError, InvalidModelError, NotFoundError
 from .record_time import resolve_record_times
 from .legacy_record_time import SAMPLE_TIMING, project_saved_meta, project_saved_record
-from .consequence_model import consequence_model
+
 from .scripted_sources import load_sources, merge_sources, merge_response_options, EXTRA_COLLECTIONS
 from .consequences import automatic_intake
 
@@ -101,6 +101,7 @@ def load_inputs(scenario_path):
 class RecordsService:
     def __init__(self, store, scripted=None, reference=None, scenario=None, now=None):
         self.store = store
+        supplied_model = scenario
 
         if scripted is None or reference is None or scenario is None:
             loaded = load_inputs(store.scenario_path)
@@ -112,9 +113,15 @@ class RecordsService:
         _, self.model_sources, self.c4_reference = load_sources(store.scenario_path)
         for kind in EXTRA_COLLECTIONS:
             self.scripted.setdefault(kind, [])
-        self.analysis_model = consequence_model(self.scenario, self.c4_reference, self.model_sources)
+        # The live baseline is the model authority. Fresh-store intake supplies
+        # its not-yet-saved baseline explicitly; ordinary readers never overlay
+        # configured source models or normalize them on demand.
+        self.analysis_model = deepcopy(supplied_model) if supplied_model is not None else store.baseline()
+        installed = {s['id'] for s in self.analysis_model.get('scenarios', [])}
+        installed_sources = [b for b in self.model_sources if b.get('scenario', {}).get('id') in installed or
+                             (b.get('scenarios') and all(s['id'] in installed for s in b['scenarios']))]
         self.scripted.setdefault('pendingDecisions', [])
-        self.reference = merge_response_options(self.reference, self.model_sources, self.analysis_model)
+        self.reference = merge_response_options(self.reference, installed_sources, self.analysis_model)
         # Public display vocabulary follows the configured source set, not a
         # frontend incident-specific fallback. This detached merge never writes state.
         for field in ('entityIcons', 'serviceLabels'):
@@ -123,7 +130,17 @@ class RecordsService:
         self._validation_scenario = deepcopy(self.analysis_model)
         self._validation_scenario["responseOptions"] = deepcopy(self.reference.get("responseOptions", []))
         self._validation_scenario["sources"] = deepcopy(self.analysis_model.get("sources", [])) + deepcopy(self.reference.get("sources", []))
-        errors = validate_reference(self.reference, self.analysis_model) + validate_scripted(self.scripted, self._validation_scenario)
+        configured = deepcopy(self.scripted)
+        # An existing store may still await explicit model intake after deploy.
+        # Do not fail its saved water workflows or pretend missing model records
+        # are installed. Validate configured rows once their model is installed;
+        # the model installer separately validates its entire staged addition.
+        pending = {b['incident']['id'] for b in self.model_sources if b not in installed_sources}
+        for collection in COLLECTIONS:
+            key = INPUT_KEYS.get(collection, collection)
+            configured[key] = [row for row in configured.get(key, [])
+                               if row.get('incidentId', row.get('id')) not in pending]
+        errors = validate_reference(self.reference, self.analysis_model) + validate_scripted(configured, self._validation_scenario)
         if errors:
             raise InvalidModelError("Invalid scripted/reference inputs: " + "; ".join(errors))
 
@@ -178,7 +195,7 @@ class RecordsService:
 
     def _automatic_analysis(self, dataset, incident_ids=None):
         meta = self._meta(dataset)
-        model = consequence_model(self.store._baseline(dataset), self.c4_reference, self.model_sources)
+        model = self.store._baseline(dataset)
         changed = False
         for incident in self.store._records(dataset, 'statewideIncidents'):
             if incident_ids is not None and incident['id'] not in incident_ids:

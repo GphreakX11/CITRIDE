@@ -391,7 +391,7 @@ class CommandService:
                 "_requests": {request["clientRequestId"]: _fingerprint(request)},
             }
             result = self._public(dataset, record)
-            RecordsService(self.store).on_case_opened(dataset, record)
+            RecordsService(self.store, scenario=baseline).on_case_opened(dataset, record)
             self.store._record_graph(dataset, KIND, record)
             self.store._save(dataset)
             return result
@@ -447,7 +447,7 @@ class CommandService:
                 record["notes"].append({"id": _id(), "text": request["note"], "createdAt": now})
                 message = "Local coordination note recorded; not sent."
             elif action in RECORD_ACTION_FIELDS:
-                message = RecordsService(self.store).apply_action(dataset, record, request)
+                message = RecordsService(self.store, scenario=self.store._baseline(dataset)).apply_action(dataset, record, request)
             else:
                 if record["runId"] is not None:
                     raise ConflictError("This case already captures an immutable run; it cannot be overwritten")
@@ -457,7 +457,17 @@ class CommandService:
                 baseline = self.store._baseline(dataset)
                 _validated_baseline(baseline)
                 if baseline["baselineRevision"] != record["baselineRevision"]:
-                    raise ConflictError("Baseline revision changed; analysis requires the captured case revision")
+                    # Add-only model intake archives the exact earlier baseline.
+                    # Existing cases can still analyze their captured revision;
+                    # never silently run them against newly imported records.
+                    try:
+                        archived = self.store._record(dataset, 'baseline-revision', 'baseline-' + str(record['baselineRevision']))
+                    except NotFoundError:
+                        raise ConflictError("Baseline revision changed; analysis requires the captured case revision") from None
+                    baseline = deepcopy(archived.get('baselineSnapshot'))
+                    _validated_baseline(baseline)
+                    if baseline['baselineRevision'] != record['baselineRevision']:
+                        raise InvalidModelError('Historical baseline revision does not match the captured case')
                 run_request = {key: request[key] for key in ("scenarioId", "evaluationHour", "horizonHours")}
                 run_request["overrides"] = []
                 try:

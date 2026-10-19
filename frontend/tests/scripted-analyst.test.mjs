@@ -370,7 +370,7 @@ test("native confirmation freezes both estimate requests and cancellation never 
   };
   // The write coordinator is now a required parent-owned boundary. Keep this
   // test's real confirmation/frozen-input assertions; root lock/replay behavior
-  // is exercised independently in potential-recovery.test.mjs.
+  // is tested independently in potential-recovery.test.mjs.
   const p = props("coordination", {
     data: input,
     onEstimatePotential: async (requests) => {

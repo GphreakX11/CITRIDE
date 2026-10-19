@@ -28,7 +28,7 @@ async function loadComponent(hookHarness = false) {
       const specifier = match[1];
       if (hookHarness && specifier === "react") imports.set(specifier, hookUrl);
       // Parent callback tests isolate the child; actual SSR tests and browser QA
-      // exercise its real controls/hooks. No fake map is used for acceptance.
+      // test its real controls/hooks. No fake map is used for acceptance.
       else if (
         hookHarness &&
         (specifier.endsWith("CommandInfrastructureMap.tsx") ||

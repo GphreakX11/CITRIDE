@@ -1,0 +1,53 @@
+{
+  "copy": {
+    "SIMULATED": "Reference data",
+    "[\"SIMULATED\"]": "Reference data",
+    "synthetic_index": "Relative index",
+    "synthetic-campaign-01": "Campaign 01",
+    "Simulated completed connection at A.": "Completed connection at A.",
+    "Invented demonstration parameter, not a measured or clinical planning value.": "Scenario parameter, not a measured or clinical planning value.",
+    "citride-demo-interval-v1": "interval-v1",
+    "Fictional Service Area A": "Service Area A",
+    "Fictional Service Area B": "Service Area B",
+    "Fictional Service Area C": "Service Area C",
+    "Fictional Electricity Operator E": "Electricity Operator E",
+    "Synthetic infrastructure inventory": "Infrastructure inventory",
+    "Synthetic dependency assumptions": "Dependency assumptions",
+    "Fictional prior OT assessment": "Prior OT assessment",
+    "Synthetic Zeek-shaped connection stream": "Network connection records",
+    "Synthetic controller audit stream": "Controller audit records",
+    "Synthetic sensor time series": "Sensor time series",
+    "Synthetic enterprise background stream": "Enterprise background records",
+    "Invented authentication and dosing parameter changes, using fictional users and assets.": "Reference authentication and dosing-parameter records for the Watershed environment.",
+    "A completed simulated connection to the previously exposed controller.": "A completed connection to the previously exposed controller.",
+    "A completed simulated VPN-pool connection to the previously exposed controller.": "A completed VPN-pool connection to the previously exposed controller.",
+    "Simulated successful vendor account login from the shared offsite source; assigns the VPN client pool address.": "Successful vendor account login from the shared offsite source; assigns the VPN client pool address.",
+    "Simulated successful controller authentication from the unusual source.": "Successful controller authentication from the unusual source.",
+    "Synthetic quality indicator drifts after the change while pressure remains stable.": "Water-quality indicator drifts after the change while pressure remains stable.",
+    "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at B.": "Shared source links the probe to the campaign. No compromise or operational loss is established at B.",
+    "Shared source supports linking the probe to the simulated campaign. No compromise or operational loss is established at C.": "Shared source links the probe to the campaign. No compromise or operational loss is established at C.",
+    "Illustrative unsafe treated-water effect at Utility A, supported by synthetic control-change and sensor events. Stable pressure means no fire-flow loss is inferred.": "Configured unsafe-water effect at Utility A, supported by control-change and sensor records. Stable pressure means no fire-flow loss is inferred.",
+    "Synthetic link and parameters initialized in local baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption.": "Scenario link and parameters initialized in baseline version 1. No real-world verification or authority approval is implied. Output loss conversion, where present, is an explicit scenario assumption."
+  },
+  "schematicPositions": {
+    "electric-e": [220, 335], "plant-a": [395, 340], "utility-a": [510, 345],
+    "dialysis-x": [575, 240], "hospital-y": [670, 345], "nursing-z": [420, 190],
+    "fire-f": [590, 445], "facility-q": [740, 270], "plant-b": [450, 450],
+    "utility-b": [535, 510], "plant-c": [695, 435], "utility-c": [770, 380]
+  },
+  "cities": [
+    {"name": "Dallas", "lon": -96.797, "lat": 32.777},
+    {"name": "Houston", "lon": -95.370, "lat": 29.760},
+    {"name": "Austin", "lon": -97.743, "lat": 30.267},
+    {"name": "San Antonio", "lon": -98.494, "lat": 29.425},
+    {"name": "El Paso", "lon": -106.485, "lat": 31.762},
+    {"name": "Lubbock", "lon": -101.855, "lat": 33.578},
+    {"name": "Amarillo", "lon": -101.832, "lat": 35.222},
+    {"name": "Corpus Christi", "lon": -97.396, "lat": 27.801}
+  ],
+  "defaultCaseEventId": "event-dosing",
+  "potentialScenarioIds": ["potential-unsafe-water-b", "potential-unsafe-water-c"],
+  "telemetrySensors": {
+    "utility-a": "w250-sensor-a", "utility-b": "w250-sensor-b", "utility-c": "w250-sensor-c"
+  }
+}

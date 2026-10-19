@@ -28,7 +28,7 @@ export default function AnalystAlerts({
   workflowLocked,
   onCreate,
   onOpenCase,
-  showAllInitially = false,
+  showAllInitially = true,
 }: Props) {
   const [showAll, setShowAll] = useState(showAllInitially),
     [editing, setEditing] = useState<string | null>(null);

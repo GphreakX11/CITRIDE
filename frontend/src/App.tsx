@@ -986,7 +986,7 @@ export default function App() {
                     </div>
                     <div>
                       <div className="banner-meta">
-                        <span className="badge exercise">
+                        <span className="badge reference-source">
                           INCIDENT ANALYSIS
                         </span>
                         <span>OT water-control scenario</span>

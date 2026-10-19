@@ -1,4 +1,5 @@
 import { StatusChip } from "./visualPrimitives.ts";
+import displayCatalog from "../../data/reference/display_catalog.json" with { type: "json" };
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { CommandAction } from "./commandTypes.ts";
@@ -11,7 +12,9 @@ import type {
 } from "./scriptedTypes.ts";
 import { object, text } from "./scriptedTypes.ts";
 import { api, humanize, windowLabel } from "./api.ts";
-import { potentialRequests, rankUtilities } from "./whoActsFirst.ts";
+import { potentialRequests, rankUtilities, utilityForEvent } from "./whoActsFirst.ts";
+import { caseRecordScope, sourceIncidentForCase } from "./analystCaseScope.ts";
+import type { ConsequenceProjection } from "./consequencesModel.ts";
 import { responseClock } from "./scriptedCommandModel.ts";
 import { formatDuration, formatDueTime, formatTime } from "./displayTime.ts";
 import "./scripted-analyst.css";
@@ -75,6 +78,27 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
   const [runsLoaded, setRunsLoaded] = useState(false);
+  const sourceIncident = sourceIncidentForCase(selected, records);
+  const selectedEvent = selected?.eventSnapshot ?? data.events.find((event) => event.id === selected?.eventId);
+  const waterCase = !!selected && (selected.contextSnapshot?.provider?.type === "WaterServiceProvider" ||
+    (!!selectedEvent && !!utilityForEvent(selectedEvent, data)));
+  const [ownerProjection, setOwnerProjection] = useState<ConsequenceProjection | null>(null);
+  const [ownerError, setOwnerError] = useState("");
+  useEffect(() => {
+    let live = true;
+    setOwnerProjection(null);
+    setOwnerError("");
+    if (view === "coordination" && sourceIncident && !waterCase) {
+      const id = sourceIncident.id;
+      void api<ConsequenceProjection>(`/v1/command/consequences?incidentId=${encodeURIComponent(id)}`)
+        .then((value) => {
+          if (live && value.incident?.id === id) setOwnerProjection(value);
+          else if (live) setOwnerError("Response owner incident did not match the selected case.");
+        })
+        .catch((error) => { if (live) setOwnerError(errorText(error)); });
+    }
+    return () => { live = false; };
+  }, [view, sourceIncident?.id, selected?.id, selected?.version, waterCase]);
   useEffect(() => {
     setRunError("");
   }, [props.potentialRuns]);
@@ -90,23 +114,11 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
     !latest.current.uncertain &&
     !!latest.current.selected &&
     latest.current.selected.status !== "closed";
-  const scope = (items: RecordItem[]) =>
-    items.filter((item) => {
-      if (!selected) return false;
-      if (item.caseId) return item.caseId === selected.id;
-      const incident = records.statewideIncidents.find(
-        (i) => i.id === item.incidentId,
-      );
-      return (
-        item.incidentId === selected.id ||
-        incident?.caseId === selected.id ||
-        incident?.linkedEventIds?.includes(selected.eventId)
-      );
-    });
+  const scope = (items: RecordItem[]) => caseRecordScope(items, selected, records);
   async function readRuns() {
     const saved = await api<(Run | RunSummary)[]>("/v1/runs");
     const relevant = saved.filter((r) =>
-      ["potential-unsafe-water-b", "potential-unsafe-water-c"].includes(
+      displayCatalog.potentialScenarioIds.includes(
         r.scenarioId,
       ),
     );
@@ -120,7 +132,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
   }
   useEffect(() => {
     mounted.current = true;
-    if (view === "coordination") {
+    if (view === "coordination" && waterCase) {
       void readRuns()
         .then((saved) => {
           if (mounted.current) {
@@ -135,7 +147,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
     return () => {
       mounted.current = false;
     };
-  }, [view]);
+  }, [view, waterCase]);
   async function refreshRuns() {
     if (estimateFlight.current) return;
     setRunBusy(true);
@@ -427,15 +439,18 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
     );
   }
   function coordination() {
-    const ranking = rankUtilities(
+    const ranking = waterCase ? rankUtilities(
       data,
       incidents,
       props.potentialRuns ?? runs,
       reference,
-    );
+    ) : [];
+    const owners = ownerProjection?.incident?.id === sourceIncident?.id ? ownerProjection?.responseOwners ?? [] : [];
+    const responseOptions = reference.responseOptions.filter((option) =>
+      option.incidentId || option.caseId ? scope([option]).length > 0 : waterCase);
     return (
       <>
-        <section className="sa-rank-panel">
+        {waterCase ? <section className="sa-rank-panel">
           <h3>Who acts first</h3>
           <p>
             Evidence first, then earliest healthcare planning window, then
@@ -488,6 +503,15 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
             ))}
           </ol>
         </section>
+        : <section className="sa-rank-panel">
+          <h3>Who acts first</h3>
+          <h4>Response owners</h4>
+          {ownerError && <p role="alert">Response owners unavailable: {ownerError}</p>}
+          {owners.length ? <ul className="sa-ranking">{owners.map((owner, index) =>
+            <li key={index}><h4>{text(owner.role)}</h4><strong>{text(owner.who)}</strong><p>{text(owner.does)}</p></li>
+          )}</ul> : <p>{!ownerProjection && !ownerError && sourceIncident
+            ? "Loading response owners…" : "No response owners recorded."}</p>}
+        </section>}
         <section className="sa-contacts-panel">
           <h3>Contacts · coordination tracking</h3>
           <div className="command-table-wrap"><table className="command-table"><thead><tr><th>Partner</th><th>Group</th><th>Status</th><th>Last update</th><th>Action</th></tr></thead><tbody>
@@ -506,7 +530,7 @@ export default function ScriptedAnalystViews(props: ScriptedAnalystProps) {
         </section>
         <section className="sa-decisions-panel">
           <details id="sa-decision-notes"><summary>Record decision note</summary>
-          {reference.responseOptions.map((option) => <details key={option.id} className="sa-decision-row"><summary>{text(option.title)}</summary>{form(
+          {responseOptions.map((option) => <details key={option.id} className="sa-decision-row"><summary>{text(option.title)}</summary>{form(
               option.id,
               "record_decision",
               text(option.title),

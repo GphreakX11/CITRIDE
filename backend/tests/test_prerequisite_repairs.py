@@ -233,8 +233,9 @@ def test_scripted_timing_is_anchor_only_and_validates_opened_at(state):
     assert any('openedAt' in error for error in validate_scripted(data, core._validation_scenario))
 
 
-def test_legacy_reference_preview_never_becomes_default_when_no_open_records(state):
+def test_missing_main_store_incident_is_never_synthesized_from_source(state):
     from rdflib import URIRef
+    from citride.storage import NotFoundError
     store, _, inputs = state
     configure(inputs, 'INC-2026-1002-POH')
     with store._locked():
@@ -247,8 +248,8 @@ def test_legacy_reference_preview_never_becomes_default_when_no_open_records(sta
     before = store.path.read_bytes()
     service = ConsequenceService(store)
     assert service.view()['incident'] is None
-    preview = service.view('INC-2026-1002-POH')
-    assert preview['incident']['referenceOnly'] is True
+    with pytest.raises(NotFoundError):
+        service.view('INC-2026-1002-POH')
     assert store.path.read_bytes() == before
 
 

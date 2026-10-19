@@ -123,7 +123,7 @@ export default function NetworkEvidence({
   }
   const raw = (id: string, record: string) =>
     navigate({ tab: "raw", streamId: id, recordId: record });
-  const timeline = caseTimeline(incident, { ...data, events }, telemetry);
+  const timeline = caseTimeline(incident, { ...data, events }, telemetry, records);
   const stream = telemetry?.streams.find((item) => item.id === streamId);
   const fields = stream ? orderedFields(stream) : [];
   const rows = stream
@@ -271,16 +271,16 @@ export default function NetworkEvidence({
       {!telemetry && <p role="status">Telemetry unavailable.</p>}
       {tab === "timeline" && (
         <>
-          <p className="network-caveat">
+          {timeline.some((row) => row.event.observation === "probing_only") && <p className="network-caveat">
             B/C campaign probes · no established compromise or service effect
-          </p>
+          </p>}
           {!timeline.length && <p>No case-linked events recorded.</p>}
           <ol className="network-timeline">
             {timeline.map((row) => (
               <li key={row.event.id} data-case-event={row.isCaseEvent}>
                 <div className="network-tags">
                   <time>{row.time}</time>
-                  <strong>{row.utility?.label ?? "Utility unmapped"}</strong>
+                  <strong>{row.utility?.label ?? row.asset?.label ?? "Provider unmapped"}</strong>
                   {row.isCaseEvent && (
                     <span className="network-chip">case event</span>
                   )}
@@ -298,6 +298,7 @@ export default function NetworkEvidence({
                       {source}
                     </span>
                   ))}
+                  {!row.techniques.length && <span className="network-chip">None recorded</span>}
                   {row.techniques.map((technique) => (
                     <TechniqueChip
                       className="network-chip network-attack"

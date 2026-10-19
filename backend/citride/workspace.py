@@ -20,8 +20,8 @@ def workspace_snapshot(store: Repository, *, reset_enabled: bool) -> dict:
     """
     with store._locked():
         dataset = store._load()
-        service = RecordsService(store)
         baseline = store._baseline(dataset)
+        service = RecordsService(store, scenario=baseline)
         incidents = CommandService(store).list_from_dataset(dataset)
         records = service.records_from_dataset(dataset)
         return deepcopy({

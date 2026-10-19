@@ -1,13 +1,15 @@
 import type { Bootstrap, Entity, Event, Telemetry } from "./types.ts";
 import type { CommandIncident } from "./commandTypes.ts";
 import { evidenceTime, evidenceRefs } from "./networkEvidence.ts";
+import type { RecordsState } from "./scriptedTypes.ts";
+import { sourceIncidentForCase } from "./analystCaseScope.ts";
 
 export type TimelineData = Pick<Bootstrap, "events"> &
-  Partial<Pick<Bootstrap, "entities" | "incidentOrigin">>;
+  Partial<Pick<Bootstrap, "entities" | "incidentOrigin" | "scenarios" | "dependencies">>;
 export interface TimelineTechnique {
   id: string;
   name: string;
-  tactic: string;
+  tactic?: string;
 }
 export interface CaseTimelineRow {
   event: Event;
@@ -23,10 +25,14 @@ export interface CaseTimelineRow {
 /** Resolve a cyber identity through its host/organization, never through service dependencies. */
 export function eventUtility(event: Event, data: TimelineData): Entity | null {
   const entities = data.entities ?? [];
+  const providerIds = new Set([
+    ...(data.scenarios ?? []).map((scenario) => scenario.seed.provider),
+    ...(data.dependencies ?? []).map((dependency) => dependency.provider),
+  ]);
   const providers = entities.filter(
-    (e) => e.type === "WaterServiceProvider" || e.id.startsWith("utility-"),
+    (e) => e.type === "WaterServiceProvider" || providerIds.has(e.id),
   );
-  const pending = [event.seenOn, event.utilityId].filter(
+  const pending = [event.seenOn, event.utilityId, event.entityId].flat().filter(
     (id): id is string => typeof id === "string",
   );
   const visited = new Set<string>();
@@ -66,9 +72,11 @@ export function caseTimeline(
   incident: CommandIncident | null | undefined,
   data: TimelineData,
   telemetry: Telemetry | null | undefined,
+  records?: Pick<RecordsState, "statewideIncidents"> | null,
 ): CaseTimelineRow[] {
   const events = new Map(data.events.map((e) => [e.id, e]));
   if (incident) events.set(incident.eventId, incident.eventSnapshot);
+  const linked = sourceIncidentForCase(incident, records)?.linkedEventIds;
   const utility = incident
     ? (eventUtility(incident.eventSnapshot, data) ??
       incident.contextSnapshot.provider)
@@ -106,8 +114,9 @@ export function caseTimeline(
     .filter(
       (e) =>
         !incident ||
-        local.includes(e) ||
-        identities(e).some((id) => campaign.has(id)),
+        (linked?.length
+          ? e.id === incident.eventId || linked.includes(e.id)
+          : local.includes(e) || identities(e).some((id) => campaign.has(id))),
     )
     .sort((a, b) => {
       const hour = (e: Event) =>
@@ -138,8 +147,7 @@ export function caseTimeline(
               !!t &&
               typeof t === "object" &&
               typeof t.id === "string" &&
-              typeof t.name === "string" &&
-              typeof t.tactic === "string",
+              typeof t.name === "string",
           )
         : [],
       evidenceCategory:

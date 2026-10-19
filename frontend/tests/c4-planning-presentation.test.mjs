@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync, existsSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { transformWithOxc } from 'vite';
+import { transformWithOxc } from './json-module-transform.mjs';
 const src = new URL('../src/', import.meta.url);
 const cache = new Map();
 const freeze = value => {

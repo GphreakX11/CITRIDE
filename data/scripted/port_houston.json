@@ -618,7 +618,9 @@
     },
     {
       "id": "feedstock-pipelines",
-      "type": "PipelineSystem",
+      "type": "Pipeline",
+      "suppliedType": "PipelineSystem",
+      "assumptionNote": "SIMULATED: Source pipeline system represented as the supported physical Pipeline type; timing and dependency ownership unchanged.",
       "label": "Feedstock pipelines",
       "sourceRefs": [
         "src-scripted-poh"
@@ -651,7 +653,9 @@
     },
     {
       "id": "galveston-refinery",
-      "type": "Refinery",
+      "type": "ChemicalPlant",
+      "suppliedType": "Refinery",
+      "assumptionNote": "SIMULATED: Refining represented by the supported physical ChemicalPlant type; remains a connected, unaffected asset with other supply.",
       "label": "Galveston refinery",
       "sourceRefs": [
         "src-scripted-poh"
@@ -1151,7 +1155,7 @@
       "dependencyType": "physical",
       "coupling": "tight",
       "lossTypes": [
-        "electricity_lost"
+        "terminal_operations_unavailable"
       ],
       "propagationDelayMinHours": 0,
       "propagationDelayMaxHours": 0,
@@ -1159,11 +1163,11 @@
       "usableBackupMaxHours": 0,
       "backupService": "petroleum_products",
       "validForLossTypes": [
-        "electricity_lost"
+        "terminal_operations_unavailable"
       ],
-      "lossOfFunction": 1.0,
+      "lossOfFunction": 0.0,
       "outputLossType": null,
-      "assumptionNote": "Illustrative scenario link and parameters. Not a statement about the real facility; no real-world verification implied. Connected, not affected in this scenario (the refinery has other supply).",
+      "assumptionNote": "Illustrative scenario link and parameters. Not a statement about the real facility; no real-world verification implied. Connected, not affected in this scenario (the refinery has other supply). SIMULATED intake correction: compatible terminal loss replaces the mismatched electricity loss; zero modeled loss explicitly represents the supplied other-supply assumption.",
       "recovery": {
         "status": "unknown"
       },
@@ -1239,9 +1243,14 @@
       ],
       "persistsThroughHour": 48,
       "eventRefs": [
+        "poh-ev-cred",
+        "poh-ev-lateral",
+        "poh-ev-ot-pivot",
         "poh-ev-tos-offline",
-        "poh-ev-ais"
+        "poh-ev-ais",
+        "poh-ev-sabine"
       ],
+      "assumptionNote": "SIMULATED: All six linked observations may open an investigation of this conditional terminal-operations-loss scenario. An account sign-in, shared login pattern, or other observation alone does not establish an outage or causal attribution; the analyst must review the loss assumption.",
       "sourceRefs": [
         "src-scripted-poh"
       ],

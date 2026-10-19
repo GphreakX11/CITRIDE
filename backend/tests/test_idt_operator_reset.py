@@ -44,7 +44,7 @@ def test_reset_fences_stale_fingerprint_and_does_not_seed_unknown_key(state):
 
 def test_reset_replaces_only_the_target_state_with_validated_inline_idt_seed(state, tmp_path):
     url, key, repository = state
-    # Exercise actual real-storage mutation before the authorized reset.
+    # Test actual real-storage mutation before the authorized reset.
     from citride.engine import compute_run
     authored = repository.create_run({"scenarioId":"unsafe-water","evaluationHour":1,"horizonHours":12,"overrides":[]}, compute_run)
     assert repository.runs()
