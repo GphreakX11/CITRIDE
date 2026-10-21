@@ -40,6 +40,7 @@ import type { RecordsState, ReferenceData } from "./scriptedTypes.ts";
 
 export interface CommandCenterViewsProps {
   records?: RecordsState;
+  projectionReadScope?: string;
   reference?: ReferenceData;
   /** Session-only what-if result; the owning workspace keeps it scoped to the case. */
   lastPlanningRun?: Run | null;
@@ -333,6 +334,7 @@ export default function CommandCenterViews({
   records,
   reference,
   lastPlanningRun,
+  projectionReadScope,
 }: CommandCenterViewsProps) {
   const overview = overviewModel(incidents);
   const model = consequenceModel(selected);
@@ -359,7 +361,7 @@ export default function CommandCenterViews({
         <Empty>This is not a Command Center screen.</Empty>
       </div>
     );
-  if (view === "cop" && records && reference) return <IncidentView data={data} incidents={incidents} selected={selected} records={records} reference={reference} view={view} selectedEntityId={selectedEntityId} onSelect={onSelect} onClearSelection={onClearSelection} onSelectEntity={onSelectEntity} onOpenAnalyst={onOpenAnalyst} onNavigate={onNavigate} />;
+  if (view === "cop" && records && reference) return <IncidentView data={data} incidents={incidents} selected={selected} records={records} reference={reference} projectionReadScope={projectionReadScope} view={view} selectedEntityId={selectedEntityId} onSelect={onSelect} onClearSelection={onClearSelection} onSelectEntity={onSelectEntity} onOpenAnalyst={onOpenAnalyst} onNavigate={onNavigate} />;
   let content: ReactNode;
   const scripted =
     records &&

@@ -34,7 +34,8 @@ test('C2 actually renders the configured third incident rather than the unrelate
  p.records.statewideIncidents.push({id:'OTHER-CUSTOMER-THIRD',title:'Third district grid incident',summary:'Third district energy records',status:'open',severity:'low',sectors:['3'],nearEntityIds:['third-grid'],location:{label:'Other district'}});
  const out=html(p);
  assert.match(out,/Third district energy records/);
- assert.match(out,/Infrastructure view for this incident type is in development/);
+ assert.match(out,/Loading sector consequences/);
+ assert.doesNotMatch(out,/No consequence model yet|in development/);
  assert.doesNotMatch(out.split('<section class="iv-more"')[0],/Captured renal facility/);
 });
 test('C2 explicit URL incident overrides the configured third incident',()=>{
@@ -55,8 +56,8 @@ test('captured facility names, functions and window survive changed live invento
  const p=props();p.data.entities.find(e=>e.id==='dialysis-x').label='LIVE CHANGED NAME';
  const out=html(p);assert.match(out,/Captured renal facility/);assert.doesNotMatch(out,/LIVE CHANGED NAME/);assert.match(out,/2–4 h/);
 });
-test('before analysis C2 uses truthful unmodeled states rather than copied risk windows',()=>{
- const out=html(props(false));assert.match(out,/Not yet modeled/);assert.doesNotMatch(out,/2–4 h/);assert.match(out,/reference/i);
+test('while analysis loads C2 preserves unknown facts rather than copying risk windows',()=>{
+ const out=html(props(false));assert.match(out,/Not yet modeled/);assert.doesNotMatch(out,/2–4 h/);assert.match(out,/Loading sector consequences/);
 });
 test('without incidents C2 keeps the selector and explains its empty state',()=>{
  const p=props();p.incidents=[];p.selected=null;p.records.statewideIncidents=[];

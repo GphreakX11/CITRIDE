@@ -54,9 +54,17 @@ import "./prototype.css";
 import "./command-casework-dark.css";
 
 type SavedRequest = { url: string; body: CommandCreate | CommandActionRequest };
-type WorkspaceRead = Pick<WorkspaceSnapshot, "incidents" | "records" | "reference"> & {
-  health?: WorkspaceSnapshot["health"];
-};
+type WorkspaceRead = Pick<WorkspaceSnapshot, "incidents" | "records" | "reference"> &
+  Partial<Pick<WorkspaceSnapshot, "health" | "bootstrap" | "runs">>;
+
+function projectionSnapshotKey(response: WorkspaceRead) {
+  // Wall-clock/late flags change on reads, not because consequence inputs changed.
+  const { now: _now, responseTasks, ...records } = response.records;
+  return JSON.stringify([response.bootstrap, response.runs, response.incidents, {
+    ...records,
+    responseTasks: responseTasks?.map(({ late: _late, ...task }) => task),
+  }, response.reference]);
+}
 
 export function workspaceNavigationLocked(
   loaded: boolean,
@@ -152,6 +160,10 @@ export default function CommandWorkspace({
     return () => window.clearTimeout(timer);
   }, [notice]);
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
+  const [projectionSnapshot, setProjectionSnapshot] = useState(() => ({
+    key: initial ? projectionSnapshotKey(initial) : null,
+    scope: crypto.randomUUID(),
+  }));
   const [records, setRecords] = useState<RecordsState | null>(initial?.records ?? null);
   const [reference, setReference] = useState<ReferenceData | null>(initial?.reference ?? null);
   // Transport capability outlives the hydration snapshot's baseline revision.
@@ -216,6 +228,11 @@ export default function CommandWorkspace({
     if (response.health) setHealth(response.health);
     setLoaded(true);
     setRefreshedAt(new Date().toISOString());
+    const projectionKey = projectionSnapshotKey(response);
+    setProjectionSnapshot(current => current.key === projectionKey ? current : {
+      key: projectionKey,
+      scope: crypto.randomUUID(),
+    });
     setRefreshFailed(false);
     handlers.current.onCasesLoaded(response.incidents, response.records);
     setError("");
@@ -725,9 +742,11 @@ export default function CommandWorkspace({
       onOpenEvidence={() => onNavigate("cyber")}
       onNavigate={(target) =>
         onNavigate(
-          target === "consequence" || target === "decisions"
-            ? "consequence"
-            : "uctf",
+          target === "case-file"
+            ? "case-file"
+            : target === "consequence" || target === "decisions"
+              ? "consequence"
+              : "uctf",
         )
       }
     />
@@ -889,6 +908,7 @@ export default function CommandWorkspace({
           <CommandCenterViews
             key={view === "consequence" ? contextSelectionRevision : "record-owned"}
             records={records ?? undefined}
+            projectionReadScope={projectionSnapshot.scope}
             reference={reference ?? undefined}
             lastPlanningRun={
               lastPlanningCaseId === selectedId ? lastPlanningRun : null

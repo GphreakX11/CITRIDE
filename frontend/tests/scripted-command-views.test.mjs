@@ -119,7 +119,7 @@ const render = (view, r = records(), s = saved(), ref = reference, d = data) =>
 test('C2 replaces the statewide register with selected incident sectors and a read-only C4 asset route',()=>{
  const html=render('cop');
  assert.match(html,/data-screen="cop"/);
- assert.match(html,/No consequence model yet/);
+ assert.match(html,/Loading sector consequences/);
  assert.match(html,/What it touches/);
  assert.match(html,/Every asset, and why: C4/);
  assert.match(html,/aria-label="What happened"/);

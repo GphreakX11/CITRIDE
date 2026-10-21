@@ -8,6 +8,7 @@ import { useConsequenceSelection, writeConsequenceSelection } from './consequenc
 import IncidentSelector from './IncidentSelector.tsx';
 import IncidentRecordedFootprints from './IncidentRecordedFootprints.tsx';
 import SectorCascadeView from './SectorCascadeView/SectorCascadeView.tsx';
+import IncidentInfrastructureDetail from './IncidentInfrastructureDetail.tsx';
 import { StatusChip, Tone } from './visualPrimitives.ts';
 import { words } from './commandCenterModel.ts';
 import { formatDuration } from './displayTime.ts';
@@ -18,6 +19,7 @@ import { c1OverviewModel } from './c1OverviewModel.ts';
 import type { ConsequenceProjection } from './consequencesModel.ts';
 import './incident-view.css';
 interface Props extends ScriptedViewProps {
+ projectionReadScope?:string;
  selectedEntityId?:string|null; onSelect:(id:string)=>void;onClearSelection?:()=>void;onSelectEntity?:(id:string|null)=>void;
  onOpenAnalyst:(view:CommandView,caseId?:string|null,entityId?:string|null)=>void;onNavigate:(view:CommandView)=>void;
 }
@@ -27,11 +29,13 @@ export default function IncidentView(props:Props) {
  const stack=useMemo(()=>{const initial=incidentStack(props,selection.incidentId);const chosen=selection.incidentId ?? defaultIncidentId({...props.records,statewideIncidents:initial.footPrintModel.rows},{cases:props.incidents,data:props.data});return chosen && chosen!==initial.incidentRecord?.id ? incidentStack(props,chosen):chosen?initial:{...initial,incidentRecord:null};},[props.data,props.incidents,props.selected,props.records,props.reference,selection.incidentId]);
  const record=stack.incidentRecord,incidentId=record?.id ?? null,caseId=stack.incident?.id ?? null;
  const model={...stack.footPrintModel,layers:stack.footPrintModel.layers.filter(l=>l.caseId===record?.caseId)};
- const [projection,setProjection]=useState<ConsequenceProjection|null>(null);
- const [error,setError]=useState('');
- useEffect(()=>{let live=true;setProjection(null);setError('');if(incidentId)api<ConsequenceProjection>(`/v1/command/consequences?incidentId=${encodeURIComponent(incidentId)}`).then(p=>{if(live)setProjection(p);}).catch(e=>{if(live)setError(String(e));});return()=>{live=false;};},[incidentId]);
+ const [request,setRequest]=useState<{incidentId:string|null;scope?:string;status:'loading'|'ready'|'error';projection:ConsequenceProjection|null;error:string}>({incidentId:null,status:'loading',projection:null,error:''});
+ useEffect(()=>{let live=true;const scope=props.projectionReadScope;setRequest({incidentId,scope,status:'loading',projection:null,error:''});if(incidentId)api<ConsequenceProjection>(`/v1/command/consequences?incidentId=${encodeURIComponent(incidentId)}`,undefined,{readScope:scope}).then(p=>{if(!live)return;if(p?.incident?.id!==incidentId)throw new Error('Consequence response does not match the selected incident.');setRequest({incidentId,scope,status:'ready',projection:p,error:''});}).catch(e=>{if(live)setRequest({incidentId,scope,status:'error',projection:null,error:String(e)});});return()=>{live=false;};},[incidentId,props.projectionReadScope]);
  useEffect(()=>{if(incidentId)writeConsequenceSelection({incidentId},true);},[incidentId]);
- const current=projection?.incident?.id===incidentId?projection:null;
+ const matching=request.incidentId===incidentId && request.scope===props.projectionReadScope;
+ const loading=!matching || request.status==='loading';
+ const error=matching && request.status==='error'?request.error:'';
+ const current=matching && request.projection?.incident?.id===incidentId?request.projection:null;
  const facts=incidentViewModel(record ?? {id:''},current,props.records,selection.sector,props.data);
  const waiting=c1OverviewModel(props).decisions.filter(d=>d.row.record.id===incidentId);
  const navigate=(view:CommandView,focus?:{sector:string;entityId:string|null})=>{if(caseId)props.onSelect(caseId);props.onNavigate(view);writeConsequenceSelection({incidentId,sector:focus?.sector ?? selection.sector,entityId:focus ? focus.entityId : selection.entityId},true);};
@@ -52,7 +56,7 @@ export default function IncidentView(props:Props) {
  <div className="iv-fact"><span>Also probed</span><b>{facts.probed.length?<Tone status="probed">{facts.probed.map(p=>p.label).join(' and ')}{facts.probedPeople!=null?` · ${facts.probedPeople.toLocaleString('en-US')} people`:''} · probing only, no confirmed compromise</Tone>:'None recorded'}</b></div>
  <div className="iv-fact"><span>Waiting on</span><b><Tone status={waiting.length?'waiting':'not_yet'}>{waiting.length?waiting.map(d=>`${d.record.title ?? d.record.label ?? 'Decision'} · ${d.windowLabel}`).join('; '):'No waiting decisions'}</Tone> · <button className="command-link" onClick={()=>navigate('leadership')}>C6 →</button></b></div>
  </div><nav className="iv-summary-links" aria-label="Incident evidence"><button className="command-link" onClick={()=>navigate('cyber')}>How it got in: C3 →</button><button className="command-link" onClick={()=>navigate('consequence')}>Full consequences: C4 →</button></nav></section>
- {current?.analysis?<SectorCascadeView value={current} onSelect={focus=>navigate('consequence',focus)}/>:<section className="iv-panel iv-development"><h2>What it touches · by sector</h2><p>{error?`Infrastructure analysis unavailable: ${error}`:'No consequence model yet. Infrastructure view for this incident type is in development.'}</p><p>Reference inventory · Not yet modeled</p><button className="command-link analyst-link" onClick={()=>props.onOpenAnalyst('command',caseId)}>Open in Analyst ↗</button></section>}
+ {current?.analysis?<><SectorCascadeView value={current} onSelect={focus=>navigate('consequence',focus)}/><IncidentInfrastructureDetail value={current} entityIcons={props.reference.entityIcons} watchAssets={facts.watch.filter(w=>!!w.entityId).map(w=>({entityId:String(w.entityId),reason:typeof w.reason==='string'?w.reason:'Watch reason not recorded'}))} onSelectEntity={props.onSelectEntity} onInspect={id=>props.onOpenAnalyst('entity-profile',caseId,id)}/></>:<section className="iv-panel iv-development" role={error?'alert':'status'} aria-busy={loading}><h2>What it touches · by sector</h2><p>{loading?'Loading sector consequences for this incident…':error?`Infrastructure analysis unavailable: ${error}`:'No consequence model yet. Infrastructure view for this incident type is in development.'}</p>{!loading && !error && <p>Reference inventory · Not yet modeled</p>}<button className="command-link analyst-link" onClick={()=>props.onOpenAnalyst('command',caseId)}>Open in Analyst ↗</button></section>}
  <nav className="iv-consequence-link"><button className="command-link" onClick={()=>navigate('consequence')}>Every asset, and why: C4 →</button></nav>
  <section className="iv-more" aria-label="More"><h2 className="iv-group-caption">More</h2><IncidentRecordedFootprints model={model}/></section>
  </>}

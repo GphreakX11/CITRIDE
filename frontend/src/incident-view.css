@@ -32,6 +32,18 @@
 .app-shell:has(.incident-view) .page-heading{align-items:center;gap:18px}.app-shell:has(.incident-view) .screen-incident-context{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.app-shell:has(.incident-view) .page-heading>.iv-selector{margin-left:auto;flex-shrink:0}
 .iv-select-trigger .iv-incident-id{font-family:var(--font-mono);font-size:var(--fs-small);white-space:nowrap}.iv-select-trigger strong{font-weight:500;font-size:var(--fs-small)}.iv-records-asof{font-size:var(--fs-small);color:var(--muted);margin:6px 0 0;text-align:right}.iv-selector .iv-selector-row{display:flex;flex-direction:column;gap:5px}.iv-select-row-title{display:flex;align-items:center;gap:10px}.iv-select-row-title strong{flex:1;font-weight:500}.iv-selector-row.iv-keyboard-active{outline:2px solid var(--blue-text);outline-offset:-2px}.iv-selector-popover footer{border-top:1px solid var(--border);padding-top:10px;margin-top:10px;color:var(--muted);font-size:var(--fs-small)}.iv-selector button:focus-visible,.iv-selector input:focus-visible{outline:2px solid var(--blue-text);outline-offset:2px}
 .iv-consequence-link { text-align:right; }
+.iv-infrastructure-detail{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:18px;min-width:0}
+.iv-detail-map,.iv-detail-roster{padding:18px;min-width:0}
+.iv-detail-map h2,.iv-detail-roster h2{margin-top:0;font-size:var(--fs-label)}
+.iv-detail-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.iv-detail-filters button{border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);color:var(--text);padding:6px 10px}
+.iv-detail-filters button[aria-pressed=true]{outline:2px solid var(--blue-text);outline-offset:1px}
+.iv-detail-scroll{max-height:600px;overflow:auto}
+.iv-detail-asset{padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;overflow-wrap:anywhere}
+.iv-detail-asset.selected{border-color:var(--blue-text)}
+.iv-detail-asset summary small{display:block;color:var(--muted)}
+.iv-detail-asset p,.iv-detail-roster .iv-hint{font-size:var(--fs-small)}
+@media(max-width:1000px){.iv-infrastructure-detail{grid-template-columns:minmax(0,1fr)}.iv-detail-scroll{max-height:420px}}
 @media(max-width:1200px){.iv-facts{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1000px){.iv-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.app-shell:has(.incident-view) .page-heading{flex-wrap:wrap}.app-shell:has(.incident-view) .page-heading>.iv-selector{margin-left:0}}
 @media(max-width:600px){.iv-facts{grid-template-columns:1fr}.iv-summary-band{padding:16px}.iv-selector{width:100%;max-width:100%}.iv-selector-popover{right:auto;left:0;max-width:calc(100vw - 55px)}}

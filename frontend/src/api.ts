@@ -36,7 +36,7 @@ function invalidateReads() {
   pendingReads.clear();
 }
 
-export async function api<T>(path: string, body?: unknown): Promise<T> {
+export async function api<T>(path: string, body?: unknown, options?: { readScope?: string }): Promise<T> {
   if (body !== undefined) {
     invalidateReads();
     try {
@@ -47,32 +47,35 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
       invalidateReads();
     }
   }
-  const cached = readCache.get(path);
+  // A changed accepted snapshot must not join an obsolete same-path read.
+  // Scope stays document-local: never add snapshot data to URLs or headers.
+  const key = JSON.stringify([path, options?.readScope ?? null]);
+  const cached = readCache.get(key);
   if (cached && cached.expires > Date.now())
     return structuredClone(cached.data) as T;
-  readCache.delete(path);
-  let pending = pendingReads.get(path);
+  readCache.delete(key);
+  let pending = pendingReads.get(key);
   if (!pending) {
     const epoch = readEpoch;
-    pending = request(path)
+    pending = request(path, undefined, options?.readScope !== undefined)
       .then((data) => {
         if (epoch === readEpoch && referencePaths.has(path))
-          readCache.set(path, { expires: Date.now() + referenceTtlMs, data });
+          readCache.set(key, { expires: Date.now() + referenceTtlMs, data });
         return data;
       })
       .finally(() => {
-        if (pendingReads.get(path) === pending) pendingReads.delete(path);
+        if (pendingReads.get(key) === pending) pendingReads.delete(key);
       });
-    pendingReads.set(path, pending);
+    pendingReads.set(key, pending);
   }
   return structuredClone(await pending) as T;
 }
 
-async function request(path: string, body?: unknown): Promise<unknown> {
+async function request(path: string, body?: unknown, freshRead = false): Promise<unknown> {
   const response = await fetch(
     path,
     body === undefined
-      ? {}
+      ? freshRead ? { cache: "no-store" } : {}
       : {
           method: "POST",
           headers: { "Content-Type": "application/json" },
