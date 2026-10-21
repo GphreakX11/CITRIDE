@@ -13,6 +13,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from rdflib.exceptions import ParserError
 
 from .access import DemoAccessMiddleware
 from .billington_reference import idt_router
@@ -117,6 +118,7 @@ def create_app(
     app.include_router(idt_router)
 
     hosted = os.environ.get("VERCEL") == "1"
+    require_auth = os.environ.get("CITRIDE_REQUIRE_AUTH")
     database_url = (
         None
         if data_dir is not None
@@ -129,7 +131,8 @@ def create_app(
             # Runtime configuration only; no credential is embedded in source.
             os.environ.get("CITRIDE_DEMO_PASSWORD")
         ),
-        required=hosted,
+        required=hosted or require_auth in {"1", "true"},
+        configuration_valid=require_auth in {None, "0", "false", "1", "true"},
         secure_origin=hosted and os.environ.get("VERCEL_ENV") != "development",
     )
     repository_path = data_dir or Path(
@@ -167,7 +170,13 @@ def create_app(
             status_code=422,
             content={
                 "detail": [
-                    {key: issue[key] for key in ("type", "loc", "msg") if key in issue}
+                    {
+                        **{key: issue[key] for key in ("type", "loc") if key in issue},
+                        "msg": {
+                            "union_tag_invalid": "Action must be one of the supported action types.",
+                            "union_tag_not_found": "Action type is required.",
+                        }.get(issue["type"], issue["msg"]),
+                    }
                     for issue in error.errors()
                 ]
             },
@@ -205,9 +214,9 @@ def create_app(
                         candidate = Repository(repository_path, fixture_path)
                     RecordsService(candidate).initialize()
                     repository = candidate
-                except (OSError, ValueError, InvalidModelError) as error:
+                except (OSError, ValueError, InvalidModelError, ParserError) as error:
                     raise HTTPException(
-                        status_code=503, detail=f"Demo model could not be loaded: {error}"
+                        status_code=503, detail="Demo model is temporarily unavailable."
                     ) from error
             return repository
 

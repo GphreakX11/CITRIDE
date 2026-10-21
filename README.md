@@ -6,7 +6,7 @@ All utilities, facilities, operational links, telemetry, and effect assumptions 
 
 ## Run locally
 
-Requirements: Python 3.12, Node.js 24, npm, and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Requirements: Python 3.12, Node.js 24, npm, and [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.13.4 or newer.
 
 ```bash
 bash scripts/setup.sh
@@ -19,7 +19,23 @@ For Vercel, the proposed root `vercel.json` configures separate FastAPI and Vite
 
 The demo username defaults to `demo`. Set `CITRIDE_DEMO_PASSWORD` in the existing Vercel project's backend environment, then redeploy. Your Google sign-in to the Vercel dashboard is separate from the demo login; no default password is committed to the repository.
 
-For development, run the API from `backend` with `uv run --locked uvicorn citride.api:app --reload --host 127.0.0.1 --port 8000`. In a separate terminal run `npm run dev --prefix frontend`; Vite proxies API requests to the backend.
+For development, run the API from `backend` with `uv run --locked uvicorn citride.api:app --reload --host 127.0.0.1 --port 8000`. In a separate terminal run `npm run dev --prefix frontend`; Vite proxies API requests to the backend. Keep both listeners loopback-only. The existing Vite proxy preserves the browser's Host header: use the frontend's own relative `/v1` URLs, not cross-port direct API requests or `changeOrigin: true`.
+
+### Dependency installation and CA trust
+
+The October 2026 emSign CA incident affects older bundled certificate stores. Setup rejects uv older than 0.13.4 before dependency downloads, and the Python lockfile selects certifi 2026.10.19. CI pins uv 0.13.4. Recheck current maintainer advisories before rebuilding; version pins and a successful test run are not a vulnerability-free certification.
+
+`scripts/setup.sh` obtains a fingerprint-checked CA bundle from the synchronized project certifi package and passes it explicitly to `npm ci` with strict TLS and dependency lifecycle scripts disabled. This replaces npm's default CA list for that command; merely adding an extra CA would not remove the compromised root. The explicit application build still runs. Node 24.19.0's bundled store was independently found to contain the affected root; this scoped npm mitigation does not repair other Node clients or the host trust store. Do not disable TLS verification or use an unreviewed CA override to bypass setup failures.
+
+The Docker bootstrap removes only the compromised emSign ECC Root CA - G3 fingerprint from its own system and old-installer stores before its first package download, then installs pip 26.2.2 and uv 0.13.4 and verifies the updated installer store. The helper's mutating `bootstrap` mode and image `verify` mode require Linux root, an explicit container-build flag, and the image's `/app/backend/pyproject.toml` marker. Do not run those image modes against a host. No host/system/global CA settings are changed by this repository workflow; provider-managed build/runtime trust, custom overrides, and live deployment TLS require separate review.
+
+### Access boundary
+
+Passwordless development is only for a trusted local machine with loopback-only listeners; the application does not enforce the listener binding. Before exposing any backend through Docker, a LAN listener, or a reverse proxy, set `CITRIDE_REQUIRE_AUTH=1`, configure a unique nonblank `CITRIDE_DEMO_PASSWORD`, and provide HTTPS at a trusted ingress. The flag accepts only the exact values `1`/`true` (required) and `0`/`false` (optional); omission keeps the local optional default. Empty, padded, uppercase, or other values fail closed with HTTP 503 even if a password is set. Vercel always requires authentication and cannot be opted out with this flag. A configured nonblank password enables login even in optional mode; there is no built-in/fallback password. Whitespace-only passwords are unconfigured; nonblank username/password bytes are preserved, not trimmed. The username defaults to `demo`; an explicitly blank username or one containing `:` is invalid.
+
+Unsafe browser requests must have a well-formed same-origin Origin, independently of whether login is enabled. Null, foreign, malformed, and duplicate origins are rejected before body parsing or state access; a `Sec-Fetch-Site: cross-site` signal also rejects browser writes with no Origin. Origin-less CLI calls remain supported. Origin, Host, Fetch Metadata, and forwarded headers are not authentication, and no wildcard CORS is enabled. Proxies must preserve a validated public Host and scheme (Vercel production requires HTTPS); arbitrary `X-Forwarded-*` headers do not override the application origin comparison. No trusted-host allowlist/DNS-rebinding defense is implemented: same-origin comparison alone does not establish hostname trust, and local processes or clients that omit/spoof browser headers are outside this defense. Do not expose passwordless mode through an untrusted hostname, tunnel, or network interface.
+
+The shared Basic login has no per-person roles, tenant boundary, login rate limit, or expiring application session. Basic credentials require TLS outside trusted loopback. Rotate the shared password through backend deployment settings whenever access changes or exposure is suspected, redeploy/restart every serving instance, and have reviewers clear cached browser credentials and sign in again; do not place passwords in URLs, frontend variables, source, or reports. Old credentials remain valid on any instance not updated.
 
 ## Demonstrate the workflow
 
@@ -75,5 +91,7 @@ Tests cover coherent synthetic inputs, loss-specific activation, interval arithm
 ## Scope of this first increment
 
 This is a single-user synthetic demo. Hosted instances support a shared demo login, with no authenticated multi-customer boundary, operational response authority catalog, human decision/audit workflow, managed Neptune deployment, live ingest pipeline, or AI agent. Hosted backend access requires the configured password; this is not an operational service. Persisted RDF and API contracts are development foundations; they are not verified GovCloud, FedRAMP, IDT-OWL, or imported-ontology conformance.
+
+Resource budgets remain a product/deployment decision: drafts, proposals, and immutable cascade/inference history can grow cumulatively, and reasoning plus whole-graph persistence can consume shared compute/memory/storage. Authentication and origin checks do not supply retention, request-byte/depth, rate, concurrency, or compute budgets. No arbitrary quotas or silent history purges are introduced; agree retention/archival, backups, and safe admission/edge controls before broader exposure.
 
 Next increments are described in [the roadmap](docs/roadmap.md). See [the implementation contract](docs/implementation-contract.md) for data/API details.

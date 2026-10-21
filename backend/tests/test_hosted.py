@@ -13,7 +13,7 @@ from citride.storage import StorageUnavailableError
 
 @pytest.fixture(autouse=True)
 def clean_hosted_environment(monkeypatch):
-    for name in ("VERCEL", "VERCEL_ENV", "CITRIDE_DATABASE_URL", "DATABASE_URL", "CITRIDE_STATE_KEY", "CITRIDE_DEMO_PASSWORD", "CITRIDE_DEMO_USERNAME"):
+    for name in ("VERCEL", "VERCEL_ENV", "CITRIDE_DATABASE_URL", "DATABASE_URL", "CITRIDE_STATE_KEY", "CITRIDE_DEMO_PASSWORD", "CITRIDE_DEMO_USERNAME", "CITRIDE_REQUIRE_AUTH"):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -75,7 +75,7 @@ def test_vercel_fails_closed_without_password_or_durable_connection(tmp_path, mo
         response = client.get("/health")
         assert response.status_code == 503
         assert response.json() == {
-            "detail": "The demo login has not been configured in Vercel.",
+            "detail": "The demo login has not been configured correctly.",
             "code": "auth_not_configured", "username": "demo",
         }
         assert not state.exists()

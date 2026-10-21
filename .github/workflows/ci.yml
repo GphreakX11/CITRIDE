@@ -29,6 +29,8 @@ jobs:
         with:
           python-version: '3.12'
       - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.13.4'
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version

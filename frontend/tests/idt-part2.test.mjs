@@ -52,6 +52,30 @@ function run(changes = {}) {
   };
 }
 
+function resolveLocalModule(spec, url) {
+  const dep = new URL(spec, url);
+  if (existsSync(dep)) return dep;
+  return [".ts", ".tsx"]
+    .map((ext) => new URL(spec + ext, url))
+    .find(existsSync);
+}
+
+test("local harness resolver distinguishes helper from case-colliding component", () => {
+  const origin = new URL("../src/OntologyBlueprint.tsx", import.meta.url);
+  assert.equal(
+    resolveLocalModule("./ontologyBlueprint", origin).href,
+    new URL("./ontologyBlueprint.ts", origin).href,
+  );
+  assert.equal(
+    resolveLocalModule("./OntologyBlueprint.tsx", origin).href,
+    origin.href,
+  );
+  assert.equal(
+    resolveLocalModule("./IdtChip", origin).href,
+    new URL("./IdtChip.tsx", origin).href,
+  );
+});
+
 // In-memory hook/effect harness executes real component handlers and read-only API
 // flows. It is not a browser/DOM/layout test and invents no production proof.
 async function harness(file, responses) {
@@ -123,11 +147,7 @@ async function harness(file, responses) {
       let target;
       if (spec === "react" || spec === "./api") target = facade;
       else if (spec.startsWith(".")) {
-        let dep = new URL(spec, url);
-        if (!existsSync(dep))
-          dep = [".tsx", ".ts"]
-            .map((ext) => new URL(spec + ext, url))
-            .find(existsSync);
+        const dep = resolveLocalModule(spec, url);
         assert.ok(dep, spec);
         target = await compile(dep);
       } else target = import.meta.resolve(spec);
