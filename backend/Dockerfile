@@ -17,13 +17,22 @@ RUN groupadd --gid 10001 citride \
     && mkdir -p /app/.local \
     && chown 10001:10001 /app/.local
 
-FROM dependencies AS runtime
-# The application must enforce this flag before network-exposed use.
-ENV CITRIDE_REQUIRE_AUTH=1
-# Source and dependencies remain root-owned; only default local state is writable.
-USER 10001:10001
-EXPOSE 8000
-CMD ["python", "-m", "uvicorn", "citride.api:app", "--host", "0.0.0.0", "--port", "8000"]
+# certifi is a locked development dependency, not part of the no-dev runtime.
+# Obtain and validate its bundle only in an intermediate build stage.
+FROM dependencies AS frontend-ca
+RUN uv sync --locked --project /app/backend
+RUN python /app/backend/scripts/harden_ca.py certifi-path
+
+FROM node:24-bookworm-slim AS frontend-build
+WORKDIR /app/frontend
+# Use the backend's reviewed CA bundle; do not fall back to Node's bundled roots.
+COPY --from=frontend-ca /app/backend/.venv/lib/python3.12/site-packages/certifi/cacert.pem /app/npm-ca.pem
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --ignore-scripts --strict-ssl=true --cafile /app/npm-ca.pem
+# TypeScript imports the same display catalog used by the backend.
+COPY --from=dependencies /app/data /app/data
+COPY frontend/ ./
+RUN npm run build
 
 FROM dependencies AS verification
 # The declared dev group includes image-composition and browser-test libraries.
@@ -40,3 +49,13 @@ COPY README.md /app/README.md
 COPY vercel.json /app/vercel.json
 USER 10001:10001
 CMD ["python", "-m", "pytest", "backend/tests", "-q"]
+
+# Keep the runnable product last: plain docker build must not produce a test runner.
+FROM dependencies AS runtime
+COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
+# The application must enforce this flag before network-exposed use.
+ENV CITRIDE_REQUIRE_AUTH=1
+# Source and dependencies remain root-owned; only default local state is writable.
+USER 10001:10001
+EXPOSE 8000
+CMD ["python", "-m", "uvicorn", "citride.api:app", "--host", "0.0.0.0", "--port", "8000"]

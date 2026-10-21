@@ -49,3 +49,34 @@ def test_docker_runnable_stages_share_inputs_without_runtime_auth_inheritance():
     assert 'CITRIDE_REQUIRE_AUTH' not in verification
     assert 'USER 10001:10001' in runtime
     assert 'USER 10001:10001' in verification
+
+
+def test_docker_runtime_contains_a_real_locked_frontend_build():
+    base, build = _docker_stage('frontend-build')
+    assert base == 'node:24-bookworm-slim'
+    ca_base, ca = _docker_stage('frontend-ca')
+    assert ca_base == 'dependencies'
+    assert 'RUN uv sync --locked --project /app/backend' in ca
+    assert 'RUN python /app/backend/scripts/harden_ca.py certifi-path' in ca
+    assert re.search(r'^COPY --from=frontend-ca\s+/app/backend/\.venv/lib/python3\.12/site-packages/certifi/cacert\.pem\s+/app/npm-ca\.pem\s*$', build, re.M)
+    assert 'COPY frontend/package.json frontend/package-lock.json ./' in build
+    assert 'npm ci --ignore-scripts --strict-ssl=true --cafile /app/npm-ca.pem' in build
+    assert 'COPY frontend/ ./' in build
+    assert 'COPY --from=dependencies /app/data /app/data' in build, 'Frontend TypeScript imports the shared display catalog'
+    assert 'RUN npm run build' in build
+    _, runtime = _docker_stage('runtime')
+    assert 'COPY --from=frontend-build /app/frontend/dist /app/frontend/dist' in runtime
+    assert runtime.index('COPY --from=frontend-build') < runtime.index('USER 10001:10001')
+    assert 'node_modules' not in runtime
+
+
+def test_ci_exercises_the_shippable_runtime_homepage():
+    workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+    assert 'docker build -f backend/Dockerfile --target runtime -t citride:ci .' in workflow
+    assert 'python scripts/check_container_ui.py --image citride:ci' in workflow
+    assert (ROOT / 'scripts/check_container_ui.py').is_file()
+
+
+def test_plain_docker_build_defaults_to_the_runnable_product():
+    text = (ROOT / 'backend/Dockerfile').read_text()
+    assert re.findall(r'^FROM\s+\S+\s+AS\s+(\S+)', text, re.M)[-1] == 'runtime'

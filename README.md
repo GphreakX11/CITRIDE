@@ -21,6 +21,15 @@ The demo username defaults to `demo`. Set `CITRIDE_DEMO_PASSWORD` in the existin
 
 For development, run the API from `backend` with `uv run --locked uvicorn citride.api:app --reload --host 127.0.0.1 --port 8000`. In a separate terminal run `npm run dev --prefix frontend`; Vite proxies API requests to the backend. Keep both listeners loopback-only. The existing Vite proxy preserves the browser's Host header: use the frontend's own relative `/v1` URLs, not cross-port direct API requests or `changeOrigin: true`.
 
+### Docker/source handoff
+
+For a self-contained container with both Command and Analyst screens, follow the
+[container handoff guide](docs/container-handoff.md). Build from the repository
+root with `docker build -f backend/Dockerfile --target runtime -t citride:handoff .`.
+The runtime includes the compiled frontend, requires a configured demo password,
+and runs as UID 10001. CI tests its real homepage and JS/CSS assets; the source
+handoff remains a controlled synthetic demo, not a public multi-user release.
+
 ### Dependency installation and CA trust
 
 The October 2026 emSign CA incident affects older bundled certificate stores. Setup rejects uv older than 0.13.4 before dependency downloads, and the Python lockfile selects certifi 2026.10.19. CI pins uv 0.13.4. Recheck current maintainer advisories before rebuilding; version pins and a successful test run are not a vulnerability-free certification.

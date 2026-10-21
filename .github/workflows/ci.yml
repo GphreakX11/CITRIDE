@@ -38,3 +38,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: bash scripts/setup.sh
       - run: bash scripts/check.sh
+      - name: Build the shippable runtime image
+        run: docker build -f backend/Dockerfile --target runtime -t citride:ci .
+      - name: Test homepage and assets from the actual runtime container
+        run: python scripts/check_container_ui.py --image citride:ci
